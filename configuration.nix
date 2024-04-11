@@ -88,6 +88,8 @@
     dolphin
     playerctl
     sddm-chili-theme
+    cloudflare-warp
+    libnotify
   ];
   fonts.packages = with pkgs; [
     fira-code
