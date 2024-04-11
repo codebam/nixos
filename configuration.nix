@@ -17,6 +17,12 @@
 
   time.timeZone = "America/Toronto";
 
+  services.xserver.enable = true;
+  services.xserver.displayManager.sddm = {
+    enable = true;
+    theme = "chili";
+  };
+
   security.polkit.enable = true;
   systemd = {
     user.services.polkit-gnome-authentication-agent-1 = {
@@ -33,7 +39,6 @@
         };
     };
   };
-
 
   security.rtkit.enable = true;
   services.pipewire = {
@@ -80,6 +85,9 @@
       pass-otp
       pass-genphrase
     ]))
+    dolphin
+    playerctl
+    sddm-chili-theme
   ];
   fonts.packages = with pkgs; [
     fira-code
