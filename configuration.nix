@@ -14,6 +14,7 @@
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.backend = "iwd";
   networking.wireless.iwd.enable = true;
+  networking.firewall.checkReversePath = false;
 
   time.timeZone = "America/Toronto";
 
@@ -88,7 +89,6 @@
     dolphin
     playerctl
     sddm-chili-theme
-    cloudflare-warp
     libnotify
   ];
   fonts.packages = with pkgs; [
