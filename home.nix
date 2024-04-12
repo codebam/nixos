@@ -46,20 +46,12 @@
   };
   programs.git = {
     enable = true;
-    includes = [
-      {
-        contents = {
-          user = {
-            email = "codebam@riseup.net";
-            name = "Sean Behan";
-            signingKey = "0F6D5021A87F92BA";
-          };
-          commit = {
-            gpgSign = true;
-          };
-        };
-      }
-    ];
+    userEmail = "codebam@riseup.net";
+    userName = "Sean Behan";
+    signing = {
+      key = "0F6D5021A87F92BA";
+      signByDefault = true;
+    };
   };
   programs.tmux = {
     enable = true;
