@@ -5,6 +5,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -20,8 +21,7 @@
 
   services.fwupd.enable = true;
 
-  services.xserver.enable = true;
-  services.xserver.displayManager.sddm = {
+  services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
     theme = "chili";
@@ -52,12 +52,12 @@
     pulse.enable = true;
     jack.enable = true;
   };
-  environment.etc."pipewire/pipewire.conf.d/93-high-sample-rate.conf".text = ''
-  context.properties = {
-    default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
-    default.clock.rate = 384000
-  }
-  '';
+  #environment.etc."pipewire/pipewire.conf.d/93-high-sample-rate.conf".text = ''
+  #context.properties = {
+  #  default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
+  #  default.clock.rate = 384000
+  #}
+  #'';
 
   users.users.codebam = {
     isNormalUser = true;
@@ -76,9 +76,7 @@
     grim
     slurp
     wl-clipboard
-    mako
     waybar
-    wofi
     tmux
     nodejs
     weechat
@@ -105,6 +103,7 @@
   xdg = {
     autostart.enable = true;
     portal = {
+      config.common.default = "*";
       enable = true;
       extraPortals = [
         pkgs.xdg-desktop-portal
@@ -112,11 +111,6 @@
       ];
       wlr.enable = true;
     };
-  };
-
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
   };
 
   services.flatpak.enable = true;
