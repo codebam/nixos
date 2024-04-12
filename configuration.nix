@@ -18,9 +18,12 @@
 
   time.timeZone = "America/Toronto";
 
+  services.fwupd.enable = true;
+
   services.xserver.enable = true;
   services.xserver.displayManager.sddm = {
     enable = true;
+    wayland.enable = true;
     theme = "chili";
   };
 
@@ -76,9 +79,8 @@
     mako
     waybar
     wofi
-    nodejs
-    nodePackages.wrangler
     tmux
+    nodejs
     weechat
     xdg-utils
     (pass.withExtensions (subpkgs: with subpkgs; [
@@ -86,12 +88,15 @@
       pass-otp
       pass-genphrase
     ]))
-    dolphin
     playerctl
     sddm-chili-theme
     libnotify
   ];
+  fonts.fontDir.enable = true;
   fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-color-emoji
+    noto-fonts-cjk-sans
     fira-code
     fira-code-symbols
     font-awesome
