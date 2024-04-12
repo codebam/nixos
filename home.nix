@@ -9,6 +9,19 @@
       modifier = "Mod4";
       terminal = "foot"; 
       menu = "wofi";
+      fonts = {
+        names = [ "Noto Sans" "FontAwesome" ];
+        style = "Bold Semi-Condensed";
+        size = 11.0;
+      };
+      output = {
+        "*" = {
+          bg = "~/Pictures/wallpapers/wallpaper.png fill";
+        };
+      };
+      bars = [{
+        command = "waybar";
+      }];
       window = {
         titlebar = false;
         border = 1;
@@ -24,6 +37,21 @@
       focus.followMouse = false;
       workspaceAutoBackAndForth = true;
     };
+  };
+  programs.bash = {
+    enable = true;
+  };
+  programs.vim = {
+    enable = true;
+  };
+  programs.git = {
+    enable = true;
+  };
+  programs.tmux = {
+    enable = true;
+  };
+  programs.waybar = {
+    enable = true;
   };
   programs.foot = {
     enable = true;
