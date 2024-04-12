@@ -52,12 +52,6 @@
     pulse.enable = true;
     jack.enable = true;
   };
-  #environment.etc."pipewire/pipewire.conf.d/93-high-sample-rate.conf".text = ''
-  #context.properties = {
-  #  default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
-  #  default.clock.rate = 384000
-  #}
-  #'';
 
   users.users.codebam = {
     isNormalUser = true;
@@ -70,14 +64,10 @@
   };
 
   environment.systemPackages = with pkgs; [
-    vim
-    git
     rcm
     grim
     slurp
     wl-clipboard
-    waybar
-    tmux
     nodejs
     weechat
     xdg-utils
