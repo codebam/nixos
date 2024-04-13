@@ -44,6 +44,7 @@
       focus.followMouse = false;
       workspaceAutoBackAndForth = true;
       keybindings = let modifier = config.wayland.windowManager.sway.config.modifier; in lib.mkOptionDefault {
+        "${modifier}+p" = "exec swaylock";
         "${modifier}+shift+u" = "exec playerctl play-pause";
         "${modifier}+shift+y" = "exec playerctl previous";
         "${modifier}+shift+i" = "exec playerctl next";
@@ -52,6 +53,13 @@
         "${modifier}+shift+x" = "exec ~/.local/bin/screenshot";
         "${modifier}+x" = "exec ~/.local/bin/screenshot-select";
       };
+    };
+  };
+  programs.swaylock = {
+    enable = true;
+    settings = {
+      color = "#000000";
+      ring-color = "#000000";
     };
   };
   programs.bash = {
