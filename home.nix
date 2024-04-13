@@ -94,6 +94,7 @@
             \ 'coc-snippets',
             \ 'coc-svelte',
             \ 'coc-python',
+            \ 'coc-nix',
         \ ]
     '';
     plugins = [
@@ -149,6 +150,14 @@
   };
   programs.waybar = {
     enable = true;
+    settings = {
+      mainBar = {
+        height = 30;
+        modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" ];
+        modules-center = [ "sway/window" ];
+        modules-right = [ "wireplumber" "memory" "cpu" "temperature" "disk" "network" "clock" ];
+      };
+    };
   };
   programs.foot = {
     enable = true;
@@ -203,6 +212,49 @@
       location = "center";
       hide_scroll = true;
     };
+    style = ''
+      window {
+        margin: 4px;
+        background-color: rgba(0,0,0,0);
+      }
+      #input {
+        margin-left: 4px;
+        margin-right: 4px;
+        color: #E5E9F0;
+        background-color: #2E3440;
+        box-shadow: none;
+        border: 1px solid #88c0d0;
+        border-radius: 0px;
+      }
+      #inner-box {
+        border-radius: 4px 4px 4px 4px;
+        background-color: #2E3440;
+        border 1px solid #3B4252;
+      }
+      #outer-box {
+        margin: 4px;
+      }
+      #scroll {
+        margin: 4px;
+      }
+      #entry,
+      #text {
+        font-family: Fira Code;
+        font-size: 9pt;
+        color: #E5E9F0;
+        outline-style: none;
+      }
+      #entry:selected {
+        color: #2e3440;
+        background-color: #88c0d0;
+      }
+      #entry:selected #text {
+        color: #2e3440;
+      }
+      .left, .right {
+        color: transparent;
+      }
+    '';
   };
   services.mako = {
     enable = true;
