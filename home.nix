@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   home.username = "codebam";
@@ -34,6 +34,7 @@
         hideEdgeBorders = "smart";
       };
       floating = {
+        titlebar = false;
         border = 1;
       };
       gaps = {
@@ -42,6 +43,15 @@
       };
       focus.followMouse = false;
       workspaceAutoBackAndForth = true;
+      keybindings = let modifier = config.wayland.windowManager.sway.config.modifier; in lib.mkOptionDefault {
+        "${modifier}+shift+u" = "exec playerctl play-pause";
+        "${modifier}+shift+y" = "exec playerctl previous";
+        "${modifier}+shift+i" = "exec playerctl next";
+        "Control+space" = "exec makoctl dismiss";
+        "${modifier}+Control+space" = "exec makoctl restore";
+        "${modifier}+shift+x" = "exec ~/.local/bin/screenshot";
+        "${modifier}+x" = "exec ~/.local/bin/screenshot-select";
+      };
     };
   };
   programs.bash = {
