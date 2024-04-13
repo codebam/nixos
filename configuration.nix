@@ -5,13 +5,20 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # networking.hostName = "nixos"; # Define your hostname.
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 1w";
+  };
+  nix.settings.auto-optimise-store = true;
+
+  networking.hostName = "nixos";
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.backend = "iwd";
   networking.wireless.iwd.enable = true;
