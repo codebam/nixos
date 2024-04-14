@@ -170,6 +170,12 @@
         modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" ];
         modules-center = [ "sway/window" ];
         modules-right = [ "wireplumber" "memory" "cpu" "temperature" "disk" "network" "clock" ];
+        clock = {
+          interval = 60;
+          tooltip = true;
+          format = "{:%H:%M}";
+          tooltip-format = "{:%Y-%m-%d}";
+        };
       };
     };
   };
