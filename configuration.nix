@@ -54,6 +54,14 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
+    configPackages = [
+      (pkgs.writeTextDir "share/pipewire/pipewire.conf.d/10-high-sample-rate.conf" ''
+        context.properties = {
+          default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
+          default.clock.rate = 384000
+        }
+          '')
+    ];
   };
 
   users.users.codebam = {
