@@ -69,6 +69,12 @@
           node ~/git/damp-recipe-a17d/src/client.mjs "$@"
       }
     '';
+    profileExtra = ''
+      PATH="$HOME/.local/bin:$PATH"
+      export PATH
+      WLR_RENDERER=vulkan
+      export WLR_RENDERER
+    '';
   };
   programs.vim = {
     enable = true;
@@ -206,6 +212,11 @@
         dim6 = "6d96a5";
         dim7 = "aeb3bb";
       };
+      bell = {
+        urgent = "yes";
+        command = "pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
+        command-focused = "yes";
+      };
     };
   };
   programs.wofi = {
@@ -263,6 +274,11 @@
         color: transparent;
       }
     '';
+  };
+  programs.direnv = {
+    enable = true;
+    enableBashIntegration = true;
+    nix-direnv.enable = true;
   };
   services.mako = {
     enable = true;
