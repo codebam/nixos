@@ -169,7 +169,30 @@
         height = 30;
         modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" ];
         modules-center = [ "sway/window" ];
-        modules-right = [ "wireplumber" "memory" "cpu" "temperature" "disk" "network" "clock" ];
+        modules-right = [ "wireplumber" "memory" "cpu" "disk" "network" "clock" ];
+        network = {
+          interval = 1;
+          format-wifi = " {signalStrength}%";
+          format-ethernet = " {ifname}";
+          format-disconnected = "No Network";
+        };
+        disk = {
+          interval = 1;
+          format = " {}%";
+        };
+        cpu = {
+          interval = 1;
+          format = " {}";
+        };
+        memory = {
+          interval = 1;
+          format = " {}%";
+        };
+        wireplumber = {
+          format = "{icon} {volume:2}%";
+          format-muted = "MUTE";
+          scroll-step = 1;
+        };
         clock = {
           interval = 60;
           tooltip = true;
