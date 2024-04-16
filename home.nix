@@ -253,7 +253,7 @@
     settings = {
       show = "drun";
       dmenu = true;
-      insentitive = true;
+      insensitive = true;
       prompt = "";
       width = "25%";
       lines = 5;
