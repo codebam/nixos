@@ -167,9 +167,12 @@
     settings = {
       mainBar = {
         height = 30;
-        modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" ];
-        modules-center = [ "sway/window" ];
-        modules-right = [ "wireplumber" "memory" "cpu" "disk" "network" "clock" ];
+        modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" "sway/window" ];
+        modules-center = [ "clock" "clock#1" ];
+        modules-right = [ "wireplumber" "memory" "cpu" "disk" "network" ];
+        "clock#1" = {
+          format = "{:%m-%d}";
+        };
         network = {
           interval = 1;
           format-wifi = " {signalStrength}%";
