@@ -94,26 +94,16 @@
             \ 'colorscheme': 'gruvbox',
             \ }
       let g:coc_disable_startup_warning = 1
-      let g:coc_global_extensions = [
-            \ 'coc-tsserver',
-            \ 'coc-rust-analyzer',
-            \ 'coc-prettier',
-            \ 'coc-eslint',
-            \ 'coc-texlab',
-            \ 'coc-go',
-            \ 'coc-rust-analyzer',
-            \ 'coc-json',
-            \ 'coc-html',
-            \ 'coc-tailwindcss',
-            \ 'coc-snippets',
-            \ 'coc-svelte',
-            \ 'coc-python',
-            \ 'coc-nix',
-        \ ]
     '';
     plugins = [
       pkgs.vimPlugins.sensible
       pkgs.vimPlugins.coc-nvim
+      pkgs.vimPlugins.coc-python
+      pkgs.vimPlugins.coc-prettier
+      pkgs.vimPlugins.coc-eslint
+      pkgs.vimPlugins.coc-snippets
+      pkgs.vimPlugins.coc-json
+      pkgs.vimPlugins.coc-svelte
       pkgs.vimPlugins.commentary
       pkgs.vimPlugins.sleuth
       pkgs.vimPlugins.surround
