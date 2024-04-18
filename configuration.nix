@@ -22,6 +22,7 @@
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.backend = "iwd";
   networking.wireless.iwd.enable = true;
+  networking.nftables.enable = true;
   networking.firewall.checkReversePath = false;
 
   time.timeZone = "America/Toronto";
