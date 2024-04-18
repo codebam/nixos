@@ -88,9 +88,9 @@
       pass-genphrase
     ]))
     playerctl
-    sddm-chili-theme
     libnotify
   ];
+
   fonts.fontDir.enable = true;
   fonts.packages = with pkgs; [
     noto-fonts
@@ -126,12 +126,6 @@
 
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
-
-  nixpkgs.config.allowUnfree = true;
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-  };
 
   programs.corectrl = {
     enable = true;
