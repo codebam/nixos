@@ -23,7 +23,12 @@
   networking.networkmanager.wifi.backend = "iwd";
   networking.wireless.iwd.enable = true;
   networking.nftables.enable = true;
-  networking.firewall.checkReversePath = false;
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 25565 ];
+    checkReversePath = false;
+  };
 
   time.timeZone = "America/Toronto";
 
@@ -133,6 +138,21 @@
     gpuOverclock.enable = true;
     gpuOverclock.ppfeaturemask = "0xffffffff";
   };
+
+  virtualisation.containers.enable = true;
+  virtualisation = {
+    podman = {
+      enable = true;
+      dockerCompat = true;
+      defaultNetwork.settings.dns_enabled = true;
+    };
+  };
+
+  services.hardware.openrgb = {
+    enable = true;
+  };
+
+  hardware.opengl.enable = true;
 
   system.stateVersion = "23.11";
 }
