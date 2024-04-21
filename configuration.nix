@@ -36,6 +36,9 @@
 
   security.polkit.enable = true;
   systemd = {
+    user.extraConfig = ''
+        DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+    '';
     user.services.polkit-gnome-authentication-agent-1 = {
       description = "polkit-gnome-authentication-agent-1";
       wantedBy = [ "graphical-session.target" ];
@@ -110,13 +113,12 @@
   xdg = {
     autostart.enable = true;
     portal = {
-      config.common.default = "*";
+      config.common.default = "gtk";
       enable = true;
-      extraPortals = [
-        pkgs.xdg-desktop-portal
-        pkgs.xdg-desktop-portal-gtk
-      ];
       wlr.enable = true;
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-gtk
+      ];
     };
   };
 
