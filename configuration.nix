@@ -157,5 +157,7 @@
 
   hardware.opengl.enable = true;
 
+  programs.dconf.enable = true;
+
   system.stateVersion = "23.11";
 }
