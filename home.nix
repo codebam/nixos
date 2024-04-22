@@ -85,9 +85,9 @@
       undodir = ["$HOME/.vim/undodir"];
     };
     extraConfig = ''
-      colorscheme catppuccin_macchiato
+      colorscheme catppuccin_mocha
       let g:lightline = {
-            \ 'colorscheme': 'catppuccin_macchiato',
+            \ 'colorscheme': 'catppuccin_mocha',
             \ }
       let g:coc_disable_startup_warning = 1
     '';
@@ -291,7 +291,7 @@
 
   catppuccin = {
     enable = true;
-    flavour = "macchiato";
+    flavour = "mocha";
   };
 
   home.stateVersion = "23.11";
