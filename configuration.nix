@@ -108,6 +108,7 @@
     noto-fonts-cjk-sans
     fira-code
     fira-code-symbols
+    fira-code-nerdfont
     font-awesome
   ];
 
