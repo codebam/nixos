@@ -89,9 +89,9 @@
       undodir = ["$HOME/.vim/undodir"];
     };
     extraConfig = ''
-      colorscheme gruvbox
+      colorscheme catppuccin_mocha
       let g:lightline = {
-            \ 'colorscheme': 'gruvbox',
+            \ 'colorscheme': 'catppuccin_mocha',
             \ }
       let g:coc_disable_startup_warning = 1
     '';
@@ -116,7 +116,7 @@
       pkgs.vimPlugins.vim-startify
       pkgs.vimPlugins.todo-comments-nvim
       pkgs.vimPlugins.vim-snippets
-      pkgs.vimPlugins.gruvbox
+      pkgs.vimPlugins.catppuccin-vim
     ];
   };
   programs.git = {
@@ -196,6 +196,7 @@
     };
   };
   programs.foot = {
+    catppuccin.enable = true;
     enable = true;
     settings = {
       main = {
@@ -210,26 +211,6 @@
         urgent = "yes";
         command = "pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
         command-focused = "yes";
-      };
-      colors = {
-        foreground = "f8f4cd";
-        background = "262423";
-        regular0 = "1e1e1e";
-        regular1 = "be0f17";
-        regular2 = "868715";
-        regular3 = "cc881a";
-        regular4 = "377375";
-        regular5 = "a04b73";
-        regular6 = "578e57";
-        regular7 = "ca480e";
-        bright0 = "262423";
-        bright1 = "f73028";
-        bright2 = "aab01e";
-        bright3 = "f7b125";
-        bright4 = "719586";
-        bright5 = "c77089";
-        bright6 = "7db669";
-        bright7 = "fb6a16";
       };
     };
   };
@@ -302,6 +283,12 @@
     borderColor = "#FFFFFF";
     borderRadius = 3;
     defaultTimeout = 5000;
+  };
+  catppuccin.flavour = "mocha";
+  programs.fzf = {
+    catppuccin.enable = true;
+    enable = true;
+    enableBashIntegration = true;
   };
 
   home.stateVersion = "23.11";
