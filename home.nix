@@ -57,10 +57,6 @@
   };
   programs.swaylock = {
     enable = true;
-    settings = {
-      color = "#000000";
-      ring-color = "#000000";
-    };
   };
   programs.bash = {
     enable = true;
@@ -129,7 +125,6 @@
     };
   };
   programs.tmux = {
-    catppuccin.enable = true;
     enable = true;
     extraConfig = ''
       set -g default-terminal "tmux-256color"
@@ -197,7 +192,6 @@
     };
   };
   programs.foot = {
-    catppuccin.enable = true;
     enable = true;
     settings = {
       main = {
@@ -277,26 +271,27 @@
     nix-direnv.enable = true;
   };
   services.mako = {
-    catppuccin.enable = true;
     enable = true;
     layer = "overlay";
     font = "Noto Sans";
     defaultTimeout = 5000;
   };
-  catppuccin.flavour = "mocha";
   programs.fzf = {
-    catppuccin.enable = true;
     enable = true;
     enableBashIntegration = true;
   };
 
   gtk = {
-    catppuccin.enable = true;
     enable = true;
   };
 
   xdg = {
     enable = true;
+  };
+
+  catppuccin = {
+    enable = true;
+    flavour = "frappe";
   };
 
   home.stateVersion = "23.11";
