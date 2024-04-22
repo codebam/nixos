@@ -84,6 +84,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    nixd
     rcm
     grim
     slurp
