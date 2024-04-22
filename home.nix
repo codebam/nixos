@@ -109,7 +109,6 @@
       pkgs.vimPlugins.vim-javascript
       pkgs.vimPlugins.typescript-vim
       pkgs.vimPlugins.lightline-vim
-      pkgs.vimPlugins.vim-startify
       pkgs.vimPlugins.todo-comments-nvim
       pkgs.vimPlugins.vim-snippets
       pkgs.vimPlugins.catppuccin-vim
