@@ -129,6 +129,7 @@
     };
   };
   programs.tmux = {
+    catppuccin.enable = true;
     enable = true;
     extraConfig = ''
       set -g default-terminal "tmux-256color"
@@ -201,7 +202,7 @@
     settings = {
       main = {
         term = "xterm-256color";
-        font = "Fira Code:size=11";
+        font = "Fira Code Nerdfont:size=11";
         dpi-aware = "yes";
       };
       mouse = {
