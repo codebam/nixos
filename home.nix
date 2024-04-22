@@ -276,12 +276,10 @@
     nix-direnv.enable = true;
   };
   services.mako = {
+    catppuccin.enable = true;
     enable = true;
     layer = "overlay";
     font = "Noto Sans";
-    backgroundColor = "#333333";
-    borderColor = "#FFFFFF";
-    borderRadius = 3;
     defaultTimeout = 5000;
   };
   catppuccin.flavour = "mocha";
