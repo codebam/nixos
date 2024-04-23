@@ -28,6 +28,8 @@
       bars = [{
         position = "top";
         statusCommand = "i3status-rs ~/.config/i3status-rust/config-default.toml";
+        hiddenState = "hide";
+        trayOutput = "none";
         fonts = {
           names = [ "Fira Code" "FontAwesome" ];
           style = "Bold Semi-Condensed";
@@ -58,6 +60,7 @@
         "${modifier}+Control+space" = "exec makoctl restore";
         "${modifier}+shift+x" = "exec ~/.local/bin/screenshot";
         "${modifier}+x" = "exec ~/.local/bin/screenshot-select";
+        "${modifier}+n" = "exec 'swaymsg \"bar mode toggle\"'";
       };
     };
   };
