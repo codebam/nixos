@@ -381,6 +381,28 @@
     flavour = "mocha";
   };
 
+  programs.tiny = {
+    enable = true;
+    settings = {
+      servers = [
+        {
+          addr = "orange.bnc4free.com";
+          port = 1339;
+          realname = "codebam";
+          nicks = [ "codebam" ];
+          join = [];
+          tls = true;
+        }
+      ];
+      defaults = {
+        nicks = [ "codebam" ];
+        realname = "codebam";
+        join = [];
+        tls = true;
+      };
+    };
+  };
+
   home.stateVersion = "23.11";
   programs.home-manager.enable = true;
 }
