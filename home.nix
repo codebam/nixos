@@ -1,5 +1,11 @@
 { config, pkgs, lib, ... }:
 
+let
+  wallpaper = builtins.fetchurl {
+    url = "https://images.hdqwalls.com/download/1/beach-seaside-digital-painting-4k-05.jpg";
+    sha256 = "2877925e7dab66e7723ef79c3bf436ef9f0f2c8968923bb0fff990229144a3fe";
+  };
+in
 {
   home.username = "codebam";
   home.homeDirectory = "/home/codebam";
@@ -22,7 +28,7 @@
       };
       output = {
         "*" = {
-          bg = "${builtins.fetchurl { url = "https://images.hdqwalls.com/download/1/beach-seaside-digital-painting-4k-05.jpg"; sha256 = "2877925e7dab66e7723ef79c3bf436ef9f0f2c8968923bb0fff990229144a3fe"; }} fill";
+          bg = "${wallpaper} fill";
         };
         "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
           mode = "3840x1600@143.998Hz";
