@@ -27,7 +27,6 @@
         "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
           mode = "3840x1600@143.998Hz";
           adaptive_sync = "on";
-          max_render_time = "1";
           subpixel = "none";
         };
       };
