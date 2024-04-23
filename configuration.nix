@@ -99,6 +99,8 @@
     ]))
     playerctl
     libnotify
+    aerc
+    alsa-utils
   ];
 
   fonts.fontDir.enable = true;

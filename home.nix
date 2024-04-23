@@ -11,6 +11,7 @@ in
   home.homeDirectory = "/home/codebam";
   wayland.windowManager.sway = {
     enable = true;
+    systemd.enable = true;
     config = rec {
       modifier = "Mod4";
       terminal = "foot"; 
@@ -74,6 +75,12 @@ in
         "${modifier}+n" = "exec 'swaymsg \"bar mode toggle\"'";
       };
     };
+    extraConfig = ''
+        bindsym --whole-window {
+        Mod4+button4 exec "amixer set Master 1%+ unmute"
+        Mod4+button5 exec "amixer set Master 1%- unmute"
+        }
+    '';
   };
   programs.i3status-rust = {
     enable = true;
