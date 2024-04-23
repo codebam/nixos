@@ -10,6 +10,34 @@
     };
     modifier = "Mod4";
   in {
+    extraConfigEarly = ''
+      set $rosewater #f5e0dc
+      set $flamingo #f2cdcd
+      set $pink #f5c2e7
+      set $mauve #cba6f7
+      set $red #f38ba8
+      set $maroon #eba0ac
+      set $peach #fab387
+      set $yellow #f9e2af
+      set $green #a6e3a1
+      set $teal #94e2d5
+      set $sky #89dceb
+      set $sapphire #74c7ec
+      set $blue #89b4fa
+      set $lavender #b4befe
+      set $text #cdd6f4
+      set $subtext1 #bac2de
+      set $subtext0 #a6adc8
+      set $overlay2 #9399b2
+      set $overlay1 #7f849c
+      set $overlay0 #6c7086
+      set $surface2 #585b70
+      set $surface1 #45475a
+      set $surface0 #313244
+      set $base #1e1e2e
+      set $mantle #181825
+      set $crust #11111b
+    '';
     enable = true;
     systemd.enable = true;
     config = rec {
@@ -20,6 +48,44 @@
         names = [ "Noto Sans" "FontAwesome" ];
         style = "Bold Semi-Condensed";
         size = 11.0;
+      };
+      colors = {
+        focused = {
+          background = "$lavender";
+          border = "$base";
+          childBorder = "$lavender";
+          indicator = "$rosewater";
+          text = "$text";
+        };
+        focusedInactive = {
+          background = "$overlay0";
+          border = "$base";
+          childBorder = "$overlay0";
+          indicator = "$rosewater";
+          text = "$text";
+        };
+        unfocused = {
+          background = "$overlay0";
+          border = "$base";
+          childBorder = "$overlay0";
+          indicator = "$rosewater";
+          text = "$text";
+        };
+        urgent = {
+          background = "$peach";
+          border = "$base";
+          childBorder = "$peach";
+          indicator = "$overlay0";
+          text = "$peach";
+        };
+        placeholder = {
+          background = "$overlay0";
+          border = "$base";
+          childBorder = "$overlay0";
+          indicator = "$overlay0";
+          text = "$text";
+        };
+        background = "$base";
       };
       output = {
         "*" = {
@@ -40,6 +106,37 @@
           names = [ "Fira Code" "FontAwesome" ];
           style = "Bold Semi-Condensed";
           size = 11.0;
+        };
+        colors = {
+          background = "$base";
+          statusline = "$text";
+          focusedStatusline = "$text";
+          focusedSeparator = "$base";
+          focusedWorkspace = {
+            background = "$base";
+            border = "$base";
+            text = "$green";
+          };
+          activeWorkspace = {
+            background = "$base";
+            border = "$base";
+            text = "$blue";
+          };
+          inactiveWorkspace = {
+            background = "$base";
+            border = "$base";
+            text = "$surface1";
+          };
+          urgentWorkspace = {
+            background = "$base";
+            border = "$base";
+            text = "$surface1";
+          };
+          bindingMode = {
+            background = "$base";
+            border = "$base";
+            text = "$surface1";
+          };
         };
       }];
       window = {
