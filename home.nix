@@ -65,10 +65,13 @@
     enable = true;
     bars = {
       default = {
+        settings = {
+          theme = {
+            theme = "ctp-mocha";
+          };
+        };
+        icons = "awesome6";
         blocks = [
-          {
-            block = "sound";
-          }
           {
             alert = 10.0;
             block = "disk_space";
@@ -83,11 +86,12 @@
           }
           {
             block = "cpu";
-            interval = 1;
+          }
+          {
+            block = "amd_gpu";
           }
           {
             block = "load";
-            interval = 1;
           }
           {
             block = "net";
