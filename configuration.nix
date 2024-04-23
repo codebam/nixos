@@ -92,6 +92,8 @@
     wl-clipboard
     nodejs
     weechat
+    aspell
+    aspellDicts.en
     xdg-utils
     (pass.withExtensions (subpkgs: with subpkgs; [
       pass-audit
