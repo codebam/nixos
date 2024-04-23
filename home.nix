@@ -26,7 +26,13 @@
         };
       };
       bars = [{
-        command = "waybar";
+        position = "top";
+        statusCommand = "i3status-rs ~/.config/i3status-rust/config-default.toml";
+        fonts = {
+          names = [ "Fira Code" "FontAwesome" ];
+          style = "Bold Semi-Condensed";
+          size = 11.0;
+        };
       }];
       window = {
         titlebar = false;
@@ -52,6 +58,48 @@
         "${modifier}+Control+space" = "exec makoctl restore";
         "${modifier}+shift+x" = "exec ~/.local/bin/screenshot";
         "${modifier}+x" = "exec ~/.local/bin/screenshot-select";
+      };
+    };
+  };
+  programs.i3status-rust = {
+    enable = true;
+    bars = {
+      default = {
+        blocks = [
+          {
+            block = "sound";
+          }
+          {
+            alert = 10.0;
+            block = "disk_space";
+            info_type = "available";
+            interval = 60;
+            path = "/";
+            warning = 20.0;
+          }
+          {
+            block = "memory";
+            format = " $icon $mem_used_percents ";
+          }
+          {
+            block = "cpu";
+            interval = 1;
+          }
+          {
+            block = "load";
+            interval = 1;
+          }
+          {
+            block = "net";
+          }
+          {
+            block = "temperature";
+          }
+          {
+            block = "time";
+            interval = 60;
+          }
+        ];
       };
     };
   };
@@ -146,49 +194,6 @@
       set -g mouse
       run '~/.tmux/plugins/tpm/tpm'
     '';
-  };
-  programs.waybar = {
-    enable = true;
-    settings = {
-      mainBar = {
-        height = 30;
-        modules-left = [ "sway/workspaces" "sway/mode" "wlr/taskbar" "sway/window" ];
-        modules-center = [ "clock" "clock#1" ];
-        modules-right = [ "wireplumber" "memory" "cpu" "disk" "network" ];
-        "clock#1" = {
-          format = "{:%m-%d}";
-        };
-        network = {
-          interval = 1;
-          format-wifi = " {signalStrength}%";
-          format-ethernet = " {ifname}";
-          format-disconnected = "No Network";
-        };
-        disk = {
-          interval = 1;
-          format = " {}%";
-        };
-        cpu = {
-          interval = 1;
-          format = " {}";
-        };
-        memory = {
-          interval = 1;
-          format = " {}%";
-        };
-        wireplumber = {
-          format = "{icon} {volume:2}%";
-          format-muted = "MUTE";
-          scroll-step = 1;
-        };
-        clock = {
-          interval = 60;
-          tooltip = true;
-          format = "{:%H:%M}";
-          tooltip-format = "{:%Y-%m-%d}";
-        };
-      };
-    };
   };
   programs.foot = {
     enable = true;
