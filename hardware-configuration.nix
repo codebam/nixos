@@ -8,34 +8,21 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usb_storage" "usbhid" "uas" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "uas" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/a313dd6e-c818-482b-b353-6916a2e437b5";
-      fsType = "btrfs";
-      options = [ "subvol=root" "compress=zstd" ];
-    };
-
-  boot.initrd.luks.devices."luks-root".device = "/dev/disk/by-uuid/34295cbe-224f-44a6-aa6d-1037672d0b2c";
-
-  fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/a313dd6e-c818-482b-b353-6916a2e437b5";
-      fsType = "btrfs";
-      options = [ "subvol=home" "compress=zstd" ];
-    };
-
-  fileSystems."/nix" =
-    { device = "/dev/disk/by-uuid/a313dd6e-c818-482b-b353-6916a2e437b5";
-      fsType = "btrfs";
-      options = [ "subvol=nix" "compress=zstd" "noatime" ];
+    { device = "UUID=4d969c23-6bbe-40b8-b841-f51e07a734a7";
+      fsType = "bcachefs";
+      options = [ "compression=lz4" "background_compression=zstd" ];
     };
 
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/B911-19AB";
       fsType = "vfat";
+      options = [ "fmask=0022" "dmask=0022" ];
     };
 
   swapDevices =

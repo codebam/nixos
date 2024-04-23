@@ -9,6 +9,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.supportedFilesystems = [ "bcachefs" ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.gc = {
