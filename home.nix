@@ -77,8 +77,8 @@ in
     };
     extraConfig = ''
         bindsym --whole-window {
-        Mod4+button4 exec "amixer set Master 1%+ unmute"
-        Mod4+button5 exec "amixer set Master 1%- unmute"
+          Mod4+button4 exec "amixer set Master 1%+ unmute"
+          Mod4+button5 exec "amixer set Master 1%- unmute"
         }
     '';
   };
