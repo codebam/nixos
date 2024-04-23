@@ -236,7 +236,7 @@
     enable = true;
     initExtra = ''
       command_not_found_handle() {
-          node ~/git/damp-recipe-a17d/src/client.mjs "$@"
+          node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
       }
     '';
     profileExtra = ''
