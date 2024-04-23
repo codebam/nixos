@@ -82,6 +82,9 @@
         icons = "awesome6";
         blocks = [
           {
+            block = "focused_window";
+          }
+          {
             alert = 10.0;
             block = "disk_space";
             info_type = "available";
@@ -104,6 +107,9 @@
           }
           {
             block = "net";
+          }
+          {
+            block = "external_ip";
           }
           {
             block = "temperature";
