@@ -13,15 +13,9 @@
     enable = true;
     systemd.enable = true;
     config = rec {
-      modifier = "Mod4";
+      inherit modifier;
       terminal = "foot"; 
       menu = "wofi";
-      startup = [
-        {
-          command = "${pkgs.systemd}/bin/systemctl --user restart polkit-gnome-authentication-agent-1.service";
-          always = true;
-        }
-      ];
       fonts = {
         names = [ "Noto Sans" "FontAwesome" ];
         style = "Bold Semi-Condensed";
@@ -63,7 +57,7 @@
       };
       focus.followMouse = false;
       workspaceAutoBackAndForth = true;
-      keybindings = let modifier = config.wayland.windowManager.sway.config.modifier; in lib.mkOptionDefault {
+      keybindings = let inherit modifier; in lib.mkOptionDefault {
         "${modifier}+p" = "exec swaylock";
         "${modifier}+shift+u" = "exec playerctl play-pause";
         "${modifier}+shift+y" = "exec playerctl previous";
@@ -75,7 +69,7 @@
         "${modifier}+n" = "exec 'swaymsg \"bar mode toggle\"'";
       };
     };
-    extraConfig = ''
+    extraConfig = let inherit modifier; in ''
         bindsym --whole-window {
           ${modifier}+button4 exec "wpctl set-volume @DEFAULT_SINK@ 1%+"
           ${modifier}+button5 exec "wpctl set-volume @DEFAULT_SINK@ 1%-"
