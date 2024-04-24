@@ -153,9 +153,19 @@
     enable = true;
   };
 
-  hardware.opengl.enable = true;
-
   programs.dconf.enable = true;
+
+  hardware.opengl = {
+    enable = true;
+    extraPackages = with pkgs; [
+      rocmPackages.clr.icd
+    ];
+  };
+
+  services.foldingathome = {
+    enable = true;
+    user = "codebam";
+  };
 
   system.stateVersion = "23.11";
 }
