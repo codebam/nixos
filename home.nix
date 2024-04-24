@@ -381,25 +381,17 @@
     flavour = "mocha";
   };
 
-  programs.tiny = {
+  programs.starship = {
     enable = true;
-    settings = {
-      servers = [
-        {
-          addr = "orange.bnc4free.com";
-          port = 1339;
-          realname = "codebam";
-          nicks = [ "codebam" ];
-          join = [];
-          tls = true;
-        }
-      ];
-      defaults = {
-        nicks = [ "codebam" ];
-        realname = "codebam";
-        join = [];
-        tls = true;
-      };
+    enableBashIntegration = true;
+  };
+
+  programs.senpai = {
+    enable = true;
+    config = {
+      address = "orange.bnc4free.com:1339";
+      nickname = "codebam";
+      password-cmd = [ "gopass" "orange.bnc4free.com" ];
     };
   };
 

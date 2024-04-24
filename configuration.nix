@@ -92,11 +92,7 @@
     wl-clipboard
     nodejs
     xdg-utils
-    (pass.withExtensions (subpkgs: with subpkgs; [
-      pass-audit
-      pass-otp
-      pass-genphrase
-    ]))
+    gopass
     playerctl
     libnotify
     aerc
