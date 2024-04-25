@@ -85,17 +85,17 @@
   };
 
   environment.systemPackages = with pkgs; [
-    nixd
-    rcm
+    aerc
+    gopass
     grim
+    libnotify
+    nixd
+    nodejs
+    playerctl
+    rcm
     slurp
     wl-clipboard
-    nodejs
     xdg-utils
-    gopass
-    playerctl
-    libnotify
-    aerc
   ];
 
   fonts.fontDir.enable = true;
@@ -173,7 +173,7 @@
 
   services.ollama = {
     enable = true;
-    # acceleration = "rocm";
+    acceleration = "rocm";
   };
 
   system.stateVersion = "23.11";
