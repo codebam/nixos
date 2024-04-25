@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 {
   imports =
@@ -165,6 +165,15 @@
   services.foldingathome = {
     enable = true;
     user = "codebam";
+  };
+
+  systemd.tmpfiles.rules = [
+    "L+    /opt/rocm/hip   -    -    -     -    ${pkgs.rocmPackages.clr}"
+  ];
+
+  services.ollama = {
+    enable = true;
+    # acceleration = "rocm";
   };
 
   system.stateVersion = "23.11";
