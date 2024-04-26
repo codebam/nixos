@@ -99,7 +99,7 @@
       };
       bars = [{
         position = "top";
-        statusCommand = "i3status-rs ~/.config/i3status-rust/config-default.toml";
+        statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
         hiddenState = "hide";
         trayOutput = "none";
         fonts = {
@@ -155,15 +155,21 @@
       focus.followMouse = false;
       workspaceAutoBackAndForth = true;
       keybindings = let inherit modifier; in lib.mkOptionDefault {
-        "${modifier}+p" = "exec swaylock";
-        "${modifier}+shift+u" = "exec playerctl play-pause";
-        "${modifier}+shift+y" = "exec playerctl previous";
-        "${modifier}+shift+i" = "exec playerctl next";
-        "Control+space" = "exec makoctl dismiss";
-        "${modifier}+Control+space" = "exec makoctl restore";
-        "${modifier}+shift+x" = "exec screenshot";
-        "${modifier}+x" = "exec screenshot-select";
-        "${modifier}+n" = "exec 'swaymsg \"bar mode toggle\"'";
+        "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
+        "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+        "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+        "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
+        "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
+        "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
+        "${modifier}+shift+x" = "exec ${(pkgs.writeShellScriptBin "screenshot" ''
+          ${pkgs.grim}/bin/grim /tmp/screenshot.png
+          spaste < /tmp/screenshot.png | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
+          '')}";
+        "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
+          ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.png
+          spaste < /tmp/screenshot.png | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
+          '')}";
+        "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
       };
     };
     extraConfig = let inherit modifier; in ''
@@ -236,7 +242,7 @@
     enable = true;
     initExtra = ''
       command_not_found_handle() {
-          node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
+          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
       }
     '';
     profileExtra = ''
@@ -279,7 +285,6 @@
       pkgs.vimPlugins.surround
       pkgs.vimPlugins.fugitive
       pkgs.vimPlugins.gitgutter
-      pkgs.vimPlugins.vim-javascript
       pkgs.vimPlugins.vim-javascript
       pkgs.vimPlugins.typescript-vim
       pkgs.vimPlugins.lightline-vim
@@ -334,7 +339,7 @@
       };
       bell = {
         urgent = "yes";
-        command = "pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
+        command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
         command-focused = "yes";
       };
     };
@@ -398,14 +403,6 @@
   home.packages = with pkgs; [
     (writeShellScriptBin "spaste" ''
       ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
-    '')
-    (writeShellScriptBin "screenshot" ''
-      ${grim}/bin/grim /tmp/screenshot.png
-      spaste < /tmp/screenshot.png | tr -d '\n' | ${wl-clipboard}/bin/wl-copy
-    '')
-    (writeShellScriptBin "screenshot-select" ''
-      ${grim}/bin/grim -g "$(${slurp}/bin/slurp)" /tmp/screenshot.png
-      spaste < /tmp/screenshot.png | tr -d '\n' | ${wl-clipboard}/bin/wl-copy
     '')
   ];
 
