@@ -161,8 +161,8 @@
         "${modifier}+shift+i" = "exec playerctl next";
         "Control+space" = "exec makoctl dismiss";
         "${modifier}+Control+space" = "exec makoctl restore";
-        "${modifier}+shift+x" = "exec ~/.local/bin/screenshot";
-        "${modifier}+x" = "exec ~/.local/bin/screenshot-select";
+        "${modifier}+shift+x" = "exec screenshot";
+        "${modifier}+x" = "exec screenshot-select";
         "${modifier}+n" = "exec 'swaymsg \"bar mode toggle\"'";
       };
     };
@@ -394,6 +394,20 @@
       password-cmd = [ "gopass" "orange.bnc4free.com" ];
     };
   };
+
+  home.packages = with pkgs; [
+    (writeShellScriptBin "spaste" ''
+      ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
+    '')
+    (writeShellScriptBin "screenshot" ''
+      ${grim}/bin/grim /tmp/screenshot.png
+      spaste < /tmp/screenshot.png | tr -d '\n' | ${wl-clipboard}/bin/wl-copy
+    '')
+    (writeShellScriptBin "screenshot-select" ''
+      ${grim}/bin/grim -g "$(${slurp}/bin/slurp)" /tmp/screenshot.png
+      spaste < /tmp/screenshot.png | tr -d '\n' | ${wl-clipboard}/bin/wl-copy
+    '')
+  ];
 
   home.stateVersion = "23.11";
   programs.home-manager.enable = true;
