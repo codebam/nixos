@@ -357,6 +357,7 @@
       lines = 5;
       location = "center";
       hide_scroll = true;
+      allow_images = true;
     };
   };
   programs.direnv = {
