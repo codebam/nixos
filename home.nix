@@ -394,10 +394,14 @@
   programs.senpai = {
     enable = true;
     config = {
-      address = "orange.bnc4free.com:1339";
+      address = "ssh.seanbehan.ca:6697";
       nickname = "codebam";
-      password-cmd = [ "gopass" "orange.bnc4free.com" ];
+      password-cmd = [ "gopass" "cat" "soju" ];
     };
+  };
+
+  programs.ncmpcpp = {
+    enable = true;
   };
 
   home.packages = with pkgs; [
