@@ -2,7 +2,8 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
   boot.loader.systemd-boot.enable = true;
@@ -38,7 +39,7 @@
   security.polkit.enable = true;
   systemd = {
     user.extraConfig = ''
-        DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+      DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
     '';
     user.services.polkit-gnome-authentication-agent-1 = {
       description = "polkit-gnome-authentication-agent-1";
@@ -46,16 +47,16 @@
       wants = [ "sway-session.target" ];
       after = [ "sway-session.target" ];
       serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-          Restart = "on-failure";
-          RestartSec = 1;
-          TimeoutStopSec = 10;
-        };
+        Type = "simple";
+        ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+        Restart = "on-failure";
+        RestartSec = 1;
+        TimeoutStopSec = 10;
+      };
     };
   };
 
-  security.pam.services.swaylock = {};
+  security.pam.services.swaylock = { };
 
   security.rtkit.enable = true;
   services.pipewire = {
@@ -70,7 +71,7 @@
           default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
           default.clock.rate = 384000
         }
-          '')
+      '')
     ];
   };
 
@@ -78,7 +79,7 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = ["wheel" "networkmanager"];
+    extraGroups = [ "wheel" "networkmanager" ];
     packages = with pkgs; [
       flatpak
     ];
@@ -89,7 +90,9 @@
     gopass
     grim
     libnotify
+    nil
     nixd
+    nixpkgs-fmt
     nodejs
     playerctl
     rcm
@@ -127,8 +130,8 @@
 
   services.pcscd.enable = true;
   programs.gnupg.agent = {
-      enable = true;
-      enableSSHSupport = true;
+    enable = true;
+    enableSSHSupport = true;
   };
 
   hardware.bluetooth.enable = true;
@@ -172,9 +175,22 @@
   ];
 
   services.ollama = {
+    package = inputs.my-nixpkgs.legacyPackages.x86_64-linux.ollama;
     enable = true;
     acceleration = "rocm";
   };
+
+  # services.mopidy = {
+  #   enable = true;
+  #   extensionPackages = with pkgs; [ mopidy-mpd mopidy-youtube ];
+  #   configuration = ''
+  #     [mpd]
+  #     hostname = ::
+  #     [youtube]
+  #     musicapi_enabled = true
+  #     channel_id = UCl7aqYpewryAPRqpGmGpoIw
+  #     '';
+  # };
 
   system.stateVersion = "23.11";
 }
