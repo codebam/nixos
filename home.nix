@@ -306,15 +306,16 @@
   };
   programs.tmux = {
     enable = true;
+    terminal = "tmux-256color";
+    prefix = "C-a";
+    mouse = true;
+    keyMode = "vi";
+    clock24 = true;
+    plugins = with pkgs; [
+      tmuxPlugins.resurrect
+    ];
     extraConfig = ''
-      set -g default-terminal "tmux-256color"
       set -ga terminal-overrides ",*256col*:Tc"
-      set -g @plugin 'tmux-plugins/tpm'
-      set -g @plugin 'tmux-plugins/tmux-sensible'
-      set -g @plugin 'tmux-plugins/tmux-resurrect'
-      unbind C-b
-      set -g prefix C-a
-      bind C-a send-prefix
       bind-key C-a last-window
       bind-key a send-prefix
       bind-key b set status
@@ -324,8 +325,6 @@
       bind j select-pane -D
       bind k select-pane -U
       bind l select-pane -R
-      set -g mouse
-      run '~/.tmux/plugins/tpm/tpm'
     '';
   };
   programs.foot = {
