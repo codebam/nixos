@@ -87,6 +87,8 @@
 
   environment.systemPackages = with pkgs; [
     aerc
+    blender-hip
+    distrobox
     gopass
     grim
     libnotify
