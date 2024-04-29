@@ -30,6 +30,7 @@
     enable = true;
     allowedTCPPorts = [ 25565 ];
     checkReversePath = false;
+    trustedInterfaces = [ "virbr0" ];
   };
 
   time.timeZone = "America/Toronto";
@@ -79,7 +80,7 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
     packages = with pkgs; [
       flatpak
     ];
@@ -89,7 +90,11 @@
     aerc
     blender-hip
     distrobox
-    gopass
+    (pass.withExtensions (subpkgs: with subpkgs; [
+      pass-audit
+      pass-otp
+      pass-genphrase
+    ]))
     grim
     libnotify
     nil
@@ -99,6 +104,7 @@
     playerctl
     rcm
     slurp
+    virt-manager
     wl-clipboard
     xdg-utils
   ];
@@ -145,8 +151,27 @@
     gpuOverclock.ppfeaturemask = "0xffffffff";
   };
 
-  virtualisation.containers.enable = true;
   virtualisation = {
+    libvirtd = {
+      enable = true;
+      qemu = {
+        package = pkgs.qemu_kvm;
+        runAsRoot = true;
+        swtpm.enable = true;
+        ovmf = {
+          enable = true;
+          packages = [
+            (pkgs.OVMF.override {
+              secureBoot = true;
+              tpmSupport = true;
+            }).fd
+          ];
+        };
+      };
+    };
+    containers = {
+      enable = true;
+    };
     podman = {
       enable = true;
       dockerCompat = true;
@@ -177,9 +202,8 @@
   ];
 
   services.ollama = {
-    package = inputs.my-nixpkgs.legacyPackages.x86_64-linux.ollama;
     enable = true;
-    acceleration = "rocm";
+    # acceleration = "rocm";
   };
 
   # services.mopidy = {

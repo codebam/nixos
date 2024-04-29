@@ -6,7 +6,6 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     catppuccin.url = "github:catppuccin/nix";
-    my-nixpkgs.url = "github:codebam/nixpkgs/cmake";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
