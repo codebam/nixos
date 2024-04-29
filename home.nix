@@ -398,7 +398,7 @@
     config = {
       address = "ssh.seanbehan.ca:6697";
       nickname = "codebam";
-      password-cmd = [ "gopass" "cat" "soju" ];
+      password-cmd = [ "pass" "show" "soju" ];
     };
   };
 
