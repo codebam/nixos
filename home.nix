@@ -1,8 +1,18 @@
 { config, pkgs, lib, ... }:
 
 {
-  home.username = "codebam";
-  home.homeDirectory = "/home/codebam";
+  home = {
+    username = "codebam";
+    homeDirectory = "/home/codebam";
+
+    packages = with pkgs; [
+      (writeShellScriptBin "spaste" ''
+        ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
+      '')
+    ];
+
+    stateVersion = "23.11";
+  };
   wayland.windowManager.sway =
     let
       wallpaper = builtins.fetchurl {
@@ -181,201 +191,233 @@
         }
       '';
     };
-  programs.i3status-rust = {
-    enable = true;
-    bars = {
-      default = {
-        settings = {
-          theme = {
-            theme = "ctp-mocha";
+  programs = {
+    i3status-rust = {
+      enable = true;
+      bars = {
+        default = {
+          settings = {
+            theme = {
+              theme = "ctp-mocha";
+            };
           };
+          icons = "awesome6";
+          blocks = [
+            {
+              block = "focused_window";
+            }
+            {
+              block = "sound";
+              format = "$volume";
+            }
+            {
+              alert = 10.0;
+              block = "disk_space";
+              info_type = "available";
+              interval = 60;
+              path = "/";
+              warning = 20.0;
+            }
+            {
+              block = "memory";
+              format = " $icon $mem_used_percents ";
+            }
+            {
+              block = "cpu";
+            }
+            {
+              block = "amd_gpu";
+            }
+            {
+              block = "load";
+            }
+            {
+              block = "net";
+            }
+            {
+              block = "external_ip";
+            }
+            {
+              block = "temperature";
+            }
+            {
+              block = "time";
+              interval = 60;
+            }
+          ];
         };
-        icons = "awesome6";
-        blocks = [
-          {
-            block = "focused_window";
-          }
-          {
-            block = "sound";
-            format = "$volume";
-          }
-          {
-            alert = 10.0;
-            block = "disk_space";
-            info_type = "available";
-            interval = 60;
-            path = "/";
-            warning = 20.0;
-          }
-          {
-            block = "memory";
-            format = " $icon $mem_used_percents ";
-          }
-          {
-            block = "cpu";
-          }
-          {
-            block = "amd_gpu";
-          }
-          {
-            block = "load";
-          }
-          {
-            block = "net";
-          }
-          {
-            block = "external_ip";
-          }
-          {
-            block = "temperature";
-          }
-          {
-            block = "time";
-            interval = 60;
-          }
-        ];
       };
     };
-  };
-  programs.swaylock = {
-    enable = true;
-  };
-  programs.bash = {
-    enable = true;
-    initExtra = ''
-      command_not_found_handle() {
-          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
-      }
-    '';
-    profileExtra = ''
-      PATH="$HOME/.local/bin:$PATH"
-      export PATH
-      WLR_RENDERER=vulkan
-      export WLR_RENDERER
-    '';
-  };
-  programs.vim = {
-    enable = true;
-    defaultEditor = true;
-    settings = {
-      background = "dark";
-      expandtab = true;
-      ignorecase = true;
-      shiftwidth = 4;
-      smartcase = true;
-      tabstop = 8;
-      undodir = [ "$HOME/.vim/undodir" ];
+    swaylock = {
+      enable = true;
     };
-    extraConfig = ''
-      colorscheme catppuccin_mocha
-      let g:lightline = {
-            \ 'colorscheme': 'catppuccin_mocha',
-            \ }
-      let g:coc_disable_startup_warning = 1
-    '';
-    plugins = [
-      pkgs.vimPlugins.sensible
-      pkgs.vimPlugins.coc-nvim
-      pkgs.vimPlugins.coc-python
-      pkgs.vimPlugins.coc-prettier
-      pkgs.vimPlugins.coc-eslint
-      pkgs.vimPlugins.coc-snippets
-      pkgs.vimPlugins.coc-json
-      pkgs.vimPlugins.coc-svelte
-      pkgs.vimPlugins.commentary
-      pkgs.vimPlugins.sleuth
-      pkgs.vimPlugins.surround
-      pkgs.vimPlugins.fugitive
-      pkgs.vimPlugins.gitgutter
-      pkgs.vimPlugins.vim-javascript
-      pkgs.vimPlugins.typescript-vim
-      pkgs.vimPlugins.lightline-vim
-      pkgs.vimPlugins.todo-comments-nvim
-      pkgs.vimPlugins.vim-snippets
-      pkgs.vimPlugins.catppuccin-vim
-    ];
-  };
-  programs.git = {
-    enable = true;
-    userEmail = "codebam@riseup.net";
-    userName = "Sean Behan";
-    signing = {
-      key = "0F6D5021A87F92BA";
-      signByDefault = true;
+    bash = {
+      enable = true;
+      initExtra = ''
+        command_not_found_handle() {
+            ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
+        }
+      '';
+      profileExtra = ''
+        PATH="$HOME/.local/bin:$PATH"
+        export PATH
+        WLR_RENDERER=vulkan
+        export WLR_RENDERER
+      '';
     };
-  };
-  programs.tmux = {
-    enable = true;
-    terminal = "tmux-256color";
-    prefix = "C-a";
-    mouse = true;
-    keyMode = "vi";
-    clock24 = true;
-    plugins = with pkgs; [
-      tmuxPlugins.resurrect
-    ];
-    extraConfig = ''
-      set -ga terminal-overrides ",*256col*:Tc"
-      bind-key C-a last-window
-      bind-key a send-prefix
-      bind-key b set status
-      bind s split-window -v
-      bind v split-window -h
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-    '';
-  };
-  programs.foot = {
-    enable = true;
-    settings = {
-      main = {
-        term = "xterm-256color";
-        font = "Fira Code Nerdfont:size=11";
-        dpi-aware = "yes";
+    neovim = {
+      enable = true;
+      coc.enable = true;
+      extraConfig = ''
+        let mapleader = '\'
+        map <leader>ac :lua vim.lsp.buf.code_action()<Cr>
+      '';
+    };
+    vim = {
+      enable = true;
+      defaultEditor = true;
+      settings = {
+        background = "dark";
+        expandtab = true;
+        ignorecase = true;
+        shiftwidth = 4;
+        smartcase = true;
+        tabstop = 8;
+        undodir = [ "$HOME/.vim/undodir" ];
       };
-      mouse = {
-        hide-when-typing = "yes";
-      };
-      bell = {
-        urgent = "yes";
-        command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
-        command-focused = "yes";
-      };
-      colors = {
-        alpha = 0.5;
+      extraConfig = ''
+        colorscheme catppuccin_mocha
+        let g:lightline = {
+              \ 'colorscheme': 'catppuccin_mocha',
+              \ }
+        let g:coc_disable_startup_warning = 1
+        map <leader>ac <Plug>(coc-codeaction-cursor)
+      '';
+      plugins = [
+        pkgs.vimPlugins.sensible
+        pkgs.vimPlugins.coc-nvim
+        pkgs.vimPlugins.coc-python
+        pkgs.vimPlugins.coc-prettier
+        pkgs.vimPlugins.coc-eslint
+        pkgs.vimPlugins.coc-snippets
+        pkgs.vimPlugins.coc-json
+        pkgs.vimPlugins.coc-svelte
+        pkgs.vimPlugins.commentary
+        pkgs.vimPlugins.sleuth
+        pkgs.vimPlugins.surround
+        pkgs.vimPlugins.fugitive
+        pkgs.vimPlugins.gitgutter
+        pkgs.vimPlugins.vim-javascript
+        pkgs.vimPlugins.typescript-vim
+        pkgs.vimPlugins.lightline-vim
+        pkgs.vimPlugins.todo-comments-nvim
+        pkgs.vimPlugins.vim-snippets
+        pkgs.vimPlugins.catppuccin-vim
+      ];
+    };
+    git = {
+      enable = true;
+      userEmail = "codebam@riseup.net";
+      userName = "Sean Behan";
+      signing = {
+        key = "0F6D5021A87F92BA";
+        signByDefault = true;
       };
     };
-  };
-  programs.wofi = {
-    enable = true;
-    settings = {
-      show = "drun";
-      dmenu = true;
-      insensitive = true;
-      prompt = "";
-      width = "25%";
-      lines = 5;
-      location = "center";
-      hide_scroll = true;
-      allow_images = true;
+    tmux = {
+      enable = true;
+      terminal = "tmux-256color";
+      prefix = "C-a";
+      mouse = true;
+      keyMode = "vi";
+      clock24 = true;
+      plugins = with pkgs; [
+        tmuxPlugins.resurrect
+      ];
+      extraConfig = ''
+        set -ga terminal-overrides ",*256col*:Tc"
+        bind-key C-a last-window
+        bind-key a send-prefix
+        bind-key b set status
+        bind s split-window -v
+        bind v split-window -h
+        bind h select-pane -L
+        bind j select-pane -D
+        bind k select-pane -U
+        bind l select-pane -R
+      '';
     };
+
+    foot = {
+      enable = true;
+      settings = {
+        main = {
+          term = "xterm-256color";
+          font = "Fira Code Nerdfont:size=11";
+          dpi-aware = "yes";
+        };
+        mouse = {
+          hide-when-typing = "yes";
+        };
+        bell = {
+          urgent = "yes";
+          command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
+          command-focused = "yes";
+        };
+        colors = {
+          alpha = 0.5;
+        };
+      };
+    };
+    wofi = {
+      enable = true;
+      settings = {
+        show = "drun";
+        dmenu = true;
+        insensitive = true;
+        prompt = "";
+        width = "25%";
+        lines = 5;
+        location = "center";
+        hide_scroll = true;
+        allow_images = true;
+      };
+    };
+    direnv = {
+      enable = true;
+      enableBashIntegration = true;
+      nix-direnv.enable = true;
+    };
+    fzf = {
+      enable = true;
+      enableBashIntegration = true;
+    };
+
+    starship = {
+      enable = true;
+      enableBashIntegration = true;
+    };
+
+    senpai = {
+      enable = true;
+      config = {
+        address = "ssh.seanbehan.ca:6697";
+        nickname = "codebam";
+        password-cmd = [ "pass" "show" "soju" ];
+      };
+    };
+
+    ncmpcpp = {
+      enable = true;
+    };
+    home-manager.enable = true;
   };
-  programs.direnv = {
-    enable = true;
-    enableBashIntegration = true;
-    nix-direnv.enable = true;
-  };
+
   services.mako = {
     enable = true;
     layer = "overlay";
     font = "Noto Sans";
     defaultTimeout = 5000;
-  };
-  programs.fzf = {
-    enable = true;
-    enableBashIntegration = true;
   };
 
   gtk = {
@@ -390,31 +432,4 @@
     enable = true;
     flavour = "mocha";
   };
-
-  programs.starship = {
-    enable = true;
-    enableBashIntegration = true;
-  };
-
-  programs.senpai = {
-    enable = true;
-    config = {
-      address = "ssh.seanbehan.ca:6697";
-      nickname = "codebam";
-      password-cmd = [ "pass" "show" "soju" ];
-    };
-  };
-
-  programs.ncmpcpp = {
-    enable = true;
-  };
-
-  home.packages = with pkgs; [
-    (writeShellScriptBin "spaste" ''
-      ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
-    '')
-  ];
-
-  home.stateVersion = "23.11";
-  programs.home-manager.enable = true;
 }
