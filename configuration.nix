@@ -121,17 +121,18 @@
     aerc
     blender-hip
     distrobox
-    (pass.withExtensions (subpkgs: with subpkgs; [
-      pass-audit
-      pass-otp
-      pass-genphrase
-    ]))
+    git
     grim
     libnotify
     nil
     nixd
     nixpkgs-fmt
     nodejs
+    (pass.withExtensions (subpkgs: with subpkgs; [
+      pass-audit
+      pass-otp
+      pass-genphrase
+    ]))
     playerctl
     rcm
     slurp
