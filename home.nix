@@ -173,12 +173,12 @@
           "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
           "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
           "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
-          "${modifier}+shift+x" = "exec ${(pkgs.writeShellScriptBin "screenshot" ''
-          ${pkgs.grim}/bin/grim /tmp/screenshot.png
+          "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
+          ${pkgs.grim}/bin/grim /tmp/screenshot.png && \
           spaste < /tmp/screenshot.png | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
           '')}";
           "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
-          ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.png
+          ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.png && \
           spaste < /tmp/screenshot.png | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
           '')}";
           "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
