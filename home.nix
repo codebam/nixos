@@ -265,14 +265,6 @@
         export WLR_RENDERER
       '';
     };
-    neovim = {
-      enable = true;
-      coc.enable = true;
-      extraConfig = ''
-        let mapleader = '\'
-        map <leader>ac :lua vim.lsp.buf.code_action()<Cr>
-      '';
-    };
     vim = {
       enable = true;
       defaultEditor = true;

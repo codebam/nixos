@@ -7,25 +7,31 @@
       ./hardware-configuration.nix
     ];
   boot = {
-    loader.systemd-boot.enable = true;
-    loader.efi.canTouchEfiVariables = true;
-    loader.systemd-boot.configurationLimit = 10;
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+      systemd-boot.configurationLimit = 10;
+    };
     kernelPackages = pkgs.linuxPackages_testing;
     supportedFilesystems = [ "bcachefs" ];
   };
   nix = {
-    settings.experimental-features = [ "nix-command" "flakes" ];
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      auto-optimise-store = true;
+    };
     gc = {
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 1w";
     };
-    settings.auto-optimise-store = true;
   };
   networking = {
     hostName = "nixos";
-    networkmanager.enable = true;
-    networkmanager.wifi.backend = "iwd";
+    networkmanager = {
+      enable = true;
+      wifi.backend = "iwd";
+    };
     wireless.iwd.enable = true;
     nftables.enable = true;
     firewall = {
@@ -39,20 +45,22 @@
   time.timeZone = "America/Toronto";
 
   systemd = {
-    user.extraConfig = ''
-      DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
-    '';
-    user.services.polkit-gnome-authentication-agent-1 = {
-      description = "polkit-gnome-authentication-agent-1";
-      wantedBy = [ "sway-session.target" ];
-      wants = [ "sway-session.target" ];
-      after = [ "sway-session.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-        Restart = "on-failure";
-        RestartSec = 1;
-        TimeoutStopSec = 10;
+    user = {
+      extraConfig = ''
+        DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+      '';
+      services.polkit-gnome-authentication-agent-1 = {
+        description = "polkit-gnome-authentication-agent-1";
+        wantedBy = [ "sway-session.target" ];
+        wants = [ "sway-session.target" ];
+        after = [ "sway-session.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          Restart = "on-failure";
+          RestartSec = 1;
+          TimeoutStopSec = 10;
+        };
       };
     };
 
@@ -180,8 +188,10 @@
   };
 
   hardware = {
-    bluetooth.enable = true;
-    bluetooth.powerOnBoot = true;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+    };
     opengl = {
       enable = true;
       extraPackages = with pkgs; [
@@ -217,18 +227,6 @@
       defaultNetwork.settings.dns_enabled = true;
     };
   };
-
-  # services.mopidy = {
-  #   enable = true;
-  #   extensionPackages = with pkgs; [ mopidy-mpd mopidy-youtube ];
-  #   configuration = ''
-  #     [mpd]
-  #     hostname = ::
-  #     [youtube]
-  #     musicapi_enabled = true
-  #     channel_id = UCl7aqYpewryAPRqpGmGpoIw
-  #     '';
-  # };
 
   zramSwap.enable = true;
 
