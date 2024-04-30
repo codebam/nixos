@@ -69,12 +69,6 @@
     ];
   };
 
-  security = {
-    polkit.enable = true;
-    pam.services.swaylock = { };
-    rtkit.enable = true;
-  };
-
   services = {
     fwupd.enable = true;
     pipewire = {
@@ -96,7 +90,6 @@
     flatpak.enable = true;
     udisks2.enable = true;
     gnome.gnome-keyring.enable = true;
-
     pcscd.enable = true;
 
     hardware.openrgb = {
@@ -177,13 +170,11 @@
       enable = true;
       enableSSHSupport = true;
     };
-
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
       gpuOverclock.ppfeaturemask = "0xffffffff";
     };
-
     dconf.enable = true;
   };
 
@@ -225,6 +216,20 @@
       enable = true;
       dockerCompat = true;
       defaultNetwork.settings.dns_enabled = true;
+    };
+  };
+  security = {
+    polkit.enable = true;
+    pam.services.swaylock = { };
+    rtkit.enable = true;
+    sudo.enable = false;
+    doas = {
+      enable = true;
+      extraRules = [{
+        groups = [ "wheel" ];
+        keepEnv = true;
+        persist = true;
+      }];
     };
   };
 
