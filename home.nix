@@ -393,9 +393,9 @@
     senpai = {
       enable = true;
       config = {
-        address = "ssh.seanbehan.ca:6697";
+        address = "chat.sr.ht:6697";
         nickname = "codebam";
-        password-cmd = [ "pass" "show" "soju" ];
+        password-cmd = [ "pass" "show" "chat.sr.ht" ];
       };
     };
 
