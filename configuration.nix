@@ -26,11 +26,6 @@
       options = "--delete-older-than 1w";
     };
   };
-  system.autoUpgrade = {
-    enable = true;
-    flake = "github:codebam/nixos";
-    dates = "09:00";
-  };
   networking = {
     hostName = "nixos";
     networkmanager = {
@@ -238,8 +233,13 @@
       }];
     };
   };
-
   zramSwap.enable = true;
-
-  system.stateVersion = "23.11";
+  system = {
+    autoUpgrade = {
+      enable = true;
+      flake = "github:codebam/nixos";
+      dates = "09:00";
+    };
+    stateVersion = "23.11";
+  };
 }
