@@ -26,6 +26,11 @@
       options = "--delete-older-than 1w";
     };
   };
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:codebam/nixos";
+    dates = "09:00";
+  };
   networking = {
     hostName = "nixos";
     networkmanager = {
