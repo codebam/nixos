@@ -272,7 +272,24 @@
     neovim = {
       enable = true;
       defaultEditor = true;
-      coc.enable = true;
+      coc = {
+        enable = true;
+        settings = {
+          "coc.preferences.formatOnSave" = true;
+          languageserver = {
+            nix = {
+              command = "nil";
+              filetypes = [ "nix" ];
+              rootPatterns = [ "flake.nix" ];
+              settings = {
+                nil = {
+                  formatting = { command = [ "nixpkgs-fmt" ]; };
+                };
+              };
+            };
+          };
+        };
+      };
       extraConfig = ''
         colorscheme catppuccin_mocha
         let g:lightline = {
