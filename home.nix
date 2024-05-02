@@ -289,6 +289,7 @@
         pkgs.vimPlugins.coc-snippets
         pkgs.vimPlugins.coc-json
         pkgs.vimPlugins.coc-svelte
+        pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.sleuth
         pkgs.vimPlugins.surround
