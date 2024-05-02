@@ -423,5 +423,6 @@
   catppuccin = {
     enable = true;
     flavour = "mocha";
+    accent = "blue";
   };
 }
