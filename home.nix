@@ -11,6 +11,10 @@
       '')
     ];
 
+    shellAliases = {
+      vi = "nvim";
+    };
+
     stateVersion = "23.11";
   };
   wayland.windowManager.sway =
@@ -265,9 +269,41 @@
         export WLR_RENDERER
       '';
     };
-    vim = {
+    neovim = {
       enable = true;
       defaultEditor = true;
+      coc.enable = true;
+      extraConfig = ''
+        colorscheme catppuccin_mocha
+        let g:lightline = {
+              \ 'colorscheme': 'catppuccin_mocha',
+              \ }
+        let g:coc_disable_startup_warning = 1
+        map <leader>ac <Plug>(coc-codeaction-cursor)
+      '';
+      plugins = [
+        pkgs.vimPlugins.sensible
+        pkgs.vimPlugins.coc-python
+        pkgs.vimPlugins.coc-prettier
+        pkgs.vimPlugins.coc-eslint
+        pkgs.vimPlugins.coc-snippets
+        pkgs.vimPlugins.coc-json
+        pkgs.vimPlugins.coc-svelte
+        pkgs.vimPlugins.commentary
+        pkgs.vimPlugins.sleuth
+        pkgs.vimPlugins.surround
+        pkgs.vimPlugins.fugitive
+        pkgs.vimPlugins.gitgutter
+        pkgs.vimPlugins.vim-javascript
+        pkgs.vimPlugins.typescript-vim
+        pkgs.vimPlugins.lightline-vim
+        pkgs.vimPlugins.todo-comments-nvim
+        pkgs.vimPlugins.vim-snippets
+        pkgs.vimPlugins.catppuccin-vim
+      ];
+    };
+    vim = {
+      enable = true;
       settings = {
         background = "dark";
         expandtab = true;
