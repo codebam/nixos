@@ -9,6 +9,7 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
+      weechat
     ];
 
     shellAliases = {

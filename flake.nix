@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    catppuccin.url = "github:catppuccin/nix";
+    catppuccin.url = "github:catppuccin/nix?rev=ccc188e244e8fb3248e3c8f19f70280076bf1408";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
