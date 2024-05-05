@@ -6,6 +6,7 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     catppuccin.url = "github:catppuccin/nix?rev=ccc188e244e8fb3248e3c8f19f70280076bf1408";
+    custom.url = "github:codebam/nixpkgs?ref=cef87082ef0cc7d6d823c750556004c0d02b7737";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
@@ -19,6 +20,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.users.codebam = {
             imports = [
               ./home.nix
