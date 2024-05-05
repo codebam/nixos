@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   home = {
@@ -291,6 +291,34 @@
           };
         };
       };
+      extraLuaConfig = ''
+
+        require('gen').setup({
+          opts = {
+            model = "llama3", -- The default model to use.
+            host = "localhost", -- The host running the Ollama service.
+            port = "11434", -- The port on which the Ollama service is listening.
+            quit_map = "q", -- set keymap for close the response window
+            retry_map = "<c-r>", -- set keymap to re-send the current prompt
+            init = function(options) pcall(io.popen, "ollama serve > /dev/null 2>&1 &") end,
+            -- Function to initialize Ollama
+            command = function(options)
+                local body = {model = options.model, stream = true}
+                return "curl --silent --no-buffer -X POST http://" .. options.host .. ":" .. options.port .. "/api/chat -d $body"
+            end,
+            -- The command for the Ollama service. You can use placeholders $prompt, $model and $body (shellescaped).
+            -- This can also be a command string.
+            -- The executed command must return a JSON object with { response, context }
+            -- (context property is optional).
+            -- list_models = '<omitted lua function>', -- Retrieves a list of model names
+            display_mode = "split", -- The display mode. Can be "float" or "split".
+            show_prompt = true, -- Shows the prompt submitted to Ollama.
+            show_model = true, -- Displays which model you are using at the beginning of your chat session.
+            no_auto_close = true, -- Never closes the window automatically.
+            debug = false -- Prints errors and the command which is run.
+          }
+        })
+      '';
       extraConfig = ''
         colorscheme catppuccin_mocha
         let g:lightline = {
@@ -300,25 +328,31 @@
         map <leader>ac <Plug>(coc-codeaction-cursor)
       '';
       plugins = [
-        pkgs.vimPlugins.sensible
-        pkgs.vimPlugins.coc-python
-        pkgs.vimPlugins.coc-prettier
+        pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.coc-eslint
-        pkgs.vimPlugins.coc-snippets
         pkgs.vimPlugins.coc-json
+        pkgs.vimPlugins.coc-prettier
+        pkgs.vimPlugins.coc-python
+        pkgs.vimPlugins.coc-snippets
         pkgs.vimPlugins.coc-svelte
         pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.commentary
-        pkgs.vimPlugins.sleuth
-        pkgs.vimPlugins.surround
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
-        pkgs.vimPlugins.vim-javascript
-        pkgs.vimPlugins.typescript-vim
         pkgs.vimPlugins.lightline-vim
+        pkgs.vimPlugins.plenary-nvim
+        pkgs.vimPlugins.sensible
+        pkgs.vimPlugins.sleuth
+        pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
+        pkgs.vimPlugins.typescript-vim
+        pkgs.vimPlugins.vim-javascript
         pkgs.vimPlugins.vim-snippets
-        pkgs.vimPlugins.catppuccin-vim
+        inputs.custom.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
+        pkgs.vimPlugins.nvim-treesitter
+        pkgs.vimPlugins.nvim-treesitter-parsers.typescript
+        pkgs.vimPlugins.nvim-treesitter-parsers.javascript
+        pkgs.vimPlugins.nvim-treesitter-parsers.nix
       ];
     };
     vim = {
