@@ -237,6 +237,11 @@
     };
   };
   zramSwap.enable = true;
+  nixpkgs.overlays = [
+    (final: prev: {
+      bcachefs-tools = inputs.bcachefs-pin.legacyPackages.x86_64-linux.bcachefs-tools;
+    })
+  ];
   system = {
     autoUpgrade = {
       enable = true;
