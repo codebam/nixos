@@ -9,6 +9,7 @@
     custom.url = "github:codebam/nixpkgs?ref=cef87082ef0cc7d6d823c750556004c0d02b7737";
     bcachefs-pin.url = "nixpkgs/668834f72c7a082bdb823d1367a9abea15ebfcad";
     bcachefs-master-pin.url = "github:koverstreet/bcachefs-tools";
+    linux-testing-update.url = "github:codebam/nixpkgs/linux_testing";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
