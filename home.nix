@@ -261,6 +261,9 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting
+        function fish_command_not_found
+          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
+        end
       '';
     };
     bash = {
