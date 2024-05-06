@@ -439,7 +439,7 @@
           command-focused = "yes";
         };
         colors = {
-          alpha = 0.5;
+          alpha = 1.0;
         };
       };
     };
