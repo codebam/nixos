@@ -256,6 +256,12 @@
     swaylock = {
       enable = true;
     };
+    fish = {
+      enable = true;
+      interactiveShellInit = ''
+        set fish_greeting
+      '';
+    };
     bash = {
       enable = true;
       initExtra = ''
@@ -472,11 +478,13 @@
     fzf = {
       enable = true;
       enableBashIntegration = true;
+      enableFishIntegration = true;
     };
 
     starship = {
       enable = true;
       enableBashIntegration = true;
+      enableFishIntegration = true;
     };
 
     senpai = {
