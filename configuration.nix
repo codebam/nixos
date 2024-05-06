@@ -240,6 +240,7 @@
   nixpkgs.overlays = [
     (final: prev: {
       bcachefs-tools = inputs.bcachefs-pin.legacyPackages.x86_64-linux.bcachefs-tools;
+      # bcachefs-tools = inputs.bcachefs-master-pin.packages.x86_64-linux.bcachefs;
     })
   ];
   system = {
