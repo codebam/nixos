@@ -329,6 +329,7 @@
         pkgs.vimPlugins.coc-svelte
         pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.coc-tsserver
+        pkgs.vimPlugins.coc-clangd
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
