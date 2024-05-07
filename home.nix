@@ -339,13 +339,12 @@
         pkgs.vimPlugins.sleuth
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.typescript-vim
-        pkgs.vimPlugins.vim-javascript
         pkgs.vimPlugins.vim-snippets
         inputs.custom.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter
         pkgs.vimPlugins.nvim-treesitter-parsers.typescript
         pkgs.vimPlugins.nvim-treesitter-parsers.javascript
+        pkgs.vimPlugins.nvim-treesitter-parsers.html
         pkgs.vimPlugins.nvim-treesitter-parsers.nix
       ];
     };
