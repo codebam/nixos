@@ -10,6 +10,9 @@
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
       weechat
+      fzf
+      ctags
+      ripgrep
     ];
 
     shellAliases = {
@@ -340,6 +343,7 @@
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.vim-snippets
+        pkgs.vimPlugins.fzf-vim
         inputs.custom.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter
         pkgs.vimPlugins.nvim-treesitter-parsers.typescript
