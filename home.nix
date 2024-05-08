@@ -10,7 +10,6 @@
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
       weechat
-      fzf
       ctags
       ripgrep
       eza
@@ -486,6 +485,10 @@
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
+      defaultOptions = [ "--no-height" "--no-reverse" ];
+      tmux = {
+        enableShellIntegration = true;
+      };
     };
 
     starship = {
