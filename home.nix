@@ -13,10 +13,12 @@
       fzf
       ctags
       ripgrep
+      eza
     ];
 
     shellAliases = {
       vi = "nvim";
+      ls = "eza";
     };
 
     stateVersion = "23.11";
