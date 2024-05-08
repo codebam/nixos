@@ -200,6 +200,11 @@
       '';
     };
   programs = {
+    zoxide = {
+      enable = true;
+      enableBashIntegration = true;
+      enableFishIntegration = true;
+    };
     i3status-rust = {
       enable = true;
       bars = {
@@ -268,6 +273,15 @@
           ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
         end
       '';
+      plugins = [{
+        name = "fisher";
+        src = pkgs.fetchFromGitHub {
+          owner = "jorgebucaran";
+          repo = "fisher";
+          rev = "2efd33ccd0777ece3f58895a093f32932bd377b6";
+          sha256 = "sha256-e8gIaVbuUzTwKtuMPNXBT5STeddYqQegduWBtURLT3M=";
+        };
+      }];
     };
     bash = {
       enable = true;
