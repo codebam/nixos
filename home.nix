@@ -13,6 +13,9 @@
       ctags
       ripgrep
       eza
+      python3
+      pylint
+      bat
     ];
 
     shellAliases = {
@@ -357,6 +360,7 @@
         pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.coc-clangd
+        pkgs.vimPlugins.coc-pyright
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
@@ -410,7 +414,6 @@
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
         pkgs.vimPlugins.vim-javascript
-        pkgs.vimPlugins.typescript-vim
         pkgs.vimPlugins.lightline-vim
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.vim-snippets
@@ -504,6 +507,10 @@
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
+    };
+
+    tiny = {
+      enable = true;
     };
 
     senpai = {
