@@ -322,7 +322,7 @@
       extraLuaConfig = ''
 
         require('gen').setup({
-          model = "llama3",
+          model = "llama3:8b-instruct-fp16",
           display_mode = "split",
           show_prompt = true,
           show_model = true,

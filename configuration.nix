@@ -14,6 +14,7 @@
     };
     kernelPackages = pkgs.linuxPackages_testing;
     supportedFilesystems = [ "bcachefs" ];
+    extraModulePackages = [ ];
   };
   nix = {
     settings = {
