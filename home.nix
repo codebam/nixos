@@ -361,6 +361,7 @@
         pkgs.vimPlugins.coc-tsserver
         pkgs.vimPlugins.coc-clangd
         pkgs.vimPlugins.coc-pyright
+        pkgs.vimPlugins.coc-rust-analyzer
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
@@ -378,6 +379,7 @@
         pkgs.vimPlugins.nvim-treesitter-parsers.javascript
         pkgs.vimPlugins.nvim-treesitter-parsers.html
         pkgs.vimPlugins.nvim-treesitter-parsers.nix
+        pkgs.vimPlugins.nvim-treesitter-parsers.rust
       ];
     };
     vim = {
