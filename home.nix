@@ -16,7 +16,6 @@
       python3
       pylint
       bat
-      inputs.wmenu-latest-pin.legacyPackages.x86_64-linux.wmenu
     ];
 
     shellAliases = {
@@ -68,7 +67,7 @@
       config = rec {
         inherit modifier;
         terminal = "foot";
-        menu = "wmenu-run";
+        menu = "${inputs.wmenu-latest-pin.legacyPackages.x86_64-linux.wmenu}/bin/wmenu-run";
         fonts = {
           names = [ "Noto Sans" "FontAwesome" ];
           style = "Bold Semi-Condensed";
