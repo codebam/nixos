@@ -341,6 +341,18 @@
           show_model = true,
           no_auto_close = true,
         })
+
+        require('nvim-treesitter.configs').setup {
+          auto_install = false,
+          ignore_install = {},
+          highlight = {
+            enable = true,
+            additional_vim_regex_highlighting = false,
+          },
+          indent = {
+            enable = true
+          },
+        }
       '';
       extraConfig = ''
         colorscheme catppuccin_mocha
@@ -375,13 +387,7 @@
         pkgs.vimPlugins.vim-snippets
         pkgs.vimPlugins.fzf-vim
         inputs.custom.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
-        pkgs.vimPlugins.nvim-treesitter
-        pkgs.vimPlugins.nvim-treesitter-parsers.typescript
-        pkgs.vimPlugins.nvim-treesitter-parsers.javascript
-        pkgs.vimPlugins.nvim-treesitter-parsers.html
-        pkgs.vimPlugins.nvim-treesitter-parsers.nix
-        pkgs.vimPlugins.nvim-treesitter-parsers.rust
-        pkgs.vimPlugins.nvim-treesitter-parsers.svelte
+        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
       ];
     };
     vim = {
