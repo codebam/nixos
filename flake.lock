@@ -7,11 +7,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1715295589,
-        "narHash": "sha256-22rIbJwJVGPbYdyl80HaRoQYF5IAHSSqaK4GM8oPfyw=",
+        "lastModified": 1715298887,
+        "narHash": "sha256-vIBahcEaMxpNSwxkEHCBIC4Qa9c3Ga5grtF5hctWiEI=",
         "owner": "codebam",
         "repo": "bcachefs-tools",
-        "rev": "8cf517b73ad66fc4a39aec795893bb1c042f1f77",
+        "rev": "fa828e4ec5d810b2a883c41a04317f5dbbcf539e",
         "type": "github"
       },
       "original": {
@@ -191,11 +191,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1715235369,
-        "narHash": "sha256-QoPaGAEQgJPvLV+yzRNDq5QGezkj3J+NqkOHtYX4O6k=",
+        "lastModified": 1715278801,
+        "narHash": "sha256-gxDVA1z+FHeOpp9isv6Qae+Og9tL1TBuPcf57M4wJhI=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "a4edc30ee850b4c993838dc33e15e3cb011a0089",
+        "rev": "2f67b8ef607a2866c3dd8f6b579aac74cd141fb7",
         "type": "github"
       },
       "original": {
