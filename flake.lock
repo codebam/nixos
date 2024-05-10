@@ -42,21 +42,6 @@
         "type": "github"
       }
     },
-    "bcachefs-pin": {
-      "locked": {
-        "lastModified": 1712523116,
-        "narHash": "sha256-L4+f4qpziEAUJHjXXhG7WHg5E3VBsawCzD+V5kyDWmI=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "668834f72c7a082bdb823d1367a9abea15ebfcad",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "rev": "668834f72c7a082bdb823d1367a9abea15ebfcad",
-        "type": "indirect"
-      }
-    },
     "catppuccin": {
       "locked": {
         "lastModified": 1714604961,
@@ -70,22 +55,6 @@
         "owner": "catppuccin",
         "repo": "nix",
         "rev": "ccc188e244e8fb3248e3c8f19f70280076bf1408",
-        "type": "github"
-      }
-    },
-    "custom": {
-      "locked": {
-        "lastModified": 1714858996,
-        "narHash": "sha256-2WL9F8mUCM1tSyIKM5wRNjFDGeHe983BlVYu4D6erEw=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "cef87082ef0cc7d6d823c750556004c0d02b7737",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "cef87082ef0cc7d6d823c750556004c0d02b7737",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -118,6 +87,22 @@
       "original": {
         "owner": "edolstra",
         "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "gen-nvim-latest-pin": {
+      "locked": {
+        "lastModified": 1715138213,
+        "narHash": "sha256-Qw22wnLFatbt5L/NFaDlfYQ9FMCTRzAoMFSM8U/ri3I=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "603d79e37836c0c69e8274317189b43cd2ebb568",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "gen-nvim",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -209,12 +194,12 @@
       "inputs": {
         "bcachefs-custom-pin": "bcachefs-custom-pin",
         "bcachefs-master-pin": "bcachefs-master-pin",
-        "bcachefs-pin": "bcachefs-pin",
         "catppuccin": "catppuccin",
-        "custom": "custom",
+        "gen-nvim-latest-pin": "gen-nvim-latest-pin",
         "home-manager": "home-manager",
         "linux-testing-update": "linux-testing-update",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_3",
+        "wmenu-latest-pin": "wmenu-latest-pin"
       }
     },
     "systems": {
@@ -280,6 +265,22 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "wmenu-latest-pin": {
+      "locked": {
+        "lastModified": 1715339794,
+        "narHash": "sha256-kKC7iT7Uby1xq0s8wdvDxBOAgdFM/px6+pZpxlaVm2k=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "e9b46e0d790740ea43a7096992ebe3fc0f067f79",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "wmenu",
+        "repo": "nixpkgs",
         "type": "github"
       }
     }

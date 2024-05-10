@@ -16,6 +16,7 @@
       python3
       pylint
       bat
+      inputs.wmenu-latest-pin.legacyPackages.x86_64-linux.wmenu
     ];
 
     shellAliases = {
@@ -67,7 +68,7 @@
       config = rec {
         inherit modifier;
         terminal = "foot";
-        menu = "wofi";
+        menu = "wmenu-run";
         fonts = {
           names = [ "Noto Sans" "FontAwesome" ];
           style = "Bold Semi-Condensed";
@@ -386,7 +387,7 @@
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.vim-snippets
         pkgs.vimPlugins.fzf-vim
-        inputs.custom.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
+        inputs.gen-nvim-latest-pin.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
       ];
     };
