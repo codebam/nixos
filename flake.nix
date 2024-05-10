@@ -6,8 +6,8 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     catppuccin.url = "github:catppuccin/nix?rev=ccc188e244e8fb3248e3c8f19f70280076bf1408";
-    custom.url = "github:codebam/nixpkgs?ref=cef87082ef0cc7d6d823c750556004c0d02b7737";
-    bcachefs-pin.url = "nixpkgs/668834f72c7a082bdb823d1367a9abea15ebfcad";
+    gen-nvim-latest-pin.url = "github:codebam/nixpkgs/gen-nvim";
+    wmenu-latest-pin.url = "github:codebam/nixpkgs/wmenu";
     bcachefs-master-pin.url = "github:koverstreet/bcachefs-tools?ref=0728677cdc325d3f9ff37f6a665eca13af5e50cc";
     bcachefs-custom-pin.url = "github:codebam/bcachefs-tools/fix2";
     linux-testing-update.url = "github:codebam/nixpkgs/linux_testing";
