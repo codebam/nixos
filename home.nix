@@ -361,6 +361,7 @@
               \ }
         let g:coc_disable_startup_warning = 1
         map <leader>ac <Plug>(coc-codeaction-cursor)
+        set nowrap
       '';
       plugins = [
         pkgs.vimPlugins.catppuccin-vim
@@ -460,6 +461,7 @@
         bind j select-pane -D
         bind k select-pane -U
         bind l select-pane -R
+        set -sg escape-time 300
       '';
     };
 
