@@ -176,11 +176,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1715435713,
-        "narHash": "sha256-lb2HqDQGfTdnCCpc1pgF6fkdgIOuBQ0nP8jjVSfLFqg=",
+        "lastModified": 1715479142,
+        "narHash": "sha256-t1hH6eW29RNPxnblXfajmnL4KUyHgAFD9kJ8hogbSeA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "52b40f6c4be12742b1504ca2eb4527e597bf2526",
+        "rev": "e1fce3f66f22935585607eedcc26f9eb8d8ab166",
         "type": "github"
       },
       "original": {
@@ -198,8 +198,7 @@
         "gen-nvim-latest-pin": "gen-nvim-latest-pin",
         "home-manager": "home-manager",
         "linux-testing-update": "linux-testing-update",
-        "nixpkgs": "nixpkgs_3",
-        "wmenu-latest-pin": "wmenu-latest-pin"
+        "nixpkgs": "nixpkgs_3"
       }
     },
     "systems": {
@@ -265,22 +264,6 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "wmenu-latest-pin": {
-      "locked": {
-        "lastModified": 1715339794,
-        "narHash": "sha256-kKC7iT7Uby1xq0s8wdvDxBOAgdFM/px6+pZpxlaVm2k=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "e9b46e0d790740ea43a7096992ebe3fc0f067f79",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "wmenu",
-        "repo": "nixpkgs",
         "type": "github"
       }
     }
