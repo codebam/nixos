@@ -67,7 +67,7 @@
       config = rec {
         inherit modifier;
         terminal = "foot";
-        menu = "${inputs.wmenu-latest-pin.legacyPackages.x86_64-linux.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
+        menu = "${pkgs.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
         fonts = {
           names = [ "Noto Sans" "FontAwesome" ];
           style = "Bold Semi-Condensed";
