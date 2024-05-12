@@ -257,8 +257,6 @@
   zramSwap.enable = true;
   nixpkgs.overlays = [
     (final: prev: {
-      # bcachefs-tools = inputs.bcachefs-pin.legacyPackages.x86_64-linux.bcachefs-tools;
-      bcachefs-tools = inputs.bcachefs-custom-pin.packages.x86_64-linux.bcachefs;
       linuxPackages_testing = inputs.linux-testing-update.legacyPackages.x86_64-linux.linuxPackages_testing;
     })
   ];
