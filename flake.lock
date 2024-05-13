@@ -76,48 +76,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1715380449,
-        "narHash": "sha256-716+f9Rj3wjSyD1xitCv2FcYbgPz1WIVDj+ZBclH99Y=",
+        "lastModified": 1715486357,
+        "narHash": "sha256-4pRuzsHZOW5W4CsXI9uhKtiJeQSUoe1d2M9mWU98HC4=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "d7682620185f213df384c363288093b486b2883f",
+        "rev": "44677a1c96810a8e8c4ffaeaad10c842402647c1",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
         "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "linux-latest-update": {
-      "locked": {
-        "lastModified": 1715579009,
-        "narHash": "sha256-vEFk0/2RyRtOZ+5y36Vl4B/z7xglFzIZcST/9oNnKwE=",
-        "owner": "K900",
-        "repo": "nixpkgs",
-        "rev": "6d249cae653406d41fd94cd4a5c99888e400cdd0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "K900",
-        "ref": "kernel-6.9",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "linux-testing-update": {
-      "locked": {
-        "lastModified": 1715246588,
-        "narHash": "sha256-bN8CoTIHXr4gJ2GwV8VXIUjaYlkR+VuVAYwiM/sNDAE=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "a0561de7ea9f6102fb80e012c5dd7e927e0a600c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "linux_testing",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -139,11 +107,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1715479142,
-        "narHash": "sha256-t1hH6eW29RNPxnblXfajmnL4KUyHgAFD9kJ8hogbSeA=",
+        "lastModified": 1715616897,
+        "narHash": "sha256-ncgLV/zSzXGx8XXEM8QlovDftzzcV11MnLeRUL63Szw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e1fce3f66f22935585607eedcc26f9eb8d8ab166",
+        "rev": "7ed944be63682d0c5bc37e66f3c997390d0bbd8e",
         "type": "github"
       },
       "original": {
@@ -159,8 +127,6 @@
         "catppuccin": "catppuccin",
         "gen-nvim-latest-pin": "gen-nvim-latest-pin",
         "home-manager": "home-manager",
-        "linux-latest-update": "linux-latest-update",
-        "linux-testing-update": "linux-testing-update",
         "nixpkgs": "nixpkgs_2"
       }
     },
