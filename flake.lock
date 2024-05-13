@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "bcachefs-fix": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "nixpkgs": "nixpkgs",
+        "utils": "utils"
+      },
+      "locked": {
+        "lastModified": 1715535559,
+        "narHash": "sha256-yWRdwDKd6zXXPCcua6H2qYfqU89FnhLGJZTcfAJjt8E=",
+        "owner": "tmuehlbacher",
+        "repo": "bcachefs-tools",
+        "rev": "734ccc58f42c3cccb0960bdd84808839e2b62ca9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tmuehlbacher",
+        "ref": "fix-encrypted-unlock",
+        "repo": "bcachefs-tools",
+        "type": "github"
+      }
+    },
     "catppuccin": {
       "locked": {
         "lastModified": 1714604961,
@@ -13,6 +34,22 @@
         "owner": "catppuccin",
         "repo": "nix",
         "rev": "ccc188e244e8fb3248e3c8f19f70280076bf1408",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1696426674,
+        "narHash": "sha256-kvjfFW7WAETZlt09AgDn1MrtKzP7t90Vf7vypd3OL1U=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "0f9255e01c2351cc7d116c072cb317785dd33b33",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
         "type": "github"
       }
     },
@@ -52,6 +89,22 @@
         "type": "github"
       }
     },
+    "linux-latest-update": {
+      "locked": {
+        "lastModified": 1715579009,
+        "narHash": "sha256-vEFk0/2RyRtOZ+5y36Vl4B/z7xglFzIZcST/9oNnKwE=",
+        "owner": "K900",
+        "repo": "nixpkgs",
+        "rev": "6d249cae653406d41fd94cd4a5c99888e400cdd0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "K900",
+        "ref": "kernel-6.9",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "linux-testing-update": {
       "locked": {
         "lastModified": 1715246588,
@@ -70,6 +123,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1698924604,
+        "narHash": "sha256-GCFbkl2tj8fEZBZCw3Tc0AkGo0v+YrQlohhEGJ/X4s0=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "fa804edfb7869c9fb230e174182a8a1a7e512c40",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1715479142,
         "narHash": "sha256-t1hH6eW29RNPxnblXfajmnL4KUyHgAFD9kJ8hogbSeA=",
         "owner": "nixos",
@@ -86,11 +155,46 @@
     },
     "root": {
       "inputs": {
+        "bcachefs-fix": "bcachefs-fix",
         "catppuccin": "catppuccin",
         "gen-nvim-latest-pin": "gen-nvim-latest-pin",
         "home-manager": "home-manager",
+        "linux-latest-update": "linux-latest-update",
         "linux-testing-update": "linux-testing-update",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs_2"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1694529238,
+        "narHash": "sha256-zsNZZGTGnMOf9YpHKJqMSsa0dXbfmxeoJ7xHlrt+xmY=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "ff7b65b44d01cf9ba6a71320833626af21126384",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
       }
     }
   },
