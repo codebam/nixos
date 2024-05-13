@@ -12,7 +12,7 @@
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages_testing;
+    kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
@@ -258,6 +258,8 @@
   nixpkgs.overlays = [
     (final: prev: {
       linuxPackages_testing = inputs.linux-testing-update.legacyPackages.x86_64-linux.linuxPackages_testing;
+      linuxPackages_latest = inputs.linux-latest-update.legacyPackages.x86_64-linux.linuxPackages_testing;
+      bcachefs-tools = inputs.bcachefs-fix.packages.x86_64-linux.bcachefs;
     })
   ];
   system = {
