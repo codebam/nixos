@@ -22,7 +22,7 @@
       auto-optimise-store = true;
     };
     gc = {
-      automatic = false;
+      automatic = true;
       dates = "weekly";
       options = "--delete-older-than 1w";
     };
