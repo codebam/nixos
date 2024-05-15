@@ -375,6 +375,7 @@
         pkgs.vimPlugins.coc-pyright
         pkgs.vimPlugins.coc-rust-analyzer
         pkgs.vimPlugins.coc-svelte
+        pkgs.vimPlugins.coc-sh
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
