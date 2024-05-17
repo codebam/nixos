@@ -361,6 +361,7 @@
         let g:coc_disable_startup_warning = 1
         map <leader>ac <Plug>(coc-codeaction-cursor)
         set nowrap
+        set guicursor=n-v-c-i:block
       '';
       plugins = [
         pkgs.vimPlugins.catppuccin-vim
