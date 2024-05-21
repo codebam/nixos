@@ -139,23 +139,13 @@
   };
 
   environment.systemPackages = with pkgs; [
-    aerc
     blender-hip
     distrobox
     git
-    grim
     libnotify
     nil
     nixd
     nixpkgs-fmt
-    nodejs
-    (pass.withExtensions (subpkgs: with subpkgs; [
-      pass-audit
-      pass-otp
-      pass-genphrase
-    ]))
-    rcm
-    slurp
     virt-manager
     wl-clipboard
     xdg-utils
