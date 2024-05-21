@@ -154,7 +154,6 @@
       pass-otp
       pass-genphrase
     ]))
-    playerctl
     rcm
     slurp
     virt-manager

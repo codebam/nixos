@@ -9,19 +9,29 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
-      weechat
-      ctags
-      ripgrep
-      eza
-      python3
-      pylint
+      (pass.withExtensions (subpkgs: with subpkgs; [
+        pass-audit
+        pass-otp
+        pass-genphrase
+      ]))
+      aerc
       bat
-      nodePackages.typescript-language-server
-      vscode-langservers-extracted
+      ctags
+      eza
+      grim
       jdt-language-server
-      nodePackages.svelte-language-server
+      nodejs
       nodePackages.bash-language-server
+      nodePackages.svelte-language-server
+      nodePackages.typescript-language-server
+      pylint
       pyright
+      python3
+      rcm
+      ripgrep
+      slurp
+      vscode-langservers-extracted
+      weechat
     ];
 
     shellAliases = {
