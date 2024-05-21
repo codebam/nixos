@@ -16,6 +16,7 @@
       ]))
       aerc
       bat
+      clang-tools
       ctags
       eza
       grim
@@ -332,7 +333,7 @@
       extraLuaConfig = ''
 
         require('gen').setup({
-          model = "llama3:8b-instruct-fp16",
+          model = "phi3:latest",
           display_mode = "split",
           show_prompt = true,
           show_model = true,
@@ -363,6 +364,7 @@
         require('lspconfig').bashls.setup{ on_attach = on_attach }
         require('lspconfig').pyright.setup{ on_attach = on_attach }
         require('lspconfig').nixd.setup{ on_attach = on_attach }
+        require('lspconfig').clangd.setup{ on_attach = on_attach }
       '';
       extraConfig = ''
         set guicursor=n-v-c-i:block
