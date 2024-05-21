@@ -248,7 +248,7 @@
     (final: prev: {
       # linuxPackages_testing = inputs.linux-testing-update.legacyPackages.x86_64-linux.linuxPackages_testing;
       # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.x86_64-linux.linuxPackages_testing;
-      bcachefs-tools = inputs.bcachefs-fix.packages.x86_64-linux.bcachefs;
+      # bcachefs-tools = inputs.bcachefs-fix.packages.x86_64-linux.bcachefs;
     })
   ];
   system = {

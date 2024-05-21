@@ -5,11 +5,11 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    catppuccin.url = "github:catppuccin/nix?rev=ccc188e244e8fb3248e3c8f19f70280076bf1408";
+    catppuccin.url = "github:catppuccin/nix";
     gen-nvim-latest-pin.url = "github:codebam/nixpkgs/gen-nvim";
     # linux-testing-update.url = "github:codebam/nixpkgs/linux_testing";
     # linux-latest-update.url = "github:K900/nixpkgs/kernel-6.9";
-    bcachefs-fix.url = "github:tmuehlbacher/bcachefs-tools/fix-encrypted-unlock";
+    # bcachefs-fix.url = "github:tmuehlbacher/bcachefs-tools/fix-encrypted-unlock";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
