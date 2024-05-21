@@ -362,6 +362,7 @@
         require('lspconfig').svelte.setup{ on_attach = on_attach }
         require('lspconfig').bashls.setup{ on_attach = on_attach }
         require('lspconfig').pyright.setup{ on_attach = on_attach }
+        require('lspconfig').nixd.setup{ on_attach = on_attach }
       '';
       extraConfig = ''
         colorscheme catppuccin_mocha
