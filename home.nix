@@ -16,6 +16,12 @@
       python3
       pylint
       bat
+      nodePackages.typescript-language-server
+      vscode-langservers-extracted
+      jdt-language-server
+      nodePackages.svelte-language-server
+      nodePackages.bash-language-server
+      pyright
     ];
 
     shellAliases = {
@@ -313,24 +319,6 @@
     neovim = {
       enable = true;
       defaultEditor = true;
-      coc = {
-        enable = true;
-        settings = {
-          "coc.preferences.formatOnSave" = true;
-          languageserver = {
-            nix = {
-              command = "nil";
-              filetypes = [ "nix" ];
-              rootPatterns = [ "flake.nix" ];
-              settings = {
-                nil = {
-                  formatting = { command = [ "nixpkgs-fmt" ]; };
-                };
-              };
-            };
-          };
-        };
-      };
       extraLuaConfig = ''
 
         require('gen').setup({
@@ -352,31 +340,31 @@
             enable = true
           },
         }
+
+        local on_attach = function(client, bufnr)
+          require("lsp-format").on_attach(client, bufnr)
+        end
+
+        require("lsp-format").setup{}
+        require('lspconfig').tsserver.setup{ on_attach = on_attach }
+        require('lspconfig').eslint.setup{ on_attach = on_attach }
+        require('lspconfig').jdtls.setup{ on_attach = on_attach }
+        require('lspconfig').svelte.setup{ on_attach = on_attach }
+        require('lspconfig').bashls.setup{ on_attach = on_attach }
+        require('lspconfig').pyright.setup{ on_attach = on_attach }
       '';
       extraConfig = ''
         colorscheme catppuccin_mocha
         let g:lightline = {
               \ 'colorscheme': 'catppuccin_mocha',
               \ }
-        let g:coc_disable_startup_warning = 1
-        map <leader>ac <Plug>(coc-codeaction-cursor)
         set nowrap
         set guicursor=n-v-c-i:block
       '';
       plugins = [
+        pkgs.vimPlugins.nvim-lspconfig
+        pkgs.vimPlugins.lsp-format-nvim
         pkgs.vimPlugins.catppuccin-vim
-        pkgs.vimPlugins.coc-eslint
-        pkgs.vimPlugins.coc-json
-        pkgs.vimPlugins.coc-prettier
-        pkgs.vimPlugins.coc-snippets
-        pkgs.vimPlugins.coc-svelte
-        pkgs.vimPlugins.coc-tsserver
-        pkgs.vimPlugins.coc-tsserver
-        pkgs.vimPlugins.coc-clangd
-        pkgs.vimPlugins.coc-pyright
-        pkgs.vimPlugins.coc-rust-analyzer
-        pkgs.vimPlugins.coc-svelte
-        pkgs.vimPlugins.coc-sh
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
         pkgs.vimPlugins.gitgutter
