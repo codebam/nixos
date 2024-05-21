@@ -365,12 +365,14 @@
         require('lspconfig').nixd.setup{ on_attach = on_attach }
       '';
       extraConfig = ''
+        set guicursor=n-v-c-i:block
+        set nowrap
         colorscheme catppuccin_mocha
+        map <leader>ac :lua vim.lsp.buf.code_action()<CR>
+        map <leader><space> :nohl<CR>
         let g:lightline = {
               \ 'colorscheme': 'catppuccin_mocha',
               \ }
-        set nowrap
-        set guicursor=n-v-c-i:block
       '';
       plugins = [
         pkgs.vimPlugins.nvim-lspconfig
