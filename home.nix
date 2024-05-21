@@ -368,11 +368,11 @@
         set guicursor=n-v-c-i:block
         set nowrap
         colorscheme catppuccin_mocha
-        map <leader>ac :lua vim.lsp.buf.code_action()<CR>
-        map <leader><space> :nohl<CR>
         let g:lightline = {
               \ 'colorscheme': 'catppuccin_mocha',
               \ }
+        map <leader>ac :lua vim.lsp.buf.code_action()<CR>
+        map <leader><space> :nohl<CR>
       '';
       plugins = [
         pkgs.vimPlugins.nvim-lspconfig
@@ -387,7 +387,6 @@
         pkgs.vimPlugins.sleuth
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.vim-snippets
         pkgs.vimPlugins.fzf-vim
         inputs.gen-nvim-latest-pin.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars

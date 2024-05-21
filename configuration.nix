@@ -132,7 +132,7 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
+    extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" ];
     packages = with pkgs; [
       flatpak
     ];
