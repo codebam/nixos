@@ -9,6 +9,9 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
+      (writeShellScriptBin "nvimdiff" ''
+        nvim -d $@
+      '')
       (pass.withExtensions (subpkgs: with subpkgs; [
         pass-audit
         pass-otp
@@ -495,6 +498,11 @@
       signing = {
         key = "0F6D5021A87F92BA";
         signByDefault = true;
+      };
+      extraConfig = {
+        merge = {
+          tool = "nvimdiff";
+        };
       };
     };
     tmux = {
