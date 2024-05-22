@@ -333,7 +333,7 @@
       extraLuaConfig = ''
 
         require('gen').setup({
-          model = "phi3:3.8b-mini-instruct-4k-fp16",
+          model = "phi3:latest",
           display_mode = "split",
           show_prompt = true,
           show_model = true,
