@@ -199,6 +199,7 @@
         workspaceAutoBackAndForth = true;
         keybindings = let inherit modifier; in lib.mkOptionDefault {
           "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
+          "${modifier}+shift+p" = "exec ${pkgs.swaylock}/bin/swaylock & systemctl suspend";
           "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
           "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
@@ -367,6 +368,52 @@
         require('lspconfig').pyright.setup{ on_attach = on_attach }
         require('lspconfig').nixd.setup{ on_attach = on_attach }
         require('lspconfig').clangd.setup{ on_attach = on_attach }
+
+        local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+        local luasnip = require('luasnip')
+        require("luasnip.loaders.from_vscode").lazy_load()
+
+        local cmp = require('cmp')
+        cmp.setup {
+          snippet = {
+            expand = function(args)
+              luasnip.lsp_expand(args.body)
+            end,
+          },
+          mapping = cmp.mapping.preset.insert({
+            ['<C-u>'] = cmp.mapping.scroll_docs(-4), -- Up
+            ['<C-d>'] = cmp.mapping.scroll_docs(4), -- Down
+            -- C-b (back) C-f (forward) for snippet placeholder navigation.
+            ['<C-Space>'] = cmp.mapping.complete(),
+            ['<CR>'] = cmp.mapping.confirm {
+              behavior = cmp.ConfirmBehavior.Replace,
+              select = true,
+            },
+            ['<Tab>'] = cmp.mapping(function(fallback)
+              if cmp.visible() then
+                cmp.select_next_item()
+              elseif luasnip.expand_or_jumpable() then
+                luasnip.expand_or_jump()
+              else
+                fallback()
+              end
+            end, { 'i', 's' }),
+            ['<S-Tab>'] = cmp.mapping(function(fallback)
+              if cmp.visible() then
+                cmp.select_prev_item()
+              elseif luasnip.jumpable(-1) then
+                luasnip.jump(-1)
+              else
+                fallback()
+              end
+            end, { 'i', 's' }),
+          }),
+          sources = {
+            { name = 'nvim_lsp' },
+            { name = 'luasnip' },
+          },
+        }
       '';
       extraConfig = ''
         set guicursor=n-v-c-i:block
@@ -381,6 +428,11 @@
       plugins = [
         pkgs.vimPlugins.nvim-lspconfig
         pkgs.vimPlugins.lsp-format-nvim
+        pkgs.vimPlugins.nvim-cmp
+        pkgs.vimPlugins.luasnip
+        pkgs.vimPlugins.cmp_luasnip
+        pkgs.vimPlugins.cmp-nvim-lsp
+        pkgs.vimPlugins.friendly-snippets
         pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.fugitive
