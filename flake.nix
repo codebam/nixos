@@ -3,22 +3,36 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
-    home-manager.url = "github:nix-community/home-manager";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v0.3.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     catppuccin.url = "github:catppuccin/nix";
     gen-nvim-latest-pin.url = "github:codebam/nixpkgs/gen-nvim";
-    # linux-testing-update.url = "github:codebam/nixpkgs/linux_testing";
-    # linux-latest-update.url = "github:K900/nixpkgs/kernel-6.9";
-    # bcachefs-fix.url = "github:tmuehlbacher/bcachefs-tools/fix-encrypted-unlock";
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, ... }@inputs: {
+  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         ./configuration.nix
         catppuccin.nixosModules.catppuccin
+        lanzaboote.nixosModules.lanzaboote
+        ({ pkgs, lib, ... }: {
+          environment.systemPackages = [
+            pkgs.sbctl
+          ];
+          boot.loader.systemd-boot.enable = lib.mkForce false;
+          boot.lanzaboote = {
+            enable = true;
+            pkiBundle = "/etc/secureboot";
+          };
+        })
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
