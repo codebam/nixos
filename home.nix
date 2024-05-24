@@ -371,6 +371,7 @@
         require('lspconfig').pyright.setup{ on_attach = on_attach }
         require('lspconfig').nixd.setup{ on_attach = on_attach }
         require('lspconfig').clangd.setup{ on_attach = on_attach }
+        require('lspconfig').html.setup{ on_attach = on_attach }
 
         local prettier = {
             formatCommand = [[prettier --stdin-filepath ''${INPUT} ''${--tab-width:tab_width}]],
@@ -382,6 +383,7 @@
             settings = {
                 languages = {
                     typescript = { prettier },
+                    html = { prettier },
                     javascript = { prettier },
                     json = { prettier },
                 },
@@ -442,7 +444,7 @@
               \ 'colorscheme': 'catppuccin_mocha',
               \ }
         map <leader>ac :lua vim.lsp.buf.code_action()<CR>
-        map <leader><space> :nohl<CR>
+        set ts=2
       '';
       plugins = [
         pkgs.vimPlugins.nvim-lspconfig
