@@ -336,6 +336,7 @@
     neovim = {
       enable = true;
       defaultEditor = true;
+      extraLuaPackages = ps: [ ps.jsregexp ];
       extraLuaConfig = ''
 
         require('gen').setup({
