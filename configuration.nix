@@ -146,7 +146,7 @@
     nil
     nixd
     nixpkgs-fmt
-    nodejs
+    nodePackages_latest.nodejs
     virt-manager
     wl-clipboard
     xdg-utils
