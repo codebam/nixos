@@ -25,7 +25,7 @@
       eza
       grim
       jdt-language-server
-      nodejs
+      nodePackages_latest.nodejs
       nodePackages.bash-language-server
       nodePackages.svelte-language-server
       nodePackages.typescript-language-server
