@@ -446,6 +446,8 @@
               \ }
         map <leader>ac :lua vim.lsp.buf.code_action()<CR>
         set ts=2
+        set undofile
+        set undodir=$HOME/.vim/undodir
       '';
       plugins = [
         pkgs.vimPlugins.nvim-lspconfig
