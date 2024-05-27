@@ -445,6 +445,7 @@
               \ 'colorscheme': 'catppuccin_mocha',
               \ }
         map <leader>ac :lua vim.lsp.buf.code_action()<CR>
+        map <leader><space> :nohl<CR>
         set ts=2
         set undofile
         set undodir=$HOME/.vim/undodir
