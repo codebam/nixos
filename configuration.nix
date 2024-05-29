@@ -54,7 +54,7 @@
     nftables.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 25565 ];
+      allowedTCPPorts = [ 22 25565 ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
@@ -88,6 +88,13 @@
   };
 
   services = {
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+      };
+    };
+    avahi.enable = true;
     fwupd.enable = true;
     pipewire = {
       enable = true;
