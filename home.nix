@@ -554,12 +554,10 @@
 
     kitty = {
       enable = true;
-      extraConfig = ''
-        font_family      Fira Code Nerdfont
-        font_size 12.0
-        cursor_shape block
-        cursor_blink_interval 0
-      '';
+      font = {
+        name = "Fira Code Nerdfont";
+        size = 12.0;
+      };
     };
 
     foot =
