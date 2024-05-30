@@ -306,24 +306,35 @@
       interactiveShellInit = ''
         set fish_greeting
         function fish_command_not_found
-          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
+          node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
         end
       '';
-      plugins = [{
-        name = "autopair.fish";
+      plugins = [
+        {
+          name = "autopair.fish";
           src = pkgs.fetchFromGitHub {
             owner = "jorgebucaran";
             repo = "autopair.fish";
             rev = "4d1752ff5b39819ab58d7337c69220342e9de0e2";
             sha256 = "sha256-qt3t1iKRRNuiLWiVoiAYOu+9E7jsyECyIqZJ/oRIT1A=";
           };
-      }];
+        }
+        {
+          name = "puffer-fish";
+          src = pkgs.fetchFromGitHub {
+            owner = "nickeb96";
+            repo = "puffer-fish";
+            rev = "12d062eae0ad24f4ec20593be845ac30cd4b5923";
+            sha256 = "sha256-2niYj0NLfmVIQguuGTA7RrPIcorJEPkxhH6Dhcy+6Bk=";
+          };
+        }
+      ];
     };
     bash = {
       enable = true;
       initExtra = ''
         command_not_found_handle() {
-            ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
+          node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
         }
       '';
       profileExtra = ''
