@@ -558,10 +558,11 @@
         name = "Fira Code Nerdfont";
         size = 12.0;
       };
-      extraConfig = ''
-        cursor_shape block
-        cursor_blink_interval 0
-      '';
+      shellIntegration.mode = "no-cursor";
+      settings = {
+        cursor_shape = "block";
+        cursor_blink_interval = 0;
+      };
     };
 
     foot =
