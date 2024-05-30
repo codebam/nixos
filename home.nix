@@ -310,13 +310,13 @@
         end
       '';
       plugins = [{
-        name = "fisher";
-        src = pkgs.fetchFromGitHub {
-          owner = "jorgebucaran";
-          repo = "fisher";
-          rev = "2efd33ccd0777ece3f58895a093f32932bd377b6";
-          sha256 = "sha256-e8gIaVbuUzTwKtuMPNXBT5STeddYqQegduWBtURLT3M=";
-        };
+        name = "autopair.fish";
+          src = pkgs.fetchFromGitHub {
+            owner = "jorgebucaran";
+            repo = "autopair.fish";
+            rev = "4d1752ff5b39819ab58d7337c69220342e9de0e2";
+            sha256 = "sha256-qt3t1iKRRNuiLWiVoiAYOu+9E7jsyECyIqZJ/oRIT1A=";
+          };
       }];
     };
     bash = {
