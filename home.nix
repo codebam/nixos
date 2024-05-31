@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   home = {
@@ -381,7 +381,6 @@
         require('lspconfig').svelte.setup{ on_attach = on_attach }
         require('lspconfig').bashls.setup{ on_attach = on_attach }
         require('lspconfig').pyright.setup{ on_attach = on_attach }
-        require('lspconfig').nixd.setup{ on_attach = on_attach }
         require('lspconfig').nil_ls.setup{ on_attach = on_attach }
         require('lspconfig').clangd.setup{ on_attach = on_attach }
         require('lspconfig').html.setup{ on_attach = on_attach }
@@ -463,24 +462,26 @@
         set undodir=$HOME/.vim/undodir
       '';
       plugins = [
-        pkgs.vimPlugins.nvim-lspconfig
-        pkgs.vimPlugins.lsp-format-nvim
-        pkgs.vimPlugins.nvim-cmp
-        pkgs.vimPlugins.luasnip
+        pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.cmp_luasnip
         pkgs.vimPlugins.cmp-nvim-lsp
-        pkgs.vimPlugins.friendly-snippets
-        pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.commentary
+        pkgs.vimPlugins.friendly-snippets
         pkgs.vimPlugins.fugitive
+        pkgs.vimPlugins.fzf-vim
         pkgs.vimPlugins.gitgutter
         pkgs.vimPlugins.lightline-vim
+        pkgs.vimPlugins.lsp-format-nvim
+        pkgs.vimPlugins.luasnip
+        pkgs.vimPlugins.nvim-cmp
+        pkgs.vimPlugins.nvim-lspconfig
+        pkgs.vimPlugins.nvim-web-devicons
         pkgs.vimPlugins.plenary-nvim
         pkgs.vimPlugins.sensible
         pkgs.vimPlugins.sleuth
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.fzf-vim
+        pkgs.vimPlugins.trouble-nvim
         inputs.gen-nvim-latest-pin.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
       ];
