@@ -151,7 +151,6 @@
     git
     libnotify
     nil
-    nixd
     nixpkgs-fmt
     nodePackages_latest.nodejs
     virt-manager
