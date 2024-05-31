@@ -147,6 +147,7 @@
 
   environment.systemPackages = with pkgs; [
     distrobox
+    efm-langserver
     git
     libnotify
     nil
