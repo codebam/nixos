@@ -253,9 +253,9 @@
   zramSwap.enable = true;
   nixpkgs.overlays = [
     (final: prev: {
-      # linuxPackages_testing = inputs.master.legacyPackages.x86_64-linux.linuxPackages_testing;
-      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.x86_64-linux.linuxPackages_testing;
-      # bcachefs-tools = inputs.bcachefs-fix.packages.x86_64-linux.bcachefs;
+      # linuxPackages_testing = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
+      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
+      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
     })
   ];
   system = {
