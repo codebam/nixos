@@ -457,6 +457,10 @@
               \ }
         map <leader>ac :lua vim.lsp.buf.code_action()<CR>
         map <leader><space> :nohl<CR>
+        nnoremap <leader>ff <cmd>Telescope find_files<cr>
+        nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+        nnoremap <leader>fb <cmd>Telescope buffers<cr>
+        nnoremap <leader>fh <cmd>Telescope help_tags<cr>
         set ts=2
         set undofile
         set undodir=$HOME/.vim/undodir
@@ -468,8 +472,8 @@
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.friendly-snippets
         pkgs.vimPlugins.fugitive
-        pkgs.vimPlugins.fzf-vim
         pkgs.vimPlugins.gitgutter
+        pkgs.vimPlugins.telescope-nvim
         pkgs.vimPlugins.lightline-vim
         pkgs.vimPlugins.lsp-format-nvim
         pkgs.vimPlugins.luasnip
