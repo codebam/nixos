@@ -382,6 +382,7 @@
         require('lspconfig').bashls.setup{ on_attach = on_attach }
         require('lspconfig').pyright.setup{ on_attach = on_attach }
         require('lspconfig').nixd.setup{ on_attach = on_attach }
+        require('lspconfig').nil_ls.setup{ on_attach = on_attach }
         require('lspconfig').clangd.setup{ on_attach = on_attach }
         require('lspconfig').html.setup{ on_attach = on_attach }
 
