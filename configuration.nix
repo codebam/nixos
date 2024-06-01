@@ -147,8 +147,11 @@
 
   environment.systemPackages = with pkgs; [
     distrobox
+    efm-langserver
     git
     libnotify
+    nil
+    nixpkgs-fmt
     virt-manager
     wl-clipboard
     xdg-utils
