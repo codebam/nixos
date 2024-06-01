@@ -129,6 +129,25 @@
             adaptive_sync = "on";
             subpixel = "none";
           };
+          "eDP-1" = {
+            scale = "1.5";
+          };
+        };
+        input = {
+          "1739:0:Synaptics_TM3289-021" = {
+            events = "enabled";
+            dwt = "enabled";
+            tap = "enabled";
+            natural_scroll = "enabled";
+            middle_emulation = "enabled";
+            pointer_accel = "0.2";
+            accel_profile = "adaptive";
+          };
+          "2:10:TPPS/2_Elan_TrackPoint" = {
+            events = "enabled";
+            pointer_accel = "0.7";
+            accel_profile = "adaptive";
+          };
         };
         bars = [{
           position = "top";
@@ -204,12 +223,20 @@
           spaste < /tmp/screenshot.png | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
           '')}";
           "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
+          "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
+          "XF86AudioLowerVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
+          "XF86AudioMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+          "XF86AudioMicMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
+          "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
         };
       };
       extraConfig = let inherit modifier; in ''
         bindsym --whole-window {
-          ${modifier}+button4 exec "wpctl set-volume @DEFAULT_SINK@ 1%+"
-          ${modifier}+button5 exec "wpctl set-volume @DEFAULT_SINK@ 1%-"
+          ${modifier}+Shift+button4 exec "${pkgs.brightnessctl}/bin/brightnessctl set +1%"
+          ${modifier}+Shift+button5 exec "${pkgs.brightnessctl}/bin/brightnessctl set 1%-"
+          ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
+          ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
         }
       '';
     };
