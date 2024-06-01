@@ -19,24 +19,11 @@
       ]))
       aerc
       bat
-      clang-tools
-      ctags
-      efm-langserver
       eza
       grim
-      jdt-language-server
-      nodePackages_latest.nodejs
-      nodePackages.bash-language-server
-      nodePackages.svelte-language-server
-      nodePackages.typescript-language-server
-      nodePackages.prettier
-      pylint
-      pyright
-      python3
       rcm
       ripgrep
       slurp
-      vscode-langservers-extracted
       weechat
     ];
 
@@ -306,7 +293,7 @@
       interactiveShellInit = ''
         set fish_greeting
         function fish_command_not_found
-          node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
+          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
         end
       '';
       plugins = [
@@ -334,7 +321,7 @@
       enable = true;
       initExtra = ''
         command_not_found_handle() {
-          node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
+          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
         }
       '';
       profileExtra = ''
