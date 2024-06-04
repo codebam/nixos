@@ -399,6 +399,7 @@
         require('lspconfig').clangd.setup{ on_attach = on_attach }
         require('lspconfig').html.setup{ on_attach = on_attach }
         require('lspconfig').rust_analyzer.setup{ on_attach = on_attach }
+        require('lspconfig').csharp_ls.setup{ on_attach = on_attach }
 
         local prettier = {
             formatCommand = [[prettier --stdin-filepath ''${INPUT} ''${--tab-width:tab_width}]],
