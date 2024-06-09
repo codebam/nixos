@@ -532,7 +532,7 @@
         settings = {
           main = {
             term = "xterm-256color";
-            font = "Fira Code Nerdfont:size=11";
+            font = "Fira Code Nerdfont:size=8";
             dpi-aware = "yes";
           };
           mouse = {
