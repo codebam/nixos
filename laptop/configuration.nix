@@ -22,7 +22,7 @@
   system = {
     autoUpgrade = {
       enable = true;
-      flake = "github:codebam/nixos#laptop";
+      flake = "github:codebam/nixos#nixos-laptop";
       dates = "09:00";
     };
     stateVersion = "23.11";

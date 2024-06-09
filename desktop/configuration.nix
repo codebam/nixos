@@ -57,7 +57,7 @@
   system = {
     autoUpgrade = {
       enable = true;
-      flake = "github:codebam/nixos#desktop";
+      flake = "github:codebam/nixos#nixos-desktop";
       dates = "09:00";
     };
     stateVersion = "23.11";
