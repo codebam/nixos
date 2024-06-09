@@ -8,6 +8,12 @@
         signByDefault = true;
       };
     };
+    bash = {
+      profileExtra = ''
+        PATH="$HOME/.local/bin:$PATH"
+        export PATH
+      '';
+    };
     i3status-rust = {
       bars = {
         default = {
