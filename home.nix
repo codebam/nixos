@@ -257,60 +257,6 @@
     };
     i3status-rust = {
       enable = true;
-      bars = {
-        default = {
-          settings = {
-            theme = {
-              theme = "ctp-mocha";
-            };
-          };
-          icons = "awesome6";
-          blocks = [
-            {
-              block = "focused_window";
-            }
-            {
-              block = "sound";
-              format = "$volume";
-            }
-            {
-              alert = 10.0;
-              block = "disk_space";
-              info_type = "available";
-              interval = 60;
-              path = "/";
-              warning = 20.0;
-            }
-            {
-              block = "memory";
-              format = " $icon $mem_used_percents ";
-            }
-            {
-              block = "cpu";
-            }
-            {
-              block = "amd_gpu";
-              format = " $icon $utilization $vram_used_percents";
-            }
-            {
-              block = "load";
-            }
-            {
-              block = "net";
-            }
-            {
-              block = "external_ip";
-            }
-            {
-              block = "temperature";
-            }
-            {
-              block = "time";
-              interval = 60;
-            }
-          ];
-        };
-      };
     };
     swaylock = {
       enable = true;
@@ -363,14 +309,6 @@
       defaultEditor = true;
       extraLuaPackages = ps: [ ps.jsregexp ];
       extraLuaConfig = ''
-
-        require('gen').setup({
-          model = "phi3:latest",
-          display_mode = "split",
-          show_prompt = true,
-          show_model = true,
-          no_auto_close = true,
-        })
 
         require('nvim-treesitter.configs').setup {
           auto_install = false,
@@ -503,7 +441,6 @@
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.trouble-nvim
-        inputs.gen-nvim-latest-pin.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
       ];
     };
@@ -551,10 +488,6 @@
       enable = true;
       userEmail = "codebam@riseup.net";
       userName = "Sean Behan";
-      signing = {
-        key = "0F6D5021A87F92BA";
-        signByDefault = true;
-      };
       extraConfig = {
         merge = {
           tool = "nvimdiff";
