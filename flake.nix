@@ -21,7 +21,7 @@
       specialArgs = { inherit inputs; };
       modules = [
         ./configuration.nix
-        ./configuration-desktop.nix
+        ./desktop/configuration.nix
         catppuccin.nixosModules.catppuccin
         lanzaboote.nixosModules.lanzaboote
         ({ pkgs, lib, ... }: {
@@ -42,7 +42,7 @@
           home-manager.users.codebam = {
             imports = [
               ./home.nix
-              ./home-desktop.nix
+              ./desktop/home.nix
               catppuccin.homeManagerModules.catppuccin
             ];
           };
@@ -54,7 +54,7 @@
       specialArgs = { inherit inputs; };
       modules = [
         ./configuration.nix
-        ./configuration-laptop.nix
+        ./laptop/configuration.nix
         catppuccin.nixosModules.catppuccin
         lanzaboote.nixosModules.lanzaboote
         ({ pkgs, lib, ... }: {
@@ -75,7 +75,7 @@
           home-manager.users.codebam = {
             imports = [
               ./home.nix
-              ./home-laptop.nix
+              ./laptop/home.nix
               catppuccin.homeManagerModules.catppuccin
             ];
           };
