@@ -13,8 +13,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     catppuccin.url = "github:catppuccin/nix";
-    gen-nvim-latest-pin.url = "github:codebam/nixpkgs/gen-nvim";
-    rc2.url = "github:codebam/nixpkgs/kernel";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
