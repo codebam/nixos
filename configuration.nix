@@ -215,7 +215,15 @@
       }];
     };
   };
+
   zramSwap.enable = true;
+
+  hardware = {
+    opengl = {
+      enable = true;
+    };
+  };
+
   system = {
     stateVersion = "23.11";
   };
