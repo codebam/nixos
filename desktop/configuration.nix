@@ -7,6 +7,10 @@
       ./hardware-configuration.nix
     ];
 
+  networking = {
+    hostName = "nixos-desktop";
+  };
+
   services = {
     hardware.openrgb = {
       enable = true;

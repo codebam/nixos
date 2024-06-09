@@ -16,7 +16,7 @@
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
-    nixosConfigurations.desktop = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.nixos-desktop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
@@ -49,7 +49,7 @@
         }
       ];
     };
-    nixosConfigurations.laptop = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.nixos-laptop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [

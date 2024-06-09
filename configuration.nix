@@ -23,7 +23,6 @@
     };
   };
   networking = {
-    hostName = "nixos";
     networkmanager = {
       enable = true;
       wifi.backend = "iwd";
