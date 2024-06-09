@@ -18,11 +18,12 @@
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.desktop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         ./configuration.nix
+        ./configuration-desktop.nix
         catppuccin.nixosModules.catppuccin
         lanzaboote.nixosModules.lanzaboote
         ({ pkgs, lib, ... }: {
@@ -43,6 +44,40 @@
           home-manager.users.codebam = {
             imports = [
               ./home.nix
+              ./home-desktop.nix
+              catppuccin.homeManagerModules.catppuccin
+            ];
+          };
+        }
+      ];
+    };
+    nixosConfigurations.laptop = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      modules = [
+        ./configuration.nix
+        ./configuration-laptop.nix
+        catppuccin.nixosModules.catppuccin
+        lanzaboote.nixosModules.lanzaboote
+        ({ pkgs, lib, ... }: {
+          environment.systemPackages = [
+            pkgs.sbctl
+          ];
+          boot.loader.systemd-boot.enable = lib.mkForce false;
+          boot.lanzaboote = {
+            enable = true;
+            pkiBundle = "/etc/secureboot";
+          };
+        })
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
+          home-manager.users.codebam = {
+            imports = [
+              ./home.nix
+              ./home-laptop.nix
               catppuccin.homeManagerModules.catppuccin
             ];
           };

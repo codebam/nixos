@@ -1,18 +1,13 @@
 { inputs, pkgs, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
   boot = {
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages_testing;
+    kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
@@ -116,23 +111,6 @@
     udisks2.enable = true;
     gnome.gnome-keyring.enable = true;
     pcscd.enable = true;
-
-    hardware.openrgb = {
-      enable = true;
-    };
-
-    foldingathome = {
-      enable = true;
-      user = "codebam";
-    };
-
-    ollama = {
-      enable = true;
-      acceleration = "rocm";
-      environmentVariables = {
-        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-      };
-    };
   };
 
   users.users.codebam = {
@@ -187,11 +165,6 @@
       enable = true;
       enableSSHSupport = true;
     };
-    corectrl = {
-      enable = true;
-      gpuOverclock.enable = true;
-      gpuOverclock.ppfeaturemask = "0xffffffff";
-    };
     dconf.enable = true;
   };
 
@@ -199,12 +172,6 @@
     bluetooth = {
       enable = true;
       powerOnBoot = true;
-    };
-    opengl = {
-      enable = true;
-      extraPackages = with pkgs; [
-        rocmPackages.clr.icd
-      ];
     };
   };
 
@@ -250,19 +217,7 @@
     };
   };
   zramSwap.enable = true;
-  nixpkgs.overlays = [
-    (final: prev: {
-      linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
-    })
-  ];
   system = {
-    autoUpgrade = {
-      enable = true;
-      flake = "github:codebam/nixos";
-      dates = "09:00";
-    };
     stateVersion = "23.11";
   };
 }
