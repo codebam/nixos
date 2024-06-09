@@ -297,12 +297,6 @@
           ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
         }
       '';
-      profileExtra = ''
-        PATH="$HOME/.local/bin:$PATH"
-        export PATH
-        WLR_RENDERER=vulkan
-        export WLR_RENDERER
-      '';
     };
     neovim = {
       enable = true;

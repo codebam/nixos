@@ -2,6 +2,20 @@
 
 {
   programs = {
+    git = {
+      signing = {
+        key = "0F6D5021A87F92BA";
+        signByDefault = true;
+      };
+    };
+    bash = {
+      profileExtra = ''
+        PATH="$HOME/.local/bin:$PATH"
+        export PATH
+        WLR_RENDERER=vulkan
+        export WLR_RENDERER
+      '';
+    };
     i3status-rust = {
       bars = {
         default = {
