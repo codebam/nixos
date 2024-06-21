@@ -54,7 +54,7 @@
         MINSTOP=hwmon6/pwm7=100 hwmon6/pwm6=100 hwmon6/pwm5=100 hwmon6/pwm4=100 hwmon6/pwm3=100 hwmon6/pwm2=100 hwmon6/pwm1=0
       '';
     };
-    opengl = {
+    graphics = {
       extraPackages = with pkgs; [
         rocmPackages.clr.icd
       ];

@@ -49,6 +49,9 @@
               format = " $icon $utilization $vram_used_percents";
             }
             {
+              block = "temperature";
+            }
+            {
               block = "cpu";
             }
             {
