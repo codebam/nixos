@@ -219,7 +219,7 @@
   zramSwap.enable = true;
 
   hardware = {
-    opengl = {
+    graphics = {
       enable = true;
     };
   };
