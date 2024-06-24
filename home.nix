@@ -609,13 +609,23 @@
     home-manager.enable = true;
   };
 
-  services.mako =
-    {
+  services = {
+    mako = {
       enable = true;
       layer = "overlay";
       font = "Noto Sans";
       defaultTimeout = 5000;
     };
+    mopidy = {
+      enable = true;
+      extensionPackages = with pkgs; [ mopidy-mpd mopidy-ytmusic ];
+      settings = {
+        ytmusic = {
+          oauth_json = "/home/codebam/Downloads/auth.json";
+        };
+      };
+    };
+  };
 
   gtk =
     {
