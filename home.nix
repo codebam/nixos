@@ -640,6 +640,12 @@
 
     ncmpcpp = {
       enable = true;
+      bindings = [
+        { key = "j"; command = "scroll_down"; }
+        { key = "k"; command = "scroll_up"; }
+        { key = "J"; command = [ "select_item" "scroll_down" ]; }
+        { key = "K"; command = [ "select_item" "scroll_up" ]; }
+      ];
       settings = {
         song_list_format = " $0%n $1• $8%t $R$0%a ";
         song_columns_list_format = "(3)[]{}(85)[white]{t} (1)[blue]{a}";
