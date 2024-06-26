@@ -694,7 +694,7 @@
       extensionPackages = with pkgs; [ mopidy-mpd mopidy-ytmusic ];
       settings = {
         ytmusic = {
-          oauth_json = "/home/codebam/Downloads/auth.json";
+          oauth_json = "/home/codebam/Downloads/oauth.json";
         };
       };
     };
