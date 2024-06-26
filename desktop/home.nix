@@ -49,6 +49,10 @@
               format = " $icon $utilization $vram_used_percents";
             }
             {
+              block = "bluetooth";
+              mac = "F4:6A:D7:A2:E2:66";
+            }
+            {
               block = "temperature";
             }
             {
