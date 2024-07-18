@@ -13,7 +13,6 @@
         nvim -d $@
       '')
       (pass.withExtensions (subpkgs: with subpkgs; [
-        pass-audit
         pass-otp
         pass-genphrase
       ]))
