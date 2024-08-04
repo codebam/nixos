@@ -16,10 +16,10 @@
       enable = true;
     };
 
-    foldingathome = {
-      enable = true;
-      user = "codebam";
-    };
+    # foldingathome = {
+    #   enable = true;
+    #   user = "codebam";
+    # };
 
     # ollama = {
     #   enable = true;
@@ -71,7 +71,7 @@
 
   system = {
     autoUpgrade = {
-      enable = true;
+      enable = false;
       flake = "github:codebam/nixos#nixos-desktop";
       dates = "09:00";
     };
