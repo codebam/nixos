@@ -1,6 +1,7 @@
 { inputs, pkgs, ... }:
 
 {
+  systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
   boot = {
     loader = {
       systemd-boot.enable = true;
@@ -205,15 +206,15 @@
     polkit.enable = true;
     pam.services.swaylock = { };
     rtkit.enable = true;
-    sudo.enable = false;
-    doas = {
-      enable = true;
-      extraRules = [{
-        groups = [ "wheel" ];
-        keepEnv = true;
-        persist = true;
-      }];
-    };
+    # sudo.enable = false;
+    # doas = {
+    #   enable = true;
+    #   extraRules = [{
+    #     groups = [ "wheel" ];
+    #     keepEnv = true;
+    #     persist = true;
+    #   }];
+    # };
   };
 
   zramSwap.enable = true;
