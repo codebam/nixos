@@ -1,4 +1,4 @@
-{ inputs, pkgs, lib, ... }:
+{ inputs, pkgs, ... }:
 
 {
   systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
@@ -166,16 +166,6 @@
   };
 
   programs = {
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-      localNetworkGameTransfers.openFirewall = true;
-    };
-    gamescope = {
-      enable = true;
-    };
-
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
@@ -238,13 +228,8 @@
     graphics = {
       enable = true;
     };
+    opengl.extraPackages = [ pkgs.gamescope-wsi ];
   };
-
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-run"
-  ];
 
   system = {
     stateVersion = "23.11";
