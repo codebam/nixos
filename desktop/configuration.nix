@@ -1,4 +1,4 @@
-{ inputs, pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   imports =
@@ -36,6 +36,22 @@
   };
 
   programs = {
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
+    };
+    gamescope = {
+      enable = true;
+      capSysNice = true;
+      args = [ "--hdr-enabled" ];
+      env = {
+        ENABLE_HDR_WSI = "0";
+        DXVK_HDR = "1";
+        ENABLE_GAMESCOPE_WSI = "1";
+      };
+    };
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
@@ -72,6 +88,12 @@
       # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
       # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
     })
+  ];
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "steam"
+    "steam-original"
+    "steam-run"
   ];
 
   system = {
