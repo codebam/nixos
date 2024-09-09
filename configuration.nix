@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ inputs, pkgs, lib, ... }:
 
 {
   systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
@@ -83,6 +83,11 @@
   };
 
   services = {
+    displayManager.sddm = { 
+      enable = true;
+      wayland.enable = true;
+    };
+    desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
       settings = {
@@ -133,6 +138,7 @@
     virt-manager
     wl-clipboard
     xdg-utils
+    (callPackage ./VK_hdr_layer.nix {})
   ];
 
   fonts = {
@@ -161,6 +167,16 @@
   };
 
   programs = {
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
+    };
+    gamescope = {
+      enable = true;
+    };
+
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
@@ -224,6 +240,12 @@
       enable = true;
     };
   };
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "steam"
+    "steam-original"
+    "steam-run"
+  ];
 
   system = {
     stateVersion = "23.11";

@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ inputs, pkgs, config, ... }:
 
 {
   imports =
@@ -10,6 +10,11 @@
   networking = {
     hostName = "nixos-desktop";
   };
+
+  environment.systemPackages = with pkgs; [
+    config.boot.kernelPackages.v4l2loopback
+    v4l-utils
+  ];
 
   services = {
     hardware.openrgb = {
