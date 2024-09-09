@@ -138,7 +138,6 @@
     virt-manager
     wl-clipboard
     xdg-utils
-    (callPackage ./VK_hdr_layer.nix {})
   ];
 
   fonts = {
