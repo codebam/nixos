@@ -83,11 +83,11 @@
   };
 
   services = {
-    displayManager.sddm = { 
-      enable = true;
-      wayland.enable = true;
-    };
-    desktopManager.plasma6.enable = true;
+    # displayManager.sddm = { 
+    #   enable = true;
+    #   wayland.enable = true;
+    # };
+    # desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
       settings = {
@@ -227,8 +227,8 @@
   hardware = {
     graphics = {
       enable = true;
+      # extraPackages = [ pkgs.gamescope-wsi ];
     };
-    opengl.extraPackages = [ pkgs.gamescope-wsi ];
   };
 
   system = {

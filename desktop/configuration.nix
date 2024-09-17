@@ -36,15 +36,15 @@
   };
 
   programs = {
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-      localNetworkGameTransfers.openFirewall = true;
-    };
-    gamescope = {
-      enable = true;
-    };
+    # steam = {
+    #   enable = true;
+    #   remotePlay.openFirewall = true;
+    #   dedicatedServer.openFirewall = true;
+    #   localNetworkGameTransfers.openFirewall = true;
+    # };
+    # gamescope = {
+    #   enable = true;
+    # };
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
@@ -76,12 +76,28 @@
   };
 
   nixpkgs.overlays = [
-    (final: prev: {
-      # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
+    (self: super: {
+      linuxPackages_latest = super.linuxPackages_latest.extend (lpself: lpsuper: {
+        rtl8814au = super.linuxPackages_latest.rtl8814au.overrideAttrs (oldAttrs: {
+          version = "${config.boot.kernelPackages.kernel.version}-unstable-2024-09-17";
+          src = pkgs.fetchFromGitHub {
+            owner = "morrownr";
+            repo = "8814au";
+            rev = "d8208c83ecfd9b286f3ea45a7eb7d78d10560670";
+            hash = "sha256-lKTxWpmC17ecKr9oBHgkyKumR0rvsZoBklq7TKjI6L4=";
+          };
+        });
+      });
     })
   ];
+
+  # nixpkgs.overlays = [
+  #   (final: prev: {
+  #     # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  #     # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  #     # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
+  #   })
+  # ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "steam"
