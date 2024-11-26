@@ -13,7 +13,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     catppuccin.url = "github:catppuccin/nix";
-    staging-next.url = "github:nixos/nixpkgs/staging-next";
+    # staging-next.url = "github:nixos/nixpkgs/staging-next";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {

@@ -246,9 +246,9 @@
         git_protocol = "ssh";
       };
     };
-    gh-dash = {
-      enable = true;
-    };
+    # gh-dash = {
+    #   enable = true;
+    # };
     zoxide = {
       enable = true;
       enableBashIntegration = true;
@@ -320,9 +320,10 @@
         end
 
         require("lsp-format").setup{}
-        require('lspconfig').tsserver.setup{ on_attach = on_attach }
+        require('lspconfig').ts_ls.setup{ on_attach = on_attach }
         require('lspconfig').eslint.setup{ on_attach = on_attach }
         require('lspconfig').jdtls.setup{ on_attach = on_attach }
+        require('lspconfig').kotlin_language_server.setup{ on_attach = on_attach }
         require('lspconfig').svelte.setup{ on_attach = on_attach }
         require('lspconfig').bashls.setup{ on_attach = on_attach }
         require('lspconfig').pyright.setup{ on_attach = on_attach }
@@ -453,6 +454,7 @@
         pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.cmp_luasnip
         pkgs.vimPlugins.cmp-nvim-lsp
+        pkgs.vimPlugins.codi-vim
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.friendly-snippets
         pkgs.vimPlugins.fugitive
@@ -495,7 +497,7 @@
       plugins = [
         pkgs.vimPlugins.sensible
         pkgs.vimPlugins.coc-nvim
-        pkgs.vimPlugins.coc-python
+        pkgs.vimPlugins.coc-pyright
         pkgs.vimPlugins.coc-prettier
         pkgs.vimPlugins.coc-eslint
         pkgs.vimPlugins.coc-snippets
@@ -548,18 +550,18 @@
       '';
     };
 
-    kitty = {
-      enable = true;
-      font = {
-        name = "Fira Code Nerdfont";
-        size = 12.0;
-      };
-      shellIntegration.mode = "no-cursor";
-      settings = {
-        cursor_shape = "block";
-        cursor_blink_interval = 0;
-      };
-    };
+    # kitty = {
+    #   enable = true;
+    #   font = {
+    #     name = "Fira Code Nerdfont";
+    #     size = 12.0;
+    #   };
+    #   shellIntegration.mode = "no-cursor";
+    #   settings = {
+    #     cursor_shape = "block";
+    #     cursor_blink_interval = 0;
+    #   };
+    # };
 
     foot =
       {
@@ -701,7 +703,7 @@
 
   gtk =
     {
-      enable = true;
+      # enable = true;
     };
 
   xdg =

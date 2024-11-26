@@ -1,7 +1,7 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 
 {
-  systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
+  # systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
   boot = {
     loader = {
       systemd-boot.enable = true;
@@ -83,11 +83,11 @@
   };
 
   services = {
-    # displayManager.sddm = { 
-    #   enable = true;
-    #   wayland.enable = true;
-    # };
-    # desktopManager.plasma6.enable = true;
+    displayManager.sddm = { 
+      enable = true;
+      wayland.enable = true;
+    };
+    desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
       settings = {
@@ -138,6 +138,7 @@
     virt-manager
     wl-clipboard
     xdg-utils
+    discord-rpc
   ];
 
   fonts = {
@@ -149,7 +150,7 @@
       fira-code
       fira-code-symbols
       font-awesome
-      (nerdfonts.override { fonts = [ "FiraCode" ]; })
+      nerd-fonts.fira-code
     ];
   };
 
@@ -227,7 +228,7 @@
   hardware = {
     graphics = {
       enable = true;
-      # extraPackages = [ pkgs.gamescope-wsi ];
+      extraPackages = [ pkgs.gamescope-wsi ];
     };
   };
 
