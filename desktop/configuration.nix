@@ -36,15 +36,15 @@
   };
 
   programs = {
-    # steam = {
-    #   enable = true;
-    #   remotePlay.openFirewall = true;
-    #   dedicatedServer.openFirewall = true;
-    #   localNetworkGameTransfers.openFirewall = true;
-    # };
-    # gamescope = {
-    #   enable = true;
-    # };
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
+    };
+    gamescope = {
+      enable = true;
+    };
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
@@ -103,6 +103,7 @@
     "steam"
     "steam-original"
     "steam-run"
+    "steam-unwrapped"
   ];
 
   system = {
