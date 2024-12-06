@@ -30,21 +30,6 @@
     };
     wireless.iwd = {
       enable = true;
-      settings = {
-        General = {
-          RoamThreshold = -75;
-          RoamThreshold5G = -80;
-        };
-        Scan = {
-          DisablePeriodicScan = true;
-        };
-        IPv6 = {
-          Enabled = true;
-        };
-        Settings = {
-          AutoConnect = true;
-        };
-      };
     };
     nftables.enable = true;
     firewall = {
