@@ -124,6 +124,7 @@
     wl-clipboard
     xdg-utils
     discord-rpc
+    mangohud
   ];
 
   fonts = {

@@ -12,8 +12,6 @@
       profileExtra = ''
         PATH="$HOME/.local/bin:$PATH"
         export PATH
-        WLR_RENDERER=vulkan
-        export WLR_RENDERER
       '';
     };
     i3status-rust = {
