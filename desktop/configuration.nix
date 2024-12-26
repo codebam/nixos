@@ -11,9 +11,7 @@
     hostName = "nixos-desktop";
   };
 
-  environment.systemPackages = with pkgs; [
-    config.boot.kernelPackages.v4l2loopback
-    v4l-utils
+  environment.systemPackages = [
   ];
 
   services = {
@@ -41,6 +39,9 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
+    };
+    gamemode = {
+      enable = true;
     };
     gamescope = {
       enable = true;
@@ -75,21 +76,21 @@
     };
   };
 
-  nixpkgs.overlays = [
-    (self: super: {
-      linuxPackages_latest = super.linuxPackages_latest.extend (lpself: lpsuper: {
-        rtl8814au = super.linuxPackages_latest.rtl8814au.overrideAttrs (oldAttrs: {
-          version = "${config.boot.kernelPackages.kernel.version}-unstable-2024-09-17";
-          src = pkgs.fetchFromGitHub {
-            owner = "morrownr";
-            repo = "8814au";
-            rev = "d8208c83ecfd9b286f3ea45a7eb7d78d10560670";
-            hash = "sha256-lKTxWpmC17ecKr9oBHgkyKumR0rvsZoBklq7TKjI6L4=";
-          };
-        });
-      });
-    })
-  ];
+  # nixpkgs.overlays = [
+  #   (self: super: {
+  #     linuxPackages_latest = super.linuxPackages_latest.extend (lpself: lpsuper: {
+  #       rtl8814au = super.linuxPackages_latest.rtl8814au.overrideAttrs (oldAttrs: {
+  #         version = "${config.boot.kernelPackages.kernel.version}-unstable-2024-09-17";
+  #         src = pkgs.fetchFromGitHub {
+  #           owner = "morrownr";
+  #           repo = "8814au";
+  #           rev = "d8208c83ecfd9b286f3ea45a7eb7d78d10560670";
+  #           hash = "sha256-lKTxWpmC17ecKr9oBHgkyKumR0rvsZoBklq7TKjI6L4=";
+  #         };
+  #       });
+  #     });
+  #   })
+  # ];
 
   # nixpkgs.overlays = [
   #   (final: prev: {
