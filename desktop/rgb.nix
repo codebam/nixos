@@ -17,7 +17,7 @@ in {
     systemd.services.custom-rgb = {
       description = "custom-rgb";
       serviceConfig = {
-        ExecStart = "${custom-rgb}/bin/no-rgb";
+        ExecStart = "${custom-rgb}/bin/custom-rgb";
         Type = "oneshot";
       };
       wantedBy = [ "multi-user.target" ];
