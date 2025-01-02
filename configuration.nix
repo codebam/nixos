@@ -158,6 +158,7 @@
       enableSSHSupport = true;
     };
     dconf.enable = true;
+    nix-ld.enable = true;
   };
 
   hardware = {
