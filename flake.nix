@@ -23,7 +23,6 @@
       modules = [
         ./configuration.nix
         ./desktop/configuration.nix
-        ./desktop/rgb.nix
         catppuccin.nixosModules.catppuccin
         lanzaboote.nixosModules.lanzaboote
         ({ pkgs, lib, ... }: {
