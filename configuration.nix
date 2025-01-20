@@ -1,14 +1,17 @@
-{ pkgs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 {
   # systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
   boot = {
     loader = {
-      systemd-boot.enable = true;
+      systemd-boot = {
+        enable = true;
+        memtest86.enable = true;
+      };
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages;
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
@@ -34,7 +37,7 @@
     nftables.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 25565 ];
+      allowedTCPPorts = [ 22 8211 25565 ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
@@ -125,6 +128,7 @@
     xdg-utils
     discord-rpc
     mangohud
+    steamtinkerlaunch
   ];
 
   fonts = {
@@ -165,6 +169,13 @@
     bluetooth = {
       enable = true;
       powerOnBoot = true;
+      settings = {
+        LE = {
+          MinConnectionInterval = 7;
+          MaxConnectionInterval = 9;
+          ConnectionLatency = 0;
+        };
+      };
     };
   };
 
@@ -200,14 +211,6 @@
     pam.services.swaylock = { };
     rtkit.enable = true;
     # sudo.enable = false;
-    # doas = {
-    #   enable = true;
-    #   extraRules = [{
-    #     groups = [ "wheel" ];
-    #     keepEnv = true;
-    #     persist = true;
-    #   }];
-    # };
   };
 
   zramSwap.enable = true;
@@ -218,6 +221,24 @@
       extraPackages = [ pkgs.gamescope-wsi ];
     };
   };
+
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      flatpak = inputs.flatpak-stable.legacyPackages.${pkgs.system}.flatpak;
+      # mesa = prev.mesa.overrideAttrs (old: {
+      #   src = prev.fetchFromGitLab {
+      #     domain = "gitlab.freedesktop.org";
+      #     owner = "mesa";
+      #     repo = "mesa";
+      #     rev = "0d29ddb328da76db391640a4186ee5a0bf078076";
+      #     hash = "sha256-xvhwTZWyj34eL34G6geHFmWMqr+PpRQoKcKi+qnTEXc=";
+      #   };
+      #   patches = [];
+      #   mesonFlags = lib.filter (flag: !(lib.isString flag && (builtins.match ".*clang-libdir.*" flag != null || builtins.match ".*opencl-spirv.*" flag != null))) old.mesonFlags;
+      # });
+    })
+  ];
 
   system = {
     stateVersion = "23.11";

@@ -240,6 +240,23 @@
       '';
     };
   programs = {
+    wezterm = {
+      enable = true;
+      extraConfig = ''
+        return {
+          font = wezterm.font("Fira Code Nerdfont"),
+          font_size = 8.0,
+          color_scheme = "catppuccin-mocha",
+          hide_tab_bar_if_only_one_tab = true,
+          window_padding = {
+            left = 0,
+            right = 0,
+            top = 0,
+            bottom = 0,
+          }
+        }
+      '';
+    };
     # gh = {
     #   enable = true;
     #   settings = {
@@ -296,6 +313,10 @@
           ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
         }
       '';
+      sessionVariables = {
+        MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
+        FLATPAK_GL_DRIVERS = "mesa-git";
+      };
     };
     neovim = {
       enable = true;
