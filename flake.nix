@@ -14,6 +14,8 @@
     };
     catppuccin.url = "github:catppuccin/nix";
     # staging-next.url = "github:nixos/nixpkgs/staging-next";
+    flatpak-stable.url = "github:getchoo-contrib/nixpkgs/pkgs/flatpak/1.16.0";
+    flatpak-mine.url = "github:codebam/nixpkgs/flatpak-1.16.0-old";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {

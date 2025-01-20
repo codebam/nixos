@@ -1,4 +1,4 @@
-{ pkgs, config, lib, ... }:
+{ inputs, pkgs, config, lib, ... }:
 
 {
   imports =
@@ -14,11 +14,17 @@
   environment.systemPackages = [
   ];
 
+  # environment.variables = {
+  #   RUSTICL_ENABLE = "1";
+  # };
+  # systemd.services.foldingathome.environment = {
+  #   RUSTICL_ENABLE = "1";
+  # };
+
   services = {
     hardware.openrgb = {
       enable = true;
     };
-
     # foldingathome = {
     #   enable = true;
     #   user = "codebam";
@@ -39,6 +45,14 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
+      extraCompatPackages = [ pkgs.proton-ge-bin ];
+      extest = {
+        enable = true;
+      };
+      gamescopeSession = {
+        enable = true;
+        args = [ "--expose-wayland" "-e" ];
+      };
     };
     gamemode = {
       enable = true;
@@ -69,10 +83,17 @@
         MINSTOP=hwmon6/pwm7=100 hwmon6/pwm6=100 hwmon6/pwm5=100 hwmon6/pwm4=100 hwmon6/pwm3=100 hwmon6/pwm2=100 hwmon6/pwm1=0
       '';
     };
-    # graphics = {
-    #   extraPackages = with pkgs; [
-    #     rocmPackages.clr.icd
-    #   ];
+    graphics = {
+      enable32Bit = true;
+      extraPackages = with pkgs; [
+        gamescope-wsi
+        # rocmPackages.clr.icd
+        mesa.opencl
+      ];
+    };
+    # amdgpu.amdvlk = {
+    #   enable = true;
+    #   support32Bit.enable = true;
     # };
   };
 
