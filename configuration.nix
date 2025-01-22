@@ -106,11 +106,16 @@
     pcscd.enable = true;
   };
 
+  users.mutableUsers = false;
+  # users.users.root = {
+  #   password = null;
+  # };
   users.users.codebam = {
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
     extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" ];
+    hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = with pkgs; [
       flatpak
     ];
@@ -209,8 +214,9 @@
   security = {
     polkit.enable = true;
     pam.services.swaylock = { };
+    pam.services.systemd-run0 = { };
     rtkit.enable = true;
-    # sudo.enable = false;
+    sudo.enable = false;
   };
 
   zramSwap.enable = true;
@@ -221,7 +227,6 @@
       extraPackages = [ pkgs.gamescope-wsi ];
     };
   };
-
 
   nixpkgs.overlays = [
     (final: prev: {
@@ -237,6 +242,14 @@
       #   patches = [];
       #   mesonFlags = lib.filter (flag: !(lib.isString flag && (builtins.match ".*clang-libdir.*" flag != null || builtins.match ".*opencl-spirv.*" flag != null))) old.mesonFlags;
       # });
+      sway = prev.sway.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "codebam";
+          repo = "sway";
+          rev = "8acb0482da68af69d52ab168f9e30e2464b9c7a3";
+          hash = "sha256-7WOgud8xXrSgoGnWL2Fmk+RfROaY8LcAo7pkeAqHFwA=";
+        };
+      });
     })
   ];
 
