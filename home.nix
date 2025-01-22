@@ -29,6 +29,7 @@
     shellAliases = {
       vi = "nvim";
       ls = "eza";
+      sudo = "run0";
     };
 
     stateVersion = "23.11";
