@@ -71,9 +71,35 @@
   };
 
   services = {
-    displayManager.sddm = { 
-      enable = true;
-      wayland.enable = true;
+    displayManager = {
+      sessionPackages = [
+        (pkgs.stdenv.mkDerivation rec {
+          pname = "flatpak-steam-session";
+          version = "1.0";
+          buildInputs = [ pkgs.flatpak pkgs.gamescope ];
+
+          passthru.providedSessions = ["flatpak-steam"];
+
+          src = pkgs.runCommand "flatpak-steam-session-source" { } ''
+            mkdir -p $out
+            echo "[Desktop Entry]
+            Name=Flatpak Steam (Gamescope)
+            Comment=Run Steam using Flatpak under Gamescope
+            Exec=${pkgs.gamescope}/bin/gamescope -- flatpak run com.valvesoftware.Steam
+            Type=Application" > $out/flatpak-steam.desktop
+          '';
+
+          # Install phase writes the session file directly
+          installPhase = ''
+            mkdir -p $out/share/wayland-sessions
+            cp ${src}/flatpak-steam.desktop $out/share/wayland-sessions/flatpak-steam.desktop
+          '';
+        })
+      ];
+      sddm = {
+        enable = true;
+        wayland.enable = true;
+      };
     };
     desktopManager.plasma6.enable = true;
     openssh = {
