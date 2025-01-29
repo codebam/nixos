@@ -28,6 +28,18 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
+  fileSystems."/games" = {
+    device = "/dev/disk/by-uuid/7d57a643-ac36-4e54-b873-0e19bd8a8645";
+    fsType = "btrfs";
+    options = [ "compress=zstd" ];
+  };
+
+  fileSystems."/backup" = {
+    device = "/dev/disk/by-uuid/a4058013-b85c-4bf0-a187-b459a23267a9";
+    fsType = "btrfs";
+    options = [ "compress=zstd" "nofail" ];
+  };
+
   swapDevices =
     [{ device = "/dev/disk/by-uuid/bd9fa5d1-b95d-4cd7-96d5-4f03c51f9f21"; }];
 
