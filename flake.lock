@@ -103,22 +103,6 @@
         "type": "github"
       }
     },
-    "flatpak-stable": {
-      "locked": {
-        "lastModified": 1737365585,
-        "narHash": "sha256-TPb4u+RWxnGjhpaPzA8hEGXoXExDFjXRREtTIKOEg/w=",
-        "owner": "getchoo-contrib",
-        "repo": "nixpkgs",
-        "rev": "e0ad51e807741ea879b7b152b0573953f55897d2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "getchoo-contrib",
-        "ref": "pkgs/flatpak/1.16.0",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
@@ -148,11 +132,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1738192575,
-        "narHash": "sha256-2DFgkx6GgLqYyTR/wtEk+EiMiAuFZo7D4LfKjTDKLTc=",
+        "lastModified": 1738741704,
+        "narHash": "sha256-+XVScrF7Yymk9659dFb/ikCIET7DblHBVgK3RTW8mQg=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "697ba1319fdc58c94dc94cd7908df554dc48d970",
+        "rev": "3b6fde96d8b41a4a21cbacba8de7debf7ea78021",
         "type": "github"
       },
       "original": {
@@ -186,14 +170,27 @@
         "type": "github"
       }
     },
+    "linux-custom": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1738725802,
+        "narHash": "sha256-uvXSqYk0TiMxVzBlKnCPBmvbDtH3b+LNcwdUObWOK0w=",
+        "path": "/home/codebam/git/linux",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/codebam/git/linux",
+        "type": "path"
+      }
+    },
     "lix": {
       "flake": false,
       "locked": {
-        "lastModified": 1738174211,
-        "narHash": "sha256-eYmp1mKM4kULV1W+EBtCPk6LmKWl2REivaYfGRl+AWo=",
+        "lastModified": 1738690832,
+        "narHash": "sha256-gHJkxfk4ePMx5lhcF12r28lX6WdaH+a4y6GZhlaRQ1I=",
         "ref": "refs/heads/main",
-        "rev": "64e33a7e09a0d1faacf2fd3f6ebd647fe4d8346a",
-        "revCount": 17329,
+        "rev": "8553adbb414167d969ba720cae02ab0694f38bd4",
+        "revCount": 17359,
         "type": "git",
         "url": "https://git.lix.systems/lix-project/lix.git"
       },
@@ -261,11 +258,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1738178544,
-        "narHash": "sha256-UbM+zJFlze877N5j2YMLKYFX7t05VvmuNX2M0vJ7RfI=",
+        "lastModified": 1738712492,
+        "narHash": "sha256-l+W3M/tssZKyE6xHHj9zadYTZ9BrevVhem+6KxyrBBk=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "975ac0ab33ee7fea64842047a96f5d679d90913c",
+        "rev": "730c3a8ddf044683369f6184e47a23431f19823d",
         "type": "github"
       },
       "original": {
@@ -305,9 +302,9 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
-        "flatpak-stable": "flatpak-stable",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
+        "linux-custom": "linux-custom",
         "lix": "lix",
         "lix-module": "lix-module",
         "nixpkgs": "nixpkgs_2"
