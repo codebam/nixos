@@ -22,8 +22,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lix.follows = "lix";
     };
+    linux-custom = {
+      url = "path:/home/codebam/git/linux";
+      flake = false;
+    };
     catppuccin.url = "github:catppuccin/nix";
-    flatpak-stable.url = "github:getchoo-contrib/nixpkgs/pkgs/flatpak/1.16.0";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, lix-module, lix, ... }@inputs: {

@@ -256,7 +256,7 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      flatpak = inputs.flatpak-stable.legacyPackages.${pkgs.system}.flatpak;
+      # flatpak = inputs.flatpak-stable.legacyPackages.${pkgs.system}.flatpak;
       # mesa = prev.mesa.overrideAttrs (old: {
       #   src = prev.fetchFromGitLab {
       #     domain = "gitlab.freedesktop.org";
