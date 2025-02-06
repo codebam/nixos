@@ -14,6 +14,26 @@
   environment.systemPackages = [
   ];
 
+  systemd.services.applyGpuSettings = {
+    description = "Apply GPU Overclocking and Power Limit Settings";
+    after = [ "multi-user.target" ];
+    wantedBy = [ "graphical.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "s 1 3200" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "m 1 1325" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon9/power1_cap
+    '';
+  };
+
+
   # environment.variables = {
   #   RUSTICL_ENABLE = "1";
   # };
@@ -113,13 +133,14 @@
   #   })
   # ];
 
-  # nixpkgs.overlays = [
-  #   (final: prev: {
-  #     # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  #     # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  #     # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
-  #   })
-  # ];
+  nixpkgs.overlays = [
+    (final: prev: {
+      # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
+      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
+      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
+      # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
+    })
+  ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "steam"

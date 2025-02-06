@@ -22,10 +22,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lix.follows = "lix";
     };
-    linux-custom = {
-      url = "path:/home/codebam/git/linux";
-      flake = false;
-    };
+    # rocm = {
+    #   url = "github:lunnova/nixpkgs/rocm-update";
+    # };
+    # linux-custom = {
+    #   url = "path:/home/codebam/git/linux";
+    #   flake = false;
+    # };
     catppuccin.url = "github:catppuccin/nix";
   };
 
