@@ -11,7 +11,7 @@
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages;
+    kernelPackages = pkgs.linuxPackages_latest;
     # kernelPackages = let
     #   linux_custom_pkg = { buildLinux, ... } @ args:
     #     buildLinux (args // rec {
