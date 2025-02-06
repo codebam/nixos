@@ -83,7 +83,8 @@
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
-      gpuOverclock.ppfeaturemask = "0xffffffff";
+      # gpuOverclock.ppfeaturemask = "0xffffffff";
+      gpuOverclock.ppfeaturemask = "0xfff07fff";
     };
   };
 
