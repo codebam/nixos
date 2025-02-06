@@ -132,11 +132,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1738741704,
-        "narHash": "sha256-+XVScrF7Yymk9659dFb/ikCIET7DblHBVgK3RTW8mQg=",
+        "lastModified": 1738789832,
+        "narHash": "sha256-HdlMPfObPu5y7oDfH/w3vvlU3UTQ/bQjSULChZARm5M=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "3b6fde96d8b41a4a21cbacba8de7debf7ea78021",
+        "rev": "30ea6fed4e4b41693cebc2263373dd810de4de49",
         "type": "github"
       },
       "original": {
@@ -168,19 +168,6 @@
         "owner": "nix-community",
         "repo": "lanzaboote",
         "type": "github"
-      }
-    },
-    "linux-custom": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1738725802,
-        "narHash": "sha256-uvXSqYk0TiMxVzBlKnCPBmvbDtH3b+LNcwdUObWOK0w=",
-        "path": "/home/codebam/git/linux",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/codebam/git/linux",
-        "type": "path"
       }
     },
     "lix": {
@@ -258,11 +245,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1738712492,
-        "narHash": "sha256-l+W3M/tssZKyE6xHHj9zadYTZ9BrevVhem+6KxyrBBk=",
+        "lastModified": 1738758495,
+        "narHash": "sha256-CZ8T4vP3ag2hwkpSZjatxJb55ouszvmnWw09qxGW9TU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "730c3a8ddf044683369f6184e47a23431f19823d",
+        "rev": "ceaea203f3ae1787b1bd13f021f686391696fc5b",
         "type": "github"
       },
       "original": {
@@ -304,7 +291,6 @@
         "catppuccin": "catppuccin",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
-        "linux-custom": "linux-custom",
         "lix": "lix",
         "lix-module": "lix-module",
         "nixpkgs": "nixpkgs_2"

@@ -12,6 +12,18 @@
       systemd-boot.configurationLimit = 10;
     };
     kernelPackages = pkgs.linuxPackages;
+    # kernelPackages = let
+    #   linux_custom_pkg = { buildLinux, ... } @ args:
+    #     buildLinux (args // rec {
+    #       version = "6.12";
+    #       modDirVersion = version;
+    #       src = inputs.linux-custom;
+    #       kernelPatches = [];
+    #     } // (args.argsOverride or {}));
+    #   linux_custom = pkgs.callPackage linux_custom_pkg{};
+    # in
+    #   pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_custom);
+
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
