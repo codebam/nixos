@@ -496,7 +496,7 @@
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.trouble-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-        inputs.augment.legacyPackages.${pkgs.system}.vimPlugins.augment-vim
+        inputs.master.legacyPackages.${pkgs.system}.vimPlugins.augment-vim
       ];
     };
     # vim = {
