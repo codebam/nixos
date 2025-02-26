@@ -13,6 +13,8 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
+  boot.kernelParams = [ "drm.panic_screen=qr_code" ];
+  boot.kernel.sysctl."kernel.sysrq" = 1;
 
   fileSystems."/" =
     {

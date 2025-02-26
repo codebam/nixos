@@ -471,6 +471,7 @@
         set ts=2
         set undofile
         set undodir=$HOME/.vim/undodir
+        let g:augment_workspace_folders = ['~/git/seanbehan.ca', '~/git/cf-workers-telegram-bot']
       '';
       plugins = [
         pkgs.vimPlugins.catppuccin-vim
@@ -495,48 +496,49 @@
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.trouble-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+        inputs.augment.legacyPackages.${pkgs.system}.vimPlugins.augment-vim
       ];
     };
-    vim = {
-      enable = true;
-      settings = {
-        background = "dark";
-        expandtab = true;
-        ignorecase = true;
-        shiftwidth = 4;
-        smartcase = true;
-        tabstop = 8;
-        undodir = [ "$HOME/.vim/undodir" ];
-      };
-      extraConfig = ''
-        colorscheme catppuccin_mocha
-        let g:lightline = {
-              \ 'colorscheme': 'catppuccin_mocha',
-              \ }
-        let g:coc_disable_startup_warning = 1
-        map <leader>ac <Plug>(coc-codeaction-cursor)
-      '';
-      plugins = [
-        pkgs.vimPlugins.sensible
-        pkgs.vimPlugins.coc-nvim
-        pkgs.vimPlugins.coc-pyright
-        pkgs.vimPlugins.coc-prettier
-        pkgs.vimPlugins.coc-eslint
-        pkgs.vimPlugins.coc-snippets
-        pkgs.vimPlugins.coc-json
-        pkgs.vimPlugins.coc-svelte
-        pkgs.vimPlugins.commentary
-        pkgs.vimPlugins.sleuth
-        pkgs.vimPlugins.surround
-        pkgs.vimPlugins.fugitive
-        pkgs.vimPlugins.gitgutter
-        pkgs.vimPlugins.vim-javascript
-        pkgs.vimPlugins.lightline-vim
-        pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.vim-snippets
-        pkgs.vimPlugins.catppuccin-vim
-      ];
-    };
+    # vim = {
+    #   enable = true;
+    #   settings = {
+    #     background = "dark";
+    #     expandtab = true;
+    #     ignorecase = true;
+    #     shiftwidth = 4;
+    #     smartcase = true;
+    #     tabstop = 8;
+    #     undodir = [ "$HOME/.vim/undodir" ];
+    #   };
+    #   extraConfig = ''
+    #     colorscheme catppuccin_mocha
+    #     let g:lightline = {
+    #           \ 'colorscheme': 'catppuccin_mocha',
+    #           \ }
+    #     let g:coc_disable_startup_warning = 1
+    #     map <leader>ac <Plug>(coc-codeaction-cursor)
+    #   '';
+    #   plugins = [
+    #     pkgs.vimPlugins.sensible
+    #     pkgs.vimPlugins.coc-nvim
+    #     pkgs.vimPlugins.coc-pyright
+    #     pkgs.vimPlugins.coc-prettier
+    #     pkgs.vimPlugins.coc-eslint
+    #     pkgs.vimPlugins.coc-snippets
+    #     pkgs.vimPlugins.coc-json
+    #     pkgs.vimPlugins.coc-svelte
+    #     pkgs.vimPlugins.commentary
+    #     pkgs.vimPlugins.sleuth
+    #     pkgs.vimPlugins.surround
+    #     pkgs.vimPlugins.fugitive
+    #     pkgs.vimPlugins.gitgutter
+    #     pkgs.vimPlugins.vim-javascript
+    #     pkgs.vimPlugins.lightline-vim
+    #     pkgs.vimPlugins.todo-comments-nvim
+    #     pkgs.vimPlugins.vim-snippets
+    #     pkgs.vimPlugins.catppuccin-vim
+    #   ];
+    # };
     git = {
       enable = true;
       userEmail = "codebam@riseup.net";
@@ -555,7 +557,7 @@
       keyMode = "vi";
       clock24 = true;
       plugins = with pkgs; [
-        tmuxPlugins.resurrect
+        # tmuxPlugins.resurrect
       ];
       extraConfig = ''
         set -ga terminal-overrides ",*256col*:Tc"
