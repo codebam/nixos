@@ -13,15 +13,15 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lix = {
-      url = "git+https://git.lix.systems/lix-project/lix.git";
-      flake = false;
-    };
-    lix-module = {
-      url = "git+https://git.lix.systems/lix-project/nixos-module.git";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.lix.follows = "lix";
-    };
+    # lix = {
+    #   url = "git+https://git.lix.systems/lix-project/lix.git";
+    #   flake = false;
+    # };
+    # lix-module = {
+    #   url = "git+https://git.lix.systems/lix-project/nixos-module.git";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.lix.follows = "lix";
+    # };
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
     # };
@@ -30,16 +30,16 @@
     #   flake = false;
     # };
     catppuccin.url = "github:catppuccin/nix";
+    augment.url = "github:codebam/nixpkgs/augment.vim";
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, lix-module, lix, ... }@inputs: {
+  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
     nixosConfigurations.nixos-desktop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         ./configuration.nix
         ./desktop/configuration.nix
-        lix-module.nixosModules.default
         catppuccin.nixosModules.catppuccin
         lanzaboote.nixosModules.lanzaboote
         ({ pkgs, lib, ... }: {

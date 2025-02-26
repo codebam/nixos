@@ -223,23 +223,23 @@
   };
 
   virtualisation = {
-    libvirtd = {
-      enable = true;
-      qemu = {
-        package = pkgs.qemu_kvm;
-        runAsRoot = true;
-        swtpm.enable = true;
-        ovmf = {
-          enable = true;
-          packages = [
-            (pkgs.OVMF.override {
-              secureBoot = true;
-              tpmSupport = true;
-            }).fd
-          ];
-        };
-      };
-    };
+    # libvirtd = {
+    #   enable = true;
+    #   qemu = {
+    #     package = pkgs.qemu_kvm;
+    #     runAsRoot = true;
+    #     swtpm.enable = true;
+    #     ovmf = {
+    #       enable = true;
+    #       packages = [
+    #         (pkgs.OVMF.override {
+    #           secureBoot = true;
+    #           tpmSupport = true;
+    #         }).fd
+    #       ];
+    #     };
+    #   };
+    # };
     containers = {
       enable = true;
     };
@@ -280,14 +280,14 @@
       #   patches = [];
       #   mesonFlags = lib.filter (flag: !(lib.isString flag && (builtins.match ".*clang-libdir.*" flag != null || builtins.match ".*opencl-spirv.*" flag != null))) old.mesonFlags;
       # });
-      sway = prev.sway.overrideAttrs (old: {
-        src = prev.fetchFromGitHub {
-          owner = "codebam";
-          repo = "sway";
-          rev = "8acb0482da68af69d52ab168f9e30e2464b9c7a3";
-          hash = "sha256-7WOgud8xXrSgoGnWL2Fmk+RfROaY8LcAo7pkeAqHFwA=";
-        };
-      });
+      # sway = prev.sway.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "codebam";
+      #     repo = "sway";
+      #     rev = "8acb0482da68af69d52ab168f9e30e2464b9c7a3";
+      #     hash = "sha256-7WOgud8xXrSgoGnWL2Fmk+RfROaY8LcAo7pkeAqHFwA=";
+      #   };
+      # });
     })
   ];
 

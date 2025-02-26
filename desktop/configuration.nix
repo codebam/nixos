@@ -42,6 +42,22 @@
   # };
 
   services = {
+    xmrig = {
+      enable = false;
+      settings = {
+        autosave = true;
+        cpu = true;
+        opencl = false;
+        cuda = false;
+        pools = [{
+          url = "pool.supportxmr.com:443";
+          user = "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
+          keepalive = true;
+          tls = true;
+        }];
+      };
+    };
+
     hardware.openrgb = {
       enable = true;
     };
@@ -83,8 +99,7 @@
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
-      # gpuOverclock.ppfeaturemask = "0xffffffff";
-      gpuOverclock.ppfeaturemask = "0xfff07fff";
+      gpuOverclock.ppfeaturemask = "0xffffffff";
     };
   };
 
