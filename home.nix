@@ -16,7 +16,6 @@
         pass-otp
         pass-genphrase
       ]))
-      aerc
       bat
       eza
       grim
@@ -75,7 +74,7 @@
       systemd.enable = true;
       config = rec {
         inherit modifier;
-        terminal = "foot";
+        terminal = "wezterm";
         menu = "${pkgs.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
         fonts = {
           names = [ "Noto Sans" "FontAwesome" ];
@@ -151,7 +150,8 @@
         };
         bars = [{
           position = "top";
-          statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+          # statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+          statusCommand = "{pkgs.i3status}/bin/i3status";
           hiddenState = "hide";
           trayOutput = "none";
           fonts = {
@@ -272,9 +272,9 @@
       enableBashIntegration = true;
       enableFishIntegration = true;
     };
-    i3status-rust = {
-      enable = true;
-    };
+    # i3status-rust = {
+    #   enable = true;
+    # };
     swaylock = {
       enable = true;
     };
@@ -496,7 +496,7 @@
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.trouble-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-        inputs.master.legacyPackages.${pkgs.system}.vimPlugins.augment-vim
+        pkgs.vimPlugins.augment-vim
       ];
     };
     # vim = {

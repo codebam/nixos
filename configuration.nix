@@ -53,6 +53,28 @@
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
+    # wireguard = {
+    #   interfaces = {
+    #     wg0 = {
+    #       ips = [
+    #         "10.128.251.130/32"
+    #         "fc00:bbbb:bbbb:bb01:d::fb82/128"
+    #       ];
+    #       privateKey = "ANbBaaTEjylLrs8FJ2ynPvVOoNt0+8+eRZcH9OVPCn0=";
+    #       peers = [
+    #         {
+    #           publicKey = "uhbuY1A7g0yNu0lRhLTi020kYeAx34ED30BA5DQRHFo=";
+    #           allowedIPs = [
+    #             "0.0.0.0/0"
+    #             "::/0"
+    #           ];
+    #           endpoint = "178.249.214.2:3431";
+    #           persistentKeepalive = 25;
+    #         }
+    #       ];
+    #     };
+    #   };
+    # };
   };
 
   time.timeZone = "America/Toronto";
@@ -172,6 +194,8 @@
     discord-rpc
     mangohud
     steamtinkerlaunch
+    vscodium
+    # inputs.firefox-nightly.packages.${pkgs.system}.firefox-nightly-bin
   ];
 
   fonts = {
@@ -223,23 +247,23 @@
   };
 
   virtualisation = {
-    # libvirtd = {
-    #   enable = true;
-    #   qemu = {
-    #     package = pkgs.qemu_kvm;
-    #     runAsRoot = true;
-    #     swtpm.enable = true;
-    #     ovmf = {
-    #       enable = true;
-    #       packages = [
-    #         (pkgs.OVMF.override {
-    #           secureBoot = true;
-    #           tpmSupport = true;
-    #         }).fd
-    #       ];
-    #     };
-    #   };
-    # };
+    libvirtd = {
+      enable = true;
+      qemu = {
+        package = pkgs.qemu_kvm;
+        runAsRoot = true;
+        swtpm.enable = true;
+        ovmf = {
+          enable = true;
+          packages = [
+            (pkgs.OVMF.override {
+              secureBoot = true;
+              tpmSupport = true;
+            }).fd
+          ];
+        };
+      };
+    };
     containers = {
       enable = true;
     };
@@ -268,6 +292,7 @@
 
   nixpkgs.overlays = [
     (final: prev: {
+      # mesa = inputs.mesa-25.legacyPackages.${pkgs.system}.mesa;
       # flatpak = inputs.flatpak-stable.legacyPackages.${pkgs.system}.flatpak;
       # mesa = prev.mesa.overrideAttrs (old: {
       #   src = prev.fetchFromGitLab {
