@@ -105,6 +105,39 @@
   };
 
   services = {
+    kanata = {
+      enable = true;
+      keyboards = {
+        "keyboard".config = ''
+(defsrc
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet lalt           spc            ralt rmet rctl
+)
+(deflayer qwerty
+  @grl 1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  @lctl lmet lalt           spc            ralt rmet rctl
+)
+(deflayer layers
+  _    @qwr lrld _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _              _              _    _    _
+)
+(defalias
+  grl (tap-hold 200 200 grv (layer-toggle layers))
+  lctl (tap-hold 200 200 caps lctl)
+  qwr (layer-switch qwerty)
+)
+        '';
+      };
+    };
     displayManager = {
       sessionPackages = [
         (pkgs.stdenv.mkDerivation rec {
@@ -174,7 +207,7 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" ];
+    extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" "uinput" ];
     hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = with pkgs; [
       flatpak
@@ -244,6 +277,7 @@
         };
       };
     };
+    uinput.enable = true;
   };
 
   virtualisation = {
