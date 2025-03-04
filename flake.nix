@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     # staging-next.url = "github:nixos/nixpkgs/staging-next";
-    master.url = "github:nixos/nixpkgs";
+    # master.url = "github:nixos/nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +29,8 @@
     #   url = "path:/home/codebam/git/linux";
     #   flake = false;
     # };
+    # firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
+    # mesa-25.url = "github:K900/nixpkgs/mesa-25.0";
     catppuccin.url = "github:catppuccin/nix";
   };
 
