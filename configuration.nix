@@ -125,7 +125,7 @@
 )
 (deflayer layers
   _    @qwr lrld _    _    _    _    _    _    _    _    _    _    _
-  _    @sml _    _    _    _    _    _    _    _    _    _    _    _
+  @dms @dr0 @dp0 _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _              _              _    _    _
@@ -133,7 +133,9 @@
 (defalias
   \ (tap-hold 200 200 \ (layer-toggle layers))
   qwr (layer-switch qwerty)
-  sml (unicode 😀)
+  dr0 (dynamic-macro-record 0)
+  dp0 (dynamic-macro-play 0)
+  dms dynamic-macro-record-stop
 )
         '';
       };
