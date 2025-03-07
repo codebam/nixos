@@ -32,9 +32,14 @@
     # firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     # mesa-25.url = "github:K900/nixpkgs/mesa-25.0";
     catppuccin.url = "github:catppuccin/nix";
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, ... }@inputs: {
+  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, plasma-manager, ... }@inputs: {
     nixosConfigurations.nixos-desktop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
@@ -65,6 +70,7 @@
               catppuccin.homeManagerModules.catppuccin
             ];
           };
+          home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
         }
       ];
     };
@@ -98,6 +104,7 @@
               catppuccin.homeManagerModules.catppuccin
             ];
           };
+          home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
         }
       ];
     };

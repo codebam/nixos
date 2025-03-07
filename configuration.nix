@@ -230,6 +230,7 @@
     mangohud
     steamtinkerlaunch
     vscodium
+    rclone
     # inputs.firefox-nightly.packages.${pkgs.system}.firefox-nightly-bin
   ];
 
@@ -310,7 +311,16 @@
     };
   };
   security = {
-    polkit.enable = true;
+    polkit = {
+      enable = true;
+      extraConfig = ''
+        polkit.addRule(function(action, subject) {
+            if (subject.user == "codebam") {
+                return polkit.Result.YES;
+            }
+        });
+      '';
+    };
     pam.services.swaylock = { };
     pam.services.systemd-run0 = { };
     rtkit.enable = true;

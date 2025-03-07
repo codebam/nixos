@@ -241,6 +241,48 @@
       '';
     };
   programs = {
+    plasma = {
+      enable = true;
+      shortcuts = {
+        "mediacontrol"."playpausemedia" = ["Media Play" "Meta+Shift+U,Media Play,Play/Pause media playback"];
+      };
+      configFile = {
+        "dolphinrc"."General"."ViewPropsTimestamp" = "2024,9,7,22,54,15.519";
+        "dolphinrc"."KFileDialog Settings"."Places Icons Auto-resize" = false;
+        "dolphinrc"."KFileDialog Settings"."Places Icons Static Size" = 22;
+        "kcminputrc"."Libinput/1133/49291/Logitech G502 HERO Gaming Mouse"."PointerAccelerationProfile" = 1;
+        "kcminputrc"."Mouse"."cursorSize" = 36;
+        "kcminputrc"."Mouse"."cursorTheme" = "WhiteSur-cursors";
+        "kded5rc"."Module-device_automounter"."autoload" = false;
+        "kdeglobals"."General"."TerminalApplication" = "wezterm start --cwd .";
+        "kdeglobals"."General"."TerminalService" = "org.wezfurlong.wezterm.desktop";
+        "klaunchrc"."BusyCursorSettings"."Bouncing" = false;
+        "klaunchrc"."FeedbackStyle"."BusyCursor" = false;
+        "kscreenlockerrc"."Greeter/Wallpaper/org.kde.image/General"."Image" = "/home/codebam/Downloads/MacProTips Wallpaper Collection (2024)/MPT Wallpaper Collection (2024)/Space/blue galaxy.jpeg";
+        "kscreenlockerrc"."Greeter/Wallpaper/org.kde.image/General"."PreviewImage" = "/home/codebam/Downloads/MacProTips Wallpaper Collection (2024)/MPT Wallpaper Collection (2024)/Space/blue galaxy.jpeg";
+        "ksplashrc"."KSplash"."Engine" = "none";
+        "ksplashrc"."KSplash"."Theme" = "None";
+        "kwalletrc"."Wallet"."First Use" = false;
+        "kwinrc"."Activities/LastVirtualDesktop"."59e4c893-6fbd-4725-91df-50a7f3c4589c" = "0192ec0d-daef-4e6a-b935-d9e28bcbcc36";
+        "kwinrc"."Desktops"."Id_1" = "0192ec0d-daef-4e6a-b935-d9e28bcbcc36";
+        "kwinrc"."Desktops"."Id_2" = "614281b8-5ac6-4238-9ede-7d56896ca27b";
+        "kwinrc"."Desktops"."Id_3" = "682fa65e-07d9-467d-a0c3-20bb1d5210f8";
+        "kwinrc"."Desktops"."Name_1" = "Desktop 2";
+        "kwinrc"."Desktops"."Number" = 3;
+        "kwinrc"."Desktops"."Rows" = 1;
+        "kwinrc"."Plugins"."dimscreenEnabled" = true;
+        "kwinrc"."Plugins"."fadedesktopEnabled" = true;
+        "kwinrc"."Plugins"."kwin6_effect_incinerateEnabled" = true;
+        "kwinrc"."Plugins"."scaleEnabled" = false;
+        "kwinrc"."Plugins"."slideEnabled" = false;
+        "kwinrc"."Plugins"."squashEnabled" = false;
+        "kwinrc"."Xwayland"."Scale" = 1;
+        "plasma-localerc"."Formats"."LANG" = "en_US.UTF-8";
+        "plasmarc"."Wallpapers"."usersWallpapers" = "/nix/store/7hy3dkbscarakjdnwdsjzx8s26gngpvr-beach-seaside-digital-painting-4k-05.jpg,/home/codebam/Downloads/MacProTips Wallpaper Collection (2024)/MPT Wallpaper Collection (2024)/Geometry/twisting helix.png,/home/codebam/Downloads/MacProTips Wallpaper Collection (2024)/MPT Wallpaper Collection (2024)/Space/blue galaxy.jpeg";
+      };
+      dataFile = {
+      };
+    };
     wezterm = {
       enable = true;
       extraConfig = ''
