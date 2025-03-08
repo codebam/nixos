@@ -11,7 +11,7 @@
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_xanmod_latest;
     # kernelPackages = let
     #   linux_custom_pkg = { buildLinux, ... } @ args:
     #     buildLinux (args // rec {
@@ -117,8 +117,8 @@
   lctl lmet lalt           spc            ralt rmet rctl
 )
 (deflayer qwerty
-  grv 1    2    3    4    5    6    7    8    9    0    -    =    bspc
-  tab  q    w    e    r    t    y    u    i    o    p    [    ]    @\
+  grv 1    2    3    4    5    6    7    8    9    0    -    @=    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
   caps a    s    d    f    g    h    j    k    l    ;    '    ret
   lsft z    x    c    v    b    n    m    ,    .    /    rsft
   lctl lmet lalt           spc            ralt rmet rctl
@@ -131,7 +131,7 @@
   _    _    _              _              _    _    _
 )
 (defalias
-  \ (tap-hold 200 200 \ (layer-toggle layers))
+  = (tap-hold 200 200 = (layer-toggle layers))
   qwr (layer-switch qwerty)
   dr0 (dynamic-macro-record 0)
   dp0 (dynamic-macro-play 0)
