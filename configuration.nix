@@ -1,4 +1,4 @@
-{ pkgs, inputs, lib, ... }:
+{ pkgs, ... }:
 
 {
   # systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
@@ -11,18 +11,6 @@
       efi.canTouchEfiVariables = true;
       systemd-boot.configurationLimit = 10;
     };
-    kernelPackages = pkgs.linuxPackages_xanmod_latest;
-    # kernelPackages = let
-    #   linux_custom_pkg = { buildLinux, ... } @ args:
-    #     buildLinux (args // rec {
-    #       version = "6.12";
-    #       modDirVersion = version;
-    #       src = inputs.linux-custom;
-    #       kernelPatches = [];
-    #     } // (args.argsOverride or {}));
-    #   linux_custom = pkgs.callPackage linux_custom_pkg{};
-    # in
-    #   pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_custom);
 
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
@@ -105,6 +93,10 @@
   };
 
   services = {
+    scx = {
+      enable = true;
+      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+    };
     kanata = {
       enable = true;
       keyboards = {

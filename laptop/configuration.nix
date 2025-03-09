@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports =
@@ -10,6 +10,8 @@
   networking = {
     hostName = "nixos-laptop";
   };
+
+  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
 
   nixpkgs.overlays = [
     (final: prev: {
