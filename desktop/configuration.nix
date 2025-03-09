@@ -14,6 +14,17 @@
   environment.systemPackages = [
   ];
 
+  boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_xanmod_latest.overrideAttrs (oldAttrs: {
+    NIX_CFLAGS_COMPILE = (oldAttrs.NIX_CFLAGS_COMPILE or []) ++ [
+      "-march=x86-64-v3"
+      "-mtune=znver3"
+    ];
+  }));
+  # nixpkgs.hostPlatform = {
+  #   system = "x86_64-linux";
+  #   gcc.arch = "x86-64-v3";
+  # };
+
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
     after = [ "multi-user.target" ];
