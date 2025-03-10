@@ -11,7 +11,7 @@
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usb_storage" "usbhid" "uas" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" "amd_3d_vcache" ];
+  boot.kernelModules = [ "kvm-amd" "amd_3d_vcache" "ntsync" ];
   boot.extraModulePackages = [ config.boot.kernelPackages.zenergy ];
   boot.kernelParams = [ "drm.panic_screen=qr_code" ];
   boot.kernel.sysctl."kernel.sysrq" = 1;

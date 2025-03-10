@@ -1,7 +1,6 @@
 { pkgs, ... }:
 
 {
-  # systemd.package = inputs.staging-next.legacyPackages.${pkgs.system}.systemd;
   boot = {
     loader = {
       systemd-boot = {
@@ -41,28 +40,6 @@
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
-    # wireguard = {
-    #   interfaces = {
-    #     wg0 = {
-    #       ips = [
-    #         "10.128.251.130/32"
-    #         "fc00:bbbb:bbbb:bb01:d::fb82/128"
-    #       ];
-    #       privateKey = "ANbBaaTEjylLrs8FJ2ynPvVOoNt0+8+eRZcH9OVPCn0=";
-    #       peers = [
-    #         {
-    #           publicKey = "uhbuY1A7g0yNu0lRhLTi020kYeAx34ED30BA5DQRHFo=";
-    #           allowedIPs = [
-    #             "0.0.0.0/0"
-    #             "::/0"
-    #           ];
-    #           endpoint = "178.249.214.2:3431";
-    #           persistentKeepalive = 25;
-    #         }
-    #       ];
-    #     };
-    #   };
-    # };
   };
 
   time.timeZone = "America/Toronto";
