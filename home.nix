@@ -359,6 +359,8 @@
       sessionVariables = {
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         FLATPAK_GL_DRIVERS = "mesa-git";
+        PROTON_ENABLE_WAYLAND = "1";
+        PROTON_USE_NTSYNC = "1";
       };
     };
     neovim = {
