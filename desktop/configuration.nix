@@ -34,13 +34,13 @@
       RemainAfterExit = true;
     };
     script = ''
-      echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "s 1 3200" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "m 1 1325" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "s 1 3200" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "m 1 1325" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "325000000" | tee /sys/class/drm/card1/device/hwmon/hwmon10/power1_cap
+      echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon10/power1_cap
     '';
   };
 
