@@ -1,4 +1,4 @@
-{ pkgs, enableXWayland, ... }:
+{ pkgs, lib, ... }:
 
 {
   boot = {
@@ -208,6 +208,7 @@
     steamtinkerlaunch
     vscodium
     rclone
+    # mpv
     # inputs.firefox-nightly.packages.${pkgs.system}.firefox-nightly-bin
   ];
 
@@ -349,6 +350,31 @@
           })
         ];
         buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+      });
+      mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "mpv-player";
+          repo = "mpv";
+          rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
+          hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
+        };
+        postPatch = lib.concatStringsSep "\n" [
+    # Don't reference compile time dependencies or create a build outputs cycle
+    # between out and dev
+    ''
+      substituteInPlace meson.build \
+        --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
+                       "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
+    ''
+    # A trick to patchShebang everything except mpv_identify.sh
+    ''
+      pushd TOOLS
+      mv mpv_identify.sh mpv_identify
+      patchShebangs *.py *.sh
+      mv mpv_identify mpv_identify.sh
+      popd
+    ''
+  ];
       });
     })
   ];
