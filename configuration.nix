@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, enableXWayland, ... }:
 
 {
   boot = {
@@ -37,6 +37,14 @@
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 8211 25565 ];
+      allowedTCPPortRanges = [
+        { from = 27015; to = 27030; }
+        { from = 27036; to = 27037; }
+      ];
+      allowedUDPPorts = [ 4380 27036 ];
+      allowedUDPPortRanges = [
+        { from = 27000; to = 27031; }
+      ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
@@ -307,27 +315,41 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      # mesa = inputs.mesa-25.legacyPackages.${pkgs.system}.mesa;
-      # flatpak = inputs.flatpak-stable.legacyPackages.${pkgs.system}.flatpak;
-      # mesa = prev.mesa.overrideAttrs (old: {
-      #   src = prev.fetchFromGitLab {
-      #     domain = "gitlab.freedesktop.org";
-      #     owner = "mesa";
-      #     repo = "mesa";
-      #     rev = "0d29ddb328da76db391640a4186ee5a0bf078076";
-      #     hash = "sha256-xvhwTZWyj34eL34G6geHFmWMqr+PpRQoKcKi+qnTEXc=";
-      #   };
-      #   patches = [];
-      #   mesonFlags = lib.filter (flag: !(lib.isString flag && (builtins.match ".*clang-libdir.*" flag != null || builtins.match ".*opencl-spirv.*" flag != null))) old.mesonFlags;
-      # });
-      # sway = prev.sway.overrideAttrs (old: {
-      #   src = prev.fetchFromGitHub {
-      #     owner = "codebam";
-      #     repo = "sway";
-      #     rev = "8acb0482da68af69d52ab168f9e30e2464b9c7a3";
-      #     hash = "sha256-7WOgud8xXrSgoGnWL2Fmk+RfROaY8LcAo7pkeAqHFwA=";
-      #   };
-      # });
+      wlroots = prev.wlroots.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "codebam";
+          repo = "wlroots";
+          rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
+          hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
+        };
+        # patches = (old.patches or []) ++ [
+        #   (prev.fetchpatch {
+        #     # color-management-v1
+        #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
+        #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
+        #   })
+        #   (prev.fetchpatch {
+        #     # hdr10 support
+        #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
+        #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
+        #   })
+        # ];
+      });
+      sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "swaywm";
+          repo = "sway";
+          rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
+          hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
+        };
+        patches = (old.patches or []) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
+            hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
+          })
+        ];
+        buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+      });
     })
   ];
 

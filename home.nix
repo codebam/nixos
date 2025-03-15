@@ -127,6 +127,7 @@
             mode = "3840x1600@143.998Hz";
             adaptive_sync = "on";
             subpixel = "none";
+            render_bit_depth = "10";
           };
           "eDP-1" = {
             scale = "1.5";
@@ -150,8 +151,8 @@
         };
         bars = [{
           position = "top";
-          # statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
-          statusCommand = "{pkgs.i3status}/bin/i3status";
+          statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+          # statusCommand = "{pkgs.i3status}/bin/i3status";
           hiddenState = "hide";
           trayOutput = "none";
           fonts = {
@@ -357,10 +358,14 @@
         }
       '';
       sessionVariables = {
+        MANGOHUD = "1";
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         FLATPAK_GL_DRIVERS = "mesa-git";
         PROTON_ENABLE_WAYLAND = "1";
         PROTON_USE_NTSYNC = "1";
+        DXVK_HDR = "1";
+        ENABLE_HDR_WSI = "1";
+        WLR_RENDERER = "vulkan";
       };
     };
     neovim = {
