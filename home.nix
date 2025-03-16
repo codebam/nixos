@@ -358,14 +358,12 @@
         }
       '';
       sessionVariables = {
+        FLATPAK_GL_DRIVERS = "mesa-git";
+        WLR_RENDERER = "vulkan";
         MANGOHUD = "1";
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
-        FLATPAK_GL_DRIVERS = "mesa-git";
         PROTON_ENABLE_WAYLAND = "1";
-        PROTON_USE_NTSYNC = "1";
         DXVK_HDR = "1";
-        ENABLE_HDR_WSI = "1";
-        WLR_RENDERER = "vulkan";
       };
     };
     neovim = {
