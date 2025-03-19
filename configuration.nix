@@ -78,6 +78,9 @@
   };
 
   services = {
+    udev.extraRules = ''
+      KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
+    '';
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
