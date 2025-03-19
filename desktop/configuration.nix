@@ -14,12 +14,13 @@
   environment.systemPackages = [
   ];
 
-  boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_xanmod_latest.overrideAttrs (oldAttrs: {
-    NIX_CFLAGS_COMPILE = (oldAttrs.NIX_CFLAGS_COMPILE or []) ++ [
-      "-march=x86-64-v3"
-      "-mtune=znver3"
-    ];
-  }));
+  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
+  # boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_xanmod_latest.overrideAttrs (oldAttrs: {
+  #   NIX_CFLAGS_COMPILE = (oldAttrs.NIX_CFLAGS_COMPILE or []) ++ [
+  #     "-march=x86-64-v3"
+  #     "-mtune=znver3"
+  #   ];
+  # }));
   # nixpkgs.hostPlatform = {
   #   system = "x86_64-linux";
   #   gcc.arch = "x86-64-v3";
@@ -35,12 +36,12 @@
     };
     script = ''
       # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "s 1 3100" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "s 1 3100" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "m 1 1275" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon10/power1_cap
+      # echo "m 1 1225" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
     '';
   };
 
