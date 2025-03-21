@@ -78,6 +78,7 @@
   };
 
   services = {
+    nixseparatedebuginfod.enable = true;
     udev.extraRules = ''
       KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
     '';
