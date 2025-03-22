@@ -78,7 +78,7 @@
   };
 
   services = {
-    nixseparatedebuginfod.enable = true;
+    # nixseparatedebuginfod.enable = true;
     udev.extraRules = ''
       KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
     '';
@@ -320,66 +320,66 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      wlroots = prev.wlroots.overrideAttrs (old: {
-        src = prev.fetchFromGitHub {
-          owner = "codebam";
-          repo = "wlroots";
-          rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
-          hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
-        };
-        # patches = (old.patches or []) ++ [
-        #   (prev.fetchpatch {
-        #     # color-management-v1
-        #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
-        #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
-        #   })
-        #   (prev.fetchpatch {
-        #     # hdr10 support
-        #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
-        #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
-        #   })
-        # ];
-      });
-      sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
-        src = prev.fetchFromGitHub {
-          owner = "swaywm";
-          repo = "sway";
-          rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
-          hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
-        };
-        patches = (old.patches or []) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
-            hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
-          })
-        ];
-        buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
-      });
-      mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
-        src = prev.fetchFromGitHub {
-          owner = "mpv-player";
-          repo = "mpv";
-          rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
-          hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
-        };
-        postPatch = lib.concatStringsSep "\n" [
-    # Don't reference compile time dependencies or create a build outputs cycle
-    # between out and dev
-    ''
-      substituteInPlace meson.build \
-        --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
-                       "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
-    ''
-    # A trick to patchShebang everything except mpv_identify.sh
-    ''
-      pushd TOOLS
-      mv mpv_identify.sh mpv_identify
-      patchShebangs *.py *.sh
-      mv mpv_identify mpv_identify.sh
-      popd
-    ''
-  ];
-      });
+      # wlroots = prev.wlroots.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "codebam";
+      #     repo = "wlroots";
+      #     rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
+      #     hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
+      #   };
+      #   # patches = (old.patches or []) ++ [
+      #   #   (prev.fetchpatch {
+      #   #     # color-management-v1
+      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
+      #   #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
+      #   #   })
+      #   #   (prev.fetchpatch {
+      #   #     # hdr10 support
+      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
+      #   #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
+      #   #   })
+      #   # ];
+      # });
+      # sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "swaywm";
+      #     repo = "sway";
+      #     rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
+      #     hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
+      #   };
+      #   patches = (old.patches or []) ++ [
+      #     (prev.fetchpatch {
+      #       url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
+      #       hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
+      #     })
+      #   ];
+      #   buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+      # });
+      # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "mpv-player";
+      #     repo = "mpv";
+      #     rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
+      #     hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
+      #   };
+      #   postPatch = lib.concatStringsSep "\n" [
+    # # Don't reference compile time dependencies or create a build outputs cycle
+    # # between out and dev
+    # ''
+      # substituteInPlace meson.build \
+      #   --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
+      #                  "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
+    # ''
+    # # A trick to patchShebang everything except mpv_identify.sh
+    # ''
+      # pushd TOOLS
+      # mv mpv_identify.sh mpv_identify
+      # patchShebangs *.py *.sh
+      # mv mpv_identify mpv_identify.sh
+      # popd
+    # ''
+  # ];
+      # });
     })
   ];
 

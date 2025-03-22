@@ -36,11 +36,11 @@
     };
     script = ''
       # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "s 1 3050" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "m 1 1275" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
     '';
   };
@@ -78,13 +78,13 @@
     #   user = "codebam";
     # };
 
-    # ollama = {
-    #   enable = true;
-    #   acceleration = "rocm";
-    #   environmentVariables = {
-    #     HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-    #   };
-    # };
+    ollama = {
+      enable = true;
+      acceleration = "rocm";
+      environmentVariables = {
+        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+      };
+    };
   };
 
   programs = {
@@ -135,8 +135,6 @@
       enable32Bit = true;
       extraPackages = with pkgs; [
         gamescope-wsi
-        # rocmPackages.clr.icd
-        mesa.opencl
       ];
     };
     # amdgpu.amdvlk = {
@@ -161,14 +159,21 @@
   #   })
   # ];
 
-  nixpkgs.overlays = [
-    (final: prev: {
+nixpkgs.config.rocmSupport = true;
+nixpkgs.overlays = [
+  (final: prev: {
+    rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
+    # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
+    ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
+      doCheck = false;
+    });
+  })
+];
+
       # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
       # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
       # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
       # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
-    })
-  ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "steam"

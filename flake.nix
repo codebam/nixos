@@ -37,6 +37,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+    rocm.url = "github:LunNova/nixpkgs/rocm-update";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, plasma-manager, ... }@inputs: {
