@@ -70,6 +70,22 @@
         "type": "github"
       }
     },
+    "gen-nvim": {
+      "locked": {
+        "lastModified": 1742763560,
+        "narHash": "sha256-oNlBh+hNt7CKOtEKtCNHGyGUHSxLxjH9YVF7HO+SgCI=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "3b4d19ae77db8bb2051e7658dcc9a46e3ce97264",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "gen-nvim",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
@@ -237,6 +253,7 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
+        "gen-nvim": "gen-nvim",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
         "nixpkgs": "nixpkgs_2",

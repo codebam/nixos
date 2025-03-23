@@ -38,6 +38,7 @@
       inputs.home-manager.follows = "home-manager";
     };
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
+    gen-nvim.url = "github:codebam/nixpkgs/gen-nvim";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, plasma-manager, ... }@inputs: {
