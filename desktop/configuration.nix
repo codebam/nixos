@@ -14,7 +14,7 @@
   environment.systemPackages = [
   ];
 
-  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
+  boot.kernelPackages = pkgs.linuxPackages_testing;
   # boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_xanmod_latest.overrideAttrs (oldAttrs: {
   #   NIX_CFLAGS_COMPILE = (oldAttrs.NIX_CFLAGS_COMPILE or []) ++ [
   #     "-march=x86-64-v3"
