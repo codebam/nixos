@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     # staging-next.url = "github:nixos/nixpkgs/staging-next";
-    # master.url = "github:nixos/nixpkgs";
+    master.url = "github:nixos/nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -31,6 +31,7 @@
     # };
     # firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     # mesa-25.url = "github:K900/nixpkgs/mesa-25.0";
+    # gen-nvim.url = "github:codebam/nixpkgs/gen-nvim";
     catppuccin.url = "github:catppuccin/nix";
     plasma-manager = {
       url = "github:nix-community/plasma-manager";
@@ -38,7 +39,6 @@
       inputs.home-manager.follows = "home-manager";
     };
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
-    gen-nvim.url = "github:codebam/nixpkgs/gen-nvim";
   };
 
   outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, plasma-manager, ... }@inputs: {

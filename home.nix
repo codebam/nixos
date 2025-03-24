@@ -814,7 +814,7 @@
       extraLuaConfig = ''
 
         require('gen').setup({
-            model = "gemma3:27b", -- The default model to use.
+            model = "qwen2.5-coder:32b", -- The default model to use.
             quit_map = "q", -- set keymap to close the response window
             retry_map = "<c-r>", -- set keymap to re-send the current prompt
             accept_map = "<c-cr>", -- set keymap to replace the previous selection with the last result
@@ -1012,7 +1012,7 @@
         pkgs.vimPlugins.trouble-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
         pkgs.vimPlugins.augment-vim
-        inputs.gen-nvim.legacyPackages.${pkgs.system}.vimPlugins.gen-nvim
+        pkgs.vimPlugins.gen-nvim
       ];
     };
     # vim = {
