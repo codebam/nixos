@@ -41,8 +41,16 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, catppuccin, lanzaboote, plasma-manager, ...
-    }@inputs: {
+  outputs =
+    {
+      nixpkgs,
+      home-manager,
+      catppuccin,
+      lanzaboote,
+      plasma-manager,
+      ...
+    }@inputs:
+    {
       nixosConfigurations.nixos-desktop = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
@@ -51,14 +59,17 @@
           ./desktop/configuration.nix
           catppuccin.nixosModules.catppuccin
           lanzaboote.nixosModules.lanzaboote
-          ({ pkgs, lib, ... }: {
-            environment.systemPackages = [ pkgs.sbctl ];
-            boot.loader.systemd-boot.enable = lib.mkForce false;
-            boot.lanzaboote = {
-              enable = true;
-              pkiBundle = "/etc/secureboot";
-            };
-          })
+          (
+            { pkgs, lib, ... }:
+            {
+              environment.systemPackages = [ pkgs.sbctl ];
+              boot.loader.systemd-boot.enable = lib.mkForce false;
+              boot.lanzaboote = {
+                enable = true;
+                pkiBundle = "/etc/secureboot";
+              };
+            }
+          )
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -71,8 +82,7 @@
                 catppuccin.homeManagerModules.catppuccin
               ];
             };
-            home-manager.sharedModules =
-              [ plasma-manager.homeManagerModules.plasma-manager ];
+            home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
           }
         ];
       };
@@ -84,14 +94,17 @@
           ./laptop/configuration.nix
           catppuccin.nixosModules.catppuccin
           lanzaboote.nixosModules.lanzaboote
-          ({ pkgs, lib, ... }: {
-            environment.systemPackages = [ pkgs.sbctl ];
-            boot.loader.systemd-boot.enable = lib.mkForce false;
-            boot.lanzaboote = {
-              enable = true;
-              pkiBundle = "/etc/secureboot";
-            };
-          })
+          (
+            { pkgs, lib, ... }:
+            {
+              environment.systemPackages = [ pkgs.sbctl ];
+              boot.loader.systemd-boot.enable = lib.mkForce false;
+              boot.lanzaboote = {
+                enable = true;
+                pkiBundle = "/etc/secureboot";
+              };
+            }
+          )
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -104,8 +117,7 @@
                 catppuccin.homeManagerModules.catppuccin
               ];
             };
-            home-manager.sharedModules =
-              [ plasma-manager.homeManagerModules.plasma-manager ];
+            home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
           }
         ];
       };
