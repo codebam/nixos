@@ -1,4 +1,10 @@
-{ inputs, pkgs, config, lib, ... }:
+{
+  inputs,
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -6,12 +12,13 @@
     ./hardware-configuration.nix
   ];
 
-  networking = { hostName = "nixos-desktop"; };
+  networking = {
+    hostName = "nixos-desktop";
+  };
 
   environment.systemPackages = [ ];
 
-  boot.kernelPackages =
-    inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
@@ -49,17 +56,20 @@
         cpu = true;
         opencl = false;
         cuda = false;
-        pools = [{
-          url = "pool.supportxmr.com:443";
-          user =
-            "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
-          keepalive = true;
-          tls = true;
-        }];
+        pools = [
+          {
+            url = "pool.supportxmr.com:443";
+            user = "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
+            keepalive = true;
+            tls = true;
+          }
+        ];
       };
     };
 
-    hardware.openrgb = { enable = true; };
+    hardware.openrgb = {
+      enable = true;
+    };
     # foldingathome = {
     #   enable = true;
     #   user = "codebam";
@@ -68,7 +78,9 @@
     ollama = {
       enable = true;
       acceleration = "rocm";
-      environmentVariables = { HSA_OVERRIDE_GFX_VERSION = "11.0.0"; };
+      environmentVariables = {
+        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+      };
     };
   };
 
@@ -79,14 +91,23 @@
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
       extraCompatPackages = [ pkgs.proton-ge-bin ];
-      extest = { enable = true; };
+      extest = {
+        enable = true;
+      };
       gamescopeSession = {
         enable = true;
-        args = [ "--expose-wayland" "-e" ];
+        args = [
+          "--expose-wayland"
+          "-e"
+        ];
       };
     };
-    gamemode = { enable = true; };
-    gamescope = { enable = true; };
+    gamemode = {
+      enable = true;
+    };
+    gamescope = {
+      enable = true;
+    };
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
@@ -139,11 +160,11 @@
   nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [
     (final: prev: {
-      rocmPackages_6 =
-        inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
+      rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
       # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
-      ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs
-        (oldAttrs: { doCheck = false; });
+      ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
+        doCheck = false;
+      });
     })
   ];
 
@@ -152,7 +173,8 @@
   # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
   # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
 
-  nixpkgs.config.allowUnfreePredicate = pkg:
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
     builtins.elem (lib.getName pkg) [
       "steam"
       "steam-original"

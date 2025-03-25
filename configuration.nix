@@ -16,7 +16,10 @@
   };
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       auto-optimise-store = true;
     };
     gc = {
@@ -30,11 +33,17 @@
       enable = true;
       wifi.backend = "iwd";
     };
-    wireless.iwd = { enable = true; };
+    wireless.iwd = {
+      enable = true;
+    };
     nftables.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 8211 25565 ];
+      allowedTCPPorts = [
+        22
+        8211
+        25565
+      ];
       allowedTCPPortRanges = [
         {
           from = 27015;
@@ -45,11 +54,16 @@
           to = 27037;
         }
       ];
-      allowedUDPPorts = [ 4380 27036 ];
-      allowedUDPPortRanges = [{
-        from = 27000;
-        to = 27031;
-      }];
+      allowedUDPPorts = [
+        4380
+        27036
+      ];
+      allowedUDPPortRanges = [
+        {
+          from = 27000;
+          to = 27031;
+        }
+      ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
@@ -69,8 +83,7 @@
         after = [ "sway-session.target" ];
         serviceConfig = {
           Type = "simple";
-          ExecStart =
-            "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
           Restart = "on-failure";
           RestartSec = 1;
           TimeoutStopSec = 10;
@@ -90,8 +103,7 @@
     '';
     scx = {
       enable = true;
-      scheduler =
-        "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     kanata = {
       enable = true;
@@ -133,7 +145,10 @@
         (pkgs.stdenv.mkDerivation rec {
           pname = "flatpak-steam-session";
           version = "1.0";
-          buildInputs = [ pkgs.flatpak pkgs.gamescope ];
+          buildInputs = [
+            pkgs.flatpak
+            pkgs.gamescope
+          ];
 
           passthru.providedSessions = [ "flatpak-steam" ];
 
@@ -161,7 +176,9 @@
     desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
-      settings = { PasswordAuthentication = false; };
+      settings = {
+        PasswordAuthentication = false;
+      };
     };
     avahi.enable = true;
     fwupd.enable = true;
@@ -172,13 +189,12 @@
       pulse.enable = true;
       jack.enable = true;
       configPackages = [
-        (pkgs.writeTextDir
-          "share/pipewire/pipewire.conf.d/10-high-sample-rate.conf" ''
-            context.properties = {
-              default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
-              default.clock.rate = 384000
-            }
-          '')
+        (pkgs.writeTextDir "share/pipewire/pipewire.conf.d/10-high-sample-rate.conf" ''
+          context.properties = {
+            default.clock.allowed-rates = [ 44100 48000 88200 96000 192000 384000 768000 ]
+            default.clock.rate = 384000
+          }
+        '')
       ];
     };
 
@@ -196,9 +212,14 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" "uinput" ];
-    hashedPassword =
-      "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "libvirtd"
+      "video"
+      "uinput"
+    ];
+    hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = with pkgs; [ flatpak ];
   };
 
@@ -287,7 +308,9 @@
         };
       };
     };
-    containers = { enable = true; };
+    containers = {
+      enable = true;
+    };
     podman = {
       enable = true;
       dockerCompat = true;
@@ -321,70 +344,71 @@
   };
 
   nixpkgs.overlays = [
-    (final: prev:
-      {
-        # wlroots = prev.wlroots.overrideAttrs (old: {
-        #   src = prev.fetchFromGitHub {
-        #     owner = "codebam";
-        #     repo = "wlroots";
-        #     rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
-        #     hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
-        #   };
-        #   # patches = (old.patches or []) ++ [
-        #   #   (prev.fetchpatch {
-        #   #     # color-management-v1
-        #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
-        #   #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
-        #   #   })
-        #   #   (prev.fetchpatch {
-        #   #     # hdr10 support
-        #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
-        #   #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
-        #   #   })
-        #   # ];
-        # });
-        # sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
-        #   src = prev.fetchFromGitHub {
-        #     owner = "swaywm";
-        #     repo = "sway";
-        #     rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
-        #     hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
-        #   };
-        #   patches = (old.patches or []) ++ [
-        #     (prev.fetchpatch {
-        #       url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
-        #       hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
-        #     })
-        #   ];
-        #   buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
-        # });
-        # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
-        #   src = prev.fetchFromGitHub {
-        #     owner = "mpv-player";
-        #     repo = "mpv";
-        #     rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
-        #     hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
-        #   };
-        #   postPatch = lib.concatStringsSep "\n" [
-        # # Don't reference compile time dependencies or create a build outputs cycle
-        # # between out and dev
-        # ''
-        # substituteInPlace meson.build \
-        #   --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
-        #                  "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
-        # ''
-        # # A trick to patchShebang everything except mpv_identify.sh
-        # ''
-        # pushd TOOLS
-        # mv mpv_identify.sh mpv_identify
-        # patchShebangs *.py *.sh
-        # mv mpv_identify mpv_identify.sh
-        # popd
-        # ''
-        # ];
-        # });
-      })
+    (final: prev: {
+      # wlroots = prev.wlroots.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "codebam";
+      #     repo = "wlroots";
+      #     rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
+      #     hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
+      #   };
+      #   # patches = (old.patches or []) ++ [
+      #   #   (prev.fetchpatch {
+      #   #     # color-management-v1
+      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
+      #   #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
+      #   #   })
+      #   #   (prev.fetchpatch {
+      #   #     # hdr10 support
+      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
+      #   #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
+      #   #   })
+      #   # ];
+      # });
+      # sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "swaywm";
+      #     repo = "sway";
+      #     rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
+      #     hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
+      #   };
+      #   patches = (old.patches or []) ++ [
+      #     (prev.fetchpatch {
+      #       url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
+      #       hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
+      #     })
+      #   ];
+      #   buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+      # });
+      # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
+      #   src = prev.fetchFromGitHub {
+      #     owner = "mpv-player";
+      #     repo = "mpv";
+      #     rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
+      #     hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
+      #   };
+      #   postPatch = lib.concatStringsSep "\n" [
+      # # Don't reference compile time dependencies or create a build outputs cycle
+      # # between out and dev
+      # ''
+      # substituteInPlace meson.build \
+      #   --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
+      #                  "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
+      # ''
+      # # A trick to patchShebang everything except mpv_identify.sh
+      # ''
+      # pushd TOOLS
+      # mv mpv_identify.sh mpv_identify
+      # patchShebangs *.py *.sh
+      # mv mpv_identify mpv_identify.sh
+      # popd
+      # ''
+      # ];
+      # });
+    })
   ];
 
-  system = { stateVersion = "23.11"; };
+  system = {
+    stateVersion = "23.11";
+  };
 }
