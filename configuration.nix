@@ -1,6 +1,9 @@
 { pkgs, lib, ... }:
 
 {
+  imports = [ ./libvirtd.nix ];
+  disabledModules = [ "virtualisation/libvirtd.nix" ];
+
   boot = {
     loader = {
       systemd-boot = {
@@ -345,6 +348,11 @@
 
   nixpkgs.overlays = [
     (final: prev: {
+      libvirt = prev.libvirt.overrideAttrs {
+        postInstall =
+          lib.replaceStrings [ "rm $out/lib/systemd/system/{virtlockd,virtlogd}.*\n" ] [ "" ]
+            prev.libvirt.postInstall;
+      };
       # wlroots = prev.wlroots.overrideAttrs (old: {
       #   src = prev.fetchFromGitHub {
       #     owner = "codebam";
