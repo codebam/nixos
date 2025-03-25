@@ -17,19 +17,11 @@
     i3status-rust = {
       bars = {
         default = {
-          settings = {
-            theme = {
-              theme = "ctp-mocha";
-            };
-          };
+          settings = { theme = { theme = "ctp-mocha"; }; };
           icons = "awesome6";
           blocks = [
-            {
-              block = "focused_window";
-            }
-            {
-              block = "sound";
-            }
+            { block = "focused_window"; }
+            { block = "sound"; }
             {
               alert = 10.0;
               block = "disk_space";
@@ -50,15 +42,9 @@
               block = "bluetooth";
               mac = "F4:6A:D7:A2:E2:66";
             }
-            {
-              block = "temperature";
-            }
-            {
-              block = "cpu";
-            }
-            {
-              block = "load";
-            }
+            { block = "temperature"; }
+            { block = "cpu"; }
+            { block = "load"; }
             {
               block = "time";
               interval = 60;

@@ -1,20 +1,17 @@
 { inputs, pkgs, config, lib, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
-
-  networking = {
-    hostName = "nixos-desktop";
-  };
-
-  environment.systemPackages = [
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
   ];
 
-  boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  networking = { hostName = "nixos-desktop"; };
+
+  environment.systemPackages = [ ];
+
+  boot.kernelPackages =
+    inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
@@ -35,6 +32,7 @@
     '';
   };
 
+  powerManagement.enable = true;
 
   # environment.variables = {
   #   RUSTICL_ENABLE = "1";
@@ -53,16 +51,15 @@
         cuda = false;
         pools = [{
           url = "pool.supportxmr.com:443";
-          user = "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
+          user =
+            "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
           keepalive = true;
           tls = true;
         }];
       };
     };
 
-    hardware.openrgb = {
-      enable = true;
-    };
+    hardware.openrgb = { enable = true; };
     # foldingathome = {
     #   enable = true;
     #   user = "codebam";
@@ -71,9 +68,7 @@
     ollama = {
       enable = true;
       acceleration = "rocm";
-      environmentVariables = {
-        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-      };
+      environmentVariables = { HSA_OVERRIDE_GFX_VERSION = "11.0.0"; };
     };
   };
 
@@ -84,20 +79,14 @@
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
       extraCompatPackages = [ pkgs.proton-ge-bin ];
-      extest = {
-        enable = true;
-      };
+      extest = { enable = true; };
       gamescopeSession = {
         enable = true;
         args = [ "--expose-wayland" "-e" ];
       };
     };
-    gamemode = {
-      enable = true;
-    };
-    gamescope = {
-      enable = true;
-    };
+    gamemode = { enable = true; };
+    gamescope = { enable = true; };
     corectrl = {
       enable = true;
       gpuOverclock.enable = true;
@@ -123,9 +112,7 @@
     };
     graphics = {
       enable32Bit = true;
-      extraPackages = with pkgs; [
-        gamescope-wsi
-      ];
+      extraPackages = with pkgs; [ gamescope-wsi ];
     };
     # amdgpu.amdvlk = {
     #   enable = true;
@@ -149,28 +136,29 @@
   #   })
   # ];
 
-nixpkgs.config.rocmSupport = true;
-nixpkgs.overlays = [
-  (final: prev: {
-    rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
-    # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
-    ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
-      doCheck = false;
-    });
-  })
-];
-
-      # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
-      # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
-
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-run"
-    "steam-unwrapped"
+  nixpkgs.config.rocmSupport = true;
+  nixpkgs.overlays = [
+    (final: prev: {
+      rocmPackages_6 =
+        inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
+      # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
+      ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs
+        (oldAttrs: { doCheck = false; });
+    })
   ];
+
+  # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
+  # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
+
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "steam"
+      "steam-original"
+      "steam-run"
+      "steam-unwrapped"
+    ];
 
   system = {
     autoUpgrade = {

@@ -1,24 +1,22 @@
 { pkgs, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
-  networking = {
-    hostName = "nixos-laptop";
-  };
+  networking = { hostName = "nixos-laptop"; };
 
   boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
 
   nixpkgs.overlays = [
-    (final: prev: {
-      # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-      # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
-    })
+    (final: prev:
+      {
+        # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
+        # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
+        # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
+      })
   ];
 
   system = {
