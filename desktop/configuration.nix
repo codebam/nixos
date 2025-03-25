@@ -1,7 +1,6 @@
 {
   inputs,
   pkgs,
-  config,
   lib,
   ...
 }:
@@ -78,9 +77,7 @@
     ollama = {
       enable = true;
       acceleration = "rocm";
-      environmentVariables = {
-        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-      };
+      rocmOverrideGfx = "11.0.0";
     };
   };
 
@@ -162,7 +159,7 @@
     (final: prev: {
       rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
       # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
-      ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
+      ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
         doCheck = false;
       });
     })
