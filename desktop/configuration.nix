@@ -32,7 +32,7 @@
       # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "vo -75" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+      echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
       echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
     '';
@@ -76,8 +76,11 @@
 
     ollama = {
       enable = true;
+      host = "0.0.0.0";
       acceleration = "rocm";
-      rocmOverrideGfx = "11.0.0";
+      environmentVariables = {
+        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+      };
     };
   };
 

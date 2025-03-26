@@ -1,9 +1,8 @@
 { pkgs, lib, ... }:
 
 {
-  imports = [ ./libvirtd.nix ];
-  disabledModules = [ "virtualisation/libvirtd.nix" ];
-
+  # imports = [ ./libvirtd.nix ];
+  # disabledModules = [ "virtualisation/libvirtd.nix" ];
   boot = {
     loader = {
       systemd-boot = {
@@ -46,6 +45,7 @@
         22
         8211
         25565
+        3000
       ];
       allowedTCPPortRanges = [
         {
@@ -270,6 +270,7 @@
   };
 
   programs = {
+    sway.enable = true;
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
@@ -348,46 +349,28 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      libvirt = prev.libvirt.overrideAttrs {
-        postInstall =
-          lib.replaceStrings [ "rm $out/lib/systemd/system/{virtlockd,virtlogd}.*\n" ] [ "" ]
-            prev.libvirt.postInstall;
-      };
-      # wlroots = prev.wlroots.overrideAttrs (old: {
-      #   src = prev.fetchFromGitHub {
-      #     owner = "codebam";
-      #     repo = "wlroots";
-      #     rev = "5ca0ad75950553989debee7f539b5f512afcfdaf";
-      #     hash = "sha256-F1tJh/tJzzFjROuPn3zv5yMZKjR/bnN2ktUDJ+mAIKI=";
-      #   };
-      #   # patches = (old.patches or []) ++ [
-      #   #   (prev.fetchpatch {
-      #   #     # color-management-v1
-      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4962.patch";
-      #   #     hash = "sha256-GmJiDLzUL7TBoVhtq5IpX4Op+g9plO4rGinyHNRNxSs=";
-      #   #   })
-      #   #   (prev.fetchpatch {
-      #   #     # hdr10 support
-      #   #     url = "https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/5002.patch";
-      #   #     hash = "sha256-eV9d6Kbm7VnPUsSFFOlQEOw1F8wpTC2aeNMebG42dVQ=";
-      #   #   })
-      #   # ];
-      # });
-      # sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
-      #   src = prev.fetchFromGitHub {
-      #     owner = "swaywm";
-      #     repo = "sway";
-      #     rev = "61cc08cf3c49b0a5785b50c070ef3c33f1bbacab";
-      #     hash = "sha256-xoAs250A/fA5isAMaKCFjJ1rzEAX+wyw5QJ6zfTsjCY=";
-      #   };
-      #   patches = (old.patches or []) ++ [
-      #     (prev.fetchpatch {
-      #       url = "https://github.com/swaywm/sway/compare/61cc08cf3c49b0a5785b50c070ef3c33f1bbacab...emersion:hdr10.patch";
-      #       hash = "sha256-HsIicBQQnVR/OkTW2rr3BNB8Xt2+uyCWzyGIFlJ06SU=";
-      #     })
-      #   ];
-      #   buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
-      # });
+      # libvirt = prev.libvirt.overrideAttrs {
+      #   postInstall =
+      #     lib.replaceStrings [ "rm $out/lib/systemd/system/{virtlockd,virtlogd}.*\n" ] [ "" ]
+      #       prev.libvirt.postInstall;
+      # };
+      wlroots = prev.wlroots.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "codebam";
+          repo = "wlroots";
+          rev = "hdr-new";
+          hash = "sha256-e3WSawnJMgs7Ilj+TgD2nTer8VdedXIYuEjV91yORi0=";
+        };
+      });
+      sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "codebam";
+          repo = "sway";
+          rev = "hdr-new";
+          hash = "sha256-BeuTGF99wS7McRYLcYnm9GVYpfree1cEs6l8SmV4vgA=";
+        };
+        buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+      });
       # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
       #   src = prev.fetchFromGitHub {
       #     owner = "mpv-player";

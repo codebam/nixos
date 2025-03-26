@@ -1336,12 +1336,12 @@
   };
 
   services = {
-    # mako = {
-    #   enable = true;
-    #   layer = "overlay";
-    #   font = "Noto Sans";
-    #   defaultTimeout = 5000;
-    # };
+    mako = {
+      enable = true;
+      layer = "overlay";
+      font = "Noto Sans";
+      defaultTimeout = 5000;
+    };
     mopidy = {
       enable = true;
       extensionPackages = with pkgs; [
