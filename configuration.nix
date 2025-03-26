@@ -282,13 +282,13 @@
     bluetooth = {
       enable = true;
       powerOnBoot = true;
-      settings = {
-        LE = {
-          MinConnectionInterval = 7;
-          MaxConnectionInterval = 9;
-          ConnectionLatency = 0;
-        };
-      };
+      # settings = {
+      #   LE = {
+      #     MinConnectionInterval = 7;
+      #     MaxConnectionInterval = 9;
+      #     ConnectionLatency = 0;
+      #   };
+      # };
     };
     uinput.enable = true;
   };
