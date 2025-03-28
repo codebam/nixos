@@ -13,6 +13,10 @@
       systemd-boot.configurationLimit = 10;
     };
 
+    kernel.sysctl = {
+      "net.ipv4.ip_unprivileged_port_start" = 0;
+    };
+
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
@@ -43,29 +47,8 @@
       enable = true;
       allowedTCPPorts = [
         22
-        8211
-        25565
-        3000
-      ];
-      allowedTCPPortRanges = [
-        {
-          from = 27015;
-          to = 27030;
-        }
-        {
-          from = 27036;
-          to = 27037;
-        }
-      ];
-      allowedUDPPorts = [
-        4380
-        27036
-      ];
-      allowedUDPPortRanges = [
-        {
-          from = 27000;
-          to = 27031;
-        }
+        80
+        443
       ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
@@ -101,6 +84,7 @@
 
   services = {
     # nixseparatedebuginfod.enable = true;
+    speechd.enable = true;
     udev.extraRules = ''
       KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
     '';
