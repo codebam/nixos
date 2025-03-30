@@ -80,7 +80,7 @@
               imports = [
                 ./home.nix
                 ./desktop/home.nix
-                catppuccin.homeManagerModules.catppuccin
+                catppuccin.homeModules.catppuccin
               ];
             };
             home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
@@ -115,7 +115,7 @@
               imports = [
                 ./home.nix
                 ./laptop/home.nix
-                catppuccin.homeManagerModules.catppuccin
+                catppuccin.homeModules.catppuccin
               ];
             };
             home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
