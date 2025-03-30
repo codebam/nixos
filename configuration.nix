@@ -226,6 +226,7 @@
     vscodium
     rclone
     gparted
+    nix-output-monitor
     # mpv
     # inputs.firefox-nightly.packages.${pkgs.system}.firefox-nightly-bin
   ];
