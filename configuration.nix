@@ -80,6 +80,7 @@
   };
 
   services = {
+    resolved.enable = true;
     speechd.enable = true;
     udev.extraRules = ''
       KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
@@ -161,18 +162,6 @@
       enable = true;
       settings = {
         PasswordAuthentication = false;
-      };
-    };
-    avahi = {
-      enable = true;
-      nssmdns = true;
-      publish = {
-        enable = true;
-        addresses = true;
-        domain = true;
-        hinfo = true;
-        userServices = true;
-        workstation = true;
       };
     };
     fwupd.enable = true;
