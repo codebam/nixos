@@ -32,13 +32,14 @@
     # firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     # mesa-25.url = "github:K900/nixpkgs/mesa-25.0";
     # gen-nvim.url = "github:codebam/nixpkgs/gen-nvim";
+    # catppuccin.url = "github:catppuccin/nix";
+    # plasma-manager = {
+    #   url = "github:nix-community/plasma-manager";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.home-manager.follows = "home-manager";
+    # };
+    stylix.url = "github:danth/stylix";
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
-    catppuccin.url = "github:catppuccin/nix";
-    plasma-manager = {
-      url = "github:nix-community/plasma-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
   };
@@ -47,9 +48,8 @@
     {
       nixpkgs,
       home-manager,
-      catppuccin,
       lanzaboote,
-      plasma-manager,
+      stylix,
       ...
     }@inputs:
     {
@@ -59,7 +59,7 @@
         modules = [
           ./configuration.nix
           ./desktop/configuration.nix
-          catppuccin.nixosModules.catppuccin
+          stylix.nixosModules.stylix
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:
@@ -74,17 +74,16 @@
           )
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
+            home-manager.useGlobalPkgs = false;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.users.codebam = {
               imports = [
                 ./home.nix
                 ./desktop/home.nix
-                catppuccin.homeModules.catppuccin
               ];
             };
-            home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
+            home-manager.sharedModules = [];
           }
         ];
       };
@@ -94,7 +93,6 @@
         modules = [
           ./configuration.nix
           ./laptop/configuration.nix
-          catppuccin.nixosModules.catppuccin
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:
@@ -109,17 +107,16 @@
           )
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
+            home-manager.useGlobalPkgs = false;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.users.codebam = {
               imports = [
                 ./home.nix
                 ./laptop/home.nix
-                catppuccin.homeModules.catppuccin
               ];
             };
-            home-manager.sharedModules = [ plasma-manager.homeManagerModules.plasma-manager ];
+            home-manager.sharedModules = [];
           }
         ];
       };
