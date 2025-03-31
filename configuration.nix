@@ -1,8 +1,6 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
-  # imports = [ ./libvirtd.nix ];
-  # disabledModules = [ "virtualisation/libvirtd.nix" ];
   boot = {
     loader = {
       systemd-boot = {

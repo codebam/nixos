@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  inputs,
   ...
 }:
 
@@ -1027,42 +1026,6 @@
             { name = 'luasnip' },
           },
         }
-        require("trouble").setup {
-          opts = {},
-          cmd = "Trouble",
-          keys = {
-            {
-              "<leader>xx",
-              "<cmd>Trouble diagnostics toggle<cr>",
-              desc = "Diagnostics (Trouble)",
-            },
-            {
-              "<leader>xX",
-              "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
-              desc = "Buffer Diagnostics (Trouble)",
-            },
-            {
-              "<leader>cs",
-              "<cmd>Trouble symbols toggle focus=false<cr>",
-              desc = "Symbols (Trouble)",
-            },
-            {
-              "<leader>cl",
-              "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
-              desc = "LSP Definitions / references / ... (Trouble)",
-            },
-            {
-              "<leader>xL",
-              "<cmd>Trouble loclist toggle<cr>",
-              desc = "Location List (Trouble)",
-            },
-            {
-              "<leader>xQ",
-              "<cmd>Trouble qflist toggle<cr>",
-              desc = "Quickfix List (Trouble)",
-            },
-          },
-        }
       '';
       extraConfig = ''
         set guicursor=n-v-c-i:block
@@ -1074,6 +1037,7 @@
         map <leader>ac :lua vim.lsp.buf.code_action()<CR>
         map <leader><space> :nohl<CR>
         nnoremap <leader>ff <cmd>Telescope find_files<cr>
+        nnoremap <leader>fd <cmd>Telescope diagnostics<cr>
         nnoremap <leader>fg <cmd>Telescope live_grep<cr>
         nnoremap <leader>fb <cmd>Telescope buffers<cr>
         nnoremap <leader>fh <cmd>Telescope help_tags<cr>
@@ -1103,7 +1067,6 @@
         pkgs.vimPlugins.sleuth
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.trouble-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
         pkgs.vimPlugins.augment-vim
         pkgs.vimPlugins.gen-nvim
@@ -1166,9 +1129,9 @@
       mouse = true;
       keyMode = "vi";
       clock24 = true;
-      plugins = with pkgs; [
-        # tmuxPlugins.resurrect
-      ];
+      # plugins = with pkgs; [
+      #   pkgs.tmuxPlugins.resurrect
+      # ];
       extraConfig = ''
         set -ga terminal-overrides ",*256col*:Tc"
         bind-key C-a last-window
