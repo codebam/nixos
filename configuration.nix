@@ -47,6 +47,7 @@
         22
         80
         443
+        11434
       ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
