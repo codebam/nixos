@@ -241,6 +241,8 @@
       fira-code-symbols
       font-awesome
       nerd-fonts.fira-code
+      monocraft
+      miracode
     ];
   };
 

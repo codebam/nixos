@@ -815,8 +815,8 @@
       enable = true;
       extraConfig = ''
         return {
-          font = wezterm.font("Fira Code Nerdfont"),
-          font_size = 8.0,
+          font = wezterm.font("Monocraft NerdFont"),
+          font_size = 7.0,
           color_scheme = "catppuccin-mocha",
           hide_tab_bar_if_only_one_tab = true,
           window_padding = {
