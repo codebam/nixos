@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "avante": {
+      "locked": {
+        "lastModified": 1743396234,
+        "narHash": "sha256-KR+naGpRy6SxNg4Y9LUELVtmRnpkqs4jmhTQp22Mb/E=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "d8ef95d164e435e443a0c7e2d3e67ca85684e669",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "avante",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "catppuccin": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -267,6 +283,7 @@
     },
     "root": {
       "inputs": {
+        "avante": "avante",
         "catppuccin": "catppuccin",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",

@@ -40,6 +40,7 @@
       inputs.home-manager.follows = "home-manager";
     };
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
+    avante.url = "github:codebam/nixpkgs/avante";
   };
 
   outputs =
