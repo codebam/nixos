@@ -816,7 +816,7 @@
       extraConfig = ''
         return {
           font = wezterm.font("Monocraft NerdFont"),
-          font_size = 7.0,
+          font_size = 13.0,
           color_scheme = "catppuccin-mocha",
           hide_tab_bar_if_only_one_tab = true,
           window_padding = {
