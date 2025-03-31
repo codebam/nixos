@@ -1013,6 +1013,10 @@
             llm_model = "gemma3:27b",
             embed_model = "nomic-embed-text",
           },
+          cursor_applying_provider = 'ollama',
+          behaviour = {
+            enable_cursor_planning_mode = true,
+          },
         })
       '';
       extraConfig = ''
