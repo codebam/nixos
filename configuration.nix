@@ -87,6 +87,7 @@
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+      # scheduler = "scx_bpfland";
     };
     kanata = {
       enable = true;
@@ -162,7 +163,18 @@
         PasswordAuthentication = false;
       };
     };
-    avahi.enable = true;
+    avahi = {
+      enable = true;
+      nssmdns = true;
+      publish = {
+        enable = true;
+        addresses = true;
+        domain = true;
+        hinfo = true;
+        userServices = true;
+        workstation = true;
+      };
+    };
     fwupd.enable = true;
     pipewire = {
       enable = true;

@@ -131,9 +131,9 @@
           background = "$base";
         };
         output = {
-          "*" = {
-            bg = "${wallpaper} fill";
-          };
+          # "*" = {
+          #   bg = "${wallpaper} fill";
+          # };
           "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
             mode = "3840x1600@143.998Hz";
             adaptive_sync = "on";
@@ -273,6 +273,7 @@
         preset = 4;
         gamemode = true;
         hdr = true;
+        full = true;
       };
     };
     wezterm = {
@@ -732,7 +733,7 @@
       };
 
       monospace = {
-        package = pkgs.dejavu_fonts;
+        package = pkgs.nerd-fonts.fira-code;
         name = "Fira Code NerdFont";
       };
 

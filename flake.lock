@@ -516,7 +516,8 @@
         "ollama": "ollama",
         "rocm": "rocm",
         "staging": "staging",
-        "stylix": "stylix"
+        "stylix": "stylix",
+        "xanmod": "xanmod"
       }
     },
     "rust-overlay": {
@@ -707,6 +708,22 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "xanmod": {
+      "locked": {
+        "lastModified": 1743365312,
+        "narHash": "sha256-XWUOQozGRpY8ITeggv8z2QfYLk/+y6q2LqfRnGCrR+I=",
+        "owner": "eljamm",
+        "repo": "nixpkgs",
+        "rev": "5a5a9cc5686fad35073b110c84b8744ce31ba154",
+        "type": "github"
+      },
+      "original": {
+        "owner": "eljamm",
+        "ref": "update-xanmod",
+        "repo": "nixpkgs",
         "type": "github"
       }
     }

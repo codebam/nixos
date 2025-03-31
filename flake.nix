@@ -42,6 +42,7 @@
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
+    xanmod.url = "github:eljamm/nixpkgs/update-xanmod";
   };
 
   outputs =
