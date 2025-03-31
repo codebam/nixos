@@ -6,9 +6,9 @@
       systemd-boot = {
         enable = true;
         memtest86.enable = true;
+        configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
-      systemd-boot.configurationLimit = 10;
     };
 
     kernel.sysctl = {
@@ -16,8 +16,9 @@
     };
 
     supportedFilesystems = [ "bcachefs" ];
-    extraModulePackages = [ ];
+    extraModulePackages = [];
   };
+
   nix = {
     settings = {
       experimental-features = [
@@ -32,6 +33,7 @@
       options = "--delete-older-than 7d";
     };
   };
+
   networking = {
     networkmanager = {
       enable = true;
@@ -75,14 +77,9 @@
         };
       };
     };
-
-    # tmpfiles.rules = [
-    #   "L+    /opt/rocm/hip   -    -    -     -    ${pkgs.rocmPackages.clr}"
-    # ];
   };
 
   services = {
-    # nixseparatedebuginfod.enable = true;
     speechd.enable = true;
     udev.extraRules = ''
       KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
@@ -147,7 +144,6 @@
             Type=Application" > $out/flatpak-steam.desktop
           '';
 
-          # Install phase writes the session file directly
           installPhase = ''
             mkdir -p $out/share/wayland-sessions
             cp ${src}/flatpak-steam.desktop $out/share/wayland-sessions/flatpak-steam.desktop
@@ -183,7 +179,6 @@
         '')
       ];
     };
-
     flatpak.enable = true;
     udisks2.enable = true;
     gnome.gnome-keyring.enable = true;
@@ -191,9 +186,6 @@
   };
 
   users.mutableUsers = false;
-  # users.users.root = {
-  #   password = null;
-  # };
   users.users.codebam = {
     isNormalUser = true;
     home = "/home/codebam";
@@ -226,8 +218,6 @@
     rclone
     gparted
     nix-output-monitor
-    # mpv
-    # inputs.firefox-nightly.packages.${pkgs.system}.firefox-nightly-bin
   ];
 
   fonts = {
@@ -269,15 +259,12 @@
     bluetooth = {
       enable = true;
       powerOnBoot = true;
-      # settings = {
-      #   LE = {
-      #     MinConnectionInterval = 7;
-      #     MaxConnectionInterval = 9;
-      #     ConnectionLatency = 0;
-      #   };
-      # };
     };
     uinput.enable = true;
+    graphics = {
+      enable = true;
+      extraPackages = [ pkgs.gamescope-wsi ];
+    };
   };
 
   virtualisation = {
@@ -307,6 +294,7 @@
       defaultNetwork.settings.dns_enabled = true;
     };
   };
+
   security = {
     polkit = {
       enable = true;
@@ -326,20 +314,8 @@
 
   zramSwap.enable = true;
 
-  hardware = {
-    graphics = {
-      enable = true;
-      extraPackages = [ pkgs.gamescope-wsi ];
-    };
-  };
-
   nixpkgs.overlays = [
     (final: prev: {
-      # libvirt = prev.libvirt.overrideAttrs {
-      #   postInstall =
-      #     lib.replaceStrings [ "rm $out/lib/systemd/system/{virtlockd,virtlogd}.*\n" ] [ "" ]
-      #       prev.libvirt.postInstall;
-      # };
       wlroots = prev.wlroots.overrideAttrs (old: {
         src = prev.fetchFromGitHub {
           owner = "codebam";
@@ -357,35 +333,8 @@
         };
         buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
       });
-      # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
-      #   src = prev.fetchFromGitHub {
-      #     owner = "mpv-player";
-      #     repo = "mpv";
-      #     rev = "a8f5beb5a38e0ed169a9fb9faff6c5ca0a43dfee";
-      #     hash = "sha256-HhzfbIwaVQMH8KTPNL5UPVsp8xfXm9pljL7lxUF4J0Q=";
-      #   };
-      #   postPatch = lib.concatStringsSep "\n" [
-      # # Don't reference compile time dependencies or create a build outputs cycle
-      # # between out and dev
-      # ''
-      # substituteInPlace meson.build \
-      #   --replace-fail "conf_data.set_quoted('CONFIGURATION', meson.build_options())" \
-      #                  "conf_data.set_quoted('CONFIGURATION', '<omitted>')"
-      # ''
-      # # A trick to patchShebang everything except mpv_identify.sh
-      # ''
-      # pushd TOOLS
-      # mv mpv_identify.sh mpv_identify
-      # patchShebangs *.py *.sh
-      # mv mpv_identify mpv_identify.sh
-      # popd
-      # ''
-      # ];
-      # });
     })
   ];
 
-  system = {
-    stateVersion = "23.11";
-  };
+  system.stateVersion = "23.11";
 }
