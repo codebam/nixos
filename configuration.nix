@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   boot = {
@@ -317,6 +317,7 @@
 
   nixpkgs.overlays = [
     (final: prev: {
+      scx = inputs.scx.legacyPackages.${pkgs.system}.scx;
       wlroots = prev.wlroots.overrideAttrs (old: {
         src = prev.fetchFromGitHub {
           owner = "codebam";
