@@ -322,16 +322,16 @@
         src = prev.fetchFromGitHub {
           owner = "codebam";
           repo = "wlroots";
-          rev = "hdr-new";
-          hash = "sha256-e3WSawnJMgs7Ilj+TgD2nTer8VdedXIYuEjV91yORi0=";
+          rev = "hdr-04-01";
+          hash = "sha256-tgOARkzZUJssb6BmUxcUo13KC43LWS0hQhMFK8XO5Ss=";
         };
       });
       sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
         src = prev.fetchFromGitHub {
           owner = "codebam";
           repo = "sway";
-          rev = "hdr-new";
-          hash = "sha256-BeuTGF99wS7McRYLcYnm9GVYpfree1cEs6l8SmV4vgA=";
+          rev = "hdr-04-01";
+          hash = "sha256-idsf0YxFjLu0caSdV9lbq3IxQ44DABxwCIRkthbOCO4=";
         };
         buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
       });
