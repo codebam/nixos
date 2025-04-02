@@ -603,8 +603,8 @@
     enable = true;
     polarity = "dark";
     image = builtins.fetchurl {
-      url = "https://images.hdqwalls.com/download/1/beach-seaside-digital-painting-4k-05.jpg";
-      sha256 = "2877925e7dab66e7723ef79c3bf436ef9f0f2c8968923bb0fff990229144a3fe";
+      url = "https://images.pexels.com/photos/20486497/pexels-photo-20486497.jpeg";
+      sha256 = "sha256-E8/gtVcwmRMV5cVEXEycjE5gfrRHtkVHhieSAyti88g=";
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     fonts = {
