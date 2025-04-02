@@ -43,10 +43,6 @@
   };
   wayland.windowManager.sway =
     let
-      wallpaper = builtins.fetchurl {
-        url = "https://images.hdqwalls.com/download/1/beach-seaside-digital-painting-4k-05.jpg";
-        sha256 = "2877925e7dab66e7723ef79c3bf436ef9f0f2c8968923bb0fff990229144a3fe";
-      };
       modifier = "Mod4";
     in
     {
@@ -62,6 +58,7 @@
             adaptive_sync = "on";
             subpixel = "none";
             render_bit_depth = "10";
+            hdr = "on";
           };
           "eDP-1" = {
             scale = "1.5";
