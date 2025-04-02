@@ -17,8 +17,31 @@
 
   environment.systemPackages = [ ];
 
-  boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
   # boot.kernelPackages = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
+  boot.kernelPackages = let
+      linux_next_pkg = { fetchgit, buildLinux, ... } @ args:
+
+        buildLinux (args // rec {
+          version = "6.15.0";
+          modDirVersion = "6.14.0";
+
+          src = fetchgit {
+            url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
+            rev = "48552153cf49e252071f28e45d770b3741040e4e";
+            sha256 = "sha256-QZMMTyqeYBzgocknUhsbCN2F7eNbyRRRHqpU2zQFbHw=";
+            deepClone = false; # Faster fetch
+            leaveDotGit = false;
+          };
+
+          kernelPatches = [];
+
+          extraMeta.branch = "next";
+
+        } // (args.argsOverride or {}));
+      linux_next = pkgs.callPackage linux_next_pkg{};
+    in 
+      pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
