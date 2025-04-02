@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
+    nixpkgs.url = "github:codebam/nixpkgs/nixos-unstable-small";
     staging.url = "github:nixos/nixpkgs/staging";
     master.url = "github:nixos/nixpkgs";
     home-manager = {
