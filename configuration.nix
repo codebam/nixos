@@ -219,6 +219,7 @@
     rclone
     gparted
     nix-output-monitor
+    linux-wallpaperengine
   ];
 
   fonts = {

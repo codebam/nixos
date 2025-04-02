@@ -59,7 +59,7 @@
             adaptive_sync = "on";
             subpixel = "none";
             render_bit_depth = "10";
-            hdr = "on";
+            hdr = "off";
           };
           "eDP-1" = {
             scale = "1.5";
@@ -153,6 +153,8 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
+          # exec "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root DP-1 3445641810 --silent"
+          exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.webm'
         '';
     };
 
@@ -602,10 +604,10 @@
   stylix = {
     enable = true;
     polarity = "dark";
-    image = builtins.fetchurl {
-      url = "https://images.pexels.com/photos/20486497/pexels-photo-20486497.jpeg";
-      sha256 = "sha256-E8/gtVcwmRMV5cVEXEycjE5gfrRHtkVHhieSAyti88g=";
-    };
+    # image = builtins.fetchurl {
+    #   url = "https://cdn.dynamicwallpaper.club/wallpapers/wqmsaakm50l/plants.heic";
+    #   sha256 = "sha256-YQs7MBz8/hFT1Oy5pFr2xffl1jL9yvrA2w9N8Tp+IsA=";
+    # };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     fonts = {
       serif = {
