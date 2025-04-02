@@ -6,6 +6,7 @@
 }:
 
 {
+  nixpkgs.overlays = lib.mkForce [];
   home = {
     username = "codebam";
     homeDirectory = "/home/codebam";
