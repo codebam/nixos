@@ -319,6 +319,7 @@
     (final: prev: {
       scx = inputs.scx.legacyPackages.${pkgs.system}.scx;
       wlroots = prev.wlroots.overrideAttrs (old: {
+        version = "hdr";
         src = prev.fetchFromGitHub {
           owner = "codebam";
           repo = "wlroots";
@@ -327,6 +328,7 @@
         };
       });
       sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+        version = "hdr";
         src = prev.fetchFromGitHub {
           owner = "codebam";
           repo = "sway";

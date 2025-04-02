@@ -17,8 +17,8 @@
 
   environment.systemPackages = [ ];
 
-  # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  boot.kernelPackages = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
+  boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
+  # boot.kernelPackages = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";

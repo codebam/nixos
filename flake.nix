@@ -13,15 +13,15 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # lix = {
-    #   url = "git+https://git.lix.systems/lix-project/lix.git";
-    #   flake = false;
-    # };
-    # lix-module = {
-    #   url = "git+https://git.lix.systems/lix-project/nixos-module.git";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.lix.follows = "lix";
-    # };
+    lix = {
+      url = "git+https://git.lix.systems/lix-project/lix.git";
+      flake = false;
+    };
+    lix-module = {
+      url = "git+https://git.lix.systems/lix-project/nixos-module.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.lix.follows = "lix";
+    };
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
     # };
@@ -49,6 +49,7 @@
   outputs =
     {
       nixpkgs,
+      lix-module,
       home-manager,
       lanzaboote,
       stylix,
@@ -59,6 +60,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          lix-module.nixosModules.default
           ./configuration.nix
           ./desktop/configuration.nix
           stylix.nixosModules.stylix
@@ -76,7 +78,7 @@
           )
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = false;
+            home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.users.codebam = {
@@ -93,6 +95,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          lix-module.nixosModules.default
           ./configuration.nix
           ./laptop/configuration.nix
           lanzaboote.nixosModules.lanzaboote
@@ -109,7 +112,7 @@
           )
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = false;
+            home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.users.codebam = {
