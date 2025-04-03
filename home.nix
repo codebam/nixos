@@ -61,6 +61,7 @@
             subpixel = "none";
             render_bit_depth = "10";
             hdr = "on";
+            color_profile = "icc ${./rtings-icc-profile.icm}";
           };
           "eDP-1" = {
             scale = "1.5";
