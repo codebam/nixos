@@ -60,7 +60,7 @@
             adaptive_sync = "on";
             subpixel = "none";
             render_bit_depth = "10";
-            hdr = "off";
+            hdr = "on";
           };
           "eDP-1" = {
             scale = "1.5";
