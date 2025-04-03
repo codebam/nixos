@@ -1,6 +1,8 @@
 { pkgs, inputs, ... }:
 
 {
+  disabledModules = ["virtualisation/libvirtd.nix" ];
+  imports = [ ./libvirtd.nix ];
   boot = {
     loader = {
       systemd-boot = {
@@ -318,6 +320,7 @@
 
   nixpkgs.overlays = [
     (final: prev: {
+      libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
       scx = inputs.scx.legacyPackages.${pkgs.system}.scx;
       wlroots = prev.wlroots.overrideAttrs (old: {
         version = "hdr";
