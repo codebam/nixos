@@ -24,13 +24,13 @@
 
         buildLinux (args // rec {
           version = "6.15.0";
-          modDirVersion = "6.14.0";
+          modDirVersion = "6.14.0-next-20250402";
 
           src = fetchgit {
             url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-            rev = "48552153cf49e252071f28e45d770b3741040e4e";
-            sha256 = "sha256-QZMMTyqeYBzgocknUhsbCN2F7eNbyRRRHqpU2zQFbHw=";
-            deepClone = false; # Faster fetch
+            rev = "fefb886b1344e222b3218f3c0165b0fd770e8b88";
+            sha256 = "sha256-Wx8jC6nEnmAoZQ3k7jdDIR6+LGyHu1mrQWsF9141hdE=";
+            deepClone = false;
             leaveDotGit = false;
           };
 

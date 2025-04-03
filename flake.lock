@@ -411,6 +411,22 @@
         "type": "github"
       }
     },
+    "libvirt": {
+      "locked": {
+        "lastModified": 1743628611,
+        "narHash": "sha256-V/tyy1E1HkCOqUZioKiEfz5vCLBO4MM1kR7+Ni+uoxI=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "de6d3dcf97260d1189bc8ccf1d8c1069717a3c84",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "libvirt-sockets",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "lix": {
       "flake": false,
       "locked": {
@@ -454,11 +470,11 @@
     },
     "master": {
       "locked": {
-        "lastModified": 1743621126,
-        "narHash": "sha256-IkLgzK4j8DIC2PJvV4vOW7ALYjkDBM4u22Y/ozsByeo=",
+        "lastModified": 1743628496,
+        "narHash": "sha256-5MzXI+ceOcEdU51AsyJtsuIDLbPKV5RegdvaU4emlUE=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "8215dcb0ec26fa7f371de65a122df55f823a85c3",
+        "rev": "da5faea5ea777ae8eb8e5a60f3c4108a76ab02f6",
         "type": "github"
       },
       "original": {
@@ -585,6 +601,7 @@
         "avante": "avante",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
+        "libvirt": "libvirt",
         "lix": "lix",
         "lix-module": "lix-module",
         "master": "master",
@@ -635,11 +652,11 @@
     },
     "staging": {
       "locked": {
-        "lastModified": 1743617139,
-        "narHash": "sha256-mMHNUmfygJHGcMYYXIuqjIVga5ZPDkCI16BH4sCBIMo=",
+        "lastModified": 1743626174,
+        "narHash": "sha256-QWXI+l5tqx1zx50iAjSFwwtg/1mZgclx27h9C7uW2og=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "76e756ecc3308a77a90cca11743ba738e1f59ffc",
+        "rev": "c08f6a5982a63a95049c050d00a5f7e5a6b881fa",
         "type": "github"
       },
       "original": {

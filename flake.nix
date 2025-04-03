@@ -43,6 +43,7 @@
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
     scx.url = "github:codebam/nixpkgs/scx";
+    libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
   };
 
   outputs =
