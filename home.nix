@@ -83,13 +83,14 @@
           };
         };
         bars = [
-          ({
+          (config.lib.stylix.sway.bar // {
             mode = "dock";
             position = "top";
             statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
             hiddenState = "hide";
             trayOutput = "none";
-          } // config.lib.stylix.sway.bar)
+            colors.background = "#00000000";
+          })
         ];
         window = {
           titlebar = false;
