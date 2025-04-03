@@ -2,6 +2,7 @@
   pkgs,
   lib,
   inputs,
+  config,
   ...
 }:
 
@@ -82,21 +83,13 @@
           };
         };
         bars = [
-          {
+          ({
+            mode = "dock";
             position = "top";
             statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
-            # statusCommand = "{pkgs.i3status}/bin/i3status";
             hiddenState = "hide";
             trayOutput = "none";
-            fonts = {
-              names = [
-                "Fira Code"
-                "FontAwesome"
-              ];
-              style = "Bold Semi-Condensed";
-              size = 11.0;
-            };
-          }
+          } // config.lib.stylix.sway.bar)
         ];
         window = {
           titlebar = false;
