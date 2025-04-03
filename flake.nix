@@ -3,8 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:codebam/nixpkgs/nixos-unstable-small";
-    staging.url = "github:nixos/nixpkgs/staging";
-    master.url = "github:nixos/nixpkgs";
+    # staging.url = "github:nixos/nixpkgs/staging";
+    # master.url = "github:nixos/nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
