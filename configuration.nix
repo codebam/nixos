@@ -322,13 +322,22 @@
     (final: prev: {
       libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
       scx = inputs.scx.legacyPackages.${pkgs.system}.scx;
+      xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
+        version = "hdr";
+        src = prev.fetchFromGitHub {
+          owner = "codebam";
+          repo = "xdg-desktop-portal-wlr";
+          rev = "image-copy-capture";
+          hash = "sha256-XjXs627itBLJC2dcA6Pi9t4JwdEFULpgRnXnTbayHb0=";
+        };
+      });
       wlroots = prev.wlroots.overrideAttrs (old: {
         version = "hdr";
         src = prev.fetchFromGitHub {
           owner = "codebam";
           repo = "wlroots";
-          rev = "hdr-04-01";
-          hash = "sha256-tgOARkzZUJssb6BmUxcUo13KC43LWS0hQhMFK8XO5Ss=";
+          rev = "hdr-04-04";
+          hash = "sha256-rlRETNIOzrWDzjd60nWnP+WqBalmvRSGqJAUQqboxFU=";
         };
       });
       sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
