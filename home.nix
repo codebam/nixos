@@ -604,6 +604,12 @@
 
   stylix = {
     enable = true;
+
+    targets = {
+      qt.enable = false;
+      gtk.enable = false;
+    };
+
     polarity = "dark";
     # image = builtins.fetchurl {
     #   url = "https://cdn.dynamicwallpaper.club/wallpapers/wqmsaakm50l/plants.heic";
