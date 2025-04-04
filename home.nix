@@ -607,7 +607,7 @@
 
     targets = {
       qt.enable = false;
-      gtk.enable = false;
+      gtk.flatpakSupport.enable = false;
     };
 
     polarity = "dark";
