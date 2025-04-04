@@ -93,7 +93,7 @@
       # scheduler = "scx_bpfland";
     };
     kanata = {
-      enable = true;
+      enable = false;
       keyboards = {
         "keyboard".config = ''
           (defsrc
