@@ -87,7 +87,7 @@
                 ./desktop/home.nix
               ];
             };
-            home-manager.sharedModules = [];
+            home-manager.sharedModules = [ ];
           }
         ];
       };
@@ -121,7 +121,7 @@
                 ./laptop/home.nix
               ];
             };
-            home-manager.sharedModules = [];
+            home-manager.sharedModules = [ ];
           }
         ];
       };
