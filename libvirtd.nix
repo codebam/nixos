@@ -588,7 +588,6 @@ in
       in
       lib.foldl' (acc: daemon: acc // (mkDaemonSockets daemon)) { } allDaemons;
 
-
     systemd.tmpfiles.rules =
       let
         vhostUserCollection = pkgs.buildEnv {

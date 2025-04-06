@@ -1,7 +1,7 @@
 { pkgs, inputs, ... }:
 
 {
-  disabledModules = ["virtualisation/libvirtd.nix" ];
+  disabledModules = [ "virtualisation/libvirtd.nix" ];
   imports = [ ./libvirtd.nix ];
   boot = {
     loader = {
@@ -18,7 +18,7 @@
     };
 
     supportedFilesystems = [ "bcachefs" ];
-    extraModulePackages = [];
+    extraModulePackages = [ ];
   };
 
   nix = {
@@ -348,7 +348,7 @@
           rev = "hdr-04-01";
           hash = "sha256-idsf0YxFjLu0caSdV9lbq3IxQ44DABxwCIRkthbOCO4=";
         };
-        buildInputs = (old.buildInputs or []) ++ [ final.wlroots ];
+        buildInputs = (old.buildInputs or [ ]) ++ [ final.wlroots ];
       });
     })
   ];

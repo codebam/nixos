@@ -19,29 +19,35 @@
 
   # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
   # boot.kernelPackages = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
-  boot.kernelPackages = let
-      linux_next_pkg = { fetchgit, buildLinux, ... } @ args:
+  boot.kernelPackages =
+    let
+      linux_next_pkg =
+        { fetchgit, buildLinux, ... }@args:
 
-        buildLinux (args // rec {
-          version = "6.15.0";
-          modDirVersion = "6.14.0-next-20250404";
+        buildLinux (
+          args
+          // rec {
+            version = "6.15.0";
+            modDirVersion = "6.14.0-next-20250404";
 
-          src = fetchgit {
-            url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-            rev = "a4cda136f021ad44b8b52286aafd613030a6db5f";
-            sha256 = "sha256-abe++Cr4oA8++EFK0ua6msfbu69jPiX7rfdjG6FjGbw=";
-            deepClone = false;
-            leaveDotGit = false;
-          };
+            src = fetchgit {
+              url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
+              rev = "a4cda136f021ad44b8b52286aafd613030a6db5f";
+              sha256 = "sha256-abe++Cr4oA8++EFK0ua6msfbu69jPiX7rfdjG6FjGbw=";
+              deepClone = false;
+              leaveDotGit = false;
+            };
 
-          kernelPatches = [];
+            kernelPatches = [ ];
 
-          extraMeta.branch = "next";
+            extraMeta.branch = "next";
 
-        } // (args.argsOverride or {}));
-      linux_next = pkgs.callPackage linux_next_pkg{};
-    in 
-      pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
+          }
+          // (args.argsOverride or { })
+        );
+      linux_next = pkgs.callPackage linux_next_pkg { };
+    in
+    pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
