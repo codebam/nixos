@@ -328,7 +328,7 @@
           owner = "codebam";
           repo = "xdg-desktop-portal-wlr";
           rev = "image-copy-capture";
-          hash = "sha256-XjXs627itBLJC2dcA6Pi9t4JwdEFULpgRnXnTbayHb0=";
+          hash = "sha256-tPeLlS97n06c8KKyaPOsGMod5dJshwxhl9OMe4ZII50=";
         };
       });
       wlroots = prev.wlroots.overrideAttrs (old: {
