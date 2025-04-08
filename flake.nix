@@ -22,6 +22,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lix.follows = "lix";
     };
+    sops-nix.url = "github:Mic92/sops-nix";
+    stylix.url = "github:danth/stylix";
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
     # };
@@ -38,7 +40,6 @@
     #   inputs.nixpkgs.follows = "nixpkgs";
     #   inputs.home-manager.follows = "home-manager";
     # };
-    stylix.url = "github:danth/stylix";
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
@@ -52,6 +53,7 @@
       lix-module,
       home-manager,
       lanzaboote,
+      sops-nix,
       stylix,
       ...
     }@inputs:
@@ -64,6 +66,7 @@
           ./configuration.nix
           ./desktop/configuration.nix
           stylix.nixosModules.stylix
+          sops-nix.nixosModules.sops
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:
@@ -98,6 +101,8 @@
           lix-module.nixosModules.default
           ./configuration.nix
           ./laptop/configuration.nix
+          stylix.nixosModules.stylix
+          sops-nix.nixosModules.sops
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:
