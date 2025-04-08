@@ -43,7 +43,6 @@
     rocm.url = "github:LunNova/nixpkgs/rocm-update";
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
-    scx.url = "github:codebam/nixpkgs/scx-1.0.11";
     libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
   };
 
