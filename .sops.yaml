@@ -1,0 +1,9 @@
+creation_rules:
+  - path_regex: "secrets/[^/]+\\.(yaml|json|env|ini)"
+    key_groups:
+    - pgp:
+      - "42CDE212593CF2FDC72348A80F6D5021A87F92BA"
+      ssh:
+      - "SHA256:Hz9Qja3ns/pXYD/9Egisqkb1f61LMiEK4AlcexHtwWk"
+      age:
+      - "age1yubikey1qvlrn778xmzl04kdp9ln90ethxxvuya09vuluqq58ke2qeaggjczxmm3gfy"

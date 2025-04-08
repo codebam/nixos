@@ -33,6 +33,7 @@
       slurp
       weechat
       nixfmt-tree
+      age-plugin-yubikey
     ];
 
     shellAliases = {
@@ -154,7 +155,7 @@
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
           # exec "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root DP-1 3445641810 --silent"
-          exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.webm'
+          exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.mp4'
         '';
     };
 
@@ -247,6 +248,7 @@
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         PROTON_ENABLE_WAYLAND = "1";
         DXVK_HDR = "1";
+        SOPS_AGE_KEY="AGE-PLUGIN-YUBIKEY-1XJTC5QYZVM2MZJGP22WZJ";
       };
     };
     neovim = {

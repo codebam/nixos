@@ -81,6 +81,13 @@
     };
   };
 
+  # sops = {
+  #   defaultSopsFile = ./secrets/secrets.yaml;
+  #   secrets = {
+  #     password = {};
+  #   };
+  # };
+
   services = {
     resolved.enable = true;
     speechd.enable = true;
@@ -205,37 +212,38 @@
   };
 
   environment.systemPackages = with pkgs; [
+    discord-rpc
     distrobox
     efm-langserver
     git
+    gparted
     libnotify
+    linux-wallpaperengine
+    mangohud
     nil
+    nix-output-monitor
     nixpkgs-fmt
+    rclone
+    sops
+    steamtinkerlaunch
     virt-manager
+    vscodium
     wl-clipboard
     xdg-utils
-    discord-rpc
-    mangohud
-    steamtinkerlaunch
-    vscodium
-    rclone
-    gparted
-    nix-output-monitor
-    linux-wallpaperengine
   ];
 
   fonts = {
     fontDir.enable = true;
     packages = with pkgs; [
-      noto-fonts
-      noto-fonts-color-emoji
-      noto-fonts-cjk-sans
       fira-code
       fira-code-symbols
       font-awesome
-      nerd-fonts.fira-code
-      monocraft
       miracode
+      monocraft
+      nerd-fonts.fira-code
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-color-emoji
     ];
   };
 
@@ -321,8 +329,17 @@
   nixpkgs.overlays = [
     (final: prev: {
       libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
-      scx = inputs.scx.legacyPackages.${pkgs.system}.scx;
-      xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
+      scx = prev.scx // {
+        full = prev.scx.full.overrideAttrs (old: {
+          src = prev.fetchFromGitHub {
+            owner = "sched-ext";
+            repo = "scx";
+            rev = "HEAD";
+            hash = "sha256-2pSK/uhkSv8UE07U3/HwmICArVfqk67ks2Nn+BvzrHo=";
+          };
+        });
+      };
+        xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
         version = "hdr";
         src = prev.fetchFromGitHub {
           owner = "codebam";
