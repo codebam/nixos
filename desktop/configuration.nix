@@ -28,12 +28,12 @@
           args
           // rec {
             version = "6.15.0";
-            modDirVersion = "6.15.0-rc1-next-20250408";
+            modDirVersion = "6.15.0-rc1-next-20250407";
 
             src = fetchgit {
               url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-              rev = "next-20250408";
-              sha256 = "sha256-3Oj/xtck/uC0Ir7TgOG/5qAaJLbDPEYO4rTo6BuGmzg=";
+              rev = "next-20250407";
+              sha256 = "sha256-wNFy92G5m4XsJ0s7PQYLqFq2OMA/yOa3K/wU54E5vUQ=";
               deepClone = false;
               leaveDotGit = false;
             };
