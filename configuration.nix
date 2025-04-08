@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, config, ... }:
 
 {
   disabledModules = [ "virtualisation/libvirtd.nix" ];
@@ -81,12 +81,17 @@
     };
   };
 
-  # sops = {
-  #   defaultSopsFile = ./secrets/secrets.yaml;
-  #   secrets = {
-  #     password = {};
-  #   };
-  # };
+  sops = {
+    age = {
+      keyFile = "/home/codebam/.config/sops/age/keys.txt";
+    };
+    defaultSopsFile = ./secrets/secrets.yaml;
+    secrets = {
+      password = {
+        neededForUsers = true;
+      };
+    };
+  };
 
   services = {
     resolved.enable = true;
@@ -207,11 +212,12 @@
       "video"
       "uinput"
     ];
-    hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
+    hashedPasswordFile = config.sops.secrets.password.path;
     packages = with pkgs; [ flatpak ];
   };
 
   environment.systemPackages = with pkgs; [
+    age
     discord-rpc
     distrobox
     efm-langserver
