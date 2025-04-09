@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:codebam/nixpkgs/nixos-unstable-small";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     # staging.url = "github:nixos/nixpkgs/staging";
     # master.url = "github:nixos/nixpkgs";
     home-manager = {
@@ -22,8 +22,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lix.follows = "lix";
     };
-    sops-nix.url = "github:Mic92/sops-nix";
+    agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
+    # sops-nix.url = "github:Mic92/sops-nix";
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
     # };
@@ -44,6 +45,7 @@
     ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
     avante.url = "github:codebam/nixpkgs/avante";
     libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
+    xanmod.url = "github:codebam/nixpkgs/update-xanmod";
   };
 
   outputs =
@@ -52,7 +54,7 @@
       lix-module,
       home-manager,
       lanzaboote,
-      sops-nix,
+      agenix,
       stylix,
       ...
     }@inputs:
@@ -65,7 +67,7 @@
           ./configuration.nix
           ./desktop/configuration.nix
           stylix.nixosModules.stylix
-          sops-nix.nixosModules.sops
+          agenix.nixosModules.default
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:
@@ -101,7 +103,7 @@
           ./configuration.nix
           ./laptop/configuration.nix
           stylix.nixosModules.stylix
-          sops-nix.nixosModules.sops
+          agenix.nixosModules.default
           lanzaboote.nixosModules.lanzaboote
           (
             { pkgs, lib, ... }:

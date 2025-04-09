@@ -58,7 +58,7 @@
         output = {
           "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
             mode = "3840x1600@143.998Hz";
-            adaptive_sync = "on";
+            adaptive_sync = "off";
             subpixel = "none";
             render_bit_depth = "10";
             hdr = "on";
@@ -248,7 +248,6 @@
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         PROTON_ENABLE_WAYLAND = "1";
         DXVK_HDR = "1";
-        SOPS_AGE_KEY="AGE-PLUGIN-YUBIKEY-1XJTC5QYZVM2MZJGP22WZJ";
       };
     };
     neovim = {
