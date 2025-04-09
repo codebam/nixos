@@ -1,4 +1,4 @@
-{ pkgs, inputs, config, ... }:
+{ pkgs, inputs, config, lib, ... }:
 
 {
   disabledModules = [ "virtualisation/libvirtd.nix" ];
@@ -77,18 +77,6 @@
           RestartSec = 1;
           TimeoutStopSec = 10;
         };
-      };
-    };
-  };
-
-  sops = {
-    age = {
-      keyFile = "/home/codebam/.config/sops/age/keys.txt";
-    };
-    defaultSopsFile = ./secrets/secrets.yaml;
-    secrets = {
-      password = {
-        neededForUsers = true;
       };
     };
   };
@@ -212,12 +200,11 @@
       "video"
       "uinput"
     ];
-    hashedPasswordFile = config.sops.secrets.password.path;
+    hashedPasswordFile = config.age.secrets.hashedpassword.path;
     packages = with pkgs; [ flatpak ];
   };
 
   environment.systemPackages = with pkgs; [
-    age
     discord-rpc
     distrobox
     efm-langserver
@@ -230,13 +217,19 @@
     nix-output-monitor
     nixpkgs-fmt
     rclone
-    sops
     steamtinkerlaunch
     virt-manager
     vscodium
     wl-clipboard
     xdg-utils
+    (inputs.agenix.packages.${pkgs.system}.default.override { ageBin = "${pkgs.rage}/bin/rage"; })
   ];
+
+  age = {
+    identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
+    secrets.hashedpassword.file = ./secrets/hashedpassword.age;
+    ageBin = "PATH=$PATH:${lib.makeBinPath [pkgs.age-plugin-yubikey]} ${pkgs.rage}/bin/rage";
+  };
 
   fonts = {
     fontDir.enable = true;

@@ -17,37 +17,38 @@
 
   environment.systemPackages = [ ];
 
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  # boot.kernelPackages = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
-  boot.kernelPackages =
-    let
-      linux_next_pkg =
-        { fetchgit, buildLinux, ... }@args:
+  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
+  # boot.kernelPackages =
+  #   let
+  #     linux_next_pkg =
+  #       { fetchgit, buildLinux, ... }@args:
 
-        buildLinux (
-          args
-          // rec {
-            version = "6.15.0";
-            modDirVersion = "6.15.0-rc1-next-20250407";
+  #       buildLinux (
+  #         args
+  #         // rec {
+  #           version = "6.15.0";
+  #           modDirVersion = "6.15.0-rc1-next-20250409";
 
-            src = fetchgit {
-              url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-              rev = "next-20250407";
-              sha256 = "sha256-wNFy92G5m4XsJ0s7PQYLqFq2OMA/yOa3K/wU54E5vUQ=";
-              deepClone = false;
-              leaveDotGit = false;
-            };
+  #           src = fetchgit {
+  #             url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
+  #             rev = "next-20250409";
+  #             sha256 = "sha256-2dLsYNwXWq9QnbKYnqmrojxt18U2OEg4x/4IOOJ9h54=";
+  #             deepClone = false;
+  #             leaveDotGit = false;
+  #           };
 
-            kernelPatches = [ ];
+  #           kernelPatches = [ ];
 
-            extraMeta.branch = "next";
+  #           extraMeta.branch = "next";
 
-          }
-          // (args.argsOverride or { })
-        );
-      linux_next = pkgs.callPackage linux_next_pkg { };
-    in
-    pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
+  #         }
+  #         // (args.argsOverride or { })
+  #       );
+  #     linux_next = pkgs.callPackage linux_next_pkg { };
+  #   in
+  #   pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
 
   systemd.services.applyGpuSettings = {
     description = "Apply GPU Overclocking and Power Limit Settings";
@@ -190,6 +191,7 @@
   nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [
     (final: prev: {
+      linuxPackages_xanmod_latest = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
       rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
       # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
       ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
