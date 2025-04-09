@@ -91,7 +91,7 @@
                 ./desktop/home.nix
               ];
             };
-            home-manager.sharedModules = [ ];
+            home-manager.sharedModules = [ agenix.homeManagerModules.default ];
           }
         ];
       };
@@ -127,7 +127,7 @@
                 ./laptop/home.nix
               ];
             };
-            home-manager.sharedModules = [ ];
+            home-manager.sharedModules = [ agenix.homeManagerModules.default ];
           }
         ];
       };

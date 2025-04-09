@@ -6,4 +6,5 @@ let
 in
 {
   "hashedpassword.age".publicKeys = [ users.yubikey-5c users.yubikey-5c-nfc ];
+  "github_token.age".publicKeys = [ users.yubikey-5c users.yubikey-5c-nfc ];
 }
