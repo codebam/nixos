@@ -7,6 +7,11 @@
 }:
 
 {
+  age = {
+    identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
+    secrets.github_token.file = ./secrets/github_token.age;
+  };
+
   home = {
     username = "codebam";
     homeDirectory = "/home/codebam";
@@ -247,6 +252,7 @@
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         PROTON_ENABLE_WAYLAND = "1";
         DXVK_HDR = "1";
+        GITHUB_TOKEN = config.age.secrets.github_token.path;
       };
     };
     neovim = {

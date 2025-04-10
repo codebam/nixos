@@ -84,7 +84,6 @@
   age = {
     identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
     secrets.hashedpassword.file = ./secrets/hashedpassword.age;
-    secrets.github_token.file = ./secrets/github_token.age;
     ageBin = "PATH=$PATH:${lib.makeBinPath [pkgs.age-plugin-yubikey]} ${pkgs.rage}/bin/rage";
   };
 
