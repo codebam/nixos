@@ -333,8 +333,8 @@
           src = prev.fetchFromGitHub {
             owner = "sched-ext";
             repo = "scx";
-            rev = "HEAD";
-            hash = "sha256-2pSK/uhkSv8UE07U3/HwmICArVfqk67ks2Nn+BvzrHo=";
+            rev = "58da3bc920910ed8c62244431739926b53ab6ea8";
+            hash = "sha256-kDwnqADKgdRrj1+gFspnZIDxF1Vlx+XHRvuc93VaXqU=";
           };
         });
       };
