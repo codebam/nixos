@@ -132,11 +132,11 @@
             "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
               ${pkgs.grim}/bin/grim -t jpeg /tmp/screenshot.jpg && \
-              spaste < /tmp/screenshot.jpg | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
+              ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
             '')}";
             "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
               ${pkgs.grim}/bin/grim -t jpeg -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.jpg && \
-              spaste < /tmp/screenshot.jpg | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
+              ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
             '')}";
             "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
             "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
