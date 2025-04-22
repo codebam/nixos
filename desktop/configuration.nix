@@ -192,11 +192,11 @@
   nixpkgs.overlays = [
     (final: prev: {
       linuxPackages_xanmod_latest = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
-      rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
+      # rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
       # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
-      ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
-        doCheck = false;
-      });
+      # ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
+      #   doCheck = false;
+      # });
     })
   ];
 
