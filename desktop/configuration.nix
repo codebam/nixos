@@ -19,7 +19,7 @@
 
   # boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
+  boot.kernelPackages = pkgs.linuxPackages_testing;
   # boot.kernelPackages =
   #   let
   #     linux_next_pkg =
