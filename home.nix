@@ -597,8 +597,10 @@
   services = {
     mako = {
       enable = true;
-      layer = "overlay";
-      defaultTimeout = 5000;
+      settings = {
+        layer = "overlay";
+        defaultTimeout = 5000;
+      };
     };
     mopidy = {
       enable = true;
