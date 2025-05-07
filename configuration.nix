@@ -90,9 +90,12 @@
   services = {
     resolved.enable = true;
     speechd.enable = true;
-    udev.extraRules = ''
-      KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
-    '';
+    udev = {
+      packages = [ pkgs.via ];
+      extraRules = ''
+        KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
+      '';
+    };
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
@@ -229,6 +232,7 @@
     vscodium
     wl-clipboard
     xdg-utils
+    via
     (inputs.agenix.packages.${pkgs.system}.default.override { ageBin = "${pkgs.rage}/bin/rage"; })
   ];
 
@@ -277,6 +281,7 @@
       enable = true;
       extraPackages = [ pkgs.gamescope-wsi ];
     };
+    keyboard.qmk.enable = true;
   };
 
   virtualisation = {
