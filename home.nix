@@ -202,12 +202,12 @@
       enableBashIntegration = true;
       enableFishIntegration = true;
     };
-    i3status-rust = {
-      enable = true;
-    };
-    swaylock = {
-      enable = true;
-    };
+    # i3status-rust = {
+    #   enable = true;
+    # };
+    # swaylock = {
+    #   enable = true;
+    # };
     fish = {
       enable = true;
       interactiveShellInit = ''
@@ -477,20 +477,20 @@
         };
       };
     };
-    wofi = {
-      enable = true;
-      settings = {
-        show = "drun";
-        dmenu = true;
-        insensitive = true;
-        prompt = "";
-        width = "25%";
-        lines = 5;
-        location = "center";
-        hide_scroll = true;
-        allow_images = true;
-      };
-    };
+    # wofi = {
+    #   enable = true;
+    #   settings = {
+    #     show = "drun";
+    #     dmenu = true;
+    #     insensitive = true;
+    #     prompt = "";
+    #     width = "25%";
+    #     lines = 5;
+    #     location = "center";
+    #     hide_scroll = true;
+    #     allow_images = true;
+    #   };
+    # };
     direnv = {
       enable = true;
       enableBashIntegration = true;
@@ -532,88 +532,87 @@
       };
     };
 
-    ncmpcpp = {
-      enable = true;
-      bindings = [
-        {
-          key = "j";
-          command = "scroll_down";
-        }
-        {
-          key = "k";
-          command = "scroll_up";
-        }
-        {
-          key = "J";
-          command = [
-            "select_item"
-            "scroll_down"
-          ];
-        }
-        {
-          key = "K";
-          command = [
-            "select_item"
-            "scroll_up"
-          ];
-        }
-      ];
-      settings = {
-        song_list_format = " $0%n $1• $8%t $R$0%a ";
-        song_columns_list_format = "(3)[]{}(85)[white]{t} (1)[blue]{a}";
-        song_status_format = " $3%t $0 $1%a ";
-        playlist_display_mode = "columns";
-        now_playing_prefix = "$3>";
-        now_playing_suffix = "$8$/b";
-        browser_playlist_prefix = "$2 ♥ $0 ";
-        playlist_disable_highlight_delay = "1";
-        message_delay_time = "1";
-        progressbar_look = "━━─";
-        progressbar_color = "black";
-        progressbar_elapsed_color = "green";
-        colors_enabled = "yes";
-        empty_tag_color = "red";
-        statusbar_color = "black";
-        state_line_color = "black";
-        state_flags_color = "green";
-        main_window_color = "green";
-        header_window_color = "black";
-        display_bitrate = "yes";
-        autocenter_mode = "yes";
-        centered_cursor = "yes";
-        titles_visibility = "no";
-        statusbar_visibility = "yes";
-        empty_tag_marker = " -- ‼ -- ";
-        mouse_support = "no";
-        header_visibility = "no";
-        display_remaining_time = "no";
-        ask_before_clearing_playlists = "no";
-        discard_colors_if_item_is_selected = "yes";
-      };
-    };
-    home-manager.enable = true;
+    # ncmpcpp = {
+    #   enable = true;
+    #   bindings = [
+    #     {
+    #       key = "j";
+    #       command = "scroll_down";
+    #     }
+    #     {
+    #       key = "k";
+    #       command = "scroll_up";
+    #     }
+    #     {
+    #       key = "J";
+    #       command = [
+    #         "select_item"
+    #         "scroll_down"
+    #       ];
+    #     }
+    #     {
+    #       key = "K";
+    #       command = [
+    #         "select_item"
+    #         "scroll_up"
+    #       ];
+    #     }
+    #   ];
+    #   settings = {
+    #     song_list_format = " $0%n $1• $8%t $R$0%a ";
+    #     song_columns_list_format = "(3)[]{}(85)[white]{t} (1)[blue]{a}";
+    #     song_status_format = " $3%t $0 $1%a ";
+    #     playlist_display_mode = "columns";
+    #     now_playing_prefix = "$3>";
+    #     now_playing_suffix = "$8$/b";
+    #     browser_playlist_prefix = "$2 ♥ $0 ";
+    #     playlist_disable_highlight_delay = "1";
+    #     message_delay_time = "1";
+    #     progressbar_look = "━━─";
+    #     progressbar_color = "black";
+    #     progressbar_elapsed_color = "green";
+    #     colors_enabled = "yes";
+    #     empty_tag_color = "red";
+    #     statusbar_color = "black";
+    #     state_line_color = "black";
+    #     state_flags_color = "green";
+    #     main_window_color = "green";
+    #     header_window_color = "black";
+    #     display_bitrate = "yes";
+    #     autocenter_mode = "yes";
+    #     centered_cursor = "yes";
+    #     titles_visibility = "no";
+    #     statusbar_visibility = "yes";
+    #     empty_tag_marker = " -- ‼ -- ";
+    #     mouse_support = "no";
+    #     header_visibility = "no";
+    #     display_remaining_time = "no";
+    #     ask_before_clearing_playlists = "no";
+    #     discard_colors_if_item_is_selected = "yes";
+    #   };
+    # };
+    # home-manager.enable = true;
   };
 
   services = {
-    mako = {
-      enable = true;
-      settings = {
-        layer = "overlay";
-        defaultTimeout = 5000;
-      };
-    };
-    mopidy = {
-      enable = true;
-      extensionPackages = with pkgs; [
-        mopidy-mpd
-        mopidy-ytmusic
-      ];
-      settings = {
-        ytmusic = {
-          oauth_json = "/home/codebam/Downloads/oauth.json";
-        };
-      };
-    };
+    # mako = {
+    #   enable = true;
+    #   settings = {
+    #     layer = "overlay";
+    #   };
+    # };
+    # mopidy = {
+    #   enable = true;
+    #   extensionPackages = with pkgs; [
+    #     mopidy-mpd
+    #     mopidy-ytmusic
+    #   ];
+    #   settings = {
+    #     ytmusic = {
+    #       oauth_json = "/home/codebam/Downloads/oauth.json";
+    #     };
+    #   };
+    # };
   };
 
   xdg = {
@@ -624,7 +623,7 @@
     enable = true;
 
     targets = {
-      qt.enable = false;
+      # qt.enable = false;
       gtk.flatpakSupport.enable = false;
       mangohud.enable = false;
     };
