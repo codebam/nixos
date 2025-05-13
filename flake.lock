@@ -639,8 +639,7 @@
         "lix": "lix",
         "lix-module": "lix-module",
         "nixpkgs": "nixpkgs_2",
-        "stylix": "stylix",
-        "xanmod": "xanmod"
+        "stylix": "stylix"
       }
     },
     "rust-overlay": {
@@ -845,22 +844,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "xanmod": {
-      "locked": {
-        "lastModified": 1744191696,
-        "narHash": "sha256-QSfhQmsQ/fF51FV5zS0x0UL+9tW9Py+3VwDtZPZGuK8=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "86fa473c159ca5b58f1da1208d157a552aebab4f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "update-xanmod",
-        "repo": "nixpkgs",
         "type": "github"
       }
     }
