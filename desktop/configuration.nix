@@ -50,61 +50,38 @@
   #   in
   #   pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
 
-  systemd.services.applyGpuSettings = {
-    description = "Apply GPU Overclocking and Power Limit Settings";
-    after = [ "multi-user.target" ];
-    wantedBy = [ "graphical.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
+  systemd.services = {
+    applyGpuSettings = {
+      description = "Apply GPU Overclocking and Power Limit Settings";
+      after = [ "multi-user.target" ];
+      wantedBy = [ "graphical.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+        echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
+      '';
     };
-    script = ''
-      # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-      echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
-    '';
+    autoUpgrade = {
+      preStart = ''
+        /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update /home/codebam/git/nixos
+      '';
+    };
   };
 
   powerManagement.enable = true;
 
-  # environment.variables = {
-  #   RUSTICL_ENABLE = "1";
-  # };
-  # systemd.services.foldingathome.environment = {
-  #   RUSTICL_ENABLE = "1";
-  # };
-
   services = {
-    xmrig = {
-      enable = false;
-      settings = {
-        autosave = true;
-        cpu = true;
-        opencl = false;
-        cuda = false;
-        pools = [
-          {
-            url = "pool.supportxmr.com:443";
-            user = "82ykgFnWJLe7waEdRNjMmfUGSLaMEYjdf4jvuAmrjhqkA2VXNZRvs913UQUX5zQr4c3PJvFbqhbBG4xGpqDLabuA8od54rs";
-            keepalive = true;
-            tls = true;
-          }
-        ];
-      };
-    };
-
     hardware.openrgb = {
       enable = true;
     };
-    # foldingathome = {
-    #   enable = true;
-    #   user = "codebam";
-    # };
-
     ollama = {
       enable = true;
       host = "0.0.0.0";
@@ -125,18 +102,8 @@
       extest = {
         enable = true;
       };
-      gamescopeSession = {
-        enable = true;
-        args = [
-          "--expose-wayland"
-          "-e"
-        ];
-      };
     };
     gamemode = {
-      enable = true;
-    };
-    gamescope = {
       enable = true;
     };
     corectrl = {
@@ -164,12 +131,7 @@
     };
     graphics = {
       enable32Bit = true;
-      extraPackages = with pkgs; [ gamescope-wsi ];
     };
-    # amdgpu.amdvlk = {
-    #   enable = true;
-    #   support32Bit.enable = true;
-    # };
   };
 
   # nixpkgs.overlays = [
@@ -191,7 +153,7 @@
   nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [
     (final: prev: {
-      linuxPackages_xanmod_latest = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
+      # linuxPackages_xanmod_latest = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
       # rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
       # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
       # ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
@@ -216,9 +178,12 @@
 
   system = {
     autoUpgrade = {
-      enable = false;
-      flake = "github:codebam/nixos#nixos-desktop";
-      dates = "09:00";
+      enable = true;
+      flake = "/home/codebam/git/nixos";
+      operation = "switch";
+      dates = "daily";
+      randomizedDelaySec = "10min";
+      allowReboot = false;
     };
     stateVersion = "23.11";
   };
