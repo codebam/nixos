@@ -252,7 +252,6 @@
         MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
         PROTON_ENABLE_WAYLAND = "1";
         DXVK_HDR = "1";
-        GITHUB_TOKEN_PATH = config.age.secrets.github_token.path;
       };
     };
     neovim = {
