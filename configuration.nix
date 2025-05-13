@@ -101,41 +101,6 @@
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
       # scheduler = "scx_bpfland";
     };
-    kanata = {
-      enable = false;
-      keyboards = {
-        "keyboard".config = ''
-          (defsrc
-            grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
-            tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
-            caps a    s    d    f    g    h    j    k    l    ;    '    ret
-            lsft z    x    c    v    b    n    m    ,    .    /    rsft
-            lctl lmet lalt           spc            ralt rmet rctl
-          )
-          (deflayer qwerty
-            grv 1    2    3    4    5    6    7    8    9    0    -    @=    bspc
-            tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
-            caps a    s    d    f    g    h    j    k    l    ;    '    ret
-            lsft z    x    c    v    b    n    m    ,    .    /    rsft
-            lctl lmet lalt           spc            ralt rmet rctl
-          )
-          (deflayer layers
-            _    @qwr lrld _    _    _    _    _    _    _    _    _    _    _
-            @dms @dr0 @dp0 _    _    _    _    _    _    _    _    _    _    _
-            _    _    _    _    _    _    _    _    _    _    _    _    _
-            _    _    _    _    _    _    _    _    _    _    _    _
-            _    _    _              _              _    _    _
-          )
-          (defalias
-            = (tap-hold 200 200 = (layer-toggle layers))
-            qwr (layer-switch qwerty)
-            dr0 (dynamic-macro-record 0)
-            dp0 (dynamic-macro-play 0)
-            dms dynamic-macro-record-stop
-          )
-        '';
-      };
-    };
     displayManager = {
       sddm = {
         enable = true;
@@ -183,7 +148,6 @@
       "video"
       "uinput"
     ];
-    # hashedPasswordFile = config.age.secrets.hashedpassword.path;
     hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = with pkgs; [ flatpak ];
   };
@@ -307,44 +271,6 @@
   nixpkgs.overlays = [
     (final: prev: {
       libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
-      scx = prev.scx // {
-        full = prev.scx.full.overrideAttrs (old: {
-          src = prev.fetchFromGitHub {
-            owner = "sched-ext";
-            repo = "scx";
-            rev = "708c51736227f895a91c65d756845d23276d39c0";
-            hash = "sha256-7QaP3f18hK5m7yi/Kh7sb1x8H76YsXiCZKFRoyyxFrY=";
-          };
-        });
-      };
-        xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
-        version = "hdr";
-        src = prev.fetchFromGitHub {
-          owner = "codebam";
-          repo = "xdg-desktop-portal-wlr";
-          rev = "image-copy-capture";
-          hash = "sha256-tPeLlS97n06c8KKyaPOsGMod5dJshwxhl9OMe4ZII50=";
-        };
-      });
-      wlroots = prev.wlroots.overrideAttrs (old: {
-        version = "hdr";
-        src = prev.fetchFromGitHub {
-          owner = "codebam";
-          repo = "wlroots";
-          rev = "hdr-04-04";
-          hash = "sha256-rlRETNIOzrWDzjd60nWnP+WqBalmvRSGqJAUQqboxFU=";
-        };
-      });
-      sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
-        version = "hdr";
-        src = prev.fetchFromGitHub {
-          owner = "codebam";
-          repo = "sway";
-          rev = "hdr-04-01";
-          hash = "sha256-idsf0YxFjLu0caSdV9lbq3IxQ44DABxwCIRkthbOCO4=";
-        };
-        buildInputs = (old.buildInputs or [ ]) ++ [ final.wlroots ];
-      });
     })
   ];
 
