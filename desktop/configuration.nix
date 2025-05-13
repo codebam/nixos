@@ -69,9 +69,10 @@
         echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
       '';
     };
-    autoUpgrade = {
+    nixos-upgrade = {
       preStart = ''
-        /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update /home/codebam/git/nixos
+        cd /home/codebam/git/nixos
+        /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update
       '';
     };
   };
