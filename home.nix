@@ -65,7 +65,7 @@
             adaptive_sync = "off";
             subpixel = "none";
             render_bit_depth = "10";
-            hdr = "on";
+            # hdr = "on";
             # color_profile = "icc ${./rtings-icc-profile.icm}";
             allow_tearing = "yes";
             max_render_time = "off";
