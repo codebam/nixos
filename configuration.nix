@@ -101,12 +101,12 @@
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
       # scheduler = "scx_bpfland";
     };
-    displayManager = {
-      sddm = {
-        enable = true;
-        wayland.enable = true;
-      };
-    };
+    # displayManager = {
+    #   sddm = {
+    #     enable = true;
+    #     wayland.enable = true;
+    #   };
+    # };
     desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
@@ -271,7 +271,7 @@
   nixpkgs.overlays = [
     (final: prev: {
       libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
-      # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
+      kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
     })
   ];
 
