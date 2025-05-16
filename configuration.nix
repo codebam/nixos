@@ -271,6 +271,7 @@
   nixpkgs.overlays = [
     (final: prev: {
       libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
+      # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
     })
   ];
 
