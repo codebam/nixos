@@ -24,6 +24,7 @@
     };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
+    plasma-beta.url = "github:K900/nixpkgs/plasma-6.4";
     # sops-nix.url = "github:Mic92/sops-nix";
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
