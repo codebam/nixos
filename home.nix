@@ -163,6 +163,7 @@
           }
           # exec "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root DP-1 3445641810 --silent"
           exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.mp4'
+          exec '${pkgs.mako}/bin/mako'
         '';
     };
 
