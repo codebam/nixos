@@ -87,6 +87,11 @@
   #   ageBin = "PATH=$PATH:${lib.makeBinPath [pkgs.age-plugin-yubikey]} ${pkgs.rage}/bin/rage";
   # };
 
+  qt = {
+    enable = true;
+    style = "kvantum";
+  };
+
   services = {
     ratbagd.enable = true;
     resolved.enable = true;
@@ -172,6 +177,7 @@
     wl-clipboard
     xdg-utils
     via
+    qt6Packages.qtstyleplugin-kvantum
     (inputs.agenix.packages.${pkgs.system}.default.override { ageBin = "${pkgs.rage}/bin/rage"; })
   ];
 
