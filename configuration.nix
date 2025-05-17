@@ -105,7 +105,6 @@
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
-      # scheduler = "scx_bpfland";
     };
     # displayManager = {
     #   sddm = {
