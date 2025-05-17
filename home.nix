@@ -126,8 +126,11 @@
             "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
             "${modifier}+shift+p" = "exec ${pkgs.swaylock}/bin/swaylock & systemctl suspend";
             "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+            "XF86AudioPlay" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
             "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+            "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
             "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
+            "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
