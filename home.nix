@@ -400,7 +400,7 @@
         set undodir=$HOME/.vim/undodir
       '';
       plugins = [
-        inputs.avante.legacyPackages.${pkgs.system}.vimPlugins.avante-nvim
+        pkgs.vimPlugins.avante-nvim
         pkgs.vimPlugins.augment-vim
         pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.cmp_luasnip

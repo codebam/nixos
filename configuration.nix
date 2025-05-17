@@ -88,6 +88,7 @@
   # };
 
   services = {
+    ratbagd.enable = true;
     resolved.enable = true;
     speechd.enable = true;
     udev = {
