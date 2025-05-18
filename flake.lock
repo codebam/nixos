@@ -437,22 +437,6 @@
         "type": "github"
       }
     },
-    "libvirt": {
-      "locked": {
-        "lastModified": 1743633007,
-        "narHash": "sha256-xJQQ+N+AhRpJbKTRntMV9w1+o6NGwel03Q3oq1cLLAE=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "292ec793e1bb322648ca474fea5e3d1eae15a21e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "libvirt-sockets",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "lix": {
       "flake": false,
       "locked": {
@@ -615,7 +599,6 @@
         "agenix": "agenix",
         "home-manager": "home-manager_2",
         "lanzaboote": "lanzaboote",
-        "libvirt": "libvirt",
         "lix": "lix",
         "lix-module": "lix-module",
         "nixpkgs": "nixpkgs_2",

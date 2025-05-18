@@ -44,7 +44,7 @@
     # };
     # rocm.url = "github:LunNova/nixpkgs/rocm-update";
     # ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
-    libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
+    # libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
     # xanmod.url = "github:codebam/nixpkgs/update-xanmod";
   };
 

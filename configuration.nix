@@ -1,8 +1,8 @@
 { pkgs, inputs, config, lib, ... }:
 
 {
-  disabledModules = [ "virtualisation/libvirtd.nix" ];
-  imports = [ ./libvirtd.nix ];
+  # disabledModules = [ "virtualisation/libvirtd.nix" ];
+  # imports = [ ./libvirtd.nix ];
   boot = {
     loader = {
       systemd-boot = {
@@ -276,7 +276,7 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
+      # libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
       kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
     })
   ];
