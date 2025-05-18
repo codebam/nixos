@@ -522,7 +522,7 @@
     enable = true;
 
     targets = {
-      qt.enable = false;
+      # qt.enable = false;
       gtk.flatpakSupport.enable = false;
       mangohud.enable = false;
     };

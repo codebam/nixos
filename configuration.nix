@@ -87,11 +87,6 @@
   #   ageBin = "PATH=$PATH:${lib.makeBinPath [pkgs.age-plugin-yubikey]} ${pkgs.rage}/bin/rage";
   # };
 
-  qt = {
-    enable = true;
-    style = "kvantum";
-  };
-
   services = {
     ratbagd.enable = true;
     resolved.enable = true;
