@@ -21,6 +21,32 @@
     extraModulePackages = [ ];
   };
 
+  stylix = {
+    enable = true;
+    targets = {
+    };
+    polarity = "dark";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+    fonts = {
+      serif = {
+        package = pkgs.dejavu_fonts;
+        name = "DejaVu Serif";
+      };
+      sansSerif = {
+        package = pkgs.dejavu_fonts;
+        name = "DejaVu Sans";
+      };
+      monospace = {
+        package = pkgs.nerd-fonts.fira-code;
+        name = "Fira Code NerdFont";
+      };
+      emoji = {
+        package = pkgs.noto-fonts-emoji;
+        name = "Noto Color Emoji";
+      };
+    };
+  };
+
   nix = {
     settings = {
       experimental-features = [
@@ -171,7 +197,6 @@
     wl-clipboard
     xdg-utils
     via
-    qt6Packages.qtstyleplugin-kvantum
     (inputs.agenix.packages.${pkgs.system}.default.override { ageBin = "${pkgs.rage}/bin/rage"; })
   ];
 
