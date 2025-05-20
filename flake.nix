@@ -9,10 +9,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     lix = {
       url = "git+https://git.lix.systems/lix-project/lix.git";
       flake = false;
@@ -24,7 +20,6 @@
     };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
-    plasma-beta.url = "github:K900/nixpkgs/plasma-6.4";
     # sops-nix.url = "github:Mic92/sops-nix";
     # rocm = {
     #   url = "github:lunnova/nixpkgs/rocm-update";
@@ -53,7 +48,6 @@
       nixpkgs,
       lix-module,
       home-manager,
-      lanzaboote,
       agenix,
       stylix,
       ...
@@ -68,18 +62,6 @@
           ./desktop/configuration.nix
           stylix.nixosModules.stylix
           agenix.nixosModules.default
-          lanzaboote.nixosModules.lanzaboote
-          (
-            { pkgs, lib, ... }:
-            {
-              environment.systemPackages = [ pkgs.sbctl ];
-              boot.loader.systemd-boot.enable = lib.mkForce false;
-              boot.lanzaboote = {
-                enable = true;
-                pkiBundle = "/etc/secureboot";
-              };
-            }
-          )
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -104,18 +86,6 @@
           ./laptop/configuration.nix
           stylix.nixosModules.stylix
           agenix.nixosModules.default
-          lanzaboote.nixosModules.lanzaboote
-          (
-            { pkgs, lib, ... }:
-            {
-              environment.systemPackages = [ pkgs.sbctl ];
-              boot.loader.systemd-boot.enable = lib.mkForce false;
-              boot.lanzaboote = {
-                enable = true;
-                pkiBundle = "/etc/secureboot";
-              };
-            }
-          )
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;

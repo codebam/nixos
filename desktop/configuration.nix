@@ -180,7 +180,7 @@
   system = {
     autoUpgrade = {
       enable = true;
-      flake = "/home/codebam/git/nixos";
+      flake = "/etc/nixos";
       operation = "switch";
       dates = "daily";
       randomizedDelaySec = "10min";
