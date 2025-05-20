@@ -527,10 +527,10 @@
     };
 
     polarity = "dark";
-    # image = builtins.fetchurl {
-    #   url = "https://cdn.dynamicwallpaper.club/wallpapers/wqmsaakm50l/plants.heic";
-    #   sha256 = "sha256-YQs7MBz8/hFT1Oy5pFr2xffl1jL9yvrA2w9N8Tp+IsA=";
-    # };
+    image = builtins.fetchurl {
+      url = "https://w.wallhaven.cc/full/2y/wallhaven-2y2wg6.png";
+      sha256 = "sha256-nFoNfk7Y/CGKWtscOE5GOxshI5eFmppWvhxHzOJ6mCA=";
+    };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     fonts = {
       serif = {
