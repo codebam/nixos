@@ -214,12 +214,12 @@
     # };
     fish = {
       enable = true;
-      interactiveShellInit = ''
-        set fish_greeting
-        function fish_command_not_found
-          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
-        end
-      '';
+      # interactiveShellInit = ''
+      #   set fish_greeting
+      #   function fish_command_not_found
+      #     ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
+      #   end
+      # '';
       plugins = [
         {
           name = "autopair.fish";
@@ -243,11 +243,11 @@
     };
     bash = {
       enable = true;
-      initExtra = ''
-        command_not_found_handle() {
-          ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
-        }
-      '';
+      # initExtra = ''
+      #   command_not_found_handle() {
+      #     ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
+      #   }
+      # '';
       sessionVariables = {
         OBS_VKCAPTURE = "1";
         FLATPAK_GL_DRIVERS = "mesa-git";
