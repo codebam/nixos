@@ -7,11 +7,6 @@
 }:
 
 {
-  # age = {
-  #   identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
-  #   secrets.github_token.file = ./secrets/github_token.age;
-  # };
-
   home = {
     username = "codebam";
     homeDirectory = "/home/codebam";
@@ -65,8 +60,6 @@
             adaptive_sync = "off";
             subpixel = "none";
             render_bit_depth = "10";
-            # hdr = "on";
-            # color_profile = "icc ${./rtings-icc-profile.icm}";
             allow_tearing = "yes";
             max_render_time = "off";
           };
@@ -161,7 +154,6 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          # exec "${pkgs.linux-wallpaperengine}/bin/linux-wallpaperengine --screen-root DP-1 3445641810 --silent"
           exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.mp4'
           exec '${pkgs.mako}/bin/mako'
         '';
@@ -209,17 +201,8 @@
     i3status-rust = {
       enable = true;
     };
-    # swaylock = {
-    #   enable = true;
-    # };
     fish = {
       enable = true;
-      # interactiveShellInit = ''
-      #   set fish_greeting
-      #   function fish_command_not_found
-      #     ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$argv"
-      #   end
-      # '';
       plugins = [
         {
           name = "autopair.fish";
@@ -243,11 +226,6 @@
     };
     bash = {
       enable = true;
-      # initExtra = ''
-      #   command_not_found_handle() {
-      #     ${pkgs.nodejs}/bin/node ~/git/cloudflare-ai-cli/src/client.mjs "$@"
-      #   }
-      # '';
       sessionVariables = {
         OBS_VKCAPTURE = "1";
         FLATPAK_GL_DRIVERS = "mesa-git";
