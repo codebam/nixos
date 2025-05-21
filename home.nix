@@ -347,13 +347,13 @@
         require("avante").setup({
           provider = "ollama",
           ollama = {
-            model = "qwen2.5-coder:32b",
+            model = "devstral",
           },
           rag_service = {
             enabled = true,
             host_mount = os.getenv("HOME"),
             provider = "ollama",
-            llm_model = "gemma3:27b",
+            llm_model = "qwen3:14b",
             embed_model = "nomic-embed-text",
           },
           cursor_applying_provider = 'ollama',
