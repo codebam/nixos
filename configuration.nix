@@ -183,7 +183,6 @@
     rclone
     steamtinkerlaunch
     virt-manager
-    vscodium
     wl-clipboard
     xdg-utils
     via
