@@ -1,8 +1,6 @@
-{ pkgs, inputs, config, lib, ... }:
+{ pkgs, inputs, ... }:
 
 {
-  # disabledModules = [ "virtualisation/libvirtd.nix" ];
-  # imports = [ ./libvirtd.nix ];
   boot = {
     loader = {
       systemd-boot = {
@@ -23,8 +21,6 @@
 
   stylix = {
     enable = true;
-    targets = {
-    };
     polarity = "dark";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     fonts = {
@@ -127,12 +123,6 @@
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
-    # displayManager = {
-    #   sddm = {
-    #     enable = true;
-    #     wayland.enable = true;
-    #   };
-    # };
     desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
@@ -296,7 +286,6 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      # libvirt = inputs.libvirt.legacyPackages.${pkgs.system}.libvirt;
       # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
     })
   ];
