@@ -3,8 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
-    # staging.url = "github:nixos/nixpkgs/staging";
-    # master.url = "github:nixos/nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,27 +18,6 @@
     };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
-    # sops-nix.url = "github:Mic92/sops-nix";
-    # rocm = {
-    #   url = "github:lunnova/nixpkgs/rocm-update";
-    # };
-    # linux-custom = {
-    #   url = "path:/home/codebam/git/linux";
-    #   flake = false;
-    # };
-    # firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
-    # mesa-25.url = "github:K900/nixpkgs/mesa-25.0";
-    # gen-nvim.url = "github:codebam/nixpkgs/gen-nvim";
-    # catppuccin.url = "github:catppuccin/nix";
-    # plasma-manager = {
-    #   url = "github:nix-community/plasma-manager";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.home-manager.follows = "home-manager";
-    # };
-    # rocm.url = "github:LunNova/nixpkgs/rocm-update";
-    # ollama.url = "github:codebam/nixpkgs/ollama-staging-into-master";
-    # libvirt.url = "github:codebam/nixpkgs/libvirt-sockets";
-    # xanmod.url = "github:codebam/nixpkgs/update-xanmod";
   };
 
   outputs =
