@@ -499,7 +499,6 @@
     enable = true;
 
     targets = {
-      gtk.flatpakSupport.enable = false;
       mangohud.enable = false;
     };
 
