@@ -92,7 +92,7 @@
         SCARF_NO_ANALYTICS = "True";
         ENABLE_WEB_SEARCH = "True";
         WEB_SEARCH_ENGINE = "searxng";
-        SEARXNG_QUERY_URL = "http://localhost/search?q=<query>";
+        SEARXNG_QUERY_URL = "http://localhost:8081/search?q=<query>";
       };
     };
     searx = {
