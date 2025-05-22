@@ -127,6 +127,10 @@
         { directory = ".local/share/keyrings"; mode = "0700"; }
         ".local/share/direnv"
         ".steam"
+        ".local/share/Steam"
+        ".librewolf"
+        ".password-store"
+        ".local/state/wireplumber"
       ];
       files = [
       ];
