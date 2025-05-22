@@ -131,6 +131,7 @@
         ".librewolf"
         ".password-store"
         ".local/state/wireplumber"
+        ".config/Element"
       ];
       files = [
       ];
