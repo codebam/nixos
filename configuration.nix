@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 {
   boot = {
@@ -70,10 +70,6 @@
     firewall = {
       enable = true;
       allowedTCPPorts = [
-        22
-        80
-        443
-        11434
       ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
@@ -129,6 +125,7 @@
       settings = {
         PasswordAuthentication = false;
       };
+      openFirewall = true;
     };
     fwupd.enable = true;
     pipewire = {
@@ -288,6 +285,17 @@
       # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
     })
   ];
+
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "steam"
+      "steam-original"
+      "steam-run"
+      "steam-unwrapped"
+      "open-webui"
+    ];
+
 
   system.stateVersion = "23.11";
 }
