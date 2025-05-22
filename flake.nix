@@ -18,6 +18,7 @@
     };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
+    impermanence.url = "github:nix-community/impermanence";
   };
 
   outputs =
@@ -27,6 +28,7 @@
       home-manager,
       agenix,
       stylix,
+      impermanence,
       ...
     }@inputs:
     {
@@ -35,6 +37,7 @@
         specialArgs = { inherit inputs; };
         modules = [
           lix-module.nixosModules.default
+	  impermanence.nixosModules.impermanence
           ./configuration.nix
           ./desktop/configuration.nix
           stylix.nixosModules.stylix

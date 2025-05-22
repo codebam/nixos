@@ -5,6 +5,7 @@
   config,
   lib,
   modulesPath,
+  environment,
   ...
 }:
 
@@ -31,9 +32,31 @@
   boot.kernel.sysctl."kernel.sysrq" = 1;
 
   fileSystems."/" = {
-    device = "UUID=2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
+    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
     fsType = "bcachefs";
     options = [
+      "X-mount.subdir=@root"
+      "compression=lz4"
+      "background_compression=zstd"
+      "discard"
+    ];
+  };
+  fileSystems."/persistent" = {
+    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
+    fsType = "bcachefs";
+    neededForBoot = true;
+    options = [
+      "X-mount.subdir=@persist"
+      "compression=lz4"
+      "background_compression=zstd"
+      "discard"
+    ];
+  };
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
+    fsType = "bcachefs";
+    options = [
+      "X-mount.subdir=@nix"
       "compression=lz4"
       "background_compression=zstd"
       "discard"
@@ -74,6 +97,39 @@
       priority = -3;
     }
   ];
+
+    environment.persistence."/persistent" = {
+    enable = true;  # NB: Defaults to true, not needed
+    hideMounts = true;
+    directories = [
+      "/var/log"
+      "/var/lib/bluetooth"
+      "/var/lib/nixos"
+      "/var/lib/systemd/coredump"
+      "/etc/NetworkManager/system-connections"
+      { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "u=rwx,g=rx,o="; }
+    ];
+    files = [
+      "/etc/machine-id"
+      { file = "/var/keys/secret_file"; parentDirectory = { mode = "u=rwx,g=,o="; }; }
+    ];
+    users.codebam = {
+      directories = [
+        "Downloads"
+        "Music"
+        "Pictures"
+        "Documents"
+        "Videos"
+        { directory = ".gnupg"; mode = "0700"; }
+        { directory = ".ssh"; mode = "0700"; }
+        { directory = ".nixops"; mode = "0700"; }
+        { directory = ".local/share/keyrings"; mode = "0700"; }
+        ".local/share/direnv"
+      ];
+      files = [
+      ];
+    };
+  };
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
