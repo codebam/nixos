@@ -83,6 +83,7 @@
     hardware.openrgb = {
       enable = true;
     };
+    open-webui.enable = true;
     ollama = {
       enable = true;
       host = "0.0.0.0";
@@ -167,15 +168,6 @@
   # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
   # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
   # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
-
-  nixpkgs.config.allowUnfreePredicate =
-    pkg:
-    builtins.elem (lib.getName pkg) [
-      "steam"
-      "steam-original"
-      "steam-run"
-      "steam-unwrapped"
-    ];
 
   system = {
     autoUpgrade = {
