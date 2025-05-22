@@ -261,6 +261,10 @@
   };
 
   programs = {
+    firefox = {
+      enable = true;
+      package = pkgs.librewolf;
+    };
     sway.enable = true;
     gnupg.agent = {
       enable = true;
