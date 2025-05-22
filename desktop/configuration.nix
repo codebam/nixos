@@ -98,8 +98,14 @@
     searx = {
       enable = true;
       settings = {
-        server.port = 8081;
-        server.secret_key = "codebam";
+        server = {
+          port = 8081;
+          secret_key = "codebam";
+        };
+        search = {
+          autocomplete = "google";
+          formats = [ "html" "json" ];
+        };
       };
     };
     ollama = {
