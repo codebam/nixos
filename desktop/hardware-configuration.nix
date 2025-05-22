@@ -5,7 +5,6 @@
   config,
   lib,
   modulesPath,
-  environment,
   ...
 }:
 
@@ -98,7 +97,7 @@
     }
   ];
 
-    environment.persistence."/persistent" = {
+  environment.persistence."/persistent" = {
     enable = true;  # NB: Defaults to true, not needed
     hideMounts = true;
     directories = [
