@@ -83,10 +83,27 @@
     hardware.openrgb = {
       enable = true;
     };
-    open-webui.enable = true;
+    open-webui = {
+      enable = true;
+      port = 8080;
+      environment = {
+        ANONYMIZED_TELEMETRY = "False";
+        DO_NOT_TRACK = "True";
+        SCARF_NO_ANALYTICS = "True";
+        ENABLE_WEB_SEARCH = "True";
+        WEB_SEARCH_ENGINE = "searxng";
+        SEARXNG_QUERY_URL = "http://localhost/search?q=<query>";
+      };
+    };
+    searx = {
+      enable = true;
+      settings = {
+        server.port = 8081;
+        server.secret_key = "codebam";
+      };
+    };
     ollama = {
       enable = true;
-      host = "0.0.0.0";
       acceleration = "rocm";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
