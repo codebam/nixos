@@ -19,47 +19,70 @@
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
     impermanence.url = "github:nix-community/impermanence";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, ... }@inputs:
-    let
-      commonModules = [
-        inputs.lix-module.nixosModules.default
-        inputs.impermanence.nixosModules.impermanence
-        ./configuration.nix
-        inputs.stylix.nixosModules.stylix
-        inputs.agenix.nixosModules.default
-        inputs.home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit inputs; };
-          home-manager.users.codebam = {
-            imports = [ ./home.nix ];
-          };
-          home-manager.sharedModules = [ inputs.agenix.homeManagerModules.default ];
-        }
-      ];
-    in
+  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+    (flake-utils.lib.eachDefaultSystem (system:
+      let
+        # You could define packages, devShells, etc. here for each system.
+        # For example:
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        # Example of a per-system output. Add your own here if needed.
+        # devShells.default = pkgs.mkShell {
+        #   buildInputs = [ pkgs.nixpkgs-fmt ];
+        # };
+      }
+    ))
+    //
     {
-      nixosConfigurations = {
-        nixos-desktop = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = { inherit inputs; };
-          modules = commonModules ++ [
-            ./desktop/configuration.nix
-            { home-manager.users.codebam.imports = [ ./desktop/home.nix ]; }
-          ];
-        };
+      nixosConfigurations =
+        let
+          mkNixosSystem = { system, hostname, extraModules ? [] }:
+            nixpkgs.lib.nixosSystem {
+              inherit system;
+              specialArgs = { inherit inputs; };
+              modules = [
+                inputs.lix-module.nixosModules.default
+                inputs.impermanence.nixosModules.impermanence
+                inputs.stylix.nixosModules.stylix
+                inputs.agenix.nixosModules.default
+                inputs.home-manager.nixosModules.home-manager
+                ./configuration.nix
+                {
+                  home-manager = {
+                    useGlobalPkgs = true;
+                    useUserPackages = true;
+                    extraSpecialArgs = { inherit inputs; };
+                    users.codebam = {
+                      imports = [ ./home.nix ];
+                    };
+                    sharedModules = [ inputs.agenix.homeManagerModules.default ];
+                  };
+                }
+              ] ++ extraModules;
+            };
+        in
+        {
+          nixos-desktop = mkNixosSystem {
+            system = "x86_64-linux";
+            hostname = "nixos-desktop";
+            extraModules = [
+              ./desktop/configuration.nix
+              { home-manager.users.codebam.imports = [ ./desktop/home.nix ]; }
+            ];
+          };
 
-        nixos-laptop = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = { inherit inputs; };
-          modules = commonModules ++ [
-            ./laptop/configuration.nix
-            { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
-          ];
+          nixos-laptop = mkNixosSystem {
+            system = "x86_64-linux";
+            hostname = "nixos-laptop";
+            extraModules = [
+              ./laptop/configuration.nix
+              { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
+            ];
+          };
         };
-      };
     };
 }
