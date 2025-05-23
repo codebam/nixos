@@ -25,15 +25,12 @@
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
     (flake-utils.lib.eachDefaultSystem (system:
       let
-        # You could define packages, devShells, etc. here for each system.
-        # For example:
         pkgs = nixpkgs.legacyPackages.${system};
       in
       {
-        # Example of a per-system output. Add your own here if needed.
-        # devShells.default = pkgs.mkShell {
-        #   buildInputs = [ pkgs.nixpkgs-fmt ];
-        # };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [ pkgs.nixpkgs-fmt ];
+        };
       }
     ))
     //
