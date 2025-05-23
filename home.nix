@@ -164,6 +164,9 @@
     };
 
   programs = {
+    swaylock = {
+      enable = true;
+    };
     mangohud = {
       enable = true;
       settings = {
