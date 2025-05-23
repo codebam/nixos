@@ -21,65 +21,45 @@
     impermanence.url = "github:nix-community/impermanence";
   };
 
-  outputs =
+  outputs = { self, nixpkgs, ... }@inputs:
+    let
+      commonModules = [
+        inputs.lix-module.nixosModules.default
+        inputs.impermanence.nixosModules.impermanence
+        ./configuration.nix
+        inputs.stylix.nixosModules.stylix
+        inputs.agenix.nixosModules.default
+        inputs.home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
+          home-manager.users.codebam = {
+            imports = [ ./home.nix ];
+          };
+          home-manager.sharedModules = [ inputs.agenix.homeManagerModules.default ];
+        }
+      ];
+    in
     {
-      nixpkgs,
-      lix-module,
-      home-manager,
-      agenix,
-      stylix,
-      impermanence,
-      ...
-    }@inputs:
-    {
-      nixosConfigurations.nixos-desktop = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          lix-module.nixosModules.default
-	  impermanence.nixosModules.impermanence
-          ./configuration.nix
-          ./desktop/configuration.nix
-          stylix.nixosModules.stylix
-          agenix.nixosModules.default
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs; };
-            home-manager.users.codebam = {
-              imports = [
-                ./home.nix
-                ./desktop/home.nix
-              ];
-            };
-            home-manager.sharedModules = [ agenix.homeManagerModules.default ];
-          }
-        ];
-      };
-      nixosConfigurations.nixos-laptop = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          lix-module.nixosModules.default
-          ./configuration.nix
-          ./laptop/configuration.nix
-          stylix.nixosModules.stylix
-          agenix.nixosModules.default
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs; };
-            home-manager.users.codebam = {
-              imports = [
-                ./home.nix
-                ./laptop/home.nix
-              ];
-            };
-            home-manager.sharedModules = [ agenix.homeManagerModules.default ];
-          }
-        ];
+      nixosConfigurations = {
+        nixos-desktop = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = commonModules ++ [
+            ./desktop/configuration.nix
+            { home-manager.users.codebam.imports = [ ./desktop/home.nix ]; }
+          ];
+        };
+
+        nixos-laptop = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs; };
+          modules = commonModules ++ [
+            ./laptop/configuration.nix
+            { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
+          ];
+        };
       };
     };
 }
