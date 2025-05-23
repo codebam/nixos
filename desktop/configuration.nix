@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   lib,
+  config,
   ...
 }:
 
@@ -71,7 +72,7 @@
     };
     nixos-upgrade = {
       preStart = ''
-        cd /home/codebam/git/nixos
+        cd ${config.system.autoUpgrade.flake}
         /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update
       '';
     };
