@@ -41,8 +41,8 @@
 
     shellAliases = {
       vi = "nvim";
-      ls = "eza";
-      sudo = "run0";
+      ls = "${pkgs.eza}/bin/eza";
+      sudo = "${pkgs.systemd}/bin/run0";
     };
 
     stateVersion = "23.11";
