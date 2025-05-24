@@ -39,6 +39,8 @@
       age-plugin-yubikey
       discord
       telegram-desktop
+      tor-browser
+      youtube-music
     ];
 
     shellAliases = {
