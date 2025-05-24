@@ -108,7 +108,9 @@
       "/etc/NetworkManager/system-connections"
       { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "u=rwx,g=rx,o="; }
       { directory = "/var/lib/private/ollama"; user = "nobody"; group = "nogroup"; }
+      { directory = "/var/lib/private/open-webui"; user = "nobody"; group = "nogroup"; }
       "/etc/nixos"
+      { directory = "/var/lib/acme"; user = "acme"; group = "acme"; }
     ];
     files = [
       "/etc/machine-id"

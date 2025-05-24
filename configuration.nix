@@ -125,6 +125,8 @@
     firewall = {
       enable = true;
       allowedTCPPorts = [
+        80
+        443
       ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
@@ -161,6 +163,20 @@
   # };
 
   services = {
+    nginx = {
+      enable = true;
+      virtualHosts = {
+        "ai.seanbehan.ca" = {
+          enableACME = true;
+          addSSL = true;
+          locations = {
+            "/" = {
+              proxyPass = "http://localhost:8080/";
+            };
+          };
+        };
+      };
+    };
     ratbagd.enable = true;
     resolved.enable = true;
     speechd.enable = true;
@@ -320,6 +336,12 @@
   };
 
   security = {
+    acme = {
+      acceptTerms = true;
+      defaults = {
+        email = "codebam@riseup.net";
+      };
+    };
     polkit = {
       enable = true;
       extraConfig = ''
