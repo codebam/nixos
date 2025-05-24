@@ -165,6 +165,16 @@
     };
 
   programs = {
+    yt-dlp = {
+      enable = true;
+    };
+    mpv = {
+      enable = true;
+      config = {
+        save-position-on-quit = true;
+        resume-playback = true;
+      };
+    };
     obs-studio = {
       enable = true;
       plugins = [ pkgs.obs-studio-plugins.obs-vaapi ];
