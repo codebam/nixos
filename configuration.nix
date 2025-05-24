@@ -352,6 +352,7 @@
       "steam-run"
       "steam-unwrapped"
       "open-webui"
+      "discord"
     ];
 
 
