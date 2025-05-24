@@ -132,6 +132,7 @@
         ".password-store"
         ".local/state/wireplumber"
         ".config/Element"
+        ".config/discord"
       ];
       files = [
       ];

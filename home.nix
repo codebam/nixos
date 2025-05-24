@@ -37,6 +37,7 @@
       weechat
       nixfmt-tree
       age-plugin-yubikey
+      discord
     ];
 
     shellAliases = {
