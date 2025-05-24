@@ -133,6 +133,7 @@
         ".local/state/wireplumber"
         ".config/Element"
         ".config/discord"
+        ".local/share/TelegramDesktop"
       ];
       files = [
       ];
