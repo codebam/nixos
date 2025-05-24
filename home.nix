@@ -158,7 +158,6 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          exec '${pkgs.mpvpaper}/bin/mpvpaper -s DP-1 -o "no-audio --panscan=1.0 loop-file=inf" /home/codebam/Downloads/wallpaper.mp4'
           exec '${pkgs.mako}/bin/mako'
         '';
     };
