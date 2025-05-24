@@ -38,6 +38,7 @@
       nixfmt-tree
       age-plugin-yubikey
       discord
+      telegram-desktop
     ];
 
     shellAliases = {
