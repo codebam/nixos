@@ -134,6 +134,7 @@
         ".config/Element"
         ".config/discord"
         ".local/share/TelegramDesktop"
+        ".local/share/YouTube Music"
       ];
       files = [
       ];
