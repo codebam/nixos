@@ -30,7 +30,69 @@
   boot.kernelParams = [ "drm.panic_screen=qr_code" ];
   boot.kernel.sysctl."kernel.sysrq" = 1;
 
-  fileSystems."/" = {
+  disko.devices = {
+    disk = {
+      nixos = {
+        device = "/dev/disk/by-id/nvme-Sabrent_Rocket_Q_FC6207030D4501357285";
+        type = "disk";
+        content = {
+          type = "gpt";
+          partitions = {
+            esp = {
+              type = "EF00";
+              size = "500M";
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+                mountOptions = [ "umask=0077" ];
+              };
+            };
+            swap = {
+              size = "30G";
+              content = {
+                type = "swap";
+              };
+            };
+            root = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "impermanence_subvolumes";
+              };
+            };
+          };
+        };
+      };
+    };
+    bcachefs_filesystems = {
+      impermanence_subvolumes = {
+        type = "bcachefs_filesystem";
+        passwordFile = "/tmp/secret.key";
+        extraFormatArgs = [
+          "--compression=lz4"
+          "--background_compression=lz4"
+        ];
+        subvolumes = {
+          "@root" = {
+            mountpoint = "/";
+            mountOptions = [
+              "verbose"
+            ];
+          };
+          "@nix" = {
+            mountpoint = "/nix";
+          };
+          "@persist" = {
+            mountpoint = "/persistent";
+          };
+        };
+      };
+    };
+  };
+
+  # remove this when reinstalling, disko will set it up
+  fileSystems."/" = lib.mkForce {
     device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
     fsType = "bcachefs";
     options = [
@@ -40,7 +102,7 @@
       "discard"
     ];
   };
-  fileSystems."/persistent" = {
+  fileSystems."/persistent" = lib.mkForce {
     device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
     fsType = "bcachefs";
     neededForBoot = true;
@@ -51,7 +113,7 @@
       "discard"
     ];
   };
-  fileSystems."/nix" = {
+  fileSystems."/nix" = lib.mkForce {
     device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
     fsType = "bcachefs";
     options = [
@@ -62,7 +124,7 @@
     ];
   };
 
-  fileSystems."/boot" = {
+  fileSystems."/boot" = lib.mkForce {
     device = "/dev/disk/by-uuid/4618-0B7F";
     fsType = "vfat";
     options = [
@@ -86,7 +148,7 @@
     ];
   };
 
-  swapDevices = [
+  swapDevices = lib.mkForce [
     {
       device = "/dev/disk/by-uuid/678b887c-a86e-449a-8f9a-3455505bd746";
       priority = -2;

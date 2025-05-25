@@ -11,6 +11,10 @@
       url = "git+https://git.lix.systems/lix-project/lix.git";
       flake = false;
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     lix-module = {
       url = "git+https://git.lix.systems/lix-project/nixos-module.git";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,6 +24,7 @@
     stylix.url = "github:danth/stylix";
     impermanence.url = "github:nix-community/impermanence";
     flake-utils.url = "github:numtide/flake-utils";
+
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
@@ -43,6 +48,7 @@
               specialArgs = { inherit inputs; };
               modules = [
                 inputs.lix-module.nixosModules.default
+                inputs.disko.nixosModules.disko
                 inputs.impermanence.nixosModules.impermanence
                 inputs.stylix.nixosModules.stylix
                 inputs.agenix.nixosModules.default
