@@ -167,6 +167,12 @@
     };
 
   programs = {
+    librewolf = {
+      enable = true;
+      settings = {
+        "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
+      };
+    };
     yt-dlp = {
       enable = true;
     };
@@ -525,6 +531,9 @@
 
     targets = {
       mangohud.enable = false;
+      librewolf = {
+        profileNames = [ "codebam" ];
+      };
     };
 
     polarity = "dark";
