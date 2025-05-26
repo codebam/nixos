@@ -9,7 +9,10 @@
 }:
 
 {
-  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+  imports = [
+    (modulesPath + "/installer/scan/not-detected.nix")
+    ./disko.nix
+  ];
 
   boot.initrd.availableKernelModules = [
     "nvme"
@@ -30,109 +33,6 @@
   boot.kernelParams = [ "drm.panic_screen=qr_code" ];
   boot.kernel.sysctl."kernel.sysrq" = 1;
 
-  disko.devices = {
-    disk = {
-      nixos = {
-        device = "/dev/disk/by-id/nvme-Sabrent_Rocket_Q_FC6207030D4501357285";
-        type = "disk";
-        content = {
-          type = "gpt";
-          partitions = {
-            esp = {
-              type = "EF00";
-              size = "500M";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-                mountOptions = [ "umask=0077" ];
-              };
-            };
-            swap = {
-              size = "30G";
-              content = {
-                type = "swap";
-              };
-            };
-            root = {
-              size = "100%";
-              content = {
-                type = "bcachefs";
-                filesystem = "impermanence_subvolumes";
-              };
-            };
-          };
-        };
-      };
-    };
-    bcachefs_filesystems = {
-      impermanence_subvolumes = {
-        type = "bcachefs_filesystem";
-        passwordFile = "/tmp/secret.key";
-        extraFormatArgs = [
-          "--compression=lz4"
-          "--background_compression=lz4"
-        ];
-        subvolumes = {
-          "@root" = {
-            mountpoint = "/";
-            mountOptions = [
-              "verbose"
-            ];
-          };
-          "@nix" = {
-            mountpoint = "/nix";
-          };
-          "@persist" = {
-            mountpoint = "/persistent";
-          };
-        };
-      };
-    };
-  };
-
-  # remove this when reinstalling, disko will set it up
-  fileSystems."/" = lib.mkForce {
-    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
-    fsType = "bcachefs";
-    options = [
-      "X-mount.subdir=@root"
-      "compression=lz4"
-      "background_compression=zstd"
-      "discard"
-    ];
-  };
-  fileSystems."/persistent" = lib.mkForce {
-    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
-    fsType = "bcachefs";
-    neededForBoot = true;
-    options = [
-      "X-mount.subdir=@persist"
-      "compression=lz4"
-      "background_compression=zstd"
-      "discard"
-    ];
-  };
-  fileSystems."/nix" = lib.mkForce {
-    device = "/dev/disk/by-uuid/2ef09b4b-9fb1-4815-8dd2-4aede2ae9add";
-    fsType = "bcachefs";
-    options = [
-      "X-mount.subdir=@nix"
-      "compression=lz4"
-      "background_compression=zstd"
-      "discard"
-    ];
-  };
-
-  fileSystems."/boot" = lib.mkForce {
-    device = "/dev/disk/by-uuid/4618-0B7F";
-    fsType = "vfat";
-    options = [
-      "fmask=0077"
-      "dmask=0077"
-    ];
-  };
-
   fileSystems."/games" = {
     device = "/dev/disk/by-uuid/7d57a643-ac36-4e54-b873-0e19bd8a8645";
     fsType = "btrfs";
@@ -148,14 +48,10 @@
     ];
   };
 
-  swapDevices = lib.mkForce [
+  swapDevices = [
     {
       device = "/dev/disk/by-uuid/678b887c-a86e-449a-8f9a-3455505bd746";
       priority = -2;
-    }
-    {
-      device = "/dev/disk/by-uuid/bd9fa5d1-b95d-4cd7-96d5-4f03c51f9f21";
-      priority = -3;
     }
   ];
 
