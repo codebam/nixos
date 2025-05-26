@@ -95,6 +95,7 @@
         ".config/discord"
         ".local/share/TelegramDesktop"
         ".config/YouTube Music"
+        ".local/share/PrismLauncher"
       ];
       files = [
       ];
