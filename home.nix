@@ -233,6 +233,9 @@
     };
     fish = {
       enable = true;
+      interactiveShellInit = ''
+        set fish_greeting ""
+      '';
       plugins = [
         {
           name = "autopair.fish";
