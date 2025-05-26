@@ -26,7 +26,7 @@
           before = [ "sysroot.mount" ];
           script = ''
             mkdir -p /bcachefs_tmp
-            mount -t bcachefs UUID=2ef09b4b-9fb1-4815-8dd2-4aede2ae9add /bcachefs_tmp
+            mount -t bcachefs /dev/disk/by-id/nvme-Sabrent_Rocket_Q_FC6207030D4501357285-part3 /bcachefs_tmp
             if [[ -e /bcachefs_tmp/@root ]]; then
                 mkdir -p /bcachefs_tmp/old_roots
                 timestamp=$(date --date="@$(stat -c %Y /bcachefs_tmp/@root)" "+%Y-%m-%-d_%H:%M:%S")
