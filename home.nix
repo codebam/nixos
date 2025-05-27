@@ -51,6 +51,26 @@
 
     stateVersion = "23.11";
   };
+
+  systemd = {
+    user = {
+      services = {
+        openrgb-apply = {
+          Unit = {
+            Description = "apply openrgb settings on login";
+          };
+          Service = {
+            ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orb";
+            Restart = "never";
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
+        };
+      };
+    };
+  };
+
   wayland.windowManager.sway =
     let
       modifier = "Mod4";

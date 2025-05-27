@@ -64,33 +64,35 @@
     };
   };
 
-  systemd.services = {
-    systemd-remount-fs = {
-      enable = false;
-    };
-    applyGpuSettings = {
-      description = "Apply GPU Overclocking and Power Limit Settings";
-      after = [ "multi-user.target" ];
-      wantedBy = [ "graphical.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
+  systemd = {
+    services = {
+      systemd-remount-fs = {
+        enable = false;
       };
-      script = ''
-        # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-        echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
-      '';
-    };
-    nixos-upgrade = {
-      preStart = ''
-        cd ${config.system.autoUpgrade.flake}
-        /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update
-      '';
+      applyGpuSettings = {
+        description = "Apply GPU Overclocking and Power Limit Settings";
+        after = [ "multi-user.target" ];
+        wantedBy = [ "graphical.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          # echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          # echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          # echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          # echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon8/power1_cap
+        '';
+      };
+      nixos-upgrade = {
+        preStart = ''
+          cd ${config.system.autoUpgrade.flake}
+          /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update
+        '';
+      };
     };
   };
 
