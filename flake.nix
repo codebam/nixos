@@ -24,7 +24,7 @@
     stylix.url = "github:danth/stylix";
     impermanence.url = "github:nix-community/impermanence";
     flake-utils.url = "github:numtide/flake-utils";
-
+    jovian.url = "github:jovian-experiments/jovian-nixos/development";
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
@@ -84,6 +84,15 @@
             extraModules = [
               ./laptop/configuration.nix
               { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
+            ];
+          };
+          nixos-steamdeck = mkNixosSystem {
+            system = "x86_64-linux";
+            hostname = "nixos-steamdeck";
+            extraModules = [
+              inputs.jovian.nixosModules.default
+              ./steamdeck/configuration.nix
+              { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
             ];
           };
         };
