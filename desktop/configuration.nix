@@ -1,14 +1,11 @@
 {
-  inputs,
   pkgs,
-  lib,
   config,
   ...
 }:
 
 {
   imports = [
-    # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
 
@@ -18,40 +15,8 @@
 
   environment.systemPackages = [ ];
 
-  # boot.kernelPackages = pkgs.linuxPackages_latest;
-  # boot.kernelPackages = inputs.master.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  boot.kernelPackages = pkgs.linuxPackages_testing;
-  # boot.kernelPackages =
-  #   let
-  #     linux_next_pkg =
-  #       { fetchgit, buildLinux, ... }@args:
-
-  #       buildLinux (
-  #         args
-  #         // rec {
-  #           version = "6.15.0";
-  #           modDirVersion = "6.15.0-rc1-next-20250409";
-
-  #           src = fetchgit {
-  #             url = "git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git";
-  #             rev = "next-20250409";
-  #             sha256 = "sha256-2dLsYNwXWq9QnbKYnqmrojxt18U2OEg4x/4IOOJ9h54=";
-  #             deepClone = false;
-  #             leaveDotGit = false;
-  #           };
-
-  #           kernelPatches = [ ];
-
-  #           extraMeta.branch = "next";
-
-  #         }
-  #         // (args.argsOverride or { })
-  #       );
-  #     linux_next = pkgs.callPackage linux_next_pkg { };
-  #   in
-  #   pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_next);
-
   boot = {
+    kernelPackages = pkgs.linuxPackages_testing;
     initrd.systemd = {
       services = {
         create-needed-for-boot-dirs = {
@@ -236,38 +201,11 @@
     };
   };
 
-  # nixpkgs.overlays = [
-  #   (self: super: {
-  #     linuxPackages_latest = super.linuxPackages_latest.extend (lpself: lpsuper: {
-  #       rtl8814au = super.linuxPackages_latest.rtl8814au.overrideAttrs (oldAttrs: {
-  #         version = "${config.boot.kernelPackages.kernel.version}-unstable-2024-09-17";
-  #         src = pkgs.fetchFromGitHub {
-  #           owner = "morrownr";
-  #           repo = "8814au";
-  #           rev = "d8208c83ecfd9b286f3ea45a7eb7d78d10560670";
-  #           hash = "sha256-lKTxWpmC17ecKr9oBHgkyKumR0rvsZoBklq7TKjI6L4=";
-  #         };
-  #       });
-  #     });
-  #   })
-  # ];
-
   nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [
     (final: prev: {
-      # linuxPackages_xanmod_latest = inputs.xanmod.legacyPackages.${pkgs.system}.linuxPackages_xanmod_latest;
-      # rocmPackages_6 = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages_6.gfx1100;
-      # ollama = inputs.rocm.legacyPackages.${pkgs.system}.ollama;
-      # ollama = inputs.ollama.legacyPackages.${pkgs.system}.ollama.overrideAttrs (oldAttrs: {
-      #   doCheck = false;
-      # });
     })
   ];
-
-  # linuxPackages_testing = inputs.rc2.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  # linuxPackages_latest = inputs.linux-latest-update.legacyPackages.${pkgs.system}.linuxPackages_testing;
-  # bcachefs-tools = inputs.bcachefs-fix.packages.${pkgs.system}.bcachefs;
-  # rocmPackages = inputs.rocm.legacyPackages.${pkgs.system}.rocmPackages;
 
   system = {
     autoUpgrade = {
