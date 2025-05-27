@@ -179,9 +179,7 @@
   };
 
   environment.systemPackages = with pkgs; [
-    discord-rpc
     distrobox
-    element-desktop
     efm-langserver
     git
     gparted
