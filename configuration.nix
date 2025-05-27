@@ -93,6 +93,20 @@
   time.timeZone = "America/Toronto";
 
   systemd = {
+    services = {
+      openrgb-apply = {
+        description = "OpenRGB Service to Apply Default Profile";
+        after = [ "multi-user.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
+          RemainAfterExit = true;
+          User = "codebam";
+          Group = "users";
+        };
+      };
+    };
     user = {
       extraConfig = ''
         DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
