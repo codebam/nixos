@@ -177,14 +177,15 @@
     gamemode = {
       enable = true;
     };
-    corectrl = {
-      enable = true;
-      gpuOverclock.enable = true;
-      gpuOverclock.ppfeaturemask = "0xffffffff";
-    };
   };
 
   hardware = {
+    amdgpu = {
+      overdrive = {
+        enable = true;
+        ppfeaturemask = "0xffffffff";
+      };
+    };
     fancontrol = {
       enable = false;
       config = ''
