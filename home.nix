@@ -77,6 +77,15 @@
           };
         };
         input = {
+          "*" = {
+            events = "disabled";
+          };
+          "1133:49291:Logitech_G502_HERO_Gaming_Mouse" = {
+            events = "enabled";
+          };
+          "13364:832:Keychron_Keychron_V4" = {
+            events = "enabled";
+          };
           "1739:0:Synaptics_TM3289-021" = {
             events = "enabled";
             dwt = "enabled";
