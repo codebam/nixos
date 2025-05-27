@@ -1,8 +1,28 @@
 {
+  pkgs,
   ...
 }:
 
 {
+  systemd = {
+    user = {
+      services = {
+        openrgb-apply = {
+          Unit = {
+            Description = "apply openrgb settings on login";
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
+        };
+      };
+    };
+  };
+
   programs = {
     git = {
       signing = {
