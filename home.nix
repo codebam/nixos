@@ -41,6 +41,8 @@
       telegram-desktop
       tor-browser
       youtube-music
+      element-desktop
+      discord-rpc
     ];
 
     shellAliases = {
