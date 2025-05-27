@@ -25,6 +25,12 @@
     extraModulePackages = [ ];
   };
 
+  system = {
+    switch = {
+      enableNg = true;
+    };
+  };
+
   # age = {
   #   identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
   #   secrets.hashedpassword.file = ./secrets/hashedpassword.age;
