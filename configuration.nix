@@ -124,7 +124,7 @@
     resolved.enable = true;
     speechd.enable = true;
     udev = {
-      packages = [ pkgs.via ];
+      packages = with pkgs; [ via yubikey-personalization ];
       extraRules = ''
         KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
       '';
