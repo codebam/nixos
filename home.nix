@@ -338,9 +338,13 @@
 
           wireplumber = {
             format = "{icon} {volume}%";
-            format-muted= "";
+            format-muted = "";
             on-click = "helvum";
-            format-icons = ["" "" ""];
+            format-icons = [
+              ""
+              ""
+              ""
+            ];
           };
 
           bluetooth = {
