@@ -148,8 +148,9 @@
             "Control+space" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client --hide-latest";
             "${modifier}+Control+space" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -t";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
-              ${pkgs.grim}/bin/grim -t jpeg /tmp/screenshot.jpg && \
-              ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
+              temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
+              ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
+              ${pkgs.grim}/bin/grim $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
             '')}";
             "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
