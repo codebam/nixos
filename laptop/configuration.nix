@@ -1,20 +1,13 @@
 { pkgs, ... }:
 
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
-  networking = {
-    hostName = "nixos-laptop";
-  };
+  networking = { hostName = "nixos-laptop"; };
 
   boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
 
-  nixpkgs.overlays = [
-    (final: prev: {
-    })
-  ];
+  nixpkgs.overlays = [ (final: prev: { }) ];
 
   system = {
     autoUpgrade = {

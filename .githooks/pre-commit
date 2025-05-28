@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+if ! ( nix run nixpkgs#nixfmt-classic . ) ; then
+	echo "pre-push hook failed with exit status $?"
+	exit 1
+fi
