@@ -7,14 +7,24 @@
         openrgb-apply = {
           Unit = {
             Description = "apply openrgb settings on login";
-            After = [ "default.target" "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+            After = [
+              "default.target"
+              "suspend.target"
+              "hibernate.target"
+              "hybrid-sleep.target"
+            ];
           };
           Service = {
             Type = "oneshot";
             ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
           };
           Install = {
-            WantedBy = [ "default.target" "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+            WantedBy = [
+              "default.target"
+              "suspend.target"
+              "hibernate.target"
+              "hybrid-sleep.target"
+            ];
           };
         };
       };
