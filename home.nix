@@ -43,6 +43,7 @@
       youtube-music
       element-desktop
       discord-rpc
+      pavucontrol
     ];
 
     shellAliases = {
@@ -154,7 +155,7 @@
               ${pkgs.grim}/bin/grim -t jpeg -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.jpg && \
               ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
             '')}";
-            "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
+            "${modifier}+n" = "exec pkill -SIGUSR1 waybar";
             "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
             "XF86AudioLowerVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
             "XF86AudioMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
@@ -181,6 +182,7 @@
   programs = {
     waybar = {
       enable = true;
+
     };
     librewolf = {
       enable = true;
