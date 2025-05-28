@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  config,
-  ...
-}:
+{ pkgs, lib, config, ... }:
 
 {
   # age = {
@@ -22,12 +17,7 @@
       (writeShellScriptBin "nvimdiff" ''
         nvim -d $@
       '')
-      (pass.withExtensions (
-        subpkgs: with subpkgs; [
-          pass-otp
-          pass-genphrase
-        ]
-      ))
+      (pass.withExtensions (subpkgs: with subpkgs; [ pass-otp pass-genphrase ]))
       bat
       eza
       grim
@@ -54,140 +44,133 @@
     stateVersion = "23.11";
   };
 
-  wayland.windowManager.sway =
-    let
-      modifier = "Mod4";
-    in
-    {
-      enable = true;
-      systemd.enable = true;
-      config = rec {
-        inherit modifier;
-        terminal = "wezterm";
-        menu = "${pkgs.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
-        output = {
-          "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
-            mode = "3840x1600@143.998Hz";
-            adaptive_sync = "off";
-            subpixel = "none";
-            render_bit_depth = "10";
-            allow_tearing = "yes";
-            max_render_time = "off";
-          };
-          "eDP-1" = {
-            scale = "1.5";
-          };
+  wayland.windowManager.sway = let modifier = "Mod4";
+  in {
+    enable = true;
+    systemd.enable = true;
+    config = rec {
+      inherit modifier;
+      terminal = "wezterm";
+      menu =
+        "${pkgs.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
+      output = {
+        "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
+          mode = "3840x1600@143.998Hz";
+          adaptive_sync = "off";
+          subpixel = "none";
+          render_bit_depth = "10";
+          allow_tearing = "yes";
+          max_render_time = "off";
         };
-        input = {
-          "*" = {
-            events = "disabled";
-          };
-          "1133:49291:Logitech_G502_HERO_Gaming_Mouse" = {
-            events = "enabled";
-          };
-          "13364:832:Keychron_Keychron_V4" = {
-            events = "enabled";
-          };
-          "1739:0:Synaptics_TM3289-021" = {
-            events = "enabled";
-            dwt = "enabled";
-            tap = "enabled";
-            natural_scroll = "enabled";
-            middle_emulation = "enabled";
-            pointer_accel = "0.2";
-            accel_profile = "adaptive";
-          };
-          "2:10:TPPS/2_Elan_TrackPoint" = {
-            events = "enabled";
-            pointer_accel = "0.7";
-            accel_profile = "adaptive";
-          };
+        "eDP-1" = { scale = "1.5"; };
+      };
+      input = {
+        "*" = { events = "disabled"; };
+        "1133:49291:Logitech_G502_HERO_Gaming_Mouse" = { events = "enabled"; };
+        "13364:832:Keychron_Keychron_V4" = { events = "enabled"; };
+        "1739:0:Synaptics_TM3289-021" = {
+          events = "enabled";
+          dwt = "enabled";
+          tap = "enabled";
+          natural_scroll = "enabled";
+          middle_emulation = "enabled";
+          pointer_accel = "0.2";
+          accel_profile = "adaptive";
         };
-        bars = [
-          (lib.mkMerge [
-            config.lib.stylix.sway.bar
-            {
-              mode = "dock";
-              position = "top";
-              statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
-              hiddenState = "hide";
-              trayOutput = "none";
-              colors.background = lib.mkForce "#00000000";
-            }
-          ])
-        ];
-        window = {
-          titlebar = false;
-          border = 1;
-          hideEdgeBorders = "smart";
+        "2:10:TPPS/2_Elan_TrackPoint" = {
+          events = "enabled";
+          pointer_accel = "0.7";
+          accel_profile = "adaptive";
         };
-        floating = {
-          titlebar = false;
-          border = 1;
-        };
-        gaps = {
-          inner = 15;
-          smartGaps = true;
-        };
-        focus.followMouse = false;
-        workspaceAutoBackAndForth = true;
-        keybindings =
-          let
-            inherit modifier;
-          in
-          lib.mkOptionDefault {
-            "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
-            "${modifier}+shift+p" = "exec ${pkgs.swaylock}/bin/swaylock & systemctl suspend";
-            "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
-            "XF86AudioPlay" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
-            "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
-            "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
-            "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
-            "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
-            "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
-            "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
-            "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
+      };
+      bars = [
+        (lib.mkMerge [
+          config.lib.stylix.sway.bar
+          {
+            mode = "dock";
+            position = "top";
+            statusCommand =
+              "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+            hiddenState = "hide";
+            trayOutput = "none";
+            colors.background = lib.mkForce "#00000000";
+          }
+        ])
+      ];
+      window = {
+        titlebar = false;
+        border = 1;
+        hideEdgeBorders = "smart";
+      };
+      floating = {
+        titlebar = false;
+        border = 1;
+      };
+      gaps = {
+        inner = 15;
+        smartGaps = true;
+      };
+      focus.followMouse = false;
+      workspaceAutoBackAndForth = true;
+      keybindings = let inherit modifier;
+      in lib.mkOptionDefault {
+        "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
+        "${modifier}+shift+p" =
+          "exec ${pkgs.swaylock}/bin/swaylock & systemctl suspend";
+        "${modifier}+shift+u" =
+          "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+        "XF86AudioPlay" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
+        "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+        "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+        "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
+        "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
+        "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
+        "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
+        "${modifier}+shift+x" = "exec ${
+            (pkgs.writeShellScript "screenshot" ''
               ${pkgs.grim}/bin/grim -t jpeg /tmp/screenshot.jpg && \
               ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
-            '')}";
-            "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
+            '')
+          }";
+        "${modifier}+x" = "exec ${
+            (pkgs.writeShellScript "screenshot-select" ''
               ${pkgs.grim}/bin/grim -t jpeg -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.jpg && \
               ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
-            '')}";
-            "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
-            "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
-            "XF86AudioLowerVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
-            "XF86AudioMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-            "XF86AudioMicMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-            "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
-            "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
-          };
+            '')
+          }";
+        "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
+        "XF86AudioRaiseVolume" =
+          "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
+        "XF86AudioLowerVolume" =
+          "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
+        "XF86AudioMute" =
+          "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        "XF86AudioMicMute" =
+          "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+        "XF86MonBrightnessUp" =
+          "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
+        "XF86MonBrightnessDown" =
+          "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
       };
-      extraConfig =
-        let
-          inherit modifier;
-        in
-        ''
-          bindsym --whole-window {
-            ${modifier}+Shift+button4 exec "${pkgs.brightnessctl}/bin/brightnessctl set +1%"
-            ${modifier}+Shift+button5 exec "${pkgs.brightnessctl}/bin/brightnessctl set 1%-"
-            ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
-            ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
-          }
-          exec '${pkgs.mako}/bin/mako'
-        '';
     };
+    extraConfig = let inherit modifier;
+    in ''
+      bindsym --whole-window {
+        ${modifier}+Shift+button4 exec "${pkgs.brightnessctl}/bin/brightnessctl set +1%"
+        ${modifier}+Shift+button5 exec "${pkgs.brightnessctl}/bin/brightnessctl set 1%-"
+        ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
+        ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
+      }
+      exec '${pkgs.mako}/bin/mako'
+    '';
+  };
 
   programs = {
     librewolf = {
       enable = true;
-      settings = {
-        "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
-      };
+      settings = { "privacy.clearOnShutdown_v2.cookiesAndStorage" = false; };
     };
-    yt-dlp = {
-      enable = true;
-    };
+    yt-dlp = { enable = true; };
     mpv = {
       enable = true;
       config = {
@@ -199,9 +182,7 @@
       enable = true;
       plugins = [ pkgs.obs-studio-plugins.obs-vaapi ];
     };
-    swaylock = {
-      enable = true;
-    };
+    swaylock = { enable = true; };
     mangohud = {
       enable = true;
       settings = {
@@ -228,21 +209,15 @@
     };
     gh = {
       enable = true;
-      settings = {
-        git_protocol = "ssh";
-      };
+      settings = { git_protocol = "ssh"; };
     };
-    gh-dash = {
-      enable = true;
-    };
+    gh-dash = { enable = true; };
     zoxide = {
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
     };
-    i3status-rust = {
-      enable = true;
-    };
+    i3status-rust = { enable = true; };
     fish = {
       enable = true;
       interactiveShellInit = ''
@@ -456,11 +431,7 @@
       enable = true;
       userEmail = "codebam@riseup.net";
       userName = "Sean Behan";
-      extraConfig = {
-        merge = {
-          tool = "nvimdiff";
-        };
-      };
+      extraConfig = { merge = { tool = "nvimdiff"; }; };
     };
     tmux = {
       enable = true;
@@ -487,20 +458,15 @@
     foot = {
       enable = true;
       settings = {
-        main = {
-          term = "xterm-256color";
-        };
-        mouse = {
-          hide-when-typing = "yes";
-        };
+        main = { term = "xterm-256color"; };
+        mouse = { hide-when-typing = "yes"; };
         bell = {
           urgent = "yes";
-          command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
+          command =
+            "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
           command-focused = "yes";
         };
-        colors = {
-          alpha = 1.0;
-        };
+        colors = { alpha = 1.0; };
       };
     };
     direnv = {
@@ -512,13 +478,8 @@
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
-      defaultOptions = [
-        "--no-height"
-        "--no-reverse"
-      ];
-      tmux = {
-        enableShellIntegration = true;
-      };
+      defaultOptions = [ "--no-height" "--no-reverse" ];
+      tmux = { enableShellIntegration = true; };
     };
 
     starship = {
@@ -531,24 +492,18 @@
   services = {
     mako = {
       enable = true;
-      settings = {
-        layer = "overlay";
-      };
+      settings = { layer = "overlay"; };
     };
   };
 
-  xdg = {
-    enable = true;
-  };
+  xdg = { enable = true; };
 
   stylix = {
     enable = true;
 
     targets = {
       mangohud.enable = false;
-      librewolf = {
-        profileNames = [ "codebam" ];
-      };
+      librewolf = { profileNames = [ "codebam" ]; };
     };
 
     polarity = "dark";

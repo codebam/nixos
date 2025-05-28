@@ -1,6 +1,4 @@
-{
-  ...
-}:
+{ ... }:
 
 {
   programs = {
@@ -19,11 +17,7 @@
     i3status-rust = {
       bars = {
         default = {
-          settings = {
-            theme = {
-              theme = "ctp-mocha";
-            };
-          };
+          settings = { theme = { theme = "ctp-mocha"; }; };
           icons = "awesome6";
           blocks = [
             { block = "focused_window"; }
