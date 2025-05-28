@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if ! ( nix run nixpkgs#nixfmt-classic . ) ; then
+if ! ( nix run nixpkgs#nixfmt-tree . ) ; then
 	echo "pre-push hook failed with exit status $?"
 	exit 1
 fi

@@ -1,9 +1,18 @@
-{ pkgs, inputs, lib, ... }:
+{
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 {
   boot = {
-    plymouth = { enable = true; };
-    initrd.systemd = { enable = true; };
+    plymouth = {
+      enable = true;
+    };
+    initrd.systemd = {
+      enable = true;
+    };
     loader = {
       systemd-boot = {
         enable = true;
@@ -13,13 +22,19 @@
       efi.canTouchEfiVariables = true;
     };
 
-    kernel.sysctl = { "net.ipv4.ip_unprivileged_port_start" = 0; };
+    kernel.sysctl = {
+      "net.ipv4.ip_unprivileged_port_start" = 0;
+    };
 
     supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
 
-  system = { switch = { enableNg = true; }; };
+  system = {
+    switch = {
+      enableNg = true;
+    };
+  };
 
   # age = {
   #   identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
@@ -53,7 +68,10 @@
 
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       auto-optimise-store = true;
     };
     gc = {
@@ -68,11 +86,16 @@
       enable = true;
       wifi.backend = "iwd";
     };
-    wireless.iwd = { enable = true; };
+    wireless.iwd = {
+      enable = true;
+    };
     nftables.enable = true;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 80 443 ];
+      allowedTCPPorts = [
+        80
+        443
+      ];
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
@@ -92,8 +115,7 @@
         after = [ "sway-session.target" ];
         serviceConfig = {
           Type = "simple";
-          ExecStart =
-            "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
           Restart = "on-failure";
           RestartSec = 1;
           TimeoutStopSec = 10;
@@ -113,20 +135,24 @@
     resolved.enable = true;
     speechd.enable = true;
     udev = {
-      packages = with pkgs; [ via yubikey-personalization ];
+      packages = with pkgs; [
+        via
+        yubikey-personalization
+      ];
       extraRules = ''
         KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
       '';
     };
     scx = {
       enable = true;
-      scheduler =
-        "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
-      settings = { PasswordAuthentication = false; };
+      settings = {
+        PasswordAuthentication = false;
+      };
       openFirewall = true;
     };
     fwupd.enable = true;
@@ -147,9 +173,14 @@
     isNormalUser = true;
     home = "/home/codebam";
     description = "Sean Behan";
-    extraGroups = [ "wheel" "networkmanager" "libvirtd" "video" "uinput" ];
-    hashedPassword =
-      "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "libvirtd"
+      "video"
+      "uinput"
+    ];
+    hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = [ ];
     shell = pkgs.fish;
     linger = true;
@@ -216,7 +247,9 @@
       powerOnBoot = true;
     };
     uinput.enable = true;
-    graphics = { enable = true; };
+    graphics = {
+      enable = true;
+    };
     keyboard.qmk.enable = true;
   };
 
@@ -238,7 +271,9 @@
         };
       };
     };
-    containers = { enable = true; };
+    containers = {
+      enable = true;
+    };
     podman = {
       enable = true;
       dockerCompat = true;
@@ -249,7 +284,9 @@
   security = {
     acme = {
       acceptTerms = true;
-      defaults = { email = "codebam@riseup.net"; };
+      defaults = {
+        email = "codebam@riseup.net";
+      };
     };
     polkit = {
       enable = true;
@@ -270,13 +307,13 @@
   zramSwap.enable = true;
 
   nixpkgs.overlays = [
-    (final: prev:
-      {
-        # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
-      })
+    (final: prev: {
+      # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
+    })
   ];
 
-  nixpkgs.config.allowUnfreePredicate = pkg:
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
     builtins.elem (lib.getName pkg) [
       "steam"
       "steam-original"

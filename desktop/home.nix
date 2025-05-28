@@ -5,12 +5,16 @@
     user = {
       services = {
         openrgb-apply = {
-          Unit = { Description = "apply openrgb settings on login"; };
+          Unit = {
+            Description = "apply openrgb settings on login";
+          };
           Service = {
             Type = "oneshot";
             ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
           };
-          Install = { WantedBy = [ "default.target" ]; };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
         };
       };
     };
@@ -32,7 +36,11 @@
     i3status-rust = {
       bars = {
         default = {
-          settings = { theme = { theme = "ctp-mocha"; }; };
+          settings = {
+            theme = {
+              theme = "ctp-mocha";
+            };
+          };
           icons = "awesome6";
           blocks = [
             { block = "focused_window"; }
