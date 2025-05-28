@@ -206,6 +206,7 @@
             "custom/l_end"
             "cpu"
             "memory"
+            "temperature"
             "custom/r_end"
             "custom/l_end"
             "idle_inhibitor"
@@ -229,7 +230,7 @@
             "backlight"
             "network"
             "bluetooth"
-            "pipewire"
+            "wireplumber"
             "custom/r_end"
             "custom/l_end"
             "tray"
@@ -274,8 +275,8 @@
           };
 
           clock = {
-            format = "{:%I:%M %p}";
-            format-alt = "{:%R 󰃭 %d·%m·%y}";
+            format = "{:%R 󰃭 %m·%d·%y}";
+            format-alt = "{:%I:%M %p}";
             tooltip-format = "<tt>{calendar}</tt>";
             calendar = {
               mode = "month";
@@ -333,6 +334,13 @@
             format-disconnected = " Disconnected";
             format-alt = "󰤨  {signalStrength}%";
             interval = 5;
+          };
+
+          wireplumber = {
+            format = "{icon} {volume}%";
+            format-muted= "";
+            on-click = "helvum";
+            format-icons = ["" "" ""];
           };
 
           bluetooth = {
@@ -517,6 +525,7 @@
         #bluetooth,
         #custom-cliphist,
         #clock,
+        #temperature,
         #cpu,
         #idle_inhibitor,
         #language,
@@ -524,7 +533,7 @@
         #custom-mode,
         #mpris,
         #network,
-        #pulseaudio,
+        #wireplumber,
         #taskbar,
         #tray,
         #custom-swaync,
