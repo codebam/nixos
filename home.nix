@@ -107,9 +107,9 @@
           (lib.mkMerge [
             config.lib.stylix.sway.bar
             {
+              command = "${pkgs.waybar}/bin/waybar";
               mode = "dock";
               position = "top";
-              statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
               hiddenState = "hide";
               trayOutput = "none";
               colors.background = lib.mkForce "#00000000";
@@ -179,6 +179,9 @@
     };
 
   programs = {
+    waybar = {
+      enable = true;
+    };
     librewolf = {
       enable = true;
       settings = {
@@ -239,9 +242,6 @@
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
-    };
-    i3status-rust = {
-      enable = true;
     };
     fish = {
       enable = true;
