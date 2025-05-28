@@ -152,8 +152,18 @@
               ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
             '')}";
             "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
-              ${pkgs.grim}/bin/grim -t jpeg -g "$(${pkgs.slurp}/bin/slurp)" /tmp/screenshot.jpg && \
-              ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/screenshot.jpg
+              temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
+              ${pkgs.grim}/bin/grim "$temp_file"
+              ${pkgs.imv}/bin/imv -f "$temp_file" &
+              imv_pid=$!
+              sleep 0.1
+              region=$(${pkgs.slurp}/bin/slurp)
+              if [ -n "$region" ]; then
+                  ${pkgs.grim}/bin/grim -g "$region" - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
+                  ${pkgs.grim}/bin/grim -g "$region" $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
+              fi
+              kill $imv_pid
+              rm "$temp_file"
             '')}";
             "${modifier}+n" = "exec pkill -SIGUSR1 waybar";
             "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
