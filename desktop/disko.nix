@@ -19,7 +19,9 @@
             };
             swap = {
               size = "30G";
-              content = { type = "swap"; };
+              content = {
+                type = "swap";
+              };
             };
             root = {
               size = "100%";
@@ -36,15 +38,21 @@
       impermanence_subvolumes = {
         type = "bcachefs_filesystem";
         passwordFile = "/tmp/secret.key";
-        extraFormatArgs =
-          [ "--compression=lz4" "--background_compression=lz4" ];
+        extraFormatArgs = [
+          "--compression=lz4"
+          "--background_compression=lz4"
+        ];
         subvolumes = {
           "@root" = {
             mountpoint = "/";
             mountOptions = [ "verbose" ];
           };
-          "@nix" = { mountpoint = "/nix"; };
-          "@persist" = { mountpoint = "/persistent"; };
+          "@nix" = {
+            mountpoint = "/nix";
+          };
+          "@persist" = {
+            mountpoint = "/persistent";
+          };
         };
       };
     };

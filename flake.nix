@@ -27,15 +27,31 @@
     jovian.url = "github:jovian-experiments/jovian-nixos/development";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
-    (flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        devShells.default =
-          pkgs.mkShell { buildInputs = [ pkgs.nixpkgs-fmt ]; };
-      })) // {
-        nixosConfigurations = let
-          mkNixosSystem = { system, hostname, extraModules ? [ ] }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }@inputs:
+    (flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        devShells.default = pkgs.mkShell { buildInputs = [ pkgs.nixpkgs-fmt ]; };
+      }
+    ))
+    // {
+      nixosConfigurations =
+        let
+          mkNixosSystem =
+            {
+              system,
+              hostname,
+              extraModules ? [ ],
+            }:
             nixpkgs.lib.nixosSystem {
               inherit system;
               specialArgs = { inherit inputs; };
@@ -52,14 +68,16 @@
                     useGlobalPkgs = true;
                     useUserPackages = true;
                     extraSpecialArgs = { inherit inputs; };
-                    users.codebam = { imports = [ ./home.nix ]; };
-                    sharedModules =
-                      [ inputs.agenix.homeManagerModules.default ];
+                    users.codebam = {
+                      imports = [ ./home.nix ];
+                    };
+                    sharedModules = [ inputs.agenix.homeManagerModules.default ];
                   };
                 }
               ] ++ extraModules;
             };
-        in {
+        in
+        {
           nixos-desktop = mkNixosSystem {
             system = "x86_64-linux";
             hostname = "nixos-desktop";
@@ -87,5 +105,5 @@
             ];
           };
         };
-      };
+    };
 }

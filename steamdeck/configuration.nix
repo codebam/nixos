@@ -1,9 +1,12 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   imports = [ ./hardware-configuration.nix ];
 
   boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;
 
-  networking = { hostName = "nixos-steamdeck"; };
+  networking = {
+    hostName = "nixos-steamdeck";
+  };
 
   jovian = {
     steam = {
@@ -13,5 +16,7 @@
     };
   };
 
-  system = { stateVersion = "23.11"; };
+  system = {
+    stateVersion = "23.11";
+  };
 }

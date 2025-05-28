@@ -3,7 +3,9 @@
 {
   imports = [ ./hardware-configuration.nix ];
 
-  networking = { hostName = "nixos-desktop"; };
+  networking = {
+    hostName = "nixos-desktop";
+  };
 
   environment.systemPackages = [ ];
 
@@ -13,7 +15,10 @@
       systemd = {
         services = {
           create-needed-for-boot-dirs = {
-            after = [ "unlock-bcachefs--.service" "cleanup-root.service" ];
+            after = [
+              "unlock-bcachefs--.service"
+              "cleanup-root.service"
+            ];
             serviceConfig.KeyringMode = "inherit";
           };
           cleanup-root = {
@@ -21,7 +26,10 @@
             serviceConfig.Type = "oneshot";
             serviceConfig.KeyringMode = "inherit";
             requiredBy = [ "initrd.target" ];
-            after = [ "unlock-bcachefs--.service" "local-fs-pre.target" ];
+            after = [
+              "unlock-bcachefs--.service"
+              "local-fs-pre.target"
+            ];
             before = [ "sysroot.mount" ];
             script = ''
               mkdir -p /bcachefs_tmp
@@ -55,7 +63,9 @@
 
   systemd = {
     services = {
-      systemd-remount-fs = { enable = false; };
+      systemd-remount-fs = {
+        enable = false;
+      };
       applyGpuSettings = {
         description = "Apply GPU Overclocking and Power Limit Settings";
         after = [ "multi-user.target" ];
@@ -92,22 +102,27 @@
         "ai.seanbehan.ca" = {
           enableACME = true;
           addSSL = true;
-          locations = { "/" = { proxyPass = "http://localhost:8080/"; }; };
+          locations = {
+            "/" = {
+              proxyPass = "http://localhost:8080/";
+            };
+          };
         };
       };
     };
     pipewire = {
       configPackages = [
-        (pkgs.writeTextDir
-          "share/pipewire/pipewire.conf.d/10-high-sample-rate.conf" ''
-            context.properties = {
-              default.clock.allowed-rates = [ 192000 384000 768000 ]
-              default.clock.rate = 192000
-            }
-          '')
+        (pkgs.writeTextDir "share/pipewire/pipewire.conf.d/10-high-sample-rate.conf" ''
+          context.properties = {
+            default.clock.allowed-rates = [ 192000 384000 768000 ]
+            default.clock.rate = 192000
+          }
+        '')
       ];
     };
-    hardware.openrgb = { enable = true; };
+    hardware.openrgb = {
+      enable = true;
+    };
     open-webui = {
       enable = true;
       port = 8080;
@@ -129,14 +144,19 @@
         };
         search = {
           autocomplete = "google";
-          formats = [ "html" "json" ];
+          formats = [
+            "html"
+            "json"
+          ];
         };
       };
     };
     ollama = {
       enable = true;
       acceleration = "rocm";
-      environmentVariables = { HSA_OVERRIDE_GFX_VERSION = "11.0.0"; };
+      environmentVariables = {
+        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+      };
     };
   };
 
@@ -147,10 +167,16 @@
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
       extraCompatPackages = [ pkgs.proton-ge-bin ];
-      extest = { enable = true; };
+      extest = {
+        enable = true;
+      };
     };
-    gamescope = { enable = true; };
-    gamemode = { enable = true; };
+    gamescope = {
+      enable = true;
+    };
+    gamemode = {
+      enable = true;
+    };
   };
 
   hardware = {
@@ -175,7 +201,9 @@
         MINSTOP=hwmon6/pwm7=100 hwmon6/pwm6=100 hwmon6/pwm5=100 hwmon6/pwm4=100 hwmon6/pwm3=100 hwmon6/pwm2=100 hwmon6/pwm1=0
       '';
     };
-    graphics = { enable32Bit = true; };
+    graphics = {
+      enable32Bit = true;
+    };
   };
 
   nixpkgs.config.rocmSupport = true;
