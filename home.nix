@@ -423,7 +423,7 @@
           };
 
           "custom/padd" = {
-            format = "  ";
+            format = " ";
             interval = "once";
             tooltip = false;
           };
@@ -456,18 +456,14 @@
         tooltip {
             background: @main-bg;
             color: @main-fg;
-            border-radius: 7px;
             border-width: 0px;
         }
         #workspaces button {
             box-shadow: none;
-          text-shadow: none;
+            text-shadow: none;
             padding: 0px;
-            border-radius: 9px;
             margin-top: 3px;
             margin-bottom: 3px;
-            padding-left: 3px;
-            padding-right: 3px;
             color: @main-fg;
             animation: gradient_f 20s ease-in infinite;
             transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
@@ -488,20 +484,13 @@
         #workspaces button:hover {
             background: @wb-hvr-bg;
             color: @wb-hvr-fg;
-            padding-left: 3px;
-            padding-right: 3px;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
         }
         #taskbar button {
             box-shadow: none;
-          text-shadow: none;
+            text-shadow: none;
             padding: 0px;
-            border-radius: 9px;
             margin-top: 3px;
             margin-bottom: 3px;
-            padding-left: 3px;
-            padding-right: 3px;
             color: @wb-color;
             animation: gradient_f 20s ease-in infinite;
             transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
@@ -519,8 +508,6 @@
         #taskbar button:hover {
             background: @wb-hvr-bg;
             color: @wb-hvr-color;
-            padding-left: 3px;
-            padding-right: 3px;
             animation: gradient_f 20s ease-in infinite;
             transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
         }
@@ -563,36 +550,24 @@
             padding: 0px;
         }
         #custom-r_end {
-            border-radius: 0px 21px 21px 0px;
             margin-right: 9px;
-            padding-right: 3px;
-              border-right: 1px solid @sec-bg;
+            border-right: 1px solid @sec-bg;
         }
         #custom-l_end {
-            border-radius: 21px 0px 0px 21px;
             margin-left: 9px;
-            padding-left: 3px;
               border-left: 1px solid @sec-bg;
         }
         #custom-sr_end {
-            border-radius: 0px;
             margin-right: 9px;
-            padding-right: 3px;
         }
         #custom-sl_end {
-            border-radius: 0px;
             margin-left: 9px;
-            padding-left: 3px;
         }
         #custom-rr_end {
-            border-radius: 0px 7px 7px 0px;
             margin-right: 9px;
-            padding-right: 3px;
         }
         #custom-rl_end {
-            border-radius: 7px 0px 0px 7px;
             margin-left: 9px;
-            padding-left: 3px;
         }
       '';
     };
