@@ -14,7 +14,6 @@
           Service = {
             Type = "oneshot";
             ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
-            RemainAfterExit = true;
           };
           Install = {
             WantedBy = [
