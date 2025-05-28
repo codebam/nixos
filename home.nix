@@ -339,7 +339,7 @@
           wireplumber = {
             format = "{icon} {volume}%";
             format-muted = "";
-            on-click = "helvum";
+            on-click = "${pkgs.helvum}/bin/helvum";
             format-icons = [
               ""
               ""
