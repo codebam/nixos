@@ -319,7 +319,7 @@
           "steam-unwrapped"
           "open-webui"
           "discord"
-      ];
+        ];
     };
     overlays = [
       (final: prev: {
