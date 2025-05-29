@@ -490,8 +490,7 @@
             box-shadow: none;
             text-shadow: none;
             padding: 0px;
-            margin-top: 3px;
-            margin-bottom: 3px;
+            margin: 3px;
             color: @wb-color;
             animation: gradient_f 20s ease-in infinite;
             transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
