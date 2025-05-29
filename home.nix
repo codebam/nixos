@@ -582,9 +582,6 @@
     };
     librewolf = {
       enable = true;
-      settings = {
-        "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
-      };
     };
     yt-dlp = {
       enable = true;
