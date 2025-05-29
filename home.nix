@@ -15,6 +15,16 @@
     username = "codebam";
     homeDirectory = "/home/codebam";
 
+    sessionVariables = {
+      OBS_VKCAPTURE = "1";
+      FLATPAK_GL_DRIVERS = "mesa-git";
+      WLR_RENDERER = "vulkan";
+      MANGOHUD = "1";
+      MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
+      PROTON_ENABLE_WAYLAND = "1";
+      PROTON_ENABLE_HDR = "1";
+    };
+
     packages = with pkgs; [
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
@@ -636,6 +646,7 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
+        ${builtins.concatStringsSep "\n" (builtins.attrValues (builtins.mapAttrs (name: value: "set -gx ${name} ${value}") (builtins.removeAttrs config.home.sessionVariables ["TMUX_TMPDIR" "XDG_CONFIG_DIRS"])))}
       '';
       plugins = [
         {
@@ -660,15 +671,6 @@
     };
     bash = {
       enable = true;
-      sessionVariables = {
-        OBS_VKCAPTURE = "1";
-        FLATPAK_GL_DRIVERS = "mesa-git";
-        WLR_RENDERER = "vulkan";
-        MANGOHUD = "1";
-        MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
-        PROTON_ENABLE_WAYLAND = "1";
-        PROTON_ENABLE_HDR = "1";
-      };
     };
     neovim = {
       enable = true;
@@ -814,6 +816,13 @@
         set ts=2
         set undofile
         set undodir=$HOME/.vim/undodir
+        let g:vimsence_client_id = '439476230543245312'
+        let g:vimsence_small_text = 'NeoVim'
+        let g:vimsence_small_image = 'neovim'
+        let g:vimsence_editing_details = 'Editing: {}'
+        let g:vimsence_editing_state = 'Working on: {}'
+        let g:vimsence_file_explorer_text = 'In :Lexplore'
+        let g:vimsence_file_explorer_details = 'Looking for files'
       '';
       plugins = [
         pkgs.vimPlugins.avante-nvim
@@ -839,6 +848,7 @@
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+        pkgs.vimPlugins.vimsence
       ];
     };
     git = {
