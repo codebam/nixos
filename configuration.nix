@@ -306,22 +306,27 @@
 
   zramSwap.enable = true;
 
-  nixpkgs.overlays = [
-    (final: prev: {
-      # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
-    })
-  ];
-
-  nixpkgs.config.allowUnfreePredicate =
-    pkg:
-    builtins.elem (lib.getName pkg) [
-      "steam"
-      "steam-original"
-      "steam-run"
-      "steam-unwrapped"
-      "open-webui"
-      "discord"
+  nixpkgs = {
+    config = {
+      checkMeta = true;
+      showDerivationWarnings = [ "maintainerless" ];
+      allowUnfreePredicate =
+        pkg:
+        builtins.elem (lib.getName pkg) [
+          "steam"
+          "steam-original"
+          "steam-run"
+          "steam-unwrapped"
+          "open-webui"
+          "discord"
+      ];
+    };
+    overlays = [
+      (final: prev: {
+        # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
+      })
     ];
+  };
 
   system.stateVersion = "23.11";
 }
