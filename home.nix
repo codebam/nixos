@@ -17,7 +17,6 @@
 
     sessionVariables = {
       OBS_VKCAPTURE = "1";
-      FLATPAK_GL_DRIVERS = "mesa-git";
       WLR_RENDERER = "vulkan";
       MANGOHUD = "1";
       MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
