@@ -120,7 +120,7 @@
     services = {
       vpn-bypass-routing = {
         description = "Set up routing to bypass VPN for marked packets";
-        after = ["network-online.target"];
+        after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
