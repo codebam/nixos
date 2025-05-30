@@ -89,7 +89,20 @@
     wireless.iwd = {
       enable = true;
     };
-    nftables.enable = true;
+    nftables = {
+      enable = true;
+      ruleset = ''
+        table inet bypass_vpn {
+          chain prerouting {
+            type filter hook prerouting priority mangle; policy accept;
+            iifname "wlan0" tcp dport 22 mark set 1
+            iifname "wlan0" tcp sport 22 mark set 1
+            iifname "wlan0" udp dport 22 mark set 1
+            iifname "wlan0" udp sport 22 mark set 1
+          }
+        }
+      '';
+    };
     firewall = {
       enable = true;
       allowedTCPPorts = [
@@ -104,21 +117,38 @@
   time.timeZone = "America/Toronto";
 
   systemd = {
+    services = {
+      vpn-bypass-routing = {
+        description = "Set up routing to bypass VPN for marked packets";
+        after = ["network-online.target"];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = [
+            "/run/current-system/sw/bin/ip rule add fwmark 1 table 100"
+            "/run/current-system/sw/bin/ip route add default via 192.168.0.1 dev wlan0 table 100"
+          ];
+        };
+      };
+    };
     user = {
       extraConfig = ''
         DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
       '';
-      services.polkit-gnome-authentication-agent-1 = {
-        description = "polkit-gnome-authentication-agent-1";
-        wantedBy = [ "sway-session.target" ];
-        wants = [ "sway-session.target" ];
-        after = [ "sway-session.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-          Restart = "on-failure";
-          RestartSec = 1;
-          TimeoutStopSec = 10;
+      services = {
+        polkit-gnome-authentication-agent-1 = {
+          description = "polkit-gnome-authentication-agent-1";
+          wantedBy = [ "sway-session.target" ];
+          wants = [ "sway-session.target" ];
+          after = [ "sway-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+            Restart = "on-failure";
+            RestartSec = 1;
+            TimeoutStopSec = 10;
+          };
         };
       };
     };
