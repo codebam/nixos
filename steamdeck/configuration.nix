@@ -97,6 +97,7 @@
   jovian = {
     decky-loader = {
       enable = true;
+      user = "codebam";
     };
     steam = {
       enable = true;
