@@ -94,10 +94,18 @@
     maliit-framework
     (retroarch.overrideAttrs {
       cores = with libretro; [
-        genesis-plus-gx
-        snes9x
-        beetle-psx-hw
-        dolphin
+        genesis-plus-gx # Sega
+        snes9x # SNES
+        beetle-psx-hw # PlayStation
+        dolphin # GameCube / Wii
+        stella # Atari 2600
+        mame # MAME
+        neocd # Neo ?
+        fbneo # Neo ?
+        mupen64plus # Nintendo 64
+        nestopia # Nintendo NES
+        mgba # Game Boy Advance
+        fuse # ZX Spectrum
       ];
     })
   ];
