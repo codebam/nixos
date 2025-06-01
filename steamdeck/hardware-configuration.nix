@@ -34,6 +34,7 @@
     enable = true; # NB: Defaults to true, not needed
     hideMounts = true;
     directories = [
+      "/root/.ssh"
       "/var/log"
       "/var/lib/bluetooth"
       "/var/lib/nixos"
