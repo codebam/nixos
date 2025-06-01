@@ -17,6 +17,7 @@
       Exec=/nix/store/5a23ffa5pzl4h7bn2la8a8l0g3cyvf95-steam/bin/steam %u
     '';
     packages = with pkgs; [
+      prismlauncher
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
         add_to_steam() {
