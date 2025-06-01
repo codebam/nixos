@@ -23,7 +23,6 @@
             before = [ "sysroot.mount" ];
             script = ''
               mkdir -p /btrfs_tmp
-              Micron_2500_MTFDKBK1T0QGN
               mount -t btrfs /dev/nvme0n1p3 /btrfs_tmp
               if [[ -e /btrfs_tmp/@root ]]; then
                 mkdir -p /btrfs_tmp/old_roots
