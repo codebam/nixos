@@ -2,6 +2,20 @@
 {
 
   home = {
+    file.".local/share/kio/servicemenus/steam.desktop".text = ''
+      [Desktop Entry]
+      Type=Service
+      ServiceTypes=KonqPopupMenu/Plugin
+      MimeType=application/x-desktop;application/x-executable;text/plain;
+      Actions=openInSteam
+      X-KDE-Priority=TopLevel
+      Icon=steam
+
+      [Desktop Action openInSteam]
+      Name=Open with Steam
+      Icon=steam
+      Exec=/nix/store/5a23ffa5pzl4h7bn2la8a8l0g3cyvf95-steam/bin/steam %u
+    '';
     packages = with pkgs; [
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
