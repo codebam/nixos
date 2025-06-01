@@ -39,6 +39,7 @@
       "/var/lib/nixos"
       "/var/lib/OpenRGB"
       "/var/lib/systemd/coredump"
+      "/var/lib/decky-loader"
       "/etc/NetworkManager/system-connections"
       "/etc/ssh"
       {
