@@ -14,7 +14,7 @@
       [Desktop Action openInSteam]
       Name=Open with Steam
       Icon=steam
-      Exec=/nix/store/5a23ffa5pzl4h7bn2la8a8l0g3cyvf95-steam/bin/steam %u
+      Exec=${pkgs.steam}/bin/steam %u
     '';
     packages = with pkgs; [
       prismlauncher
@@ -23,11 +23,11 @@
         add_to_steam() {
             encodedUrl="steam://addnonsteamgame/$(python3 -c "import urllib.parse;print(urllib.parse.quote(\"$1\", safe=''\))")"
             touch /tmp/addnonsteamgamefile
-            steam "$encodedUrl"
+            ${pkgs.steam}/bin/steam "$encodedUrl"
         }
         show_error() {
           if [ "$show_dialog" = "1" ]; then
-              kdialog --title Error --error "$1"
+              ${pkgs.kdePackages.kdialog}/bin/kdialog --title Error --error "$1"
           else
               echo "$1" >&2
           fi
