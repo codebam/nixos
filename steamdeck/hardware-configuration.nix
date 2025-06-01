@@ -34,7 +34,6 @@
     enable = true; # NB: Defaults to true, not needed
     hideMounts = true;
     directories = [
-      "/root/.ssh"
       "/var/log"
       "/var/lib/bluetooth"
       "/var/lib/nixos"
@@ -43,6 +42,12 @@
       "/var/lib/decky-loader"
       "/etc/NetworkManager/system-connections"
       "/etc/ssh"
+      {
+        directory = "/root/.ssh";
+        user = "root";
+        group = "root";
+        mode = "u=rwx,g=,o=";
+      }
       {
         directory = "/var/lib/colord";
         user = "colord";
