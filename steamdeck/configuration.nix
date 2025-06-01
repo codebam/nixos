@@ -92,9 +92,8 @@
     protonup-qt
     maliit-keyboard
     maliit-framework
-    (wrapRetroArch { 
-    package = retroarch; 
-    cores = with libretro; [
+    (wrapRetroArch {
+      cores = with libretro; [
         genesis-plus-gx # Sega
         snes9x # SNES
         beetle-psx-hw # PlayStation
