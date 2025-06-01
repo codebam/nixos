@@ -70,6 +70,13 @@
   };
 
   systemd = {
+    user = {
+      services = {
+        steamos-manager = {
+          enable = false;
+        };
+      };
+    };
     services = {
       systemd-remount-fs = {
         enable = true;
