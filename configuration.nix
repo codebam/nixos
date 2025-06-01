@@ -395,6 +395,8 @@
           "discord"
           "steamdeck-hw-theme"
           "steam-jupiter-unwrapped"
+          "libretro-genesis-plus-gx"
+          "libretro-snes9x"
         ];
     };
     overlays = [
