@@ -73,8 +73,14 @@
         "flakes"
       ];
       auto-optimise-store = true;
-      trusted-users = [ "root" "codebam" ];
-      system-features = [ "i686-linux" "big-parallel" ];
+      trusted-users = [
+        "root"
+        "codebam"
+      ];
+      system-features = [
+        "i686-linux"
+        "big-parallel"
+      ];
     };
     gc = {
       automatic = true;
