@@ -21,7 +21,10 @@
     "usbhid"
     "sdhci_pci"
   ];
-  boot.initrd.kernelModules = [ ];
+  boot.initrd.kernelModules = [
+    "nvme"
+    "btrfs"
+  ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ config.boot.kernelPackages.zenergy ];
   boot.kernelParams = [ "drm.panic_screen=qr_code" ];
