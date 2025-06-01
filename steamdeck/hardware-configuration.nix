@@ -40,6 +40,7 @@
       "/var/lib/OpenRGB"
       "/var/lib/systemd/coredump"
       "/etc/NetworkManager/system-connections"
+      "/etc/ssh"
       {
         directory = "/var/lib/colord";
         user = "colord";
