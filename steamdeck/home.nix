@@ -21,7 +21,7 @@
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
         add_to_steam() {
-            encodedUrl="steam://addnonsteamgame/$(python3 -c "import urllib.parse;print(urllib.parse.quote(\"$1\", safe=''\))")"
+            encodedUrl="steam://addnonsteamgame/$(${pkgs.python3}/bin/python3 -c "import urllib.parse;print(urllib.parse.quote(\"$1\", safe=''\))")"
             touch /tmp/addnonsteamgamefile
             ${pkgs.steam}/bin/steam "$encodedUrl"
         }
