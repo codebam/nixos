@@ -80,7 +80,7 @@
   environment.systemPackages = with pkgs; [
     maliit-keyboard
     maliit-framework
-    (retroarch.override {
+    (retroarch.overrideAttrs {
       cores = with libretro; [
         genesis-plus-gx
         snes9x
