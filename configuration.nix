@@ -7,9 +7,6 @@
 
 {
   boot = {
-    plymouth = {
-      enable = true;
-    };
     initrd.systemd = {
       enable = true;
     };
@@ -26,7 +23,6 @@
       "net.ipv4.ip_unprivileged_port_start" = 0;
     };
 
-    supportedFilesystems = [ "bcachefs" ];
     extraModulePackages = [ ];
   };
 
@@ -213,7 +209,6 @@
       '';
     };
     scx = {
-      enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     desktopManager.plasma6.enable = true;
@@ -398,6 +393,8 @@
           "steam-unwrapped"
           "open-webui"
           "discord"
+          "steamdeck-hw-theme"
+          "steam-jupiter-unwrapped"
         ];
     };
     overlays = [
