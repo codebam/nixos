@@ -399,6 +399,7 @@
           "steam-jupiter-unwrapped"
           "libretro-genesis-plus-gx"
           "libretro-snes9x"
+          "libretro-fbneo"
         ];
     };
     overlays = [
