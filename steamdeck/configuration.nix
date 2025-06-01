@@ -80,6 +80,14 @@
   environment.systemPackages = with pkgs; [
     maliit-keyboard
     maliit-framework
+    (retroarch.override {
+      cores = with libretro; [
+        genesis-plus-gx
+        snes9x
+        beetle-psx-hw
+        dolphin
+      ];
+    })
   ];
 
   networking = {
