@@ -97,7 +97,7 @@
   jovian = {
     decky-loader = {
       enable = true;
-      extraPackages = [ pkgs.python3 ];
+      user = "codebam";
     };
     steam = {
       enable = true;
