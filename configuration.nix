@@ -138,12 +138,14 @@
         }
       '';
     };
-    firewall = {
+    firewall = rec {
       enable = true;
       allowedTCPPorts = [
         80
         443
+        3389
       ];
+      allowedUDPPorts = allowedTCPPorts;
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
