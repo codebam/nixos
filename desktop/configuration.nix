@@ -10,6 +10,7 @@
   environment.systemPackages = [ ];
 
   boot = {
+    supportedFilesystems = [ "bcachefs" ];
     kernelPackages = pkgs.linuxPackages_testing;
     initrd = {
       systemd = {
@@ -96,6 +97,9 @@
   powerManagement.enable = true;
 
   services = {
+    scx = {
+      enable = true;
+    };
     nginx = {
       enable = true;
       virtualHosts = {

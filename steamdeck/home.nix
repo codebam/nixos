@@ -54,4 +54,13 @@
       '')
     ];
   };
+
+  programs = {
+    git = {
+      signing = {
+        key = "0F6D5021A87F92BA";
+        signByDefault = true;
+      };
+    };
+  };
 }
