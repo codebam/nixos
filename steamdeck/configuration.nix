@@ -78,6 +78,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    protonup-qt
     maliit-keyboard
     maliit-framework
     (retroarch.overrideAttrs {
