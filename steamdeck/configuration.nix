@@ -74,6 +74,10 @@
       services = {
         steamos-manager = {
           enable = false;
+          wantedBy = [ ];
+          serviceConfig = {
+            ExecStart = "/usr/bin/env true";
+          };
         };
       };
     };
@@ -100,12 +104,6 @@
 
   networking = {
     hostName = "nixos-steamdeck";
-  };
-
-  programs = {
-    steam = {
-      extraCompatPackages = [ pkgs.proton-ge-bin ];
-    };
   };
 
   jovian = {
