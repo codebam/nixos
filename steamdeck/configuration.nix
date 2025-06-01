@@ -92,7 +92,7 @@
     protonup-qt
     maliit-keyboard
     maliit-framework
-    (retroarch.overrideAttrs {
+    (retroarch.override {
       cores = with libretro; [
         genesis-plus-gx # Sega
         snes9x # SNES
