@@ -94,6 +94,12 @@
     hostName = "nixos-steamdeck";
   };
 
+  programs = {
+    steam = {
+      extraCompatPackages = [ pkgs.proton-ge-bin ];
+    };
+  };
+
   jovian = {
     decky-loader = {
       enable = true;
