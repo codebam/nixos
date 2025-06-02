@@ -1,6 +1,12 @@
 { pkgs, ... }:
 
 {
+  home = {
+    packages = with pkgs; [
+      prismlauncher
+    ];
+  };
+
   systemd = {
     user = {
       services = {
