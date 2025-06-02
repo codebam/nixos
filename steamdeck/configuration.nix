@@ -71,15 +71,15 @@
 
   systemd = {
     user = {
-      services = {
-        steamos-manager = {
-          enable = false;
-          wantedBy = [ ];
-          serviceConfig = {
-            ExecStart = "/usr/bin/env true";
-          };
-        };
-      };
+      # services = {
+      #   steamos-manager = {
+      #     enable = false;
+      #     wantedBy = [ ];
+      #     serviceConfig = {
+      #       ExecStart = "/usr/bin/env true";
+      #     };
+      #   };
+      # };
     };
     services = {
       systemd-remount-fs = {
