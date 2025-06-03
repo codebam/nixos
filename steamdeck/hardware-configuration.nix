@@ -115,6 +115,7 @@
         ".config/YouTube Music"
         ".local/share/PrismLauncher"
         ".config/OpenRGB"
+        ".config/retroarch"
       ];
       files = [ ];
     };
