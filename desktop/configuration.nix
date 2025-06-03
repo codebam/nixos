@@ -97,11 +97,11 @@
   powerManagement.enable = true;
 
   services = {
-    cfdyndns = {
+    ddclient = {
       enable = true;
-      email = "codebam@riseup.net";
-      records = [ "desktop.seanbehan.ca" ];
-      apiTokenFile = config.age.secrets.cloudflare-token.path;
+      protocol = "duckdns";
+      domains = [ "codebam" ];
+      passwordFile = config.age.secrets.duckdns-token.path;
     };
     scx = {
       enable = true;
