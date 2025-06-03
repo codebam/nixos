@@ -105,6 +105,7 @@
         80
         443
         3389
+        5353
       ];
       allowedUDPPorts = allowedTCPPorts;
       checkReversePath = false;
