@@ -116,6 +116,7 @@
         ".local/share/PrismLauncher"
         ".config/OpenRGB"
         ".config/retroarch"
+        ".config/Ryujinx"
       ];
       files = [ ];
     };
