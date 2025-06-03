@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   imports = [ ./hardware-configuration.nix ];
@@ -8,6 +8,15 @@
   };
 
   environment.systemPackages = [ ];
+
+  age = {
+    # identityPaths = [
+    #   ./secrets/identities/yubikey-5c.txt
+    #   ./secrets/identities/yubikey-5c-nfc.txt
+    # ];
+    secrets.duckdns-token.file = ./secrets/duckdns-token.age;
+    ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
+  };
 
   boot = {
     supportedFilesystems = [ "bcachefs" ];
