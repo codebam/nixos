@@ -19,7 +19,7 @@
     #   ./secrets/identities/yubikey-5c.txt
     #   ./secrets/identities/yubikey-5c-nfc.txt
     # ];
-    secrets.duckdns-token.file = ./secrets/duckdns-token.age;
+    secrets.duckdns-token.file = ../secrets/duckdns-token.age;
     ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
   };
 
