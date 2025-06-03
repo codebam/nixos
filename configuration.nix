@@ -183,6 +183,7 @@
       "libvirtd"
       "video"
       "uinput"
+      "wireshark"
     ];
     hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
     packages = [ ];
@@ -242,6 +243,7 @@
   };
 
   programs = {
+    wireshark.enable = true;
     fish.enable = true;
     sway.enable = true;
     gnupg.agent = {
