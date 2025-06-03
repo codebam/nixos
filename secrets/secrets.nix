@@ -7,7 +7,7 @@ let
   };
 in
 {
-  "cloudflare-token.age".publicKeys = [
+  "duckdns-token.age".publicKeys = [
     users.desktop
     users.codebam
   ];
