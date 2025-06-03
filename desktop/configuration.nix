@@ -97,6 +97,12 @@
   powerManagement.enable = true;
 
   services = {
+    cfdyndns = {
+      enable = true;
+      email = "codebam@riseup.net";
+      records = [ "desktop.seanbehan.ca" ];
+      apiTokenFile = config.age.secrets.cloudflare-token.path;
+    };
     scx = {
       enable = true;
     };

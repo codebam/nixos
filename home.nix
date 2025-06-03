@@ -6,10 +6,13 @@
 }:
 
 {
-  # age = {
-  #   identityPaths = [ ./secrets/identities/yubikey-5c.txt ./secrets/identities/yubikey-5c-nfc.txt ];
-  #   secrets.github_token.file = ./secrets/github_token.age;
-  # };
+  age = {
+    identityPaths = [
+      ./secrets/identities/yubikey-5c.txt
+      ./secrets/identities/yubikey-5c-nfc.txt
+    ];
+    secrets.cloudflare-token.file = ./secrets/cloudflare-token.age;
+  };
 
   home = {
     username = "codebam";

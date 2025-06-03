@@ -68,6 +68,12 @@
       "/var/lib/iwd"
       "/etc/ssh"
       {
+        directory = "/root/.ssh";
+        user = "root";
+        group = "root";
+        mode = "u=rwx,g=,o=";
+      }
+      {
         directory = "/var/lib/colord";
         user = "colord";
         group = "colord";
