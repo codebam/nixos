@@ -18,6 +18,7 @@
     '';
     packages = with pkgs; [
       prismlauncher
+      ryubing
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
         add_to_steam() {
