@@ -41,6 +41,7 @@
       "/var/lib/systemd/coredump"
       "/var/lib/decky-loader"
       "/etc/NetworkManager/system-connections"
+      "/var/lib/iwd"
       "/etc/ssh"
       {
         directory = "/root/.ssh";

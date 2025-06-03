@@ -65,6 +65,7 @@
       "/var/lib/OpenRGB"
       "/var/lib/systemd/coredump"
       "/etc/NetworkManager/system-connections"
+      "/var/lib/iwd"
       "/etc/ssh"
       {
         directory = "/var/lib/colord";
