@@ -6,7 +6,7 @@
     distributedBuilds = true;
     buildMachines = [
       {
-        hostName = "192.168.0.12";
+        hostName = "nixos-desktop.local";
         system = "x86_64-linux,i686-linux";
         maxJobs = 15;
         speedFactor = 4;
