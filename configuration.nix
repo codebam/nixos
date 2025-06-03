@@ -95,48 +95,6 @@
     };
     nftables = {
       enable = true;
-      ruleset = ''
-        table inet bypass_vpn {
-          chain prerouting {
-            type filter hook prerouting priority mangle; policy accept;
-            iifname "wlan0" tcp dport 22 mark set 1
-            iifname "wlan0" tcp sport 22 mark set 1
-            iifname "wlan0" udp dport 22 mark set 1
-            iifname "wlan0" udp sport 22 mark set 1
-
-            iifname "wlan0" tcp dport 27031 mark set 1
-            iifname "wlan0" tcp sport 27031 mark set 1
-            iifname "wlan0" udp dport 27031 mark set 1
-            iifname "wlan0" udp sport 27031 mark set 1
-
-            iifname "wlan0" tcp dport 27032 mark set 1
-            iifname "wlan0" tcp sport 27032 mark set 1
-            iifname "wlan0" udp dport 27032 mark set 1
-            iifname "wlan0" udp sport 27032 mark set 1
-
-            iifname "wlan0" tcp dport 27033 mark set 1
-            iifname "wlan0" tcp sport 27033 mark set 1
-            iifname "wlan0" udp dport 27033 mark set 1
-            iifname "wlan0" udp sport 27033 mark set 1
-
-            iifname "wlan0" tcp dport 27034 mark set 1
-            iifname "wlan0" tcp sport 27034 mark set 1
-            iifname "wlan0" udp dport 27034 mark set 1
-            iifname "wlan0" udp sport 27034 mark set 1
-
-            iifname "wlan0" tcp dport 27035 mark set 1
-            iifname "wlan0" tcp sport 27035 mark set 1
-            iifname "wlan0" udp dport 27035 mark set 1
-            iifname "wlan0" udp sport 27035 mark set 1
-
-            iifname "wlan0" tcp dport 27036 mark set 1
-            iifname "wlan0" tcp sport 27036 mark set 1
-            iifname "wlan0" udp dport 27036 mark set 1
-            iifname "wlan0" udp sport 27036 mark set 1
-
-          }
-        }
-      '';
     };
     firewall = rec {
       enable = true;
@@ -154,21 +112,6 @@
   time.timeZone = "America/Toronto";
 
   systemd = {
-    services = {
-      vpn-bypass-routing = {
-        description = "Set up routing to bypass VPN for marked packets";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = [
-            "/run/current-system/sw/bin/ip rule add fwmark 1 table 100"
-            "/run/current-system/sw/bin/ip route add default via 192.168.0.1 dev wlan0 table 100"
-          ];
-        };
-      };
-    };
     user = {
       extraConfig = ''
         DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
@@ -400,6 +343,7 @@
           "libretro-genesis-plus-gx"
           "libretro-snes9x"
           "libretro-fbneo"
+          "vscode"
         ];
     };
     overlays = [
