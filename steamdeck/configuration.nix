@@ -14,6 +14,15 @@
         sshUser = "codebam";
         sshKey = "/home/codebam/.ssh/id_ed25519";
       }
+      {
+        hostName = "codebam.duckdns.org";
+        system = "x86_64-linux,i686-linux";
+        maxJobs = 15;
+        speedFactor = 4;
+        supportedFeatures = [ "big-parallel" ];
+        sshUser = "codebam";
+        sshKey = "/home/codebam/.ssh/id_ed25519";
+      }
     ];
     settings = {
       max-jobs = 0;
