@@ -48,6 +48,7 @@
       element-desktop
       discord-rpc
       pavucontrol
+      heroic
     ];
 
     shellAliases = {

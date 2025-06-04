@@ -119,6 +119,7 @@
         ".config/OpenRGB"
         ".config/retroarch"
         ".config/Ryujinx"
+        ".config/heroic"
       ];
       files = [ ];
     };

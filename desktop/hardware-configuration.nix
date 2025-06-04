@@ -140,6 +140,7 @@
         ".config/YouTube Music"
         ".local/share/PrismLauncher"
         ".config/OpenRGB"
+        ".config/heroic"
       ];
       files = [ ];
     };
