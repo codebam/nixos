@@ -88,6 +88,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    kodi-wayland
     protonup-qt
     maliit-keyboard
     maliit-framework
