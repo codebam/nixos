@@ -74,7 +74,7 @@
       services = {
         steamos-manager = {
           serviceConfig = {
-            ExecStartPre = "/run/current-system/sw/bin/sleep 5";
+            ExecStartPre = "/run/current-system/sw/bin/sleep 10";
           };
         };
       };
