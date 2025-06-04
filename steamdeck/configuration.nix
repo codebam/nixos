@@ -75,6 +75,7 @@
         steamos-manager-restart = {
           description = "Restart steamos-manager service for codebam on boot";
           wantedBy = [ "default.target" ];
+          after = [ "steamos-manager.service" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "/run/current-system/sw/bin/systemctl --user restart steamos-manager.service";
