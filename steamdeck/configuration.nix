@@ -71,15 +71,17 @@
 
   systemd = {
     user = {
-      # services = {
-      #   steamos-manager = {
-      #     enable = false;
-      #     wantedBy = [ ];
-      #     serviceConfig = {
-      #       ExecStart = "/usr/bin/env true";
-      #     };
-      #   };
-      # };
+      services = {
+        steamos-manager-restart = {
+          description = "Restart steamos-manager service for codebam on boot";
+          wantedBy = [ "default.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "/run/current-system/sw/bin/systemctl --user restart steamos-manager.service";
+            RemainAfterExit = true;
+          };
+        };
+      };
     };
     services = {
       systemd-remount-fs = {
