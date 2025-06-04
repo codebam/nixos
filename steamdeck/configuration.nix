@@ -85,11 +85,6 @@
         };
       };
     };
-    services = {
-      systemd-remount-fs = {
-        enable = true;
-      };
-    };
   };
 
   environment.systemPackages = with pkgs; [
