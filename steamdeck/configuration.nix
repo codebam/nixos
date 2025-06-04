@@ -106,6 +106,7 @@
         nestopia # Nintendo NES
         mgba # Game Boy Advance
         fuse # ZX Spectrum
+        melonds # Nintendo DS
       ];
     })
   ];
