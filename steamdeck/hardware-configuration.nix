@@ -106,6 +106,7 @@
         }
         ".local/share/direnv"
         ".steam"
+        ".kodi"
         ".local/share/Steam"
         ".librewolf"
         ".password-store"
