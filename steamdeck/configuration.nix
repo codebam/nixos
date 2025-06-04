@@ -78,6 +78,7 @@
           after = [ "steamos-manager.service" ];
           serviceConfig = {
             Type = "oneshot";
+            ExecStartPre = "/run/current-system/sw/bin/sleep 5";
             ExecStart = "/run/current-system/sw/bin/systemctl --user restart steamos-manager.service";
             RemainAfterExit = true;
           };
