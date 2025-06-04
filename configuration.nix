@@ -243,7 +243,10 @@
   };
 
   programs = {
-    wireshark.enable = true;
+    wireshark = {
+      enable = true;
+      package = pkgs.wireshark;
+    };
     fish.enable = true;
     sway.enable = true;
     gnupg.agent = {
