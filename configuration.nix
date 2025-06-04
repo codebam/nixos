@@ -212,6 +212,8 @@
     wl-clipboard
     xdg-utils
     via
+    dig
+    neovim
     (inputs.agenix.packages.${pkgs.system}.default.override {
       ageBin = "${pkgs.rage}/bin/rage";
     })
