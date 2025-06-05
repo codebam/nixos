@@ -38,6 +38,9 @@
   stylix = {
     enable = true;
     polarity = "dark";
+    targets = {
+      plymouth.enable = false;
+    };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
     fonts = {
       serif = {
