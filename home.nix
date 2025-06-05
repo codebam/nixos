@@ -942,6 +942,7 @@
     enable = true;
 
     targets = {
+      plymouth.enable = false;
       mangohud.enable = false;
       librewolf = {
         profileNames = [ "codebam" ];
