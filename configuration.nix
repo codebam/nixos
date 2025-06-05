@@ -18,8 +18,8 @@
         enable = true;
         memtest86.enable = true;
         configurationLimit = 10;
-        timeout = 0;
       };
+      timeout = 0;
       efi.canTouchEfiVariables = true;
     };
 
