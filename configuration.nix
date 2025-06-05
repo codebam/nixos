@@ -107,7 +107,12 @@
         5353
       ];
       allowedUDPPorts = allowedTCPPorts;
-      allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
+      allowedTCPPortRanges = [
+        {
+          from = 1714;
+          to = 1764;
+        }
+      ];
       allowedUDPPortRanges = allowedTCPPortRanges;
       checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
