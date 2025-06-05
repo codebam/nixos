@@ -258,12 +258,13 @@
       enable = true;
       package = pkgs.wireshark;
     };
-    fish.enable = true;
-    sway.enable = true;
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
     };
+    kdeconnect.enable = true;
+    fish.enable = true;
+    sway.enable = true;
     dconf.enable = true;
   };
 
