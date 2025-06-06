@@ -49,6 +49,7 @@
       discord-rpc
       pavucontrol
       heroic
+      playerctl
     ];
 
     shellAliases = {
