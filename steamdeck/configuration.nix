@@ -135,6 +135,25 @@
     };
   };
 
+  programs = {
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
+      extraCompatPackages = [ pkgs.proton-ge-bin ];
+      extest = {
+        enable = true;
+      };
+    };
+    gamescope = {
+      enable = true;
+    };
+    gamemode = {
+      enable = true;
+    };
+  };
+
   system = {
     stateVersion = "23.11";
   };
