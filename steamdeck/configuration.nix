@@ -79,11 +79,9 @@
   };
 
   systemd = {
-    user = {
-      services = {
-        steamos-manager = {
-          wantedBy = [ "multi-user.target" ];
-        };
+    services = {
+      steamos-manager = {
+        wantedBy = [ "multi-user.target" ];
       };
     };
   };
