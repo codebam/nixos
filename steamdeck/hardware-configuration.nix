@@ -124,6 +124,7 @@
         ".config/retroarch"
         ".config/Ryujinx"
         ".config/heroic"
+        ".config/kdeconnect"
       ];
       files = [ ];
     };
