@@ -105,6 +105,7 @@
         443
         3389
         5353
+        27037
       ];
       allowedUDPPorts = allowedTCPPorts;
       allowedTCPPortRanges = [
