@@ -81,16 +81,8 @@
   systemd = {
     user = {
       services = {
-        steamos-manager-restart = {
-          description = "Restart steamos-manager service for codebam on boot";
-          wantedBy = [ "default.target" ];
-          after = [ "steamos-manager.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStartPre = "/run/current-system/sw/bin/sleep 10";
-            ExecStart = "/run/current-system/sw/bin/systemctl --user restart steamos-manager.service";
-            RemainAfterExit = true;
-          };
+        steamos-manager = {
+          wantedBy = [ "multi-user.target" ];
         };
       };
     };
