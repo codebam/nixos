@@ -27,7 +27,7 @@
   ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ config.boot.kernelPackages.zenergy ];
-  boot.kernelParams = [ "drm.panic_screen=qr_code" ];
+  boot.kernelParams = [ "drm.panic_screen=qr_code" "quiet" ];
   boot.kernel.sysctl."kernel.sysrq" = 1;
 
   environment.persistence."/persistent" = {
