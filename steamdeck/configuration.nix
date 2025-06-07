@@ -79,6 +79,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    steamdeck-firmware
     kodi-wayland
     protonup-qt
     maliit-keyboard
