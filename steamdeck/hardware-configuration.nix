@@ -125,6 +125,7 @@
         ".config/Ryujinx"
         ".config/heroic"
         ".config/kdeconnect"
+        ".config/rpcs3"
       ];
       files = [ ];
     };
