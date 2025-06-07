@@ -17,6 +17,7 @@
       Exec=${pkgs.steam}/bin/steam %u
     '';
     packages = with pkgs; [
+      rpcs3
       prismlauncher
       ryubing
       (writeShellScriptBin "steamos-add-to-steam" ''
