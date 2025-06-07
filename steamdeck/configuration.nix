@@ -78,14 +78,6 @@
     };
   };
 
-  systemd = {
-    services = {
-      steamos-manager = {
-        wantedBy = [ "multi-user.target" ];
-      };
-    };
-  };
-
   environment.systemPackages = with pkgs; [
     kodi-wayland
     protonup-qt
