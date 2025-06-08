@@ -29,6 +29,10 @@
     };
   };
 
+  services = {
+    desktopManager.gnome.enable = true;
+  };
+
   boot = {
     initrd = {
       systemd = {
@@ -120,7 +124,7 @@
       enable = true;
       user = "codebam";
       autoStart = true;
-      desktopSession = "plasma";
+      desktopSession = "gnome";
     };
     devices = {
       steamdeck = {
