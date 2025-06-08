@@ -46,6 +46,7 @@
         }
       ];
       directories = [
+      	{directory="/etc/nixos"; user="codebam"; group="users";}
         "/var/log"
         "/var/lib/bluetooth"
         "/var/lib/nixos"
@@ -73,7 +74,7 @@
         {
           directory = "/var/lib/acme";
           user = "acme";
-          group = "acme";
+          group = "nginx";
         }
       ];
       users = {
@@ -131,6 +132,24 @@
         };
       };
     };
+  };
+
+  systemd.tmpfiles.settings.preservation = {
+    "/home/codebam/.config".d = { user = "codebam"; group = "users"; mode = "0755"; };
+    "/home/codebam/.local".d = { user = "codebam"; group = "users"; mode = "0755"; };
+    "/home/codebam/.local/share".d = { user = "codebam"; group = "users"; mode = "0755"; };
+    "/home/codebam/.local/state".d = { user = "codebam"; group = "users"; mode = "0755"; };
+  };
+
+  systemd.services.systemd-machine-id-commit = {
+    unitConfig.ConditionPathIsMountPoint = [
+      ""
+      "/persistent/etc/machine-id"
+    ];
+    serviceConfig.ExecStart = [
+      ""
+      "systemd-machine-id-setup --commit --root /persistent"
+    ];
   };
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
