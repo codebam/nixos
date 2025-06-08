@@ -69,7 +69,11 @@
         }
       ];
       directories = [
-      	{directory="/etc/nixos"; user="codebam"; group="users";}
+        {
+          directory = "/etc/nixos";
+          user = "codebam";
+          group = "users";
+        }
         "/var/log"
         "/var/lib/bluetooth"
         "/var/lib/nixos"
@@ -156,10 +160,26 @@
   };
 
   systemd.tmpfiles.settings.preservation = {
-    "/home/codebam/.config".d = { user = "codebam"; group = "users"; mode = "0755"; };
-    "/home/codebam/.local".d = { user = "codebam"; group = "users"; mode = "0755"; };
-    "/home/codebam/.local/share".d = { user = "codebam"; group = "users"; mode = "0755"; };
-    "/home/codebam/.local/state".d = { user = "codebam"; group = "users"; mode = "0755"; };
+    "/home/codebam/.config".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
+    "/home/codebam/.local".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
+    "/home/codebam/.local/share".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
+    "/home/codebam/.local/state".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
   };
 
   systemd.services.systemd-machine-id-commit = {
