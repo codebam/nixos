@@ -62,7 +62,10 @@
         "x-gvfs-hide"
       ];
       files = [
-        { file = "/etc/machine-id"; inInitrd = true; }
+        {
+          file = "/etc/machine-id";
+          inInitrd = true;
+        }
       ];
       directories = [
         "/var/log"
@@ -73,15 +76,35 @@
         "/etc/NetworkManager/system-connections"
         "/var/lib/iwd"
         "/etc/ssh"
-        { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "0700"; }
-        { directory = "/var/lib/private/ollama"; user = "nobody"; group = "nogroup"; }
-        { directory = "/var/lib/private/open-webui"; user = "nobody"; group = "nogroup"; }
-        { directory = "/var/lib/acme"; user = "acme"; group = "acme"; }
+        {
+          directory = "/var/lib/colord";
+          user = "colord";
+          group = "colord";
+          mode = "0700";
+        }
+        {
+          directory = "/var/lib/private/ollama";
+          user = "nobody";
+          group = "nogroup";
+        }
+        {
+          directory = "/var/lib/private/open-webui";
+          user = "nobody";
+          group = "nogroup";
+        }
+        {
+          directory = "/var/lib/acme";
+          user = "acme";
+          group = "acme";
+        }
       ];
       users = {
         root = {
           directories = [
-            { directory = ".ssh"; mode = "0700"; }
+            {
+              directory = ".ssh";
+              mode = "0700";
+            }
           ];
         };
         codebam = {
@@ -89,10 +112,22 @@
             "x-gvfs-hide"
           ];
           directories = [
-            { directory = ".ssh"; mode = "0700"; }
-            { directory = ".gnupg"; mode = "0700"; }
-            { directory = ".nixops"; mode = "0700"; }
-            { directory = ".local/share/keyrings"; mode = "0700"; }
+            {
+              directory = ".ssh";
+              mode = "0700";
+            }
+            {
+              directory = ".gnupg";
+              mode = "0700";
+            }
+            {
+              directory = ".nixops";
+              mode = "0700";
+            }
+            {
+              directory = ".local/share/keyrings";
+              mode = "0700";
+            }
             "Downloads"
             "Music"
             "Pictures"
