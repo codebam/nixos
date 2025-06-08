@@ -55,95 +55,66 @@
     }
   ];
 
-  environment.persistence."/persistent" = {
-    enable = true; # NB: Defaults to true, not needed
-    hideMounts = true;
-    directories = [
-      "/var/log"
-      "/var/lib/bluetooth"
-      "/var/lib/nixos"
-      "/var/lib/OpenRGB"
-      "/var/lib/systemd/coredump"
-      "/etc/NetworkManager/system-connections"
-      "/var/lib/iwd"
-      "/etc/ssh"
-      {
-        directory = "/root/.ssh";
-        user = "root";
-        group = "root";
-        mode = "u=rwx,g=,o=";
-      }
-      {
-        directory = "/var/lib/colord";
-        user = "colord";
-        group = "colord";
-        mode = "u=rwx,g=rx,o=";
-      }
-      {
-        directory = "/var/lib/private/ollama";
-        user = "nobody";
-        group = "nogroup";
-      }
-      {
-        directory = "/var/lib/private/open-webui";
-        user = "nobody";
-        group = "nogroup";
-      }
-      "/etc/nixos"
-      {
-        directory = "/var/lib/acme";
-        user = "acme";
-        group = "acme";
-      }
-    ];
-    files = [
-      "/etc/machine-id"
-      {
-        file = "/var/keys/secret_file";
-        parentDirectory = {
-          mode = "u=rwx,g=,o=";
-        };
-      }
-    ];
-    users.codebam = {
-      directories = [
-        "Downloads"
-        "Music"
-        "Pictures"
-        "Documents"
-        "Videos"
-        "Games"
-        {
-          directory = ".gnupg";
-          mode = "0700";
-        }
-        {
-          directory = ".ssh";
-          mode = "0700";
-        }
-        {
-          directory = ".nixops";
-          mode = "0700";
-        }
-        {
-          directory = ".local/share/keyrings";
-          mode = "0700";
-        }
-        ".local/share/direnv"
-        ".steam"
-        ".local/share/Steam"
-        ".librewolf"
-        ".password-store"
-        ".local/state/wireplumber"
-        ".config/Element"
-        ".config/discord"
-        ".local/share/TelegramDesktop"
-        ".config/YouTube Music"
-        ".local/share/PrismLauncher"
-        ".config/OpenRGB"
-        ".config/heroic"
+  preservation = {
+    enable = true;
+    preserveAt."/persistent" = {
+      commonMountOptions = [
+        "x-gvfs-hide"
       ];
-      files = [ ];
+      files = [
+        { file = "/etc/machine-id"; inInitrd = true; }
+      ];
+      directories = [
+        "/var/log"
+        "/var/lib/bluetooth"
+        "/var/lib/nixos"
+        "/var/lib/OpenRGB"
+        "/var/lib/systemd/coredump"
+        "/etc/NetworkManager/system-connections"
+        "/var/lib/iwd"
+        "/etc/ssh"
+        { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "0700"; }
+        { directory = "/var/lib/private/ollama"; user = "nobody"; group = "nogroup"; }
+        { directory = "/var/lib/private/open-webui"; user = "nobody"; group = "nogroup"; }
+        { directory = "/var/lib/acme"; user = "acme"; group = "acme"; }
+      ];
+      users = {
+        root = {
+          directories = [
+            { directory = ".ssh"; mode = "0700"; }
+          ];
+        };
+        codebam = {
+          commonMountOptions = [
+            "x-gvfs-hide"
+          ];
+          directories = [
+            { directory = ".ssh"; mode = "0700"; }
+            { directory = ".gnupg"; mode = "0700"; }
+            { directory = ".nixops"; mode = "0700"; }
+            { directory = ".local/share/keyrings"; mode = "0700"; }
+            "Downloads"
+            "Music"
+            "Pictures"
+            "Documents"
+            "Videos"
+            "Games"
+            ".local/share/direnv"
+            ".steam"
+            ".local/share/Steam"
+            ".librewolf"
+            ".password-store"
+            ".local/state/wireplumber"
+            ".config/Element"
+            ".config/discord"
+            ".local/share/TelegramDesktop"
+            ".config/YouTube Music"
+            ".local/share/PrismLauncher"
+            ".config/OpenRGB"
+            ".config/heroic"
+          ];
+        };
+      };
     };
   };
 
