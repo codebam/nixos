@@ -20,6 +20,9 @@
     };
 
     packages = with pkgs; [
+      (writeShellScriptBin "sretry" ''
+        until "$@"; do sleep 1; done
+      '')
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
