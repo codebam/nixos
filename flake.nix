@@ -22,7 +22,7 @@
     };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
-    impermanence.url = "github:nix-community/impermanence";
+    preservation.url = "github:nix-community/preservation";
     flake-utils.url = "github:numtide/flake-utils";
     jovian.url = "github:jovian-experiments/jovian-nixos/development";
   };
@@ -58,7 +58,7 @@
               modules = [
                 inputs.lix-module.nixosModules.default
                 inputs.disko.nixosModules.disko
-                inputs.impermanence.nixosModules.impermanence
+                inputs.preservation.nixosModules.default
                 inputs.stylix.nixosModules.stylix
                 inputs.agenix.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
