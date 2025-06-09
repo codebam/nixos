@@ -78,9 +78,9 @@
                 }
               ];
             }
-            { 
+            {
               block = "net";
-              format = "$icon {$signal_strength $ssid $frequency|Wired connection}";
+              format = "$icon {$signal_strength $ssid|Wired connection}";
             }
             {
               alert = 10.0;
