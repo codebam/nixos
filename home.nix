@@ -117,11 +117,11 @@
           (lib.mkMerge [
             config.lib.stylix.sway.bar
             {
-              command = "${pkgs.waybar}/bin/waybar";
+              statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
               mode = "dock";
               position = "top";
               hiddenState = "hide";
-              # trayOutput = "none";
+              trayOutput = "none";
               colors.background = lib.mkForce "#00000000";
             }
           ])
@@ -154,8 +154,8 @@
             "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
             "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
-            "Control+space" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client --hide-latest";
-            "${modifier}+Control+space" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -t";
+            "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
+            "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
               ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
@@ -175,7 +175,7 @@
               kill $imv_pid
               rm "$temp_file"
             '')}";
-            "${modifier}+n" = "exec pkill -SIGUSR1 waybar";
+            "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
             "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
             "XF86AudioLowerVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
             "XF86AudioMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
@@ -195,390 +195,13 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          exec '${pkgs.swaynotificationcenter}/bin/swaync'
+          exec '${pkgs.mako}/bin/mako'
         '';
     };
 
   programs = {
-    waybar = {
+    i3status-rust = {
       enable = true;
-      settings = {
-        mainBar = {
-          layer = "top";
-          position = "top";
-          mod = "dock";
-          height = 31;
-          exclusive = true;
-          passthrough = false;
-          gtk-layer-shell = true;
-          modules-left = [
-            "custom/padd"
-            "custom/l_end"
-            "cpu"
-            "memory"
-            "temperature"
-            "custom/r_end"
-            "custom/l_end"
-            "idle_inhibitor"
-            "clock"
-            "custom/r_end"
-            "custom/l_end"
-            "sway/workspaces"
-            "custom/r_end"
-            "custom/padd"
-          ];
-          modules-center = [
-            "custom/padd"
-            "custom/l_end"
-            "wlr/taskbar"
-            "custom/r_end"
-            "custom/padd"
-          ];
-          modules-right = [
-            "custom/padd"
-            "custom/l_end"
-            "backlight"
-            "network"
-            "bluetooth"
-            "wireplumber"
-            "custom/r_end"
-            "custom/l_end"
-            "tray"
-            "battery"
-            "custom/r_end"
-            "custom/l_end"
-            "custom/swaync"
-            "custom/r_end"
-            "custom/padd"
-          ];
-          cpu = {
-            interval = 10;
-            format = "󰍛 {usage}%";
-            format-alt = "{icon0}{icon1}{icon2}{icon3}";
-            format-icons = [
-              "▁"
-              "▂"
-              "▃"
-              "▄"
-              "▅"
-              "▆"
-              "▇"
-              "█"
-            ];
-          };
-
-          memory = {
-            interval = 30;
-            format = "󰾆 {percentage}%";
-            format-alt = "󰾅 {used}GB";
-            max-length = 20;
-            tooltip = true;
-            tooltip-format = " {used:0.1f}GB/{total:0.1f}GB";
-          };
-
-          idle_inhibitor = {
-            format = "{icon}";
-            format-icons = {
-              activated = "󰥔";
-              deactivated = "󰥔";
-            };
-          };
-
-          clock = {
-            format = "{:%R 󰃭 %m·%d·%y}";
-            format-alt = "{:%I:%M %p}";
-            tooltip-format = "<tt>{calendar}</tt>";
-            calendar = {
-              mode = "month";
-              mode-mon-col = 3;
-              on-scroll = 1;
-              on-click-right = "mode";
-              format = {
-                months = "<span color='#ffead3'><b>{}</b></span>";
-                weekdays = "<span color='#ffcc66'><b>{}</b></span>";
-                today = "<span color='#ff6699'><b>{}</b></span>";
-              };
-            };
-            actions = {
-              on-click-right = "mode";
-              on-click-forward = "tz_up";
-              on-click-backward = "tz_down";
-              on-scroll-up = "shift_up";
-              on-scroll-down = "shift_down";
-            };
-          };
-
-          "wlr/taskbar" = {
-            format = "{icon}";
-            icon-size = 18;
-            spacing = 0;
-            tooltip-format = "{title}";
-            on-click = "activate";
-            on-click-middle = "close";
-          };
-
-          backlight = {
-            device = "intel_backlight";
-            format = "{icon}  {percent}%";
-            format-icons = [
-              ""
-              ""
-              ""
-              ""
-              ""
-              ""
-              ""
-              ""
-              ""
-            ];
-            on-scroll-up = "brightnessctl set 1%+";
-            on-scroll-down = "brightnessctl set 1%-";
-            min-length = 6;
-          };
-
-          network = {
-            format-wifi = "󰤨  {essid}";
-            format-ethernet = "󱘖 Wired";
-            tooltip-format = "󱘖  {ipaddr}   {bandwidthUpBytes}   {bandwidthDownBytes}";
-            format-linked = "󱘖  {ifname} (No IP)";
-            format-disconnected = " Disconnected";
-            format-alt = "󰤨  {signalStrength}%";
-            interval = 5;
-          };
-
-          wireplumber = {
-            format = "{icon} {volume}%";
-            format-muted = "";
-            on-click = "${pkgs.helvum}/bin/helvum";
-            format-icons = [
-              ""
-              ""
-              ""
-            ];
-          };
-
-          bluetooth = {
-            format = "";
-            format-disabled = "";
-            format-connected = " {num_connections}";
-            tooltip-format = " {device_alias}";
-            tooltip-format-connected = "{device_enumerate}";
-            tooltip-format-enumerate-connected = " {device_alias}";
-          };
-
-          tray = {
-            icon-size = 18;
-            spacing = 5;
-          };
-
-          battery = {
-            states = {
-              good = 95;
-              warning = 30;
-              critical = 20;
-            };
-            format = "{icon} {capacity}%";
-            format-charging = " {capacity}%";
-            format-plugged = " {capacity}%";
-            format-alt = "{time} {icon}";
-            format-icons = [
-              "󰂎"
-              "󰁺"
-              "󰁻"
-              "󰁼"
-              "󰁽"
-              "󰁾"
-              "󰁿"
-              "󰂀"
-              "󰂁"
-              "󰂂"
-              "󰁹"
-            ];
-          };
-
-          "custom/l_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/r_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/sl_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/sr_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/rl_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/rr_end" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-
-          "custom/padd" = {
-            format = " ";
-            interval = "once";
-            tooltip = false;
-          };
-          "custom/swaync" = {
-            format = "{}";
-            on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
-            tooltip = false;
-          };
-        };
-      };
-      style = ''
-        * {
-            border: none;
-            border-radius: 0px;
-            font-weight: bold;
-            font-size: 14px;
-            min-height: 30px;
-        }
-        @define-color bar-bg rgba(0, 0, 0, 0);
-        @define-color main-bg #1e1e2e;
-        @define-color sec-bg #313244;
-        @define-color main-fg #cdd6f4;
-        @define-color wb-act-bg #a6adc8;
-        @define-color wb-act-fg #313244;
-        @define-color wb-hvr-bg #f5c2e7;
-        @define-color wb-hvr-fg #313244;
-        window#waybar {
-            background: @bar-bg;
-        }
-        tooltip {
-            background: @main-bg;
-            color: @main-fg;
-            border-width: 0px;
-        }
-        #workspaces button {
-            box-shadow: none;
-            text-shadow: none;
-            padding: 0px;
-            margin-top: 3px;
-            margin-bottom: 3px;
-            color: @main-fg;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
-        }
-        #workspaces button.active, #workspaces button.focused {
-            background: @wb-act-bg;
-            color: @wb-act-fg;
-            margin-left: 3px;
-            padding-left: 12px;
-            padding-right: 12px;
-            margin-right: 3px;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-        }
-        #workspaces button.urgent{
-          background: @wb-hvr-bg;
-        }
-        #workspaces button:hover {
-            background: @wb-hvr-bg;
-            color: @wb-hvr-fg;
-        }
-        #taskbar button {
-            box-shadow: none;
-            text-shadow: none;
-            padding: 0px;
-            margin: 3px;
-            color: @wb-color;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
-        }
-        #taskbar button.active {
-            background: @wb-act-bg;
-            color: @wb-act-color;
-            margin-left: 3px;
-            padding-left: 12px;
-            padding-right: 12px;
-            margin-right: 3px;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-        }
-        #taskbar button:hover {
-            background: @wb-hvr-bg;
-            color: @wb-hvr-color;
-            animation: gradient_f 20s ease-in infinite;
-            transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-        }
-        #backlight,
-        #battery,
-        #bluetooth,
-        #custom-cliphist,
-        #clock,
-        #temperature,
-        #cpu,
-        #idle_inhibitor,
-        #language,
-        #memory,
-        #custom-mode,
-        #mpris,
-        #network,
-        #wireplumber,
-        #taskbar,
-        #tray,
-        #custom-swaync,
-        #window,
-        #workspaces,
-        #custom-l_end,
-        #custom-r_end,
-        #custom-sl_end,
-        #custom-sr_end,
-        #custom-rl_end,
-        #custom-rr_end {
-            color: @main-fg;
-            background: @main-bg;
-            opacity: 1;
-            margin: 4px 0px 4px 0px;
-            padding-left: 4px;
-            padding-right: 4px;
-            border-top: 1px solid @sec-bg;
-            border-bottom: 1px solid @sec-bg;
-        }
-        #workspaces,
-        #taskbar {
-            padding: 0px;
-        }
-        #custom-r_end {
-            margin-right: 9px;
-            border-right: 1px solid @sec-bg;
-        }
-        #custom-l_end {
-            margin-left: 9px;
-              border-left: 1px solid @sec-bg;
-        }
-        #custom-sr_end {
-            margin-right: 9px;
-        }
-        #custom-sl_end {
-            margin-left: 9px;
-        }
-        #custom-rr_end {
-            margin-right: 9px;
-        }
-        #custom-rl_end {
-            margin-left: 9px;
-        }
-      '';
     };
     librewolf = {
       enable = true;
