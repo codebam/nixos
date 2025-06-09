@@ -556,7 +556,7 @@
   };
 
   services = {
-    swaync = {
+    mako = {
       enable = true;
     };
   };
