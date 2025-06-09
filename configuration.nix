@@ -215,6 +215,8 @@
   };
 
   environment.systemPackages = with pkgs; [
+    uutils-coreutils-noprefix
+    uutils-findutils
     distrobox
     efm-langserver
     git
