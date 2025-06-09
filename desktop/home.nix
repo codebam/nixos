@@ -47,12 +47,6 @@
         signByDefault = true;
       };
     };
-    bash = {
-      profileExtra = ''
-        PATH="$HOME/.local/bin:$PATH"
-        export PATH
-      '';
-    };
     i3status-rust = {
       bars = {
         default = {
@@ -71,6 +65,22 @@
               info_type = "available";
               interval = 60;
               path = "/";
+              warning = 20.0;
+            }
+            {
+              alert = 10.0;
+              block = "disk_space";
+              info_type = "available";
+              interval = 60;
+              path = "/games";
+              warning = 20.0;
+            }
+            {
+              alert = 10.0;
+              block = "disk_space";
+              info_type = "available";
+              interval = 60;
+              path = "/backup";
               warning = 20.0;
             }
             {
