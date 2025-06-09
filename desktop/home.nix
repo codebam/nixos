@@ -59,6 +59,8 @@
           blocks = [
             { block = "focused_window"; }
             { block = "sound"; }
+            { block = "music"; }
+            { block = "net"; }
             {
               alert = 10.0;
               block = "disk_space";
