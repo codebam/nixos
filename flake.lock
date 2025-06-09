@@ -575,7 +575,8 @@
         "lix-module": "lix-module",
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
-        "stylix": "stylix"
+        "stylix": "stylix",
+        "sway": "sway"
       }
     },
     "stylix": {
@@ -610,6 +611,22 @@
       "original": {
         "owner": "danth",
         "repo": "stylix",
+        "type": "github"
+      }
+    },
+    "sway": {
+      "locked": {
+        "lastModified": 1749432234,
+        "narHash": "sha256-Byqvx6MB1QiAt/Mpoqe3yw2mQ8UlcV55OzsQbWMC31o=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "ab504c15828d79264f54add090e8475e311c88b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "sway-1.11",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },

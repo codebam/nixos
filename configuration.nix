@@ -369,7 +369,7 @@
     };
     overlays = [
       (final: prev: {
-        # kdePackages = inputs.plasma-beta.legacyPackages.${pkgs.system}.kdePackages;
+        sway-unwrapped = inputs.sway.legacyPackages.${pkgs.system}.sway-unwrapped;
       })
     ];
   };
