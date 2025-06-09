@@ -59,12 +59,12 @@
           blocks = [
             { block = "focused_window"; }
             { block = "sound"; }
-            { 
-              block = "sound"; 
+            {
+              block = "sound";
               device_kind = "source";
             }
-            { 
-              block = "music"; 
+            {
+              block = "music";
               format = "$icon {$combo.str(max_w:30,rot_interval:0.5) $prev $play $next |}";
               seek_step_secs = 10;
               click = [
