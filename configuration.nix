@@ -371,7 +371,14 @@
     };
     overlays = [
       (final: prev: {
-        sway-unwrapped = inputs.sway.legacyPackages.${pkgs.system}.sway-unwrapped;
+        sway-unwrapped = inputs.sway.legacyPackages.${pkgs.system}.sway-unwrapped.overrideAttrs (oldAttrs: {
+          # patches = [
+          #   (pkgs.fetchpatch {
+          #     url = "https://github.com/codebam/sway/commit/2953294a92f814dfc70d3229320729e3e133d9ad.patch";
+          #     sha256 = "sha256-qwIkDI7qPWsw+/fkrKHYsCpzRc+VJziZw6ihN/4kffs=";
+          #   })
+          # ];
+        });
       })
     ];
   };
