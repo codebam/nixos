@@ -78,7 +78,10 @@
                 }
               ];
             }
-            { block = "net"; }
+            { 
+              block = "net";
+              format = "$icon {$signal_strength $ssid $frequency|Wired connection}";
+            }
             {
               alert = 10.0;
               block = "disk_space";
