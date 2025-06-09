@@ -59,7 +59,25 @@
           blocks = [
             { block = "focused_window"; }
             { block = "sound"; }
-            { block = "music"; }
+            { 
+              block = "sound"; 
+              device_kind = "source";
+            }
+            { 
+              block = "music"; 
+              format = "$icon {$combo.str(max_w:30,rot_interval:0.5) $prev $play $next |}";
+              seek_step_secs = 10;
+              click = [
+                {
+                  button = "forward";
+                  action = "seek_forward";
+                }
+                {
+                  button = "back";
+                  action = "seek_backward";
+                }
+              ];
+            }
             { block = "net"; }
             {
               alert = 10.0;
@@ -87,11 +105,11 @@
             }
             {
               block = "memory";
-              format = " $icon $mem_used_percents ";
+              format = "$icon $mem_used_percents ";
             }
             {
               block = "amd_gpu";
-              format = " $icon $utilization $vram_used_percents";
+              format = "$icon $utilization $vram_used_percents";
             }
             { block = "temperature"; }
             { block = "cpu"; }
