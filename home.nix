@@ -90,7 +90,7 @@
         };
         input = {
           "*" = {
-            events = "disabled";
+            events = "enabled";
           };
           "1133:49291:Logitech_G502_HERO_Gaming_Mouse" = {
             events = "enabled";
