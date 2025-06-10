@@ -120,6 +120,7 @@
       enable = true;
       user = "codebam";
       stateDir = "/home/codebam/.config/decky-loader";
+      extraPackages = [ pkgs.gst_all_1.gstreamer ];
     };
     steam = {
       enable = true;
@@ -143,7 +144,7 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
-      extraCompatPackages = [ pkgs.gst_all_1.gstreamer pkgs.proton-ge-bin ];
+      extraCompatPackages = [ pkgs.proton-ge-bin ];
       extest = {
         enable = true;
       };
