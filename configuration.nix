@@ -215,7 +215,6 @@
   };
 
   environment.systemPackages = with pkgs; [
-    nix-index
     uutils-coreutils-noprefix
     uutils-findutils
     distrobox

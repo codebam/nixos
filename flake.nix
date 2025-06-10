@@ -26,6 +26,10 @@
     flake-utils.url = "github:numtide/flake-utils";
     jovian.url = "github:jovian-experiments/jovian-nixos/development";
     sway.url = "github:codebam/nixpkgs/sway-1.11";
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -63,6 +67,7 @@
                 inputs.stylix.nixosModules.stylix
                 inputs.agenix.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
+                inputs.nix-index-database.nixosModules.nix-index
                 ./configuration.nix
                 {
                   home-manager = {
