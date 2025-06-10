@@ -142,8 +142,8 @@
       package = pkgs.steam.overrideAttrs (oldAttrs: {
         extraBwrapArgs = (oldAttrs.extraBwrapArgs or [ ]) ++ [
           "--bind"
-          "/var/lib/decky-loader"
-          "/var/lib/decky-loader"
+          "/var/lib"
+          "/var/lib"
         ];
       });
       remotePlay.openFirewall = true;
