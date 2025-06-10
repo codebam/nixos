@@ -2,7 +2,7 @@
   disko.devices = {
     disk = {
       nixos = {
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/nvme-SAMSUNG_MZVLB1T0HALR-000L7_S3TPNX0K805497";
         type = "disk";
         content = {
           type = "gpt";
