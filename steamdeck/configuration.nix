@@ -156,11 +156,7 @@
   };
 
   nixpkgs.overlays = [
-    (final: prev: {
-      steam = prev.steam.override {
-        extraArgs = "-no-cef-sandbox";
-      };
-    })
+    (final: prev: {})
   ];
 
   system = {
