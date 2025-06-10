@@ -137,15 +137,11 @@
   };
 
   programs = {
+    google-chrome = {
+      extraFlags = [ "--no-sandbox" ];
+    };
     steam = {
       enable = true;
-      package = pkgs.steam.overrideAttrs (oldAttrs: {
-        extraBwrapArgs = (oldAttrs.extraBwrapArgs or [ ]) ++ [
-          "--bind"
-          "/var/lib"
-          "/var/lib"
-        ];
-      });
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
