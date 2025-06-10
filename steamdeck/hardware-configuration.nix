@@ -59,7 +59,6 @@
         "/etc/NetworkManager/system-connections"
         "/var/lib/iwd"
         "/etc/ssh"
-        "/var/lib/decky-loader"
         {
           directory = "/var/lib/colord";
           user = "colord";
