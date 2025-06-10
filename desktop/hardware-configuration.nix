@@ -153,6 +153,7 @@
             ".local/share/PrismLauncher"
             ".config/OpenRGB"
             ".config/heroic"
+            ".cache/nix-index"
           ];
         };
       };
