@@ -83,7 +83,6 @@
   };
 
   environment.systemPackages = with pkgs; [
-    gst_all_1.gstreamer
     steamdeck-firmware
     (pkgs.kodi-wayland.withPackages (
       kodiPkgs: with kodiPkgs; [
@@ -144,7 +143,7 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
-      extraCompatPackages = [ pkgs.proton-ge-bin ];
+      extraCompatPackages = [ pkgs.gst_all_1.gstreamer pkgs.proton-ge-bin ];
       extest = {
         enable = true;
       };
