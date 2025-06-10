@@ -157,9 +157,9 @@
 
   nixpkgs.overlays = [
     (final: prev: {
-      google-chrome = prev.google-chrome.overrideAttrs (oldAttrs: {
-        extraWrapperArgs = (oldAttrs.extraWrapperArgs or [ ]) ++ [ "--no-sandbox" ];
-      });
+      steam = prev.steam.override {
+        extraArgs = [ "-no-cef-sandbox" ];
+      };
     })
   ];
 
