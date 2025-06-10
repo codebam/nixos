@@ -32,7 +32,7 @@
             before = [ "sysroot.mount" ];
             script = ''
               mkdir -p /bcachefs_tmp
-              mount -t bcachefs /dev/disk/by-id/ID-part3 /bcachefs_tmp
+              mount -t bcachefs /dev/disk/by-id/nvme-SAMSUNG_MZVLB1T0HALR-000L7_S3TPNX0K805497-part3 /bcachefs_tmp
               if [[ -e /bcachefs_tmp/@root ]]; then
                 mkdir -p /bcachefs_tmp/old_roots
                 timestamp=$(date --date="@$(stat -c %Y /bcachefs_tmp/@root)" "+%Y-%m-%-d_%H:%M:%S")
