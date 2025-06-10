@@ -119,6 +119,7 @@
     decky-loader = {
       enable = true;
       user = "codebam";
+      stateDir = "/home/codebam/.config/decky-loader";
     };
     steam = {
       enable = true;
@@ -156,7 +157,7 @@
   };
 
   nixpkgs.overlays = [
-    (final: prev: {})
+    (final: prev: { })
   ];
 
   system = {
