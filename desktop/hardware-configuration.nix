@@ -181,6 +181,11 @@
       group = "users";
       mode = "0755";
     };
+    "/home/codebam/.cache".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
   };
 
   systemd.services.systemd-machine-id-commit = {
