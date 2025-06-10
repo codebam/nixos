@@ -139,6 +139,13 @@
   programs = {
     steam = {
       enable = true;
+      package = pkgs.steam.overrideAttrs (oldAttrs: {
+        extraBwrapArgs = (oldAttrs.extraBwrapArgs or [ ]) ++ [
+          "--bind"
+          "/var/lib/decky-loader"
+          "/var/lib/decky-loader"
+        ];
+      });
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
