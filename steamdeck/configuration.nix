@@ -83,6 +83,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    gst_all_1.gstreamer
     steamdeck-firmware
     (pkgs.kodi-wayland.withPackages (
       kodiPkgs: with kodiPkgs; [
