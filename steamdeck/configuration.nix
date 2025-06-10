@@ -137,9 +137,6 @@
   };
 
   programs = {
-    google-chrome = {
-      extraFlags = [ "--no-sandbox" ];
-    };
     steam = {
       enable = true;
       remotePlay.openFirewall = true;
@@ -157,6 +154,14 @@
       enable = true;
     };
   };
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      google-chrome = prev.google-chrome.overrideAttrs (oldAttrs: {
+        extraWrapperArgs = (oldAttrs.extraWrapperArgs or [ ]) ++ [ "--no-sandbox" ];
+      });
+    })
+  ];
 
   system = {
     stateVersion = "23.11";
