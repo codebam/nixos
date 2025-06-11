@@ -20,6 +20,9 @@ _:
           settings = {
             theme = {
               theme = "ctp-mocha";
+              overrides = {
+                separator = "";
+              };
             };
           };
           icons = "awesome6";
