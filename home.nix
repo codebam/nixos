@@ -10,6 +10,10 @@
     username = "codebam";
     homeDirectory = "/home/codebam";
 
+    shell = {
+      enableShellIntegration = true;
+    };
+
     sessionVariables = {
       OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
@@ -204,6 +208,42 @@
     };
 
   programs = {
+    carapace = {
+      enable = true;
+      enableNushellIntegration = true;
+    };
+    nushell = {
+      enable = true;
+      extraConfig = ''
+        let carapace_completer = {|spans|
+        carapace $spans.0 nushell ...$spans | from json
+        }
+        $env.config = {
+         show_banner: false,
+         completions: {
+         case_sensitive: false
+         quick: true
+         partial: true
+         algorithm: "fuzzy"
+         external: {
+             enable: true 
+             max_results: 100 
+             completer: $carapace_completer # check 'carapace_completer' 
+           }
+         }
+        } 
+        $env.PATH = ($env.PATH | 
+        split row (char esep) |
+        prepend /home/myuser/.apps |
+        append /usr/bin/env
+        )
+      '';
+      shellAliases = {
+        vi = "${config.programs.neovim.finalPackage}/bin/nvim";
+        ls = "${pkgs.eza}/bin/eza";
+        sudo = "${pkgs.systemd}/bin/run0";
+      };
+    };
     i3status-rust = {
       enable = true;
     };
@@ -558,6 +598,7 @@
       enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
+      enableNushellIntegration = true;
     };
   };
 

@@ -137,6 +137,7 @@
             ".config/retroarch"
             ".config/Ryujinx"
             ".config/decky-loader"
+            ".config/nushell"
           ];
         };
       };

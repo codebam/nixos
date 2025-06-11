@@ -125,6 +125,7 @@
             ".local/share/PrismLauncher"
             ".config/OpenRGB"
             ".config/heroic"
+            ".config/nushell"
             ".cache/nix-index"
           ];
         };
