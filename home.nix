@@ -39,8 +39,6 @@
           pass-genphrase
         ]
       ))
-      bat
-      eza
       grim
       rcm
       ripgrep
@@ -61,7 +59,6 @@
 
     shellAliases = {
       vi = "${config.programs.neovim.finalPackage}/bin/nvim";
-      ls = "${pkgs.eza}/bin/eza";
       sudo = "${pkgs.systemd}/bin/run0";
     };
 
@@ -238,10 +235,6 @@
         append /usr/bin/env
         )
       '';
-      shellAliases = {
-        vi = "${config.programs.neovim.finalPackage}/bin/nvim";
-        sudo = "${pkgs.systemd}/bin/run0";
-      };
     };
     i3status-rust = {
       enable = true;
