@@ -211,6 +211,7 @@
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCNeFVxzMGKcckiXZBmDkLsB8yE7zmT88V5GgjJpkkEYnyk7lvJb+zRWYbAW0k5j+Tf1iNWIUy5EFCm5wfqq57PwhaR8TlMmClQQaRUDWotmqkYVKRiFjFIklUMAcmWVjhxqWtJdo8iBX7+S2i74z4ivku6xI+ifQ8Xr5OoNONYJvVa/nfakCWjFLQ51+RnXNEcEV76v/dfG482uvhqubZgjgfYfuWHSUZC65D6LstTrEa/DtAUc/47unFAMm5U9L4C33m7RKS/JllXW47cT0KJBUywYcc6+euzPdQhAVGj8fUKxjRHWIYcuhTSjrDYVgXwasjnHKOmRxlyClSFTD7 cardno:15_606_805" # yubikey-5c-nfc
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFm8MinRasfhAbMOkQhz+/yXgKBgV1N2J98dlLJ70daz" # servercat
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL7yDL3drFmgNAFIaTgoamlGaTBiKdm+eIK8q3JJTpKh codebam@nixos-steamdeck" # nixos-steamdeck
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKnwv9Ifx6b82N/oRMCAKYi0vWCDyue9Mkf2Fh8lLidm codebam@nixos-laptop" # nixos-laptop
     ];
   };
 
