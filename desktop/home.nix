@@ -53,6 +53,9 @@
           settings = {
             theme = {
               theme = "ctp-mocha";
+              overrides = {
+                separator = "";
+              };
             };
           };
           icons = "awesome6";
@@ -65,7 +68,7 @@
             }
             {
               block = "music";
-              format = "$icon {$combo.str(max_w:30,rot_interval:0.5) $prev $play $next |}";
+              format = " $icon {$combo.str(max_w:30,rot_interval:0.5) $prev $play $next |} ";
               seek_step_secs = 10;
               click = [
                 {
@@ -80,7 +83,7 @@
             }
             {
               block = "net";
-              format = "$icon {$signal_strength $ssid|Wired connection}";
+              format = " $icon {$signal_strength $ssid|Wired connection} ";
             }
             {
               alert = 10.0;
@@ -112,7 +115,7 @@
             }
             {
               block = "amd_gpu";
-              format = "$icon $utilization $vram_used_percents";
+              format = " $icon $utilization $vram_used_percents ";
             }
             { block = "temperature"; }
             { block = "cpu"; }
