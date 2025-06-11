@@ -240,7 +240,6 @@
       '';
       shellAliases = {
         vi = "${config.programs.neovim.finalPackage}/bin/nvim";
-        ls = "${pkgs.eza}/bin/eza";
         sudo = "${pkgs.systemd}/bin/run0";
       };
     };
