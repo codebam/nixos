@@ -615,6 +615,8 @@
       librewolf = {
         profileNames = [ "codebam" ];
       };
+      nushell.enable = false;
+      fish.enable = false;
     };
 
     polarity = "dark";
