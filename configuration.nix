@@ -494,7 +494,6 @@
     ];
   };
 
-
   nixpkgs = {
     config = {
       checkMeta = true;
