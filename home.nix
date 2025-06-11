@@ -74,7 +74,7 @@
       systemd.enable = true;
       config = rec {
         inherit modifier;
-        terminal = "wezterm";
+        terminal = "${pkgs.foot}/bin/foot";
         menu = "${pkgs.wmenu}/bin/wmenu-run -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
         output = {
           "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
@@ -298,7 +298,7 @@
       enableFishIntegration = true;
     };
     fish = {
-      enable = true;
+      enable = false;
       interactiveShellInit = ''
         set fish_greeting ""
         ${builtins.concatStringsSep "\n" (
@@ -564,7 +564,7 @@
           command-focused = "yes";
         };
         colors = {
-          alpha = 1.0;
+          alpha = lib.mkForce 0.9;
         };
       };
     };
