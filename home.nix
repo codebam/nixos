@@ -234,6 +234,8 @@
         prepend /home/myuser/.apps |
         append /usr/bin/env
         )
+        $env.SSH_AUTH_SOCK = (gpgconf --list-dirs agent-ssh-socket)
+        $env.GPG_TTY = (tty)
       '';
     };
     i3status-rust = {

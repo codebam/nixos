@@ -30,7 +30,7 @@
       "amd_3d_vcache"
       "ntsync"
     ];
-    extraModulePackages = [ config.boot.kernelPackages.zenergy ];
+    extraModulePackages = [ ];
     kernelParams = [ "drm.panic_screen=qr_code" ];
     kernel.sysctl."kernel.sysrq" = 1;
   };
