@@ -14,24 +14,26 @@
     ./disko.nix
   ];
 
-  boot.initrd.availableKernelModules = [
-    "nvme"
-    "xhci_pci"
-    "ahci"
-    "usb_storage"
-    "usbhid"
-    "uas"
-    "sd_mod"
-  ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [
-    "kvm-amd"
-    "amd_3d_vcache"
-    "ntsync"
-  ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.zenergy ];
-  boot.kernelParams = [ "drm.panic_screen=qr_code" ];
-  boot.kernel.sysctl."kernel.sysrq" = 1;
+  boot = {
+    initrd.availableKernelModules = [
+      "nvme"
+      "xhci_pci"
+      "ahci"
+      "usb_storage"
+      "usbhid"
+      "uas"
+      "sd_mod"
+    ];
+    initrd.kernelModules = [ ];
+    kernelModules = [
+      "kvm-amd"
+      "amd_3d_vcache"
+      "ntsync"
+    ];
+    extraModulePackages = [ config.boot.kernelPackages.zenergy ];
+    kernelParams = [ "drm.panic_screen=qr_code" ];
+    kernel.sysctl."kernel.sysrq" = 1;
+  };
 
   fileSystems."/games" = {
     device = "/dev/disk/by-uuid/7d57a643-ac36-4e54-b873-0e19bd8a8645";

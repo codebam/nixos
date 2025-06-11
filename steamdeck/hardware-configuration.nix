@@ -15,23 +15,25 @@
     ./disko.nix
   ];
 
-  boot.initrd.availableKernelModules = [
-    "nvme"
-    "xhci_pci"
-    "usbhid"
-    "sdhci_pci"
-  ];
-  boot.initrd.kernelModules = [
-    "nvme"
-    "btrfs"
-  ];
-  boot.kernelModules = [ "kvm-amd" ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.zenergy ];
-  boot.kernelParams = [
-    "drm.panic_screen=qr_code"
-    "quiet"
-  ];
-  boot.kernel.sysctl."kernel.sysrq" = 1;
+  boot = {
+    initrd.availableKernelModules = [
+      "nvme"
+      "xhci_pci"
+      "usbhid"
+      "sdhci_pci"
+    ];
+    initrd.kernelModules = [
+      "nvme"
+      "btrfs"
+    ];
+    kernelModules = [ "kvm-amd" ];
+    extraModulePackages = [ config.boot.kernelPackages.zenergy ];
+    kernelParams = [
+      "drm.panic_screen=qr_code"
+      "quiet"
+    ];
+    kernel.sysctl."kernel.sysrq" = 1;
+  };
 
   preservation = {
     enable = true;
