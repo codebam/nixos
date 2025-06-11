@@ -596,8 +596,7 @@
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
-        "stylix": "stylix",
-        "sway": "sway"
+        "stylix": "stylix"
       }
     },
     "stylix": {
@@ -632,22 +631,6 @@
       "original": {
         "owner": "danth",
         "repo": "stylix",
-        "type": "github"
-      }
-    },
-    "sway": {
-      "locked": {
-        "lastModified": 1749434906,
-        "narHash": "sha256-Byqvx6MB1QiAt/Mpoqe3yw2mQ8UlcV55OzsQbWMC31o=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "0656506b748ba63352b5d0c8514228ff3f79e83a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "sway-1.11",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
