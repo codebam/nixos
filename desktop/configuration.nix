@@ -28,7 +28,7 @@
 
   boot = {
     supportedFilesystems = [ "bcachefs" ];
-    kernelPackages = pkgs.linuxPackages_testing;
+    kernelPackages = pkgs.linuxPackages_latest;
     initrd = {
       systemd = {
         services = {
