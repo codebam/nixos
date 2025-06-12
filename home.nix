@@ -17,7 +17,6 @@
     sessionVariables = {
       OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
-      MANGOHUD = "1";
       MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
       PROTON_ENABLE_WAYLAND = "1";
       PROTON_ENABLE_HDR = "1";
