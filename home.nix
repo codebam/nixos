@@ -160,6 +160,7 @@
             "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
+            "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl invoke default";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
               ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
