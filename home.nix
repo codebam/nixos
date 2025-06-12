@@ -516,7 +516,6 @@
         pkgs.vimPlugins.surround
         pkgs.vimPlugins.todo-comments-nvim
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-        pkgs.vimPlugins.vimsence
       ];
     };
     git = {
