@@ -62,7 +62,7 @@
       sudo = "${pkgs.systemd}/bin/run0";
     };
 
-    stateVersion = "23.11";
+    stateVersion = "25.11";
   };
 
   wayland.windowManager.sway =
