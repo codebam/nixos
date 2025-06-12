@@ -266,6 +266,6 @@
       randomizedDelaySec = "10min";
       allowReboot = false;
     };
-    stateVersion = "23.11";
+    stateVersion = "25.11";
   };
 }
