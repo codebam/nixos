@@ -443,6 +443,7 @@
             ".config/Element"
             ".config/discord"
             ".local/share/TelegramDesktop"
+            ".local/share/zoxide"
             ".config/YouTube Music"
             ".local/share/PrismLauncher"
             ".config/OpenRGB"
