@@ -72,6 +72,12 @@
     ];
   };
 
+  dconf.settings = {
+    "org/gnome/desktop/a11y/keyboard" = {
+      enable = true;
+    };
+  };
+
   programs = {
     git = {
       signing = {
