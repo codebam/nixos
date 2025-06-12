@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ -n "$SKIP_POST_COMMIT" ]; then
+    exit 0
+fi
+
+if ! git diff --cached --quiet; then
+    SKIP_POST_COMMIT=1 git commit --amend --no-edit
+fi
