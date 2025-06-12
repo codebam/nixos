@@ -74,10 +74,7 @@
 
   dconf.settings = {
     "org/gnome/desktop/a11y/applications" = {
-      show-screen-keyboard = true;
-    };
-    "org/gnome/desktop/interface" = {
-      show-a11y-menu = true; # Shows accessibility menu in system tray
+      screen-keyboard-enabled = true;
     };
   };
 
