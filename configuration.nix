@@ -74,7 +74,6 @@
       trusted-users = [
         "root"
         "codebam"
-        "makano"
       ];
       system-features = [
         "i686-linux"
@@ -217,6 +216,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    run0-sudo-shim
     nushell
     uutils-coreutils-noprefix
     uutils-findutils
@@ -451,14 +451,6 @@
             ".config/heroic"
             ".config/nushell"
             ".cache/nix-index"
-          ];
-        };
-        makano = {
-          commonMountOptions = [
-            "x-gvfs-hide"
-          ];
-          directories = [
-            "persist"
           ];
         };
       };

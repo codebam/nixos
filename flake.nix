@@ -29,6 +29,10 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    run0-sudo-shim = {
+      url = "github:lordgrimmauld/run0-sudo-shim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -67,6 +71,7 @@
                 inputs.agenix.nixosModules.default
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-index-database.nixosModules.nix-index
+                inputs.run0-sudo-shim.nixosModules.default
                 ./configuration.nix
                 {
                   home-manager = {

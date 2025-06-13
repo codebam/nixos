@@ -58,7 +58,6 @@
 
     shellAliases = {
       vi = "${config.programs.neovim.finalPackage}/bin/nvim";
-      sudo = "${pkgs.systemd}/bin/run0";
     };
 
     stateVersion = "25.11";
