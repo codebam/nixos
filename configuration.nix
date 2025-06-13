@@ -453,6 +453,14 @@
             ".cache/nix-index"
           ];
         };
+        makano = {
+          commonMountOptions = [
+            "x-gvfs-hide"
+          ];
+          directories = [
+            "persist"
+          ];
+        };
       };
     };
   };
