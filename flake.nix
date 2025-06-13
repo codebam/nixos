@@ -33,6 +33,10 @@
       url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -66,6 +70,18 @@
               modules = [
                 inputs.lix-module.nixosModules.default
                 inputs.disko.nixosModules.disko
+                inputs.lanzaboote.nixosModules.lanzaboote
+                (
+                  { pkgs, lib, ... }:
+                  {
+                    environment.systemPackages = [ pkgs.sbctl ];
+                    boot.loader.systemd-boot.enable = lib.mkForce false;
+                    boot.lanzaboote = {
+                      enable = true;
+                      pkiBundle = "/var/lib/sbctl";
+                    };
+                  }
+                )
                 inputs.preservation.nixosModules.default
                 inputs.stylix.nixosModules.stylix
                 inputs.agenix.nixosModules.default
