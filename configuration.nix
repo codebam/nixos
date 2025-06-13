@@ -369,6 +369,7 @@
           user = "codebam";
           group = "users";
         }
+        "/var/lib/sbctl"
         "/var/log"
         "/var/lib/bluetooth"
         "/var/lib/nixos"
