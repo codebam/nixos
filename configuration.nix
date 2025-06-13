@@ -74,6 +74,7 @@
       trusted-users = [
         "root"
         "codebam"
+        "makano"
       ];
       system-features = [
         "i686-linux"
