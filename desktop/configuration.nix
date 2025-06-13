@@ -12,7 +12,9 @@
     hostName = "nixos-desktop";
   };
 
-  environment.systemPackages = [ ];
+  environment.systemPackages = with pkgs; [
+    blender-hip
+  ];
 
   age = {
     # identityPaths = [
