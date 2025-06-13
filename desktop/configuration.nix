@@ -266,6 +266,29 @@
     };
   };
 
+  preservation = {
+    preserveAt."/persistent" = {
+      users = {
+        makano = {
+          commonMountOptions = [
+            "x-gvfs-hide"
+          ];
+          directories = [
+            "persist"
+          ];
+        };
+      };
+    };
+  };
+
+  nix = {
+    settings = {
+      trusted-users = [
+        "makano"
+      ];
+    };
+  };
+
   nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [ (final: prev: { }) ];
 
