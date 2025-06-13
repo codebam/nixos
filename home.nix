@@ -80,7 +80,7 @@
             mode = "3840x1600@143.998Hz";
             adaptive_sync = "off";
             subpixel = "none";
-            render_bit_depth = "10";
+            render_bit_depth = "8";
             allow_tearing = "yes";
             max_render_time = "off";
           };
