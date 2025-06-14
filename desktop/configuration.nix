@@ -33,7 +33,7 @@
     home = "/home/makano";
     description = "Makano";
     packages = [ ];
-    shell = pkgs.nushell;
+    shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAf5Y0VAO2dyCseCQ0gyNaTUIzNJj885bYyX03v0vSS4 makano@nixos"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGFpzbhkbHB3jZPdMKuNRBjAgsslCeILJE+BmSYWcht1 makano@Dush"
