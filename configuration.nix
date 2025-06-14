@@ -440,6 +440,7 @@
             "Videos"
             "Games"
             ".local/share/direnv"
+            ".local/share/fish"
             ".steam"
             ".local/share/Steam"
             ".librewolf"
