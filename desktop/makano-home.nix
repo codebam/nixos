@@ -97,7 +97,7 @@
       enableFishIntegration = true;
     };
     fish = {
-      enable = false;
+      enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
         ${builtins.concatStringsSep "\n" (
