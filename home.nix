@@ -26,6 +26,7 @@
     };
 
     sessionVariables = {
+      NIXOS_OZONE_WL = "1";
       OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
       MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
@@ -318,6 +319,12 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
+        set -gx NIXOS_OZONE_WL 1
+        set -gx OBS_VKCAPTURE 1
+        set -gx WLR_RENDERER vulkan
+        set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
+        set -gx PROTON_ENABLE_WAYLAND 1
+        set -gx PROTON_ENABLE_HDR 1
       '';
       plugins = [
         {
