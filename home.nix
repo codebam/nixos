@@ -14,6 +14,17 @@
       enableShellIntegration = true;
     };
 
+    pointerCursor = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Ice";
+      size = 24;
+      x11 = {
+        enable = true;
+        defaultCursor = "Bibata-Modern-Ice";
+      };
+      gtk.enable = true;
+    };
+
     sessionVariables = {
       OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
@@ -74,6 +85,11 @@
         inherit modifier;
         terminal = "${pkgs.foot}/bin/foot";
         menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
+        seat = {
+          "*" = {
+            xcursor_theme = "Bibata-Modern-Ice";
+          };
+        };
         output = {
           "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
             mode = "3840x1600@143.998Hz";
@@ -302,16 +318,6 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
-        ${builtins.concatStringsSep "\n" (
-          builtins.attrValues (
-            builtins.mapAttrs (name: value: "set -gx ${name} ${value}") (
-              builtins.removeAttrs config.home.sessionVariables [
-                "TMUX_TMPDIR"
-                "XDG_CONFIG_DIRS"
-              ]
-            )
-          )
-        )}
       '';
       plugins = [
         {
