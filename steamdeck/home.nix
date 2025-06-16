@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
 
   home = {
@@ -72,15 +72,20 @@
     ];
   };
 
-  wayland.windowManager.sway = {
-    config = {
-      output = {
-        "X11-1" = {
-          resolution = "1280x800";
+  wayland.windowManager.sway =
+    let
+      modifier = lib.mkForce "Mod1";
+    in
+    {
+      config = rec {
+        inherit modifier;
+        output = {
+          "X11-1" = {
+            resolution = "1280x800";
+          };
         };
       };
     };
-  };
 
   dconf.settings = {
     "org/gnome/desktop/a11y/applications" = {
