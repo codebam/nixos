@@ -21,22 +21,6 @@
         "type": "github"
       }
     },
-    "avante-06-16": {
-      "locked": {
-        "lastModified": 1750052085,
-        "narHash": "sha256-Us7XN6N3ecEjoKr0ew0TXHf0qtdIk8H5P2oI3otZZcU=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "e2963527a01fb9a98d9a18158581fe3d27afd537",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "avante-0.0.24-unstable-2025-06-16",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -767,7 +751,6 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
-        "avante-06-16": "avante-06-16",
         "disko": "disko",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager_2",
