@@ -522,8 +522,7 @@
         let g:vimsence_file_explorer_details = 'Looking for files'
       '';
       plugins = [
-        # pkgs.vimPlugins.avante-nvim
-        inputs.avante-06-16.legacyPackages.${pkgs.system}.vimPlugins.avante-nvim
+        pkgs.vimPlugins.avante-nvim
         pkgs.vimPlugins.augment-vim
         pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.cmp_luasnip
