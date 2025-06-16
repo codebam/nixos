@@ -455,6 +455,7 @@
             ".config/OpenRGB"
             ".config/heroic"
             ".config/nushell"
+            ".config/qmk"
             ".cache/nix-index"
           ];
         };
