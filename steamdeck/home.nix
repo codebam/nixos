@@ -72,6 +72,16 @@
     ];
   };
 
+  wayland.windowManager.sway = {
+    config = {
+      output = {
+        "X11-1" = {
+          resolution = "1280x800";
+        };
+      };
+    };
+  };
+
   dconf.settings = {
     "org/gnome/desktop/a11y/applications" = {
       screen-keyboard-enabled = true;
