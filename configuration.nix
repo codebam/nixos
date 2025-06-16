@@ -503,8 +503,8 @@
 
   nixpkgs = {
     config = {
-      checkMeta = true;
-      showDerivationWarnings = [ "maintainerless" ];
+      # checkMeta = true;
+      # showDerivationWarnings = [ "maintainerless" ];
       allowUnfreePredicate =
         pkg:
         builtins.elem (lib.getName pkg) [

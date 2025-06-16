@@ -186,7 +186,7 @@
       enable = true;
     };
     open-webui = {
-      enable = true;
+      enable = false;
       port = 8080;
       environment = {
         ANONYMIZED_TELEMETRY = "False";
