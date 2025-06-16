@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 
@@ -465,13 +466,29 @@
             ollama = {
               model = "devstral",
             },
+            gemini = {
+              model = "gemini-2.5-flash-preview-05-20",
+            },
           },
           rag_service = {
             enabled = true,
             host_mount = os.getenv("HOME"),
-            provider = "ollama",
-            llm_model = "qwen3:14b",
-            embed_model = "nomic-embed-text",
+            llm = {
+              provider = "ollama",
+              endpoint = "http://localhost:11434",
+              api_key = "",
+              model = "qwen3:14b",
+              extra = nil,
+            },
+            embed = {
+              provider = "ollama",
+              endpoint = "http://localhost:11434",
+              api_key = "",
+              model = "nomic-embed-text",
+              extra = {
+                embed_batch_size = 10,
+              },
+            },
           },
           cursor_applying_provider = 'ollama',
           behaviour = {
@@ -505,7 +522,8 @@
         let g:vimsence_file_explorer_details = 'Looking for files'
       '';
       plugins = [
-        pkgs.vimPlugins.avante-nvim
+        # pkgs.vimPlugins.avante-nvim
+        inputs.avante-06-16.legacyPackages.${pkgs.system}.vimPlugins.avante-nvim
         pkgs.vimPlugins.augment-vim
         pkgs.vimPlugins.catppuccin-vim
         pkgs.vimPlugins.cmp_luasnip
