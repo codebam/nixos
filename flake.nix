@@ -37,6 +37,7 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    avante-06-16.url = "github:codebam/nixpkgs/avante-0.0.24-unstable-2025-06-16";
   };
 
   outputs =
