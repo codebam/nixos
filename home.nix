@@ -597,7 +597,7 @@
       nix-direnv.enable = true;
     };
     fzf = {
-      enable = true;
+      enable = false;
       enableBashIntegration = true;
       enableFishIntegration = true;
       defaultOptions = [
