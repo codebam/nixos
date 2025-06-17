@@ -528,6 +528,7 @@
     };
     overlays = [
       (final: prev: {
+        sway-unwrapped = inputs.sway-master.legacyPackages.${pkgs.system}.sway-unwrapped;
       })
     ];
   };
