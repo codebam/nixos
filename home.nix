@@ -409,7 +409,9 @@
         }
         vim.lsp.enable('efm')
 
-        require("blink.cmp").setup{}
+        require("blink.cmp").setup{
+          signature = { enabled = true },
+        }
 
         require("avante_lib").load()
         require("avante").setup({
