@@ -175,6 +175,8 @@
             "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
             "${modifier}+shift+i" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
+            "XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl next";
+            "shift+XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl previous";
             "Control+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+Control+space" = "exec ${pkgs.mako}/bin/makoctl restore";
             "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl invoke default";
@@ -407,51 +409,8 @@
         }
         vim.lsp.enable('efm')
 
-        local capabilities = require("cmp_nvim_lsp").default_capabilities()
+        require("blink.cmp").setup{}
 
-        local luasnip = require('luasnip')
-        require("luasnip.loaders.from_vscode").lazy_load()
-
-        local cmp = require('cmp')
-        cmp.setup {
-          snippet = {
-            expand = function(args)
-              luasnip.lsp_expand(args.body)
-            end,
-          },
-          mapping = cmp.mapping.preset.insert({
-            ['<C-u>'] = cmp.mapping.scroll_docs(-4), -- Up
-            ['<C-d>'] = cmp.mapping.scroll_docs(4), -- Down
-            -- C-b (back) C-f (forward) for snippet placeholder navigation.
-            ['<C-Space>'] = cmp.mapping.complete(),
-            ['<CR>'] = cmp.mapping.confirm {
-              behavior = cmp.ConfirmBehavior.Replace,
-              select = true,
-            },
-            ['<Tab>'] = cmp.mapping(function(fallback)
-              if cmp.visible() then
-                cmp.select_next_item()
-              elseif luasnip.expand_or_jumpable() then
-                luasnip.expand_or_jump()
-              else
-                fallback()
-              end
-            end, { 'i', 's' }),
-            ['<S-Tab>'] = cmp.mapping(function(fallback)
-              if cmp.visible() then
-                cmp.select_prev_item()
-              elseif luasnip.jumpable(-1) then
-                luasnip.jump(-1)
-              else
-                fallback()
-              end
-            end, { 'i', 's' }),
-          }),
-          sources = {
-            { name = 'nvim_lsp' },
-            { name = 'luasnip' },
-          },
-        }
         require("avante_lib").load()
         require("avante").setup({
           provider = "ollama",
@@ -518,8 +477,6 @@
         pkgs.vimPlugins.avante-nvim
         pkgs.vimPlugins.augment-vim
         pkgs.vimPlugins.catppuccin-vim
-        pkgs.vimPlugins.cmp_luasnip
-        pkgs.vimPlugins.cmp-nvim-lsp
         pkgs.vimPlugins.codi-vim
         pkgs.vimPlugins.commentary
         pkgs.vimPlugins.friendly-snippets
@@ -529,7 +486,7 @@
         pkgs.vimPlugins.lightline-vim
         pkgs.vimPlugins.lsp-format-nvim
         pkgs.vimPlugins.luasnip
-        pkgs.vimPlugins.nvim-cmp
+        pkgs.vimPlugins.blink-cmp
         pkgs.vimPlugins.nvim-lspconfig
         pkgs.vimPlugins.nvim-web-devicons
         pkgs.vimPlugins.plenary-nvim
