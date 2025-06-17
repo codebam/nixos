@@ -411,6 +411,7 @@
 
         require("blink.cmp").setup{
           signature = { enabled = true },
+          snippets = { preset = 'luasnip' },
         }
 
         require("avante_lib").load()
