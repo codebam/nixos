@@ -37,6 +37,7 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sway-master.url = "github:codebam/nixpkgs/sway-master";
   };
 
   outputs =
