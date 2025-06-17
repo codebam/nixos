@@ -359,13 +359,71 @@
       colorschemes.catppuccin.enable = true;
       opts = {
         guicursor = "n-v-c-i:block";
-        undodir = "\$HOME/.vim/undodir";
+        undodir = "/home/codebam/.vim/undodir";
         undofile = true;
         ts = 2;
       };
       globals = {
         mapLeader = "\\";
       };
+      keymaps = [
+        {
+          mode = "n";
+          key = "<leader><space>";
+          action = ":nohl<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader><space>";
+          action = ":nohl<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader>ff";
+          action = "<cmd>Telescope find_files<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader>fd";
+          action = "<cmd>Telescope diagnostics<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader>fg";
+          action = "<cmd>Telescope live_grep<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader>fb";
+          action = "<cmd>Telescope buffers<CR>";
+          options = {
+            silent = true;
+          };
+        }
+        {
+          mode = "n";
+          key = "<leader>fh";
+          action = "<cmd>Telescope help_tags<CR>";
+          options = {
+            silent = true;
+          };
+        }
+      ];
       plugins = {
         avante = {
           enable = true;
