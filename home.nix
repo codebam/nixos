@@ -70,7 +70,7 @@
     ];
 
     shellAliases = {
-      vi = "${config.programs.neovim.finalPackage}/bin/nvim";
+      vi = "${config.programs.nixvim.finalPackage}/bin/nvim";
     };
 
     stateVersion = "25.11";
@@ -353,195 +353,133 @@
     bash = {
       enable = true;
     };
-    neovim = {
+    nixvim = {
       enable = true;
       defaultEditor = true;
-      extraLuaPackages = ps: [ ps.jsregexp ];
-      extraLuaConfig = ''
-
-        require('nvim-treesitter.configs').setup {
-          auto_install = false,
-          ignore_install = {},
-          highlight = {
-            enable = true,
-            additional_vim_regex_highlighting = false,
-          },
-          indent = {
-            enable = true
-          },
-        }
-
-        local on_attach = function(client, bufnr)
-          require("lsp-format").on_attach(client, bufnr)
-        end
-
-        require("lsp-format").setup{}
-        vim.lsp.enable('ts_ls')
-        vim.lsp.enable('eslint')
-        vim.lsp.enable('jdtls')
-        vim.lsp.enable('kotlin_language_server')
-        vim.lsp.enable('svelte')
-        vim.lsp.enable('bashls')
-        vim.lsp.enable('pyright')
-        vim.lsp.enable('nil_ls')
-        vim.lsp.enable('clangd')
-        vim.lsp.enable('html')
-        vim.lsp.enable('rust_analyzer')
-        vim.lsp.enable('csharp_ls')
-        vim.lsp.enable('sqls')
-        vim.lsp.enable('nil_ls')
-
-        local prettier = {
-          formatCommand = [[prettier --stdin-filepath ''${INPUT} ''${--tab-width:tab_width}]],
-          formatStdin = true,
-        }
-        vim.lsp.config['efm'] = {
-          on_attach = on_attach,
-          init_options = { documentFormatting = true },
+      colorschemes.catppuccin.enable = true;
+      opts = {
+        guicursor = "n-v-c-i:block";
+        undodir = "\$HOME/.vim/undodir";
+        undofile = true;
+        ts = 2;
+      };
+      globals = {
+        mapLeader = "\\";
+      };
+      plugins = {
+        avante = {
+          enable = true;
+        };
+        commentary = {
+          enable = true;
+        };
+        friendly-snippets = {
+          enable = true;
+        };
+        fugitive = {
+          enable = true;
+        };
+        gitgutter = {
+          enable = true;
+        };
+        telescope = {
+          enable = true;
+        };
+        lualine = {
+          enable = true;
+        };
+        lazydev = {
+          enable = true;
+        };
+        lsp-format = {
+          enable = true;
+        };
+        luasnip = {
+          enable = true;
+        };
+        blink-cmp = {
+          enable = true;
+        };
+        lsp = {
+          enable = true;
+          inlayHints = true;
+          servers = {
+            nixd = {
+              enable = true;
+            };
+            rust_analyzer = {
+              enable = true;
+              installRustc = true;
+              installCargo = true;
+            };
+            ts_ls = {
+              enable = true;
+            };
+            cssls = {
+              enable = true;
+            };
+            tailwindcss = {
+              enable = true;
+            };
+            html = {
+              enable = true;
+            };
+            svelte = {
+              enable = true;
+            };
+            pyright = {
+              enable = true;
+            };
+            dockerls = {
+              enable = true;
+            };
+            bashls = {
+              enable = true;
+            };
+            clangd = {
+              enable = true;
+            };
+            csharp_ls = {
+              enable = true;
+            };
+            markdown_oxide = {
+              enable = true;
+            };
+          };
+        };
+        web-devicons = {
+          enable = true;
+        };
+        sleuth = {
+          enable = true;
+        };
+        surround = {
+          enable = true;
+        };
+        todo-comments = {
+          enable = true;
+        };
+        treesitter = {
+          enable = true;
           settings = {
-            languages = {
-              typescript = { prettier },
-              html = { prettier },
-              javascript = { prettier },
-              json = { prettier },
-            },
-          },
-        }
-        vim.lsp.enable('efm')
-
-        require("blink.cmp").setup{
-          signature = { enabled = true },
-          snippets = { preset = 'luasnip' },
-          keymap = {
-            preset = "enter",
-            ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
-            ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
-          },
-          ghost_text = {
-            enabled = true,
-          },
-          documentation = {
-            auto_show = true,
-            auto_show_delay_ms = 0,
-          },
-          accept = {
-            auto_brackets = {
-              enabled = true,
-              blocked_filetypes = { "gleam" },
-            },
-          },
-          sources = {
-            transform_items = function(_, items)
-              for _, item in ipairs(items) do
-                if item.kind == require("blink.cmp.types").CompletionItemKind.Snippet then
-                  item.score_offset = item.score_offset + 10
-                end
-              end
-              return items
-            end,
-            default = {
-              "lsp",
-              "path",
-              "snippets",
-              "lazydev",
-              "omni",
-            },
-            providers = {
-              lazydev = {
-                name = "LazyDev",
-                module = "lazydev.integrations.blink",
-                score_offset = 100,
-              },
-            },
-          },
-        }
-
-        require("avante_lib").load()
-        require("avante").setup({
-          provider = "ollama",
-          providers = {
-            ollama = {
-              model = "devstral",
-            },
-            gemini = {
-              model = "gemini-2.5-flash-preview-05-20",
-            },
-          },
-          rag_service = {
-            enabled = true,
-            host_mount = os.getenv("HOME"),
-            llm = {
-              provider = "ollama",
-              endpoint = "http://localhost:11434",
-              api_key = "",
-              model = "qwen3:14b",
-              extra = nil,
-            },
-            embed = {
-              provider = "ollama",
-              endpoint = "http://localhost:11434",
-              api_key = "",
-              model = "nomic-embed-text",
-              extra = {
-                embed_batch_size = 10,
-              },
-            },
-          },
-          cursor_applying_provider = 'ollama',
-          behaviour = {
-            enable_cursor_planning_mode = true,
-          },
-        })
-      '';
-      extraConfig = ''
-        set guicursor=n-v-c-i:block
-        set nowrap
-        colorscheme catppuccin_mocha
-        let g:lightline = {
-              \ 'colorscheme': 'catppuccin_mocha',
-              \ }
-        map <leader>ac :lua vim.lsp.buf.code_action()<CR>
-        map <leader><space> :nohl<CR>
-        nnoremap <leader>ff <cmd>Telescope find_files<cr>
-        nnoremap <leader>fd <cmd>Telescope diagnostics<cr>
-        nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-        nnoremap <leader>fb <cmd>Telescope buffers<cr>
-        nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-        set ts=2
-        set undofile
-        set undodir=$HOME/.vim/undodir
-        let g:vimsence_client_id = '439476230543245312'
-        let g:vimsence_small_text = 'NeoVim'
-        let g:vimsence_small_image = 'neovim'
-        let g:vimsence_editing_details = 'Editing: {}'
-        let g:vimsence_editing_state = 'Working on: {}'
-        let g:vimsence_file_explorer_text = 'In :Lexplore'
-        let g:vimsence_file_explorer_details = 'Looking for files'
-      '';
-      plugins = [
-        pkgs.vimPlugins.avante-nvim
-        pkgs.vimPlugins.augment-vim
-        pkgs.vimPlugins.catppuccin-vim
-        pkgs.vimPlugins.codi-vim
-        pkgs.vimPlugins.commentary
-        pkgs.vimPlugins.friendly-snippets
-        pkgs.vimPlugins.fugitive
-        pkgs.vimPlugins.gitgutter
-        pkgs.vimPlugins.telescope-nvim
-        pkgs.vimPlugins.lightline-vim
-        pkgs.vimPlugins.lazydev-nvim
-        pkgs.vimPlugins.lsp-format-nvim
-        pkgs.vimPlugins.luasnip
-        pkgs.vimPlugins.blink-cmp
-        pkgs.vimPlugins.nvim-lspconfig
-        pkgs.vimPlugins.nvim-web-devicons
-        pkgs.vimPlugins.plenary-nvim
-        pkgs.vimPlugins.sensible
-        pkgs.vimPlugins.sleuth
-        pkgs.vimPlugins.surround
-        pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-      ];
+            indent = {
+              enable = true;
+            };
+            highlight = {
+              enable = true;
+            };
+          };
+          nixvimInjections = true;
+          grammarPackages = pkgs.vimPlugins.nvim-treesitter.allGrammars;
+        };
+        treesitter-textobjects = {
+          enable = true;
+          select = {
+            enable = true;
+            lookahead = true;
+          };
+        };
+      };
     };
     git = {
       enable = true;
