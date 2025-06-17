@@ -374,34 +374,26 @@
         end
 
         require("lsp-format").setup{}
-        require('lspconfig').ts_ls.setup { on_attach = on_attach }
-        require('lspconfig').eslint.setup { on_attach = on_attach }
-        require('lspconfig').jdtls.setup { on_attach = on_attach }
-        require('lspconfig').kotlin_language_server.setup { on_attach = on_attach }
-        require('lspconfig').svelte.setup { on_attach = on_attach }
-        require('lspconfig').bashls.setup { on_attach = on_attach }
-        require('lspconfig').pyright.setup { on_attach = on_attach }
-        require('lspconfig').nil_ls.setup {
-          on_attach = on_attach,
-          settings = {
-            ['nil'] = {
-              formatting = {
-                command = { "nixfmt" },
-              },
-            },
-          },
-        }
-        require('lspconfig').clangd.setup { on_attach = on_attach }
-        require('lspconfig').html.setup { on_attach = on_attach }
-        require('lspconfig').rust_analyzer.setup { on_attach = on_attach }
-        require('lspconfig').csharp_ls.setup { on_attach = on_attach }
-        require('lspconfig').sqls.setup {}
+        vim.lsp.enable('ts_ls')
+        vim.lsp.enable('eslint')
+        vim.lsp.enable('jdtls')
+        vim.lsp.enable('kotlin_language_server')
+        vim.lsp.enable('svelte')
+        vim.lsp.enable('bashls')
+        vim.lsp.enable('pyright')
+        vim.lsp.enable('nil_ls')
+        vim.lsp.enable('clangd')
+        vim.lsp.enable('html')
+        vim.lsp.enable('rust_analyzer')
+        vim.lsp.enable('csharp_ls')
+        vim.lsp.enable('sqls')
+        vim.lsp.enable('nil_ls')
 
         local prettier = {
           formatCommand = [[prettier --stdin-filepath ''${INPUT} ''${--tab-width:tab_width}]],
           formatStdin = true,
         }
-        require("lspconfig").efm.setup {
+        vim.lsp.config['efm'] = {
           on_attach = on_attach,
           init_options = { documentFormatting = true },
           settings = {
@@ -413,6 +405,7 @@
             },
           },
         }
+        vim.lsp.enable('efm')
 
         local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
