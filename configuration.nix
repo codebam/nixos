@@ -520,6 +520,9 @@
           "libretro-genesis-plus-gx"
           "libretro-snes9x"
           "libretro-fbneo"
+          "libretro-mame2000"
+          "libretro-mame2003"
+          "libretro-mame2015"
           "vscode"
         ];
     };
