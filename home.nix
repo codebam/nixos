@@ -70,7 +70,7 @@
     ];
 
     shellAliases = {
-      vi = "${config.programs.nixvim.finalPackage}/bin/nvim";
+      vi = "${config.programs.nixvim.build.package}/bin/nvim";
     };
 
     stateVersion = "25.11";
@@ -427,6 +427,40 @@
       plugins = {
         avante = {
           enable = true;
+          settings = {
+            provider = "ollama";
+            providers = {
+              ollama = {
+                model = "devstral";
+              };
+              gemini = {
+                model = "gemini-2.5-flash-preview-05-20";
+              };
+            };
+            rag_service = {
+              enabled = true;
+              host_mount = "os.getenv(\"HOME\")";
+              llm = {
+                provider = "ollama";
+                endpoint = "http://localhost:11434";
+                api_key = "";
+                model = "qwen3:14b";
+              };
+              embed = {
+                provider = "ollama";
+                endpoint = "http://localhost:11434";
+                api_key = "";
+                model = "nomic-embed-text";
+                extra = {
+                  embed_batch_size = 10;
+                };
+              };
+            };
+            cursor_applying_provider = "ollama";
+            behaviour = {
+              enable_cursor_planning_mode = true;
+            };
+          };
         };
         commentary = {
           enable = true;
@@ -511,7 +545,7 @@
         sleuth = {
           enable = true;
         };
-        surround = {
+        vim-surround = {
           enable = true;
         };
         todo-comments = {
