@@ -95,7 +95,6 @@
             telescope-nvim
             lualine-nvim
             lazydev-nvim
-            lsp-format-nvim
             luasnip
             blink-cmp
             nvim-lspconfig

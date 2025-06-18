@@ -31,20 +31,6 @@ vim.lsp.enable('jdtls')
 vim.lsp.enable('csharp_ls')
 vim.lsp.enable('markdown_oxide')
 
-vim.lsp.config['efm'] = {
-	on_attach = on_attach,
-	init_options = { documentFormatting = true },
-	settings = {
-		languages = {
-			typescript = { prettier },
-			html = { prettier },
-			javascript = { prettier },
-			json = { prettier },
-		},
-	},
-}
-vim.lsp.enable('efm')
-
 require("blink.cmp").setup({
 	signature = { enabled = true },
 	snippets = { preset = 'luasnip' },
