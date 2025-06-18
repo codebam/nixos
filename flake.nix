@@ -39,6 +39,7 @@
     };
     nixvim.url = "github:nix-community/nixvim";
     sway-master.url = "github:codebam/nixpkgs/sway-master";
+    mnw.url = "github:gerg-l/mnw";
   };
 
   outputs =
@@ -102,6 +103,7 @@
                     sharedModules = [
                       inputs.agenix.homeManagerModules.default
                       inputs.nixvim.homeManagerModules.nixvim
+                      inputs.mnw.homeManagerModules.default
                     ];
                   };
                 }

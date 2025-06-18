@@ -67,6 +67,47 @@
       pavucontrol
       heroic
       playerctl
+      (inputs.mnw.lib.wrap pkgs {
+        neovim = pkgs.neovim-unwrapped;
+        aliases = [
+          "vi"
+          "vim"
+        ];
+        initLua = ''
+          require('codebam')
+        '';
+        providers = {
+          ruby.enable = false;
+          python3.enable = false;
+        };
+        plugins = {
+          # dev.codebam = {
+          #   pure = ./nvim;
+          # };
+          start = with pkgs.vimPlugins; [
+            avante-nvim
+            catppuccin-vim
+            commentary
+            friendly-snippets
+            fugitive
+            gitgutter
+            telescope-nvim
+            lualine-nvim
+            lazydev-nvim
+            lsp-format-nvim
+            luasnip
+            blink-cmp
+            nvim-lspconfig
+            nvim-web-devicons
+            plenary-nvim
+            sensible
+            sleuth
+            surround
+            todo-comments-nvim
+            nvim-treesitter.withAllGrammars
+          ];
+        };
+      })
     ];
 
     shellAliases = {
@@ -354,7 +395,7 @@
       enable = true;
     };
     nixvim = {
-      enable = true;
+      enable = false;
       defaultEditor = true;
       colorschemes.catppuccin.enable = true;
       opts = {
