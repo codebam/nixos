@@ -1,8 +1,7 @@
-{
-  pkgs,
-  inputs,
-  lib,
-  ...
+{ pkgs
+, inputs
+, lib
+, ...
 }:
 
 {
@@ -528,7 +527,7 @@
     };
     overlays = [
       (final: prev: {
-        sway-unwrapped = inputs.sway-master.legacyPackages.${pkgs.system}.sway-unwrapped;
+        inherit (inputs.sway-master.legacyPackages.${pkgs.system}) sway-unwrapped;
       })
     ];
   };

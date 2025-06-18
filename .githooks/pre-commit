@@ -2,15 +2,15 @@
 
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
 
-if ! nix run nixpkgs#nixfmt-tree -- .; then
+if ! nix run nixpkgs#nixpkgs-fmt -- .; then
     echo "nixfmt-tree failed with exit status $?"
     exit 1
 fi
 
-# if ! nix run nixpkgs#statix -- check .; then
-#     echo "statix failed with exit status $?"
-#     exit 1
-# fi
+if ! nix run nixpkgs#statix -- check .; then
+    echo "statix failed with exit status $?"
+    exit 1
+fi
 
 MODIFIED_FILES=$(git status --porcelain | grep -v "^[? ]" | cut -c4-)
 for file in $MODIFIED_FILES; do
