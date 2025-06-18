@@ -10,30 +10,30 @@ vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { noremap = tr
 vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { noremap = true, silent = true })
 vim.opt.tabstop = 2
 
-local undodir = vim.fn.stdpath('state') .. '/undo'
-vim.fn.mkdir(undodir, 'p')
+local undodir = vim.fn.stdpath("state") .. "/undo"
+vim.fn.mkdir(undodir, "p")
 vim.opt.undodir = undodir
 vim.opt.undofile = true
 
-vim.lsp.enable('nixd')
-vim.lsp.enable('nil_ls')
-vim.lsp.enable('rust_analyzer')
-vim.lsp.enable('ts_ls')
-vim.lsp.enable('cssls')
-vim.lsp.enable('tailwindcss')
-vim.lsp.enable('html')
-vim.lsp.enable('svelte')
-vim.lsp.enable('pyright')
-vim.lsp.enable('dockerls')
-vim.lsp.enable('bashls')
-vim.lsp.enable('clangd')
-vim.lsp.enable('jdtls')
-vim.lsp.enable('csharp_ls')
-vim.lsp.enable('markdown_oxide')
+vim.lsp.enable("nixd")
+vim.lsp.enable("nil_ls")
+vim.lsp.enable("rust_analyzer")
+vim.lsp.enable("ts_ls")
+vim.lsp.enable("cssls")
+vim.lsp.enable("tailwindcss")
+vim.lsp.enable("html")
+vim.lsp.enable("svelte")
+vim.lsp.enable("pyright")
+vim.lsp.enable("dockerls")
+vim.lsp.enable("bashls")
+vim.lsp.enable("clangd")
+vim.lsp.enable("jdtls")
+vim.lsp.enable("csharp_ls")
+vim.lsp.enable("markdown_oxide")
 
 require("blink.cmp").setup({
 	signature = { enabled = true },
-	snippets = { preset = 'luasnip' },
+	snippets = { preset = "luasnip" },
 	keymap = {
 		preset = "enter",
 		["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
@@ -78,9 +78,9 @@ require("blink.cmp").setup({
 	},
 })
 
-require('lualine').setup()
+require("lualine").setup()
 
-require('nvim-treesitter.configs').setup({
+require("nvim-treesitter.configs").setup({
 	auto_install = false,
 	ignore_install = {},
 	highlight = {
@@ -92,7 +92,7 @@ require('nvim-treesitter.configs').setup({
 	},
 })
 
-require('avante').setup({
+require("avante").setup({
 	provider = "ollama",
 	providers = {
 		ollama = {
@@ -122,8 +122,23 @@ require('avante').setup({
 			},
 		},
 	},
-	cursor_applying_provider = 'ollama',
+	cursor_applying_provider = "ollama",
 	behaviour = {
 		enable_cursor_planning_mode = true,
+	},
+})
+
+require("conform").setup({
+	formatters_by_ft = {
+		lua = { "stylua" },
+		python = { "isort", "black" },
+		rust = { "rustfmt", lsp_format = "fallback" },
+		javascript = { "prettierd", "prettier", stop_after_first = true },
+		typescript = { "prettierd", "prettier", stop_after_first = true },
+		nix = { "nixpkgs-fmt" },
+	},
+	format_on_save = {
+		timeout_ms = 500,
+		lsp_format = "fallback",
 	},
 })
