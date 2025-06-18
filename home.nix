@@ -81,9 +81,9 @@
           python3.enable = false;
         };
         plugins = {
-          # dev.codebam = {
-          #   pure = ./nvim;
-          # };
+          dev.codebam = {
+            pure = ./nvim;
+          };
           start = with pkgs.vimPlugins; [
             avante-nvim
             catppuccin-vim
@@ -109,10 +109,6 @@
         };
       })
     ];
-
-    shellAliases = {
-      vi = "${config.programs.nixvim.build.package}/bin/nvim";
-    };
 
     stateVersion = "25.11";
   };
@@ -394,226 +390,226 @@
     bash = {
       enable = true;
     };
-    nixvim = {
-      enable = false;
-      defaultEditor = true;
-      colorschemes.catppuccin.enable = true;
-      opts = {
-        guicursor = "n-v-c-i:block";
-        undodir = "/home/codebam/.vim/undodir";
-        undofile = true;
-        ts = 2;
-      };
-      globals = {
-        mapLeader = "\\";
-      };
-      keymaps = [
-        {
-          mode = "n";
-          key = "<leader><space>";
-          action = ":nohl<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader><space>";
-          action = ":nohl<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader>ff";
-          action = "<cmd>Telescope find_files<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader>fd";
-          action = "<cmd>Telescope diagnostics<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader>fg";
-          action = "<cmd>Telescope live_grep<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader>fb";
-          action = "<cmd>Telescope buffers<CR>";
-          options = {
-            silent = true;
-          };
-        }
-        {
-          mode = "n";
-          key = "<leader>fh";
-          action = "<cmd>Telescope help_tags<CR>";
-          options = {
-            silent = true;
-          };
-        }
-      ];
-      plugins = {
-        avante = {
-          enable = true;
-          settings = {
-            provider = "ollama";
-            providers = {
-              ollama = {
-                model = "devstral";
-              };
-              gemini = {
-                model = "gemini-2.5-flash-preview-05-20";
-              };
-            };
-            rag_service = {
-              enabled = true;
-              host_mount = "os.getenv(\"HOME\")";
-              llm = {
-                provider = "ollama";
-                endpoint = "http://localhost:11434";
-                api_key = "";
-                model = "qwen3:14b";
-              };
-              embed = {
-                provider = "ollama";
-                endpoint = "http://localhost:11434";
-                api_key = "";
-                model = "nomic-embed-text";
-                extra = {
-                  embed_batch_size = 10;
-                };
-              };
-            };
-            cursor_applying_provider = "ollama";
-            behaviour = {
-              enable_cursor_planning_mode = true;
-            };
-          };
-        };
-        commentary = {
-          enable = true;
-        };
-        friendly-snippets = {
-          enable = true;
-        };
-        fugitive = {
-          enable = true;
-        };
-        gitgutter = {
-          enable = true;
-        };
-        telescope = {
-          enable = true;
-        };
-        lualine = {
-          enable = true;
-        };
-        lazydev = {
-          enable = true;
-        };
-        lsp-format = {
-          enable = true;
-        };
-        luasnip = {
-          enable = true;
-        };
-        blink-cmp = {
-          enable = true;
-        };
-        lsp = {
-          enable = true;
-          inlayHints = true;
-          servers = {
-            nixd = {
-              enable = true;
-            };
-            rust_analyzer = {
-              enable = true;
-              installRustc = true;
-              installCargo = true;
-            };
-            ts_ls = {
-              enable = true;
-            };
-            cssls = {
-              enable = true;
-            };
-            tailwindcss = {
-              enable = true;
-            };
-            html = {
-              enable = true;
-            };
-            svelte = {
-              enable = true;
-            };
-            pyright = {
-              enable = true;
-            };
-            dockerls = {
-              enable = true;
-            };
-            bashls = {
-              enable = true;
-            };
-            clangd = {
-              enable = true;
-            };
-            csharp_ls = {
-              enable = true;
-            };
-            markdown_oxide = {
-              enable = true;
-            };
-          };
-        };
-        web-devicons = {
-          enable = true;
-        };
-        sleuth = {
-          enable = true;
-        };
-        vim-surround = {
-          enable = true;
-        };
-        todo-comments = {
-          enable = true;
-        };
-        treesitter = {
-          enable = true;
-          settings = {
-            indent = {
-              enable = true;
-            };
-            highlight = {
-              enable = true;
-            };
-          };
-          nixvimInjections = true;
-          grammarPackages = pkgs.vimPlugins.nvim-treesitter.allGrammars;
-        };
-        treesitter-textobjects = {
-          enable = true;
-          select = {
-            enable = true;
-            lookahead = true;
-          };
-        };
-      };
-    };
+    # nixvim = {
+    #   enable = false;
+    #   defaultEditor = true;
+    #   colorschemes.catppuccin.enable = true;
+    #   opts = {
+    #     guicursor = "n-v-c-i:block";
+    #     undodir = "/home/codebam/.vim/undodir";
+    #     undofile = true;
+    #     ts = 2;
+    #   };
+    #   globals = {
+    #     mapLeader = "\\";
+    #   };
+    #   keymaps = [
+    #     {
+    #       mode = "n";
+    #       key = "<leader><space>";
+    #       action = ":nohl<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader><space>";
+    #       action = ":nohl<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader>ff";
+    #       action = "<cmd>Telescope find_files<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader>fd";
+    #       action = "<cmd>Telescope diagnostics<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader>fg";
+    #       action = "<cmd>Telescope live_grep<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader>fb";
+    #       action = "<cmd>Telescope buffers<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #     {
+    #       mode = "n";
+    #       key = "<leader>fh";
+    #       action = "<cmd>Telescope help_tags<CR>";
+    #       options = {
+    #         silent = true;
+    #       };
+    #     }
+    #   ];
+    #   plugins = {
+    #     avante = {
+    #       enable = true;
+    #       settings = {
+    #         provider = "ollama";
+    #         providers = {
+    #           ollama = {
+    #             model = "devstral";
+    #           };
+    #           gemini = {
+    #             model = "gemini-2.5-flash-preview-05-20";
+    #           };
+    #         };
+    #         rag_service = {
+    #           enabled = true;
+    #           host_mount = "os.getenv(\"HOME\")";
+    #           llm = {
+    #             provider = "ollama";
+    #             endpoint = "http://localhost:11434";
+    #             api_key = "";
+    #             model = "qwen3:14b";
+    #           };
+    #           embed = {
+    #             provider = "ollama";
+    #             endpoint = "http://localhost:11434";
+    #             api_key = "";
+    #             model = "nomic-embed-text";
+    #             extra = {
+    #               embed_batch_size = 10;
+    #             };
+    #           };
+    #         };
+    #         cursor_applying_provider = "ollama";
+    #         behaviour = {
+    #           enable_cursor_planning_mode = true;
+    #         };
+    #       };
+    #     };
+    #     commentary = {
+    #       enable = true;
+    #     };
+    #     friendly-snippets = {
+    #       enable = true;
+    #     };
+    #     fugitive = {
+    #       enable = true;
+    #     };
+    #     gitgutter = {
+    #       enable = true;
+    #     };
+    #     telescope = {
+    #       enable = true;
+    #     };
+    #     lualine = {
+    #       enable = true;
+    #     };
+    #     lazydev = {
+    #       enable = true;
+    #     };
+    #     lsp-format = {
+    #       enable = true;
+    #     };
+    #     luasnip = {
+    #       enable = true;
+    #     };
+    #     blink-cmp = {
+    #       enable = true;
+    #     };
+    #     lsp = {
+    #       enable = true;
+    #       inlayHints = true;
+    #       servers = {
+    #         nixd = {
+    #           enable = true;
+    #         };
+    #         rust_analyzer = {
+    #           enable = true;
+    #           installRustc = true;
+    #           installCargo = true;
+    #         };
+    #         ts_ls = {
+    #           enable = true;
+    #         };
+    #         cssls = {
+    #           enable = true;
+    #         };
+    #         tailwindcss = {
+    #           enable = true;
+    #         };
+    #         html = {
+    #           enable = true;
+    #         };
+    #         svelte = {
+    #           enable = true;
+    #         };
+    #         pyright = {
+    #           enable = true;
+    #         };
+    #         dockerls = {
+    #           enable = true;
+    #         };
+    #         bashls = {
+    #           enable = true;
+    #         };
+    #         clangd = {
+    #           enable = true;
+    #         };
+    #         csharp_ls = {
+    #           enable = true;
+    #         };
+    #         markdown_oxide = {
+    #           enable = true;
+    #         };
+    #       };
+    #     };
+    #     web-devicons = {
+    #       enable = true;
+    #     };
+    #     sleuth = {
+    #       enable = true;
+    #     };
+    #     vim-surround = {
+    #       enable = true;
+    #     };
+    #     todo-comments = {
+    #       enable = true;
+    #     };
+    #     treesitter = {
+    #       enable = true;
+    #       settings = {
+    #         indent = {
+    #           enable = true;
+    #         };
+    #         highlight = {
+    #           enable = true;
+    #         };
+    #       };
+    #       nixvimInjections = true;
+    #       grammarPackages = pkgs.vimPlugins.nvim-treesitter.allGrammars;
+    #     };
+    #     treesitter-textobjects = {
+    #       enable = true;
+    #       select = {
+    #         enable = true;
+    #         lookahead = true;
+    #       };
+    #     };
+    #   };
+    # };
     git = {
       enable = true;
       userEmail = "codebam@riseup.net";

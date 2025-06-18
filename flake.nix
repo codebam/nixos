@@ -37,7 +37,7 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixvim.url = "github:nix-community/nixvim";
+    # nixvim.url = "github:nix-community/nixvim";
     sway-master.url = "github:codebam/nixpkgs/sway-master";
     mnw.url = "github:gerg-l/mnw";
   };
@@ -102,7 +102,7 @@
                     };
                     sharedModules = [
                       inputs.agenix.homeManagerModules.default
-                      inputs.nixvim.homeManagerModules.nixvim
+                      # inputs.nixvim.homeManagerModules.nixvim
                       inputs.mnw.homeManagerModules.default
                     ];
                   };
