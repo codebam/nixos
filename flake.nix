@@ -119,7 +119,7 @@
             system = "x86_64-linux";
             hostname = "nixos-desktop";
             extraModules = [
-              ./desktop/configuration.nix
+              ./desktop/configuration
               {
                 home-manager.users.codebam.imports = [ ./desktop/home.nix ];
                 home-manager.users.makano.imports = [ ./desktop/makano-home.nix ];
