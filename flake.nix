@@ -131,7 +131,7 @@
             system = "x86_64-linux";
             hostname = "nixos-laptop";
             extraModules = [
-              ./laptop/configuration.nix
+              ./laptop/configuration
               { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
             ];
           };
@@ -140,7 +140,7 @@
             hostname = "nixos-steamdeck";
             extraModules = [
               inputs.jovian.nixosModules.default
-              ./steamdeck/configuration.nix
+              ./steamdeck/configuration
               { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
             ];
           };
