@@ -1,12 +1,6 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
-
-  networking = {
-    hostName = "nixos-laptop";
-  };
-
   boot = {
     kernelPackages = pkgs.linuxPackages_xanmod_latest;
     supportedFilesystems = [ "bcachefs" ];
@@ -58,19 +52,5 @@
         };
       };
     };
-  };
-
-  systemd = {
-    services = {
-      systemd-remount-fs = {
-        enable = false;
-      };
-    };
-  };
-
-  nixpkgs.overlays = [ (final: prev: { }) ];
-
-  system = {
-    stateVersion = "25.11";
   };
 }
