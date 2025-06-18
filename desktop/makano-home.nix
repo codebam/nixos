@@ -14,8 +14,7 @@
       enableShellIntegration = true;
     };
 
-    sessionVariables = {
-    };
+    sessionVariables = { };
 
     packages = with pkgs; [
       (writeShellScriptBin "sretry" ''
