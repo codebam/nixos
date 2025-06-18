@@ -142,3 +142,7 @@ require("conform").setup({
 		lsp_format = "fallback",
 	},
 })
+
+require("flash").setup()
+
+require("oil").setup()

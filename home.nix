@@ -85,25 +85,27 @@
           };
           start = with pkgs.vimPlugins; [
             avante-nvim
+            blink-cmp
             catppuccin-vim
             commentary
             conform-nvim
+            flash-nvim
             friendly-snippets
             fugitive
             gitgutter
-            telescope-nvim
-            lualine-nvim
             lazydev-nvim
+            lualine-nvim
             luasnip
-            blink-cmp
             nvim-lspconfig
+            nvim-treesitter.withAllGrammars
             nvim-web-devicons
+            oil-nvim
             plenary-nvim
             sensible
             sleuth
             surround
+            telescope-nvim
             todo-comments-nvim
-            nvim-treesitter.withAllGrammars
           ];
         };
       })
