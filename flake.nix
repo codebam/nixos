@@ -102,7 +102,7 @@
                     useUserPackages = true;
                     extraSpecialArgs = { inherit inputs; };
                     users.codebam = {
-                      imports = [ ./home.nix ];
+                      imports = [ ./home ];
                     };
                     sharedModules = [
                       inputs.agenix.homeManagerModules.default
