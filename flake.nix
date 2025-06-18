@@ -95,7 +95,7 @@
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-index-database.nixosModules.nix-index
                 inputs.run0-sudo-shim.nixosModules.default
-                ./configuration.nix
+                ./configuration
                 {
                   home-manager = {
                     useGlobalPkgs = true;
