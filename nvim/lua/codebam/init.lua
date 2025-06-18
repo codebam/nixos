@@ -15,6 +15,17 @@ vim.fn.mkdir(undodir, "p")
 vim.opt.undodir = undodir
 vim.opt.undofile = true
 
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+	callback = function(args)
+		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local bufnr = args.buf
+		if client.server_capabilities.inlayHintProvider then
+			vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+		end
+	end,
+})
+
 vim.lsp.enable("nixd")
 vim.lsp.enable("nil_ls")
 vim.lsp.enable("rust_analyzer")
