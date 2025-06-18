@@ -43,11 +43,10 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      ...
+    { self
+    , nixpkgs
+    , flake-utils
+    , ...
     }@inputs:
     (flake-utils.lib.eachDefaultSystem (
       system:
@@ -69,10 +68,10 @@
       nixosConfigurations =
         let
           mkNixosSystem =
-            {
-              system,
-              hostname,
-              extraModules ? [ ],
+            { system
+            , hostname
+            , extraModules ? [ ]
+            ,
             }:
             nixpkgs.lib.nixosSystem {
               inherit system;
