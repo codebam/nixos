@@ -37,14 +37,12 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # nixvim.url = "github:nix-community/nixvim";
-    sway-master.url = "github:codebam/nixpkgs/sway-master";
+    # sway-master.url = "github:codebam/nixpkgs/sway-master";
     mnw.url = "github:gerg-l/mnw";
   };
 
   outputs =
-    { self
-    , nixpkgs
+    { nixpkgs
     , flake-utils
     , ...
     }@inputs:

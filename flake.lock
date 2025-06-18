@@ -778,8 +778,7 @@
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
-        "stylix": "stylix",
-        "sway-master": "sway-master"
+        "stylix": "stylix"
       }
     },
     "run0-sudo-shim": {
@@ -880,22 +879,6 @@
       "original": {
         "owner": "danth",
         "repo": "stylix",
-        "type": "github"
-      }
-    },
-    "sway-master": {
-      "locked": {
-        "lastModified": 1750152794,
-        "narHash": "sha256-MM7es6o4gqkhwurODHIr8Eu0njRIQEdEhNisIY5UPMQ=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "e03faaeaa30e03f23ff8323f184e03579c543b65",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "sway-master",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
