@@ -64,6 +64,8 @@
       pavucontrol
       heroic
       playerctl
+      nixd
+      nil
       (inputs.mnw.lib.wrap pkgs {
         neovim = pkgs.neovim-unwrapped;
         aliases = [

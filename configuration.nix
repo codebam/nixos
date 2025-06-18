@@ -224,9 +224,7 @@
     gparted
     libnotify
     mangohud
-    nil
     nix-output-monitor
-    nixpkgs-fmt
     rclone
     virt-manager
     wl-clipboard
