@@ -55,7 +55,13 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in
       {
-        devShells.default = pkgs.mkShell { buildInputs = [ pkgs.nixpkgs-fmt ]; };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.nixpkgs-fmt
+            pkgs.nixd
+            pkgs.nil
+          ];
+        };
       }
     ))
     // {
