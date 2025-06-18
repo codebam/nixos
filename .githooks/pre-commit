@@ -3,7 +3,7 @@
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
 
 if ! nix run nixpkgs#nixpkgs-fmt -- .; then
-    echo "nixfmt-tree failed with exit status $?"
+    echo "nixpkgs-fmt failed with exit status $?"
     exit 1
 fi
 
