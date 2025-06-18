@@ -1,3 +1,5 @@
+{ config, pkgs, lib, inputs, ... }:
+
 {
   disko.devices = {
     disk = {
