@@ -95,7 +95,6 @@
             lualine-nvim
             luasnip
             nvim-autopairs
-            nvim-lspconfig
             nvim-treesitter.withAllGrammars
             nvim-web-devicons
             oil-nvim
