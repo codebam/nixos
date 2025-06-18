@@ -146,3 +146,7 @@ require("conform").setup({
 require("flash").setup()
 
 require("oil").setup()
+
+require("nvim-autopairs").setup()
+
+require("gitsigns").setup()

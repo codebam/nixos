@@ -92,10 +92,11 @@
             flash-nvim
             friendly-snippets
             fugitive
-            gitgutter
+            gitsigns-nvim
             lazydev-nvim
             lualine-nvim
             luasnip
+            nvim-autopairs
             nvim-lspconfig
             nvim-treesitter.withAllGrammars
             nvim-web-devicons
