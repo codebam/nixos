@@ -88,6 +88,7 @@
             avante-nvim
             catppuccin-vim
             commentary
+            conform-nvim
             friendly-snippets
             fugitive
             gitgutter

@@ -56,10 +56,11 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.nixpkgs-fmt
-            pkgs.nixd
-            pkgs.nil
+          buildInputs = with pkgs; [
+            nixpkgs-fmt
+            nixd
+            nil
+            stylua
           ];
         };
       }
