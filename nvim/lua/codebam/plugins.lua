@@ -1,11 +1,6 @@
 require("blink.cmp").setup({
 	signature = { enabled = true },
 	snippets = { preset = "luasnip" },
-	keymap = {
-		preset = "enter",
-		["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
-		["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
-	},
 	ghost_text = {
 		enabled = true,
 	},
@@ -29,9 +24,10 @@ require("blink.cmp").setup({
 			return items
 		end,
 		default = {
-			"lsp",
-			"path",
 			"snippets",
+			"lsp",
+			"copilot",
+			"path",
 			"lazydev",
 			"omni",
 		},
@@ -40,6 +36,12 @@ require("blink.cmp").setup({
 				name = "LazyDev",
 				module = "lazydev.integrations.blink",
 				score_offset = 100,
+			},
+			copilot = {
+				name = "copilot",
+				module = "blink-cmp-copilot",
+				score_offset = 100,
+				async = true,
 			},
 		},
 	},
@@ -169,15 +171,26 @@ require("gitsigns").setup()
 
 require("neogit").setup()
 
-require("copilot").setup()
-require("copilot.suggestion").is_visible()
-require("copilot.suggestion").accept(modifier)
-require("copilot.suggestion").accept_word()
-require("copilot.suggestion").accept_line()
-require("copilot.suggestion").next()
-require("copilot.suggestion").prev()
-require("copilot.suggestion").dismiss()
-require("copilot.suggestion").toggle_auto_trigger()
+require("copilot").setup({
+	suggestion = {
+		enabled = false,
+	},
+	panel = {
+		enabled = false,
+	},
+})
+vim.api.nvim_create_autocmd("User", {
+	pattern = "BlinkCmpMenuOpen",
+	callback = function()
+		vim.b.copilot_suggestion_hidden = true
+	end,
+})
+vim.api.nvim_create_autocmd("User", {
+	pattern = "BlinkCmpMenuClose",
+	callback = function()
+		vim.b.copilot_suggestion_hidden = false
+	end,
+})
 
 require("avante").setup({
 	provider = "copilot",
@@ -190,7 +203,6 @@ require("avante").setup({
 		},
 	},
 	behaviour = {
-		auto_suggestions = true,
 		auto_approve_tool_permissions = true,
 	},
 })
