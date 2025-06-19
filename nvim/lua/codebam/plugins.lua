@@ -91,7 +91,8 @@ require("avante").setup({
 	},
 	cursor_applying_provider = "ollama",
 	behaviour = {
-		enable_cursor_planning_mode = true,
+		auto_suggestions = true,
+		auto_approve_tool_permissions = false,
 	},
 })
 
