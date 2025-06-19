@@ -107,8 +107,8 @@
             "XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "shift+XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl previous";
             "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
-            "${modifier}+control+space" = "exec ${pkgs.mako}/bin/makoctl invoke default";
-            "${modifier}+escape" = "exec ${pkgs.mako}/bin/makoctl restore";
+            "${modifier}+c" = "exec ${pkgs.mako}/bin/makoctl invoke default";
+            "${modifier}+z" = "exec ${pkgs.mako}/bin/makoctl restore";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
               ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
