@@ -36,7 +36,7 @@ local lsp_servers = {
 		root_dir = find_root({ "Cargo.toml", ".git" }),
 		settings = {
 			["rust-analyzer"] = {
-				checkOnSave = { command = "clippy" },
+				check = { command = "clippy" },
 			},
 		},
 	},
