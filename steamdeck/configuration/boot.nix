@@ -1,4 +1,9 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 
 {
   boot = {
@@ -22,7 +27,7 @@
             before = [ "sysroot.mount" ];
             script = ''
               mkdir -p /btrfs_tmp
-              mount -t btrfs /dev/nvme0n1p3 /btrfs_tmp
+              mount -t btrfs /dev/disk/by-id/nvme-Micron_2500_MTFDKBK1T0QGN_25024D7C572C-part3 /btrfs_tmp
               if [[ -e /btrfs_tmp/@root ]]; then
                 mkdir -p /btrfs_tmp/old_roots
                 timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/@root)" "+%Y-%m-%-d_%H:%M:%S")

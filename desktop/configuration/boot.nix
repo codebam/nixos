@@ -2,6 +2,9 @@
 
 {
   boot = {
+    plymouth = {
+      enable = true;
+    };
     supportedFilesystems = [ "bcachefs" ];
     kernelPackages = pkgs.linuxPackages_latest;
     initrd = {
