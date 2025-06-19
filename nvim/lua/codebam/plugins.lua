@@ -178,3 +178,19 @@ require("copilot.suggestion").next()
 require("copilot.suggestion").prev()
 require("copilot.suggestion").dismiss()
 require("copilot.suggestion").toggle_auto_trigger()
+
+require("avante").setup({
+	provider = "copilot",
+	providers = {
+		ollama = {
+			model = "devstral",
+		},
+		gemini = {
+			model = "gemini-2.5-flash-preview-05-20",
+		},
+	},
+	behaviour = {
+		auto_suggestions = true,
+		auto_approve_tool_permissions = true,
+	},
+})
