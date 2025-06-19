@@ -80,3 +80,5 @@ require("oil").setup()
 require("nvim-autopairs").setup()
 
 require("gitsigns").setup()
+
+require("neogit").setup()

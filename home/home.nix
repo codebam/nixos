@@ -86,11 +86,11 @@
             conform-nvim
             flash-nvim
             friendly-snippets
-            fugitive
             gitsigns-nvim
             lazydev-nvim
             lualine-nvim
             luasnip
+            neogit
             nvim-autopairs
             nvim-treesitter.withAllGrammars
             nvim-web-devicons
