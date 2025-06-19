@@ -84,7 +84,6 @@
             catppuccin-vim
             commentary
             conform-nvim
-            flash-nvim
             friendly-snippets
             gitsigns-nvim
             lazydev-nvim
@@ -93,6 +92,7 @@
             neogit
             nvim-autopairs
             nvim-treesitter.withAllGrammars
+            nvim-treesitter-textobjects
             nvim-web-devicons
             oil-nvim
             plenary-nvim
