@@ -1,4 +1,8 @@
-{ lib, ... }:
+{ lib
+, pkgs
+, inputs
+, ...
+}:
 {
   nixpkgs = {
     config = {
@@ -27,6 +31,7 @@
     overlays = [
       (final: prev: {
         # inherit (inputs.sway-master.legacyPackages.${pkgs.system}) sway-unwrapped;
+        inherit (inputs.linux-firmware.legacyPackages.${pkgs.system}) linux-firmware;
       })
     ];
   };
