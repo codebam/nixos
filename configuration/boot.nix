@@ -1,10 +1,12 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 
 {
   boot = {
-    plymouth = {
-      enable = true;
-    };
     initrd.systemd = {
       enable = true;
     };
