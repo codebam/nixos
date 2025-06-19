@@ -32,8 +32,6 @@
         ]
       ))
       ripgrep
-      weechat
-      nixfmt-tree
     ];
 
     shellAliases = {
