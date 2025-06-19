@@ -1,4 +1,9 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 {
   preservation = {
     enable = true;
@@ -104,6 +109,7 @@
             ".config/nushell"
             ".config/qmk"
             ".cache/nix-index"
+            ".config/github-copilot"
           ];
         };
       };
