@@ -3,7 +3,7 @@
 {
   programs = {
     neovide = {
-      enable = true;
+      enable = false;
     };
     carapace = {
       enable = true;
