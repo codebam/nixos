@@ -11,6 +11,7 @@
       };
       nushell.enable = false;
       fish.enable = false;
+      neovide.enable = false;
     };
 
     polarity = "dark";

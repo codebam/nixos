@@ -2,6 +2,9 @@
 
 {
   programs = {
+    neovide = {
+      enable = true;
+    };
     carapace = {
       enable = true;
       enableNushellIntegration = true;
