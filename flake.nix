@@ -54,9 +54,9 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nixpkgs-fmt
-            nixd
             nil
+            nixd
+            nixpkgs-fmt
             stylua
           ];
         };

@@ -59,43 +59,6 @@ require("nvim-treesitter.configs").setup({
 	},
 })
 
-require("avante").setup({
-	provider = "ollama",
-	providers = {
-		ollama = {
-			model = "devstral",
-		},
-		gemini = {
-			model = "gemini-2.5-flash-preview-05-20",
-		},
-	},
-	rag_service = {
-		enabled = true,
-		host_mount = os.getenv("HOME"),
-		llm = {
-			provider = "ollama",
-			endpoint = "http://localhost:11434",
-			api_key = "",
-			model = "qwen3:14b",
-			extra = nil,
-		},
-		embed = {
-			provider = "ollama",
-			endpoint = "http://localhost:11434",
-			api_key = "",
-			model = "nomic-embed-text",
-			extra = {
-				embed_batch_size = 10,
-			},
-		},
-	},
-	cursor_applying_provider = "ollama",
-	behaviour = {
-		auto_suggestions = true,
-		auto_approve_tool_permissions = false,
-	},
-})
-
 require("conform").setup({
 	formatters_by_ft = {
 		lua = { "stylua" },
@@ -103,7 +66,6 @@ require("conform").setup({
 		rust = { "rustfmt", lsp_format = "fallback" },
 		javascript = { "prettierd", "prettier", stop_after_first = true },
 		typescript = { "prettierd", "prettier", stop_after_first = true },
-		nix = { "nixpkgs-fmt" },
 	},
 	format_on_save = {
 		timeout_ms = 500,
