@@ -61,6 +61,7 @@
       playerctl
       nixd
       nil
+      nodejs
       (inputs.mnw.lib.wrap pkgs {
         neovim = pkgs.neovim-unwrapped;
         aliases = [
@@ -84,6 +85,7 @@
             catppuccin-vim
             commentary
             conform-nvim
+            copilot-lua
             friendly-snippets
             gitsigns-nvim
             lazydev-nvim
