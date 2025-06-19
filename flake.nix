@@ -20,6 +20,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lix.follows = "lix";
     };
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
     preservation.url = "github:nix-community/preservation";
@@ -31,10 +35,6 @@
     };
     run0-sudo-shim = {
       url = "github:lordgrimmauld/run0-sudo-shim";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # sway-master.url = "github:codebam/nixpkgs/sway-master";
@@ -124,7 +124,6 @@
               }
             ];
           };
-
           nixos-laptop = mkNixosSystem {
             system = "x86_64-linux";
             extraModules = [
