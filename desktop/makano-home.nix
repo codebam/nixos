@@ -1,6 +1,7 @@
 { pkgs
 , lib
 , config
+, inputs
 , ...
 }:
 
@@ -16,6 +17,57 @@
     sessionVariables = { };
 
     packages = with pkgs; [
+      (inputs.mnw.lib.wrap pkgs {
+        neovim = pkgs.neovim-unwrapped;
+        aliases = [
+          "vi"
+          "vim"
+        ];
+        initLua = ''
+          require('codebam')
+        '';
+        providers = {
+          ruby.enable = false;
+          python3.enable = false;
+        };
+        plugins = {
+          dev.codebam = {
+            pure = ../nvim;
+          };
+          start = with pkgs.vimPlugins; [
+            avante-nvim
+            blink-cmp
+            blink-cmp-copilot
+            catppuccin-vim
+            commentary
+            conform-nvim
+            copilot-lua
+            friendly-snippets
+            gitsigns-nvim
+            lazydev-nvim
+            lualine-nvim
+            luasnip
+            neogit
+            nvim-autopairs
+            nvim-treesitter.withAllGrammars
+            nvim-treesitter-textobjects
+            nvim-web-devicons
+            oil-nvim
+            plenary-nvim
+            sensible
+            sleuth
+            surround
+            telescope-nvim
+            todo-comments-nvim
+          ];
+        };
+        extraLuaPackages = ps: [ ps.jsregexp ];
+        extraBinPath = with pkgs; [
+          bash-language-server
+          nil
+          nixd
+        ];
+      })
       (writeShellScriptBin "sretry" ''
         until "$@"; do sleep 1; done
       '')
@@ -33,10 +85,6 @@
       ))
       ripgrep
     ];
-
-    shellAliases = {
-      vi = "${config.programs.neovim.finalPackage}/bin/nvim";
-    };
 
     stateVersion = "25.11";
   };
@@ -130,186 +178,6 @@
     };
     bash = {
       enable = true;
-    };
-    neovim = {
-      enable = true;
-      defaultEditor = true;
-      extraLuaPackages = ps: [ ps.jsregexp ];
-      extraLuaConfig = ''
-
-        require('nvim-treesitter.configs').setup {
-          auto_install = false,
-          ignore_install = {},
-          highlight = {
-            enable = true,
-            additional_vim_regex_highlighting = false,
-          },
-          indent = {
-            enable = true
-          },
-        }
-
-        local on_attach = function(client, bufnr)
-          require("lsp-format").on_attach(client, bufnr)
-        end
-
-        require("lsp-format").setup{}
-        require('lspconfig').ts_ls.setup { on_attach = on_attach }
-        require('lspconfig').eslint.setup { on_attach = on_attach }
-        require('lspconfig').jdtls.setup { on_attach = on_attach }
-        require('lspconfig').kotlin_language_server.setup { on_attach = on_attach }
-        require('lspconfig').svelte.setup { on_attach = on_attach }
-        require('lspconfig').bashls.setup { on_attach = on_attach }
-        require('lspconfig').pyright.setup { on_attach = on_attach }
-        require('lspconfig').nil_ls.setup {
-          on_attach = on_attach,
-          settings = {
-            ['nil'] = {
-              formatting = {
-                command = { "nixfmt" },
-              },
-            },
-          },
-        }
-        require('lspconfig').clangd.setup { on_attach = on_attach }
-        require('lspconfig').html.setup { on_attach = on_attach }
-        require('lspconfig').rust_analyzer.setup { on_attach = on_attach }
-        require('lspconfig').csharp_ls.setup { on_attach = on_attach }
-        require('lspconfig').sqls.setup {}
-
-        local prettier = {
-          formatCommand = [[prettier --stdin-filepath ''${INPUT} ''${--tab-width:tab_width}]],
-          formatStdin = true,
-        }
-        require("lspconfig").efm.setup {
-          on_attach = on_attach,
-          init_options = { documentFormatting = true },
-          settings = {
-            languages = {
-              typescript = { prettier },
-              html = { prettier },
-              javascript = { prettier },
-              json = { prettier },
-            },
-          },
-        }
-
-        local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
-        local luasnip = require('luasnip')
-        require("luasnip.loaders.from_vscode").lazy_load()
-
-        local cmp = require('cmp')
-        cmp.setup {
-          snippet = {
-            expand = function(args)
-              luasnip.lsp_expand(args.body)
-            end,
-          },
-          mapping = cmp.mapping.preset.insert({
-            ['<C-u>'] = cmp.mapping.scroll_docs(-4), -- Up
-            ['<C-d>'] = cmp.mapping.scroll_docs(4), -- Down
-            -- C-b (back) C-f (forward) for snippet placeholder navigation.
-            ['<C-Space>'] = cmp.mapping.complete(),
-            ['<CR>'] = cmp.mapping.confirm {
-              behavior = cmp.ConfirmBehavior.Replace,
-              select = true,
-            },
-            ['<Tab>'] = cmp.mapping(function(fallback)
-              if cmp.visible() then
-                cmp.select_next_item()
-              elseif luasnip.expand_or_jumpable() then
-                luasnip.expand_or_jump()
-              else
-                fallback()
-              end
-            end, { 'i', 's' }),
-            ['<S-Tab>'] = cmp.mapping(function(fallback)
-              if cmp.visible() then
-                cmp.select_prev_item()
-              elseif luasnip.jumpable(-1) then
-                luasnip.jump(-1)
-              else
-                fallback()
-              end
-            end, { 'i', 's' }),
-          }),
-          sources = {
-            { name = 'nvim_lsp' },
-            { name = 'luasnip' },
-          },
-        }
-        require("avante_lib").load()
-        require("avante").setup({
-          provider = "ollama",
-          providers = {
-            ollama = {
-              model = "devstral",
-            },
-          },
-          rag_service = {
-            enabled = true,
-            host_mount = os.getenv("HOME"),
-            provider = "ollama",
-            llm_model = "qwen3:14b",
-            embed_model = "nomic-embed-text",
-          },
-          cursor_applying_provider = 'ollama',
-          behaviour = {
-            enable_cursor_planning_mode = true,
-          },
-        })
-      '';
-      extraConfig = ''
-        set guicursor=n-v-c-i:block
-        set nowrap
-        colorscheme catppuccin_mocha
-        let g:lightline = {
-              \ 'colorscheme': 'catppuccin_mocha',
-              \ }
-        map <leader>ac :lua vim.lsp.buf.code_action()<CR>
-        map <leader><space> :nohl<CR>
-        nnoremap <leader>ff <cmd>Telescope find_files<cr>
-        nnoremap <leader>fd <cmd>Telescope diagnostics<cr>
-        nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-        nnoremap <leader>fb <cmd>Telescope buffers<cr>
-        nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-        set ts=2
-        set undofile
-        set undodir=$HOME/.vim/undodir
-        let g:vimsence_client_id = '439476230543245312'
-        let g:vimsence_small_text = 'NeoVim'
-        let g:vimsence_small_image = 'neovim'
-        let g:vimsence_editing_details = 'Editing: {}'
-        let g:vimsence_editing_state = 'Working on: {}'
-        let g:vimsence_file_explorer_text = 'In :Lexplore'
-        let g:vimsence_file_explorer_details = 'Looking for files'
-      '';
-      plugins = [
-        pkgs.vimPlugins.avante-nvim
-        pkgs.vimPlugins.augment-vim
-        pkgs.vimPlugins.catppuccin-vim
-        pkgs.vimPlugins.cmp_luasnip
-        pkgs.vimPlugins.cmp-nvim-lsp
-        pkgs.vimPlugins.codi-vim
-        pkgs.vimPlugins.commentary
-        pkgs.vimPlugins.friendly-snippets
-        pkgs.vimPlugins.fugitive
-        pkgs.vimPlugins.gitgutter
-        pkgs.vimPlugins.telescope-nvim
-        pkgs.vimPlugins.lightline-vim
-        pkgs.vimPlugins.lsp-format-nvim
-        pkgs.vimPlugins.luasnip
-        pkgs.vimPlugins.nvim-cmp
-        pkgs.vimPlugins.nvim-lspconfig
-        pkgs.vimPlugins.nvim-web-devicons
-        pkgs.vimPlugins.plenary-nvim
-        pkgs.vimPlugins.sensible
-        pkgs.vimPlugins.sleuth
-        pkgs.vimPlugins.surround
-        pkgs.vimPlugins.todo-comments-nvim
-        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-      ];
     };
     git = {
       enable = true;
