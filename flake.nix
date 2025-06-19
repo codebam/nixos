@@ -67,7 +67,6 @@
         let
           mkNixosSystem =
             { system
-            , hostname
             , extraModules ? [ ]
             ,
             }:
@@ -117,7 +116,6 @@
         {
           nixos-desktop = mkNixosSystem {
             system = "x86_64-linux";
-            hostname = "nixos-desktop";
             extraModules = [
               ./desktop/configuration
               {
@@ -129,7 +127,6 @@
 
           nixos-laptop = mkNixosSystem {
             system = "x86_64-linux";
-            hostname = "nixos-laptop";
             extraModules = [
               ./laptop/configuration
               { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
@@ -137,7 +134,6 @@
           };
           nixos-steamdeck = mkNixosSystem {
             system = "x86_64-linux";
-            hostname = "nixos-steamdeck";
             extraModules = [
               inputs.jovian.nixosModules.default
               ./steamdeck/configuration
