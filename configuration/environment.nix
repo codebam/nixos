@@ -2,6 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
+      bash-language-server
       dig
       distrobox
       git
