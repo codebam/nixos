@@ -107,6 +107,11 @@
           ];
         };
         extraLuaPackages = ps: [ ps.jsregexp ];
+        extraBinPath = with pkgs; [
+          bash-language-server
+          nil
+          nixd
+        ];
       })
     ];
 
