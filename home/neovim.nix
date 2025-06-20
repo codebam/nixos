@@ -33,6 +33,7 @@ inputs.mnw.lib.wrap pkgs {
       luasnip
       neogit
       nvim-autopairs
+      nvim-bqf
       nvim-surround
       nvim-treesitter.withAllGrammars
       nvim-treesitter-textobjects
