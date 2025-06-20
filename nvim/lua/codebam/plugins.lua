@@ -212,3 +212,5 @@ require("avante").setup({
 require("treesj").setup()
 
 require("gitblame").setup()
+
+require("bqf").setup()
