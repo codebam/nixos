@@ -50,7 +50,10 @@
       ripgrep
       slurp
       weechat
-      discord
+      (discord.override {
+        withOpenASAR = true;
+        withVencord = true;
+      })
       telegram-desktop
       tor-browser
       youtube-music
