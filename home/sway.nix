@@ -149,7 +149,6 @@
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
           exec '${pkgs.mako}/bin/mako'
-          xwayland disable
         '';
     };
 }
