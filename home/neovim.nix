@@ -26,6 +26,7 @@ inputs.mnw.lib.wrap pkgs {
       conform-nvim
       copilot-lua
       friendly-snippets
+      git-blame-nvim
       gitsigns-nvim
       lazydev-nvim
       lualine-nvim
