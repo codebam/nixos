@@ -32,6 +32,7 @@ inputs.mnw.lib.wrap pkgs {
       luasnip
       neogit
       nvim-autopairs
+      nvim-surround
       nvim-treesitter.withAllGrammars
       nvim-treesitter-textobjects
       nvim-web-devicons
@@ -39,9 +40,9 @@ inputs.mnw.lib.wrap pkgs {
       plenary-nvim
       sensible
       sleuth
-      surround
       telescope-nvim
       todo-comments-nvim
+      treesj
     ];
   };
   extraLuaPackages = ps: [ ps.jsregexp ];
