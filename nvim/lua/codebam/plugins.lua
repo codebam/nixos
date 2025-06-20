@@ -1,19 +1,6 @@
 require("blink.cmp").setup({
 	signature = { enabled = true },
 	snippets = { preset = "luasnip" },
-	ghost_text = {
-		enabled = true,
-	},
-	documentation = {
-		auto_show = true,
-		auto_show_delay_ms = 0,
-	},
-	accept = {
-		auto_brackets = {
-			enabled = true,
-			blocked_filetypes = { "gleam" },
-		},
-	},
 	sources = {
 		transform_items = function(_, items)
 			for _, item in ipairs(items) do
