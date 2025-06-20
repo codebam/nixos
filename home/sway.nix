@@ -29,6 +29,7 @@
             render_bit_depth = "8";
             allow_tearing = "yes";
             max_render_time = "off";
+            hdr = "on";
           };
           "eDP-1" = {
             scale = "1.5";
