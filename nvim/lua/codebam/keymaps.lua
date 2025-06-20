@@ -6,3 +6,7 @@ vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", { noremap = tr
 vim.keymap.set("n", "<leader>fd", "<cmd>Telescope diagnostics<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>m", require("treesj").toggle)
+vim.keymap.set("n", "<leader>M", function()
+	require("treesj").toggle({ split = { recursive = true } })
+end)

@@ -165,6 +165,8 @@ require("conform").setup({
 
 require("oil").setup()
 
+require("nvim-surround").setup()
+
 require("nvim-autopairs").setup()
 
 require("gitsigns").setup()
@@ -206,3 +208,5 @@ require("avante").setup({
 		auto_approve_tool_permissions = true,
 	},
 })
+
+require("treesj").setup()
