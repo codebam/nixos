@@ -62,7 +62,6 @@
       nixd
       nil
       nodejs
-      (import ./neovim.nix { inherit pkgs inputs; })
     ];
 
     stateVersion = "25.11";
