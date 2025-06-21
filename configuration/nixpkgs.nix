@@ -17,6 +17,8 @@
           "steam-unwrapped"
           "open-webui"
           "discord"
+          "discord-ptb"
+          "discord-canary"
           "steamdeck-hw-theme"
           "steam-jupiter-unwrapped"
           "libretro-genesis-plus-gx"
