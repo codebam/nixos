@@ -100,7 +100,7 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
-        set -gx EDITOR = nvim
+        set -gx EDITOR nvim
         set -gx NIXOS_OZONE_WL 1
         set -gx OBS_VKCAPTURE 1
         set -gx WLR_RENDERER vulkan
