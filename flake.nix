@@ -39,9 +39,11 @@
     };
     sway-master.url = "github:codebam/nixpkgs/sway-master";
     linux-firmware.url = "github:nixos/nixpkgs/12a55407652e04dcf2309436eb06fef0d3713ef3";
+    mnw.url = "github:gerg-l/mnw";
     neovim = {
       url = "github:codebam/neovim";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.mnw.follows = "mnw";
     };
   };
 
@@ -109,6 +111,8 @@
                     };
                     sharedModules = [
                       inputs.agenix.homeManagerModules.default
+                      inputs.mnw.homeManagerModules.default
+                      inputs.neovim.homeManagerModules.default
                     ];
                   };
                 }
@@ -121,7 +125,9 @@
             extraModules = [
               ./desktop/configuration
               {
-                home-manager.users.codebam.imports = [ ./desktop/home.nix ];
+                home-manager.users.codebam.imports = [
+                  ./desktop/home.nix
+                ];
                 home-manager.users.makano.imports = [ ./desktop/makano-home.nix ];
               }
             ];
