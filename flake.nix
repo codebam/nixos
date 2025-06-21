@@ -39,7 +39,10 @@
     };
     sway-master.url = "github:codebam/nixpkgs/sway-master";
     linux-firmware.url = "github:nixos/nixpkgs/12a55407652e04dcf2309436eb06fef0d3713ef3";
-    neovim.url = "github:codebam/neovim";
+    neovim = {
+      url = "github:codebam/neovim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
