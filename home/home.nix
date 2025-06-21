@@ -21,6 +21,7 @@
     };
 
     sessionVariables = {
+      EDITOR = "nvim";
       NIXOS_OZONE_WL = "1";
       OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
