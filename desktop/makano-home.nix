@@ -17,7 +17,7 @@
     sessionVariables = { };
 
     packages = with pkgs; [
-      inputs.neovim.packages.${system}.default
+      inputs.neovim.packages.${pkgs.system}.default
       (writeShellScriptBin "sretry" ''
         until "$@"; do sleep 1; done
       '')

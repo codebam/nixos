@@ -65,7 +65,7 @@
       nixd
       nil
       nodejs
-      inputs.neovim.packages.${system}.default
+      inputs.neovim.packages.${pkgs.system}.default
     ];
 
     stateVersion = "25.11";
