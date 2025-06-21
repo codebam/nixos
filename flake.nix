@@ -38,8 +38,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sway-master.url = "github:codebam/nixpkgs/sway-master";
-    mnw.url = "github:gerg-l/mnw";
     linux-firmware.url = "github:nixos/nixpkgs/12a55407652e04dcf2309436eb06fef0d3713ef3";
+    neovim.url = "github:codebam/neovim";
   };
 
   outputs =
@@ -106,8 +106,6 @@
                     };
                     sharedModules = [
                       inputs.agenix.homeManagerModules.default
-                      # inputs.nixvim.homeManagerModules.nixvim
-                      inputs.mnw.homeManagerModules.default
                     ];
                   };
                 }
