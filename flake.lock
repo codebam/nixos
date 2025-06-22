@@ -823,8 +823,7 @@
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
         "stylix": "stylix",
-        "sway": "sway",
-        "sway-master": "sway-master"
+        "sway": "sway"
       }
     },
     "run0-sudo-shim": {
@@ -947,22 +946,6 @@
         "owner": "codebam",
         "ref": "flake",
         "repo": "sway",
-        "type": "github"
-      }
-    },
-    "sway-master": {
-      "locked": {
-        "lastModified": 1750399883,
-        "narHash": "sha256-KZy/PA2J6j4if5fZScwnNtvq+rMOqtxTWRkqHmY4Yyw=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "5abbbd0ff1d07c748386e3cb4b5365573b83051a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "sway-master",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
