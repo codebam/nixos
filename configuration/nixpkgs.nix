@@ -32,8 +32,17 @@
     };
     overlays = [
       (final: prev: {
-        inherit (inputs.linux-firmware.legacyPackages.${pkgs.system}) linux-firmware;
-        inherit (inputs.sway-master.legacyPackages.${pkgs.system}) sway-unwrapped;
+        inherit (inputs.linux-firmware.legacyPackages.${prev.system}) linux-firmware;
+        sway-unwrapped = inputs.sway.packages.${prev.system}.default.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (prev.fetchpatch {
+              name = "hdr10.patch";
+              url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
+              hash = "sha256-t57uUw++faJODxhgcprA9nkRWYUelqyd1yJu7afp5hc=";
+            })
+            ../sway-hdr.patch
+          ];
+        });
       })
     ];
   };
