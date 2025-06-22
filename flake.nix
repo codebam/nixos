@@ -36,6 +36,10 @@
       url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sway = {
+      url = "github:codebam/sway/flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     sway-master.url = "github:codebam/nixpkgs/sway-master";
     linux-firmware.url = "github:nixos/nixpkgs/12a55407652e04dcf2309436eb06fef0d3713ef3";
     mnw.url = "github:gerg-l/mnw";

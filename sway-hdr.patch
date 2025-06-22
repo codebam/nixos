@@ -1,0 +1,12 @@
+diff --git a/sway/commands/output/hdr.c b/sway/commands/output/hdr.c
+index 6ae5fba3..00efe451 100644
+--- a/sway/commands/output/hdr.c
++++ b/sway/commands/output/hdr.c
+@@ -13,6 +13,7 @@ struct cmd_results *output_cmd_hdr(int argc, char **argv) {
+ 	}
+ 
+ 	bool current;
++	current = false;
+ 	if (strcasecmp(argv[0], "toggle") == 0) {
+ 		const char *oc_name = config->handler_context.output_config->name;
+ 		if (strcmp(oc_name, "*") == 0) {
