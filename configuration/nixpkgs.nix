@@ -40,7 +40,12 @@
               url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
               hash = "sha256-t57uUw++faJODxhgcprA9nkRWYUelqyd1yJu7afp5hc=";
             })
-            ../sway-hdr.patch
+            ../sway-patches/sway-hdr.patch
+            ../sway-patches/load-configuration-from-etc.patch
+            (prev.replaceVars ../sway-patches/fix-paths.patch {
+              inherit (prev) swaybg;
+            })
+            ../sway-patches/sway-config-nixos-paths.patch
           ];
         });
       })
