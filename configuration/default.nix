@@ -1,5 +1,11 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 {
+  disabledModules = [ "services/networking/searx.nix" ];
   imports = [
     ./boot.nix
     ./environment.nix
@@ -20,5 +26,6 @@
     ./virtualisation.nix
     ./xdg.nix
     ./zram.nix
+    ../custom-modules/searx.nix
   ];
 }

@@ -1,8 +1,7 @@
-{
-  pkgs,
-  config,
-  inputs,
-  ...
+{ pkgs
+, config
+, inputs
+, ...
 }:
 
 {
@@ -60,7 +59,7 @@
       environmentFile = config.age.secrets.searx-secret.path;
       settings = {
         server = {
-          secret_key = "@SEARX_SECRET@";
+          secret_key = "$\{SECRET_KEY}";
           port = 8081;
         };
         search = {
