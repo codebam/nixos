@@ -28,7 +28,7 @@
         } 
         $env.PATH = ($env.PATH | 
         split row (char esep) |
-        prepend /home/myuser/.apps |
+        prepend /home/codebam/.local/bin |
         append /usr/bin/env
         )
         $env.SSH_AUTH_SOCK = (gpgconf --list-dirs agent-ssh-socket)
@@ -140,6 +140,27 @@
         merge = {
           tool = "nvimdiff";
         };
+        pull = {
+          rebase = true;
+        };
+        push = {
+          default = "simple";
+          autoSetupRemote = true;
+        };
+        init = {
+          defaultBranch = "main";
+        };
+        core = {
+          editor = "nvim";
+          autocrlf = "input";
+        };
+        diff = {
+          colorMoved = "default";
+        };
+        branch = {
+          autosetupmerge = "always";
+          autosetuprebase = "always";
+        };
       };
     };
     tmux = {
@@ -189,12 +210,14 @@
       nix-direnv.enable = true;
     };
     fzf = {
-      enable = false;
+      enable = true;
       enableBashIntegration = true;
       enableFishIntegration = true;
       defaultOptions = [
-        "--no-height"
-        "--no-reverse"
+        "--height 40%"
+        "--layout=reverse"
+        "--border"
+        "--inline-info"
       ];
       tmux = {
         enableShellIntegration = true;

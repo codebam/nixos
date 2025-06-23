@@ -1,4 +1,8 @@
-{ pkgs, config, ... }:
+{ pkgs
+, config
+, inputs
+, ...
+}:
 
 {
   services = {
@@ -55,7 +59,7 @@
       settings = {
         server = {
           port = 8081;
-          secret_key = "codebam";
+          secret_key = config.age.secrets.searx-secret.path;
         };
         search = {
           autocomplete = "google";

@@ -11,4 +11,8 @@ in
     users.desktop
     users.codebam
   ];
+  "searx-secret.age".publicKeys = [
+    users.desktop
+    users.codebam
+  ];
 }
