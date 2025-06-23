@@ -28,6 +28,7 @@
       MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
       PROTON_ENABLE_WAYLAND = "1";
       PROTON_ENABLE_HDR = "1";
+      SEARXNG_API_URL = "http://localhost:8081";
     };
 
     packages = with pkgs; [

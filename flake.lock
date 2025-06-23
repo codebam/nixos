@@ -577,11 +577,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1750684880,
-        "narHash": "sha256-w9fl2Spr8nfp/UUTA9NyrH8DZ9tnIbNcYBt4WndAK2I=",
+        "lastModified": 1750700294,
+        "narHash": "sha256-UJ02MhnAd2YIg7J/Oj1QmiJfNo5644HXuAqhhKKna30=",
         "owner": "codebam",
         "repo": "neovim",
-        "rev": "bac1886f8c952e0fc2fb5bef67231b958e4940a0",
+        "rev": "2de19f3605b21eafcf020cf476c1fe51ee7cb363",
         "type": "github"
       },
       "original": {
