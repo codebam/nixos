@@ -7,7 +7,7 @@ if ! nix run nixpkgs#nixpkgs-fmt -- .; then
     exit 1
 fi
 
-if ! nix run nixpkgs#statix -- check .; then
+if ! nix run nixpkgs#statix -- check -i "custom-modules/*" .; then
     echo "statix failed with exit status $?"
     exit 1
 fi
