@@ -1,4 +1,9 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 
 {
   nix = {
@@ -23,8 +28,5 @@
         sshKey = "/home/codebam/.ssh/id_ed25519";
       }
     ];
-    settings = {
-      max-jobs = 0;
-    };
   };
 }

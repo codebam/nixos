@@ -28,6 +28,7 @@
           "libretro-mame2003"
           "libretro-mame2015"
           "vscode"
+          "via"
         ];
     };
     overlays = [

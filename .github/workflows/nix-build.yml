@@ -1,6 +1,8 @@
-name: nix eval all configurations
+name: nix flake check
 
 on:
+  push:
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -21,11 +23,5 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
             experimental-features = nix-command flakes
 
-      - name: nix eval .#nixosConfigurations.nixos-desktop
-        run: nix eval .#nixosConfigurations.nixos-desktop
-
-      - name: nix eval .#nixosConfigurations.nixos-laptop
-        run: nix eval .#nixosConfigurations.nixos-laptop
-
-      - name: nix eval .#nixosConfigurations.nixos-steamdeck
-        run: nix eval .#nixosConfigurations.nixos-steamdeck
+      - name: nix flake check
+        run: nix flake check
