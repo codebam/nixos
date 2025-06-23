@@ -90,8 +90,12 @@
           inner = 15;
           smartGaps = true;
         };
-        focus.followMouse = false;
+        focus = {
+          followMouse = false;
+          wrapping = "workspace";
+        };
         workspaceAutoBackAndForth = true;
+        defaultWorkspace = "workspace number 1";
         keybindings =
           let
             inherit modifier;
