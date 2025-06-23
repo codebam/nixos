@@ -59,7 +59,7 @@
       environmentFile = config.age.secrets.searx-secret.path;
       settings = {
         server = {
-          secret_key = "$\{SECRET_KEY}";
+          secret_key = "$''{SECRET_KEY}";
           port = 8081;
         };
         search = {
