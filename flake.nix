@@ -116,8 +116,6 @@
                 };
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
-                  inputs.mnw.homeManagerModules.default
-                  inputs.neovim.homeManagerModules.default
                 ];
               };
             }
