@@ -432,27 +432,6 @@
     "home-manager_3": {
       "inputs": {
         "nixpkgs": [
-          "neovim",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1750304462,
-        "narHash": "sha256-Mj5t4yX05/rXnRqJkpoLZTWqgStB88Mr/fegTRqyiWc=",
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "rev": "863842639722dd12ae9e37ca83bcb61a63b36f6c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "home-manager_4": {
-      "inputs": {
-        "nixpkgs": [
           "stylix",
           "nixpkgs"
         ]
@@ -590,7 +569,6 @@
     },
     "neovim": {
       "inputs": {
-        "home-manager": "home-manager_3",
         "mnw": [
           "mnw"
         ],
@@ -599,11 +577,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1750664765,
-        "narHash": "sha256-fdKj174IG4J1+ZgW8HUrzdD67xrvQBX56hwI8BM3kLc=",
+        "lastModified": 1750683404,
+        "narHash": "sha256-0hx+vnLiHwFzS7zPHhl6QW9x2mdbYPkWOVQQsm5lQM8=",
         "owner": "codebam",
         "repo": "neovim",
-        "rev": "d9fe5cb8ad28f9f5e613df68df34fb3b9455bb5f",
+        "rev": "19d4788b82a07bf2643a76a39f80e8c2baf66acc",
         "type": "github"
       },
       "original": {
@@ -903,7 +881,7 @@
         "flake-parts": "flake-parts_2",
         "git-hooks": "git-hooks",
         "gnome-shell": "gnome-shell",
-        "home-manager": "home-manager_4",
+        "home-manager": "home-manager_3",
         "nixpkgs": "nixpkgs_4",
         "nur": "nur",
         "systems": "systems_4",
