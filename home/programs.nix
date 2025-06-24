@@ -185,7 +185,22 @@
         set -sg escape-time 300
       '';
     };
-
+    kitty = {
+      enable = true;
+      enableGitIntegration = true;
+      shellIntegration = {
+        mode = "no-cursor";
+        enableBashIntegration = true;
+        enableFishIntegration = true;
+      };
+      settings = {
+        term = "xterm-256color";
+        cursor_shape = "block";
+        cursor_blink_interval = 0;
+        background_opacity = lib.mkForce 0.8;
+        mouse_hide_wait = 0;
+      };
+    };
     foot = {
       enable = true;
       settings = {
@@ -224,7 +239,6 @@
         enableShellIntegration = true;
       };
     };
-
     starship = {
       enable = true;
       enableBashIntegration = true;
