@@ -1,6 +1,10 @@
 { pkgs, ... }:
 {
   services = {
+    tailscale = {
+      enable = true;
+      openFirewall = true;
+    };
     ratbagd.enable = true;
     resolved.enable = true;
     speechd.enable = true;
