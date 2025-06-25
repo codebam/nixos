@@ -94,6 +94,7 @@
             ".local/share/direnv"
             ".local/share/fish"
             ".steam"
+            ".tmux"
             ".local/share/Steam"
             ".librewolf"
             ".password-store"
