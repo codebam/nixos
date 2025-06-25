@@ -12,6 +12,7 @@
     gnupg.agent = {
       enable = true;
       enableSSHSupport = true;
+      pinentryPackage = pkgs.pinentry-tty;
     };
     kdeconnect.enable = true;
     sway.enable = true;
