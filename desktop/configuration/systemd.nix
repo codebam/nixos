@@ -16,6 +16,34 @@
       };
     };
     services = {
+      wifi-reconnect = {
+        description = "Reconnect Wi-Fi if disconnected";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          User = "root";
+          Restart = "always";
+          RestartSec = "10s";
+        };
+        path = [
+          pkgs.networkmanager
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+        script = ''
+          while true
+          do
+          if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
+          				nmcli connection up "BeeNetwork-5GHz"
+          				sleep 15
+          				if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
+          								nmcli connection up "BeeNetwork"
+          				fi
+          				sleep 60
+          fi
+          done
+        '';
+      };
       nix-build-steamdeck = {
         description = "NixOS Build Service for Steam Deck Configuration";
         after = [ "network.target" ];
