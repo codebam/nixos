@@ -29,6 +29,7 @@
         "/var/lib/bluetooth"
         "/var/lib/nixos"
         "/var/lib/OpenRGB"
+        "/var/lib/tailscale"
         "/var/lib/systemd/coredump"
         "/etc/NetworkManager/system-connections"
         "/var/lib/iwd"
