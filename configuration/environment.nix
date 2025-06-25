@@ -14,8 +14,6 @@
       podman-compose
       rclone
       run0-sudo-shim
-      uutils-coreutils-noprefix
-      uutils-findutils
       via
       virt-manager
       wl-clipboard
