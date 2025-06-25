@@ -141,6 +141,20 @@
             "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
             "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
           };
+        assigns = {
+          "1" = [
+            { app_id = "^org\.telegram\.desktop$"; }
+            { app_id = "^discord$"; }
+            { app_id = "^Element$"; }
+          ];
+          "2" = [
+            { app_id = "^librewolf$"; }
+          ];
+          "4" = [
+            { class = "^steam$"; }
+          ];
+          "5" = [{ app_id = "^com\.github\.th_ch\.youtube_music$"; }];
+        };
       };
       extraConfig =
         let
