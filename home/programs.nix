@@ -184,7 +184,9 @@
         bind k select-pane -U
         bind l select-pane -R
         set -sg escape-time 300
+        set -g @resurrect-strategy-vim 'session'
         set -g @resurrect-strategy-nvim 'session'
+        set -g @resurrect-capture-pane-contents 'on'
       '';
       plugins = with pkgs.tmuxPlugins; [
         resurrect
