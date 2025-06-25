@@ -47,8 +47,8 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "170c9c9525f54e8c1ba03847d5f9b01fc24b8c89";
-            hash = "sha256-ziKsVin8Ze00ZkI4c6TL9sZgNCkdnow75KXixkuhCpM=";
+            rev = "c2f08075ec00632293bbc63582c7f3ffd75441af";
+            hash = "sha256-kwDv9TP3oIxfk7x8zRFzSiecTKPqZwDg+AA9cdeDXCg=";
           };
           patches = old.patches ++ [
             (prev.fetchurl {
