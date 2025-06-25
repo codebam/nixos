@@ -70,6 +70,10 @@
       inputs.neovim.packages.${pkgs.system}.default
     ];
 
+    file.".gitignore".text = ''
+      Session.vim
+    '';
+
     stateVersion = "25.11";
   };
 }

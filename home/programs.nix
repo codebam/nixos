@@ -154,6 +154,7 @@
         core = {
           editor = "nvim";
           autocrlf = "input";
+          excludesfile = "~/.gitignore";
         };
         diff = {
           colorMoved = "default";
