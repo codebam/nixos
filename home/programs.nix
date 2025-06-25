@@ -212,6 +212,7 @@
         background_opacity = lib.mkForce 0.8;
         mouse_hide_wait = 0;
         disable_ligatures = "cursor";
+        cursor_trail = 1;
       };
     };
     foot = {
