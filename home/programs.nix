@@ -183,7 +183,11 @@
         bind k select-pane -U
         bind l select-pane -R
         set -sg escape-time 300
+        set -g @resurrect-strategy-nvim 'session'
       '';
+      plugins = with pkgs.tmuxPlugins; [
+        resurrect
+      ];
     };
     kitty = {
       enable = true;
