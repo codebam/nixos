@@ -1,9 +1,20 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   services = {
     tailscale = {
       enable = true;
       openFirewall = true;
+      useRoutingFeatures = "both";
+    };
+    networkd-dispatcher = {
+      enable = true;
+      rules."50-tailscale" = {
+        onState = [ "routable" ];
+        script = ''
+          NETDEV=$(ip -o route get 8.8.8.8 | cut -d ' ' -f 5)
+          ${pkgs.ethtool}/bin/ethtool -K "$NETDEV" rx-udp-gro-forwarding on rx-gro-list off
+        '';
+      };
     };
     ratbagd.enable = true;
     resolved.enable = true;
