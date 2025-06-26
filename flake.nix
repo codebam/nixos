@@ -46,6 +46,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.mnw.follows = "mnw";
     };
+    gemini-cli.url = "github:donteatoreo/nixpkgs/donteatoreo/push-pqruxnzlooly";
   };
 
   outputs =
