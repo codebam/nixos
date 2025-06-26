@@ -98,6 +98,7 @@
             ".tmux"
             ".local/share/Steam"
             ".claude"
+            ".gemini"
             ".librewolf"
             ".password-store"
             ".local/state/wireplumber"
