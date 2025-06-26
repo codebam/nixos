@@ -1,4 +1,9 @@
-{ config, pkgs, lib, inputs, ... }:
+{ config
+, pkgs
+, lib
+, inputs
+, ...
+}:
 {
   networking = {
     networkmanager = {
@@ -28,7 +33,6 @@
         }
       ];
       allowedUDPPortRanges = allowedTCPPortRanges;
-      checkReversePath = false;
       trustedInterfaces = [ "virbr0" ];
     };
   };
