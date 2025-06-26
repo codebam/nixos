@@ -97,6 +97,7 @@
             ".steam"
             ".tmux"
             ".local/share/Steam"
+            ".claude"
             ".librewolf"
             ".password-store"
             ".local/state/wireplumber"

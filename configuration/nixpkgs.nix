@@ -29,6 +29,7 @@
           "libretro-mame2015"
           "vscode"
           "via"
+          "claude-code"
         ];
     };
     overlays = [
