@@ -2,6 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
+      claude-code
       dig
       distrobox
       git
