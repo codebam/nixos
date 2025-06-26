@@ -301,6 +301,22 @@
         "type": "github"
       }
     },
+    "gemini-cli": {
+      "locked": {
+        "lastModified": 1750867966,
+        "narHash": "sha256-3eccaTNebWdpP/v0U7b3ERac96vanSdHUFdMbqY3964=",
+        "owner": "donteatoreo",
+        "repo": "nixpkgs",
+        "rev": "6574cde9e881474ca4ee3438d4ad0ab471f58b0b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "donteatoreo",
+        "ref": "donteatoreo/push-pqruxnzlooly",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "git-hooks": {
       "inputs": {
         "flake-compat": [
@@ -772,6 +788,7 @@
       "inputs": {
         "agenix": "agenix",
         "disko": "disko",
+        "gemini-cli": "gemini-cli",
         "home-manager": "home-manager_2",
         "jovian": "jovian",
         "lanzaboote": "lanzaboote",
