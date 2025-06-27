@@ -743,6 +743,22 @@
         "type": "github"
       }
     },
+    "ollama": {
+      "locked": {
+        "lastModified": 1750978781,
+        "narHash": "sha256-Qlqsr2nRxj7L54zPwGGDfJUZ8jRiCLMOIMKOB0DLCuY=",
+        "owner": "ryand56",
+        "repo": "nixpkgs",
+        "rev": "9d3fde1795b3739fe6f37b6a912fdb95876f4763",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ryand56",
+        "ref": "update/ollama",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks-nix": {
       "inputs": {
         "flake-compat": [
@@ -798,6 +814,7 @@
         "neovim": "neovim",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_3",
+        "ollama": "ollama",
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
         "stylix": "stylix",
