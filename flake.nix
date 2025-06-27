@@ -47,6 +47,7 @@
       inputs.mnw.follows = "mnw";
     };
     gemini-cli.url = "github:donteatoreo/nixpkgs/donteatoreo/push-pqruxnzlooly";
+    ollama.url = "github:ryand56/nixpkgs/update/ollama";
   };
 
   outputs =
