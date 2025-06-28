@@ -89,7 +89,7 @@
       nil
       nodejs
       inputs.neovim.packages.${pkgs.system}.default
-      inputs.gemini-cli.legacyPackages.${pkgs.system}.gemini-cli
+      gemini-cli
     ];
 
     file.".gitignore".text = ''
