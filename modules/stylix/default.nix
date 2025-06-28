@@ -18,8 +18,8 @@
         name = "Noto Sans";
       };
       monospace = {
-        package = pkgs.nerd-fonts.fira-code;
-        name = "Fira Code NerdFont";
+        package = pkgs.monocraft;
+        name = "Monocraft";
       };
       emoji = {
         package = pkgs.noto-fonts-emoji;
