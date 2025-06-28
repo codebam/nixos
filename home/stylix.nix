@@ -32,8 +32,8 @@
       };
 
       monospace = {
-        package = pkgs.monocraft;
-        name = "Monocraft";
+        package = pkgs.nerd-fonts.fira-code;
+        name = "Fira Code NerdFont";
       };
 
       emoji = {

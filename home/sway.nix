@@ -15,7 +15,7 @@
       config = rec {
         inherit modifier;
         terminal = "${pkgs.kitty}/bin/kitty";
-        menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Monocraft 11\" -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
+        menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
         seat = {
           "*" = {
             xcursor_theme = "Bibata-Modern-Ice";
@@ -67,10 +67,7 @@
               statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
               mode = "dock";
               fonts = lib.mkForce {
-                names = [
-                  "Monocraft"
-                  "Fira Code NerdFont"
-                ];
+                names = [ "Fira Code NerdFont" ];
                 size = 11.0;
               };
               position = "top";
