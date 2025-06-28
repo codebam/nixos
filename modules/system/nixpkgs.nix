@@ -34,7 +34,7 @@
     };
     overlays = [
       (final: prev: {
-        inherit (inputs.ollama.legacyPackages.${prev.system}) ollama;
+        # inherit (inputs.ollama.legacyPackages.${prev.system}) ollama;
         wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
           src = prev.fetchFromGitLab {
             domain = "gitlab.freedesktop.org";
