@@ -32,6 +32,27 @@
     };
 
     packages = with pkgs; [
+      (writeShellScriptBin "sway-kill-parent-fzf" ''
+        set -euo pipefail
+        WINDOW_LIST=$(${pkgs.sway}/bin/swaymsg -t get_tree | ${pkgs.jq}/bin/jq -r '.. | select(.pid? and .name) | "\(.pid) | \(.app_id // .window_properties.class // .name)"')
+        if [ -z "$WINDOW_LIST" ]; then
+          echo "No selectable windows found." >&2
+          exit 0
+        fi
+        CHOSEN_WINDOW=$(echo "$WINDOW_LIST" | ${pkgs.fzf}/bin/fzf --prompt="Kill Parent Of> " --height=40% --layout=reverse --border)
+        if [ -z "$CHOSEN_WINDOW" ]; then
+            echo "Operation cancelled."
+            exit 0
+        fi
+        PID=$(echo "$CHOSEN_WINDOW" | cut -d'|' -f1 | tr -d ' ')
+        PPID=$(ps -o ppid= -p "$PID" || true) # Use '|| true' to prevent exit on error if PID vanishes
+        if [ -z "$PPID" ]; then
+            echo "Error: Could not find parent process for PID $PID." >&2
+            exit 1
+        fi
+        kill "$PPID"
+        echo "Sent kill signal to parent process with PID $PPID."
+      '')
       (writeShellScriptBin "sretry" ''
         until "$@"; do sleep 1; done
       '')
