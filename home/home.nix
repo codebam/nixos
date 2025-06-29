@@ -20,6 +20,10 @@
       gtk.enable = true;
     };
 
+    shellAliases = {
+      e = "$EDITOR";
+    };
+
     sessionVariables = {
       EDITOR = "hx";
       NIXOS_OZONE_WL = "1";
