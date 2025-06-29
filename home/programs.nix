@@ -4,6 +4,7 @@
   programs = {
     helix = {
       enable = true;
+      defaultEditor = true;
     };
     carapace = {
       enable = true;
