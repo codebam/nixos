@@ -104,7 +104,7 @@
       interactiveShellInit = ''
         set fish_greeting ""
         set -gx SEARXNG_API_URL http://localhost:8081
-        set -gx EDITOR nvim
+        set -gx EDITOR hx
         set -gx NIXOS_OZONE_WL 1
         set -gx OBS_VKCAPTURE 1
         set -gx WLR_RENDERER vulkan
@@ -155,7 +155,7 @@
           defaultBranch = "main";
         };
         core = {
-          editor = "nvim";
+          editor = "hx";
           autocrlf = "input";
           excludesfile = "~/.gitignore";
         };
