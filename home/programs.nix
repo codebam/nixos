@@ -2,6 +2,9 @@
 
 {
   programs = {
+    helix = {
+      enable = true;
+    };
     carapace = {
       enable = true;
       enableNushellIntegration = true;
