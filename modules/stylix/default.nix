@@ -7,7 +7,7 @@
       console.enable = false;
       plymouth.enable = false;
     };
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
     fonts = {
       serif = {
         package = pkgs.noto-fonts;
