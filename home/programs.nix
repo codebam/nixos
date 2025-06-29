@@ -5,6 +5,10 @@
     helix = {
       enable = true;
       defaultEditor = true;
+      extraConfig = ''
+        [editor.lsp]
+        display-inlay-hints = true
+      '';
     };
     carapace = {
       enable = true;
