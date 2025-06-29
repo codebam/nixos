@@ -21,7 +21,7 @@
     };
 
     shellAliases = {
-      e = "$EDITOR";
+      e = "hx";
     };
 
     sessionVariables = {
