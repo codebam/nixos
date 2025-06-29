@@ -129,7 +129,6 @@
             nil
             nixd
             nixpkgs-fmt
-            stylua
           ];
         };
       });
