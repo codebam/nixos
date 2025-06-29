@@ -14,7 +14,7 @@
       systemd.enable = true;
       config = rec {
         inherit modifier;
-        terminal = "${pkgs.foot}/bin/foot";
+        terminal = "${pkgs.ghostty}/bin/ghostty";
         menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 1e1e2e -n 89b4fa -M 1e1e2e -m 89b4fa -S 89b4fa -s cdd6f4";
         seat = {
           "*" = {

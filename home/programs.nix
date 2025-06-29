@@ -2,6 +2,19 @@
 
 {
   programs = {
+    ghostty = {
+      enable = true;
+      enableFishIntegration = true;
+      clearDefaultKeybinds = true;
+      settings = {
+        cursor-style = "block";
+        shell-integration-features = "no-cursor";
+        background-opacity = 0.8;
+        cursor-style-blink = false;
+        window-padding-x = 0;
+        window-padding-y = 0;
+      };
+    };
     helix = {
       enable = true;
       defaultEditor = true;
