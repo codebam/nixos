@@ -205,7 +205,7 @@
         bind j select-pane -D
         bind k select-pane -U
         bind l select-pane -R
-        set -sg escape-time 300
+        set -sg escape-time 100
       '';
       plugins = with pkgs.tmuxPlugins; [
         {
