@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+_:
 {
   time = {
     timeZone = "America/Toronto";

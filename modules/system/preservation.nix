@@ -1,9 +1,4 @@
-{ config
-, pkgs
-, lib
-, inputs
-, ...
-}:
+_:
 {
   preservation = {
     enable = true;
