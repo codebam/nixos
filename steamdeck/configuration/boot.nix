@@ -1,10 +1,4 @@
-{ config
-, pkgs
-, lib
-, inputs
-, ...
-}:
-
+_:
 {
   boot = {
     initrd = {
