@@ -13,6 +13,7 @@
         cursor-style-blink = false;
         window-padding-x = 0;
         window-padding-y = 0;
+        app-notifications = "no-clipboard-copy";
       };
     };
     helix = {
