@@ -5,7 +5,6 @@
     file.".local/share/kio/servicemenus/steam.desktop".text = ''
       [Desktop Entry]
       Type=Service
-      ServiceTypes=KonqPopupMenu/Plugin
       MimeType=application/x-desktop;application/x-executable;text/plain;
       Actions=openInSteam
       X-KDE-Priority=TopLevel
