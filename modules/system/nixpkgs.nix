@@ -33,7 +33,7 @@
     };
     overlays = [
       (final: prev: {
-        inherit (inputs.librewolf.legacyPackages.${prev.system}) librewolf-unwrapped;
+        # inherit (inputs.librewolf.legacyPackages.${prev.system}) librewolf-unwrapped;
         wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
           src = prev.fetchFromGitLab {
             domain = "gitlab.freedesktop.org";

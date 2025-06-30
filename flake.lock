@@ -495,22 +495,6 @@
         "type": "github"
       }
     },
-    "librewolf": {
-      "locked": {
-        "lastModified": 1751152373,
-        "narHash": "sha256-UH066vpeUVkhM12d41miv13pVLUUEk66AluDOEFHKPw=",
-        "owner": "fpletz",
-        "repo": "nixpkgs",
-        "rev": "0c9b46d726de1def9234da1d4cd7773e1ed87fe2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "fpletz",
-        "ref": "pkgs/librewolf-140.0.2-1",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "lix": {
       "flake": false,
       "locked": {
@@ -791,7 +775,6 @@
         "home-manager": "home-manager_2",
         "jovian": "jovian",
         "lanzaboote": "lanzaboote",
-        "librewolf": "librewolf",
         "lix": "lix",
         "lix-module": "lix-module",
         "mnw": "mnw",
