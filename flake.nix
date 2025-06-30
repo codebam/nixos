@@ -40,12 +40,6 @@
       url = "github:codebam/sway/flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    mnw.url = "github:gerg-l/mnw";
-    neovim = {
-      url = "github:codebam/neovim";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.mnw.follows = "mnw";
-    };
   };
 
   outputs =

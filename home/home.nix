@@ -92,12 +92,12 @@
       nixd
       nil
       nodejs
-      inputs.neovim.packages.${pkgs.system}.default
       gemini-cli
     ];
 
     file.".gitignore".text = ''
       Session.vim
+      .claude/
     '';
 
     stateVersion = "25.11";
