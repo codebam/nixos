@@ -743,8 +743,7 @@
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
-        "stylix": "stylix",
-        "sway": "sway"
+        "stylix": "stylix"
       }
     },
     "run0-sudo-shim": {
@@ -845,28 +844,6 @@
       "original": {
         "owner": "danth",
         "repo": "stylix",
-        "type": "github"
-      }
-    },
-    "sway": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "wlroots-src": "wlroots-src"
-      },
-      "locked": {
-        "lastModified": 1750589137,
-        "narHash": "sha256-q2d7wFiXXaW7KSYMBso5S7plUgYqOl2ZEML8FCfNp8U=",
-        "owner": "codebam",
-        "repo": "sway",
-        "rev": "3e8893e081d42e3caed92e8f3d6b95481dcd3376",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "flake",
-        "repo": "sway",
         "type": "github"
       }
     },
@@ -1052,22 +1029,6 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "type": "github"
-      }
-    },
-    "wlroots-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1750499664,
-        "narHash": "sha256-h4yl6USEm4jQKknBu5LXTmjkJVfMeC5xz/xI6M8hy08=",
-        "ref": "refs/heads/master",
-        "rev": "f5e7caf59994cfa08650cade41374e23779a24a4",
-        "revCount": 7547,
-        "type": "git",
-        "url": "https://gitlab.freedesktop.org/wlroots/wlroots.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://gitlab.freedesktop.org/wlroots/wlroots.git"
       }
     }
   },
