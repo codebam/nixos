@@ -9,7 +9,6 @@
       gparted
       libnotify
       mangohud
-      neovim
       nix-output-monitor
       nushell
       podman-compose
