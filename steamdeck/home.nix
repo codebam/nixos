@@ -102,14 +102,6 @@
     i3status-rust = {
       bars = {
         default = {
-          settings = {
-            theme = {
-              overrides = {
-                separator = "";
-              };
-            };
-          };
-          icons = "awesome6";
           blocks = [
             { block = "focused_window"; }
             { block = "sound"; }
