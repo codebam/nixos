@@ -15,10 +15,7 @@
     };
 
     polarity = "dark";
-    image = builtins.fetchurl {
-      url = "https://w.wallhaven.cc/full/2y/wallhaven-2y2wg6.png";
-      sha256 = "sha256-nFoNfk7Y/CGKWtscOE5GOxshI5eFmppWvhxHzOJ6mCA=";
-    };
+    image = ../wallpaper.png;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
     fonts = {
       serif = {
