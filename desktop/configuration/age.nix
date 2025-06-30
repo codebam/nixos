@@ -13,6 +13,8 @@
     ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
     identityPaths = [
       "/persistent/etc/ssh/ssh_host_ed25519_key"
+      "/persistent/etc/nixos/secrets/identities/yubikey-5c.txt"
+      "/persistent/etc/nixos/secrets/identities/yubikey-5c-nfc.txt"
     ];
   };
 }

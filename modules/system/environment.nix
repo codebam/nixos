@@ -29,7 +29,7 @@
       zip
       _7zz
       (inputs.agenix.packages.${pkgs.system}.default.override {
-        ageBin = "${pkgs.rage}/bin/rage";
+        ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
       })
     ];
   };
