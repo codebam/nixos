@@ -8,11 +8,15 @@ let
 in
 {
   "duckdns-token.age".publicKeys = [
-    users.desktop
-    users.codebam
+    # users.desktop
+    # users.codebam
+    users.yubikey-5c
+    users.yubikey-5c-nfc
   ];
   "searx-secret.age".publicKeys = [
-    users.desktop
-    users.codebam
+    # users.desktop
+    # users.codebam
+    users.yubikey-5c
+    users.yubikey-5c-nfc
   ];
 }
