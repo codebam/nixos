@@ -47,13 +47,25 @@
         signByDefault = true;
       };
     };
+
     i3status-rust = {
       bars = {
         default = {
           settings = {
             theme = {
-              theme = "ctp-mocha";
               overrides = {
+                idle_fg = "#95e6cb";
+                idle_bg = "#131721";
+                good_fg = "#b8cc52";
+                good_bg = "#131721";
+                warning_fg = "#ffb454";
+                warning_bg = "#272d38";
+                critical_fg = "#f07178";
+                critical_bg = "#272d38";
+                info_fg = "#59c2ff";
+                info_bg = "#131721";
+                separator_fg = "#e6e1cf";
+                separator_bg = "#131721";
                 separator = "";
               };
             };
