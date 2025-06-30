@@ -46,7 +46,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.mnw.follows = "mnw";
     };
-    librewolf.url = "github:fpletz/nixpkgs/pkgs/librewolf-140.0.2-1";
   };
 
   outputs =
