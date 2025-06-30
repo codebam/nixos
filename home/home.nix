@@ -20,9 +20,7 @@
       gtk.enable = true;
     };
 
-    shellAliases = {
-      e = "hx";
-    };
+    shellAliases = { };
 
     sessionVariables = {
       EDITOR = "hx";
