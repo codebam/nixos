@@ -104,7 +104,6 @@
         default = {
           settings = {
             theme = {
-              theme = "ctp-mocha";
               overrides = {
                 separator = "";
               };
