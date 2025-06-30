@@ -20,6 +20,7 @@
       enable = true;
       defaultEditor = true;
       settings = {
+        theme = lib.mkForce "ayu_dark";
         editor = {
           lsp.display-inlay-hints = true;
         };
