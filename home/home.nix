@@ -95,7 +95,7 @@
       playerctl
       nixd
       nil
-      nodejs
+      nodePackages_latest.nodejs
       gemini-cli
     ];
 
