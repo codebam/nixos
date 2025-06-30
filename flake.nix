@@ -36,10 +36,6 @@
       url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sway = {
-      url = "github:codebam/sway/flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
