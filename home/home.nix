@@ -34,6 +34,12 @@
     };
 
     packages = with pkgs; [
+      (writeShellScriptBin "trace" ''
+        nu -e '${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace | lines | parse "{key}={value}"'
+      '')
+      (writeShellScriptBin "trace-old" ''
+        ${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace
+      '')
       (writeShellScriptBin "sway-kill-parent-fzf" ''
         set -euo pipefail
         WINDOW_LIST=$(${pkgs.sway}/bin/swaymsg -t get_tree | ${pkgs.jq}/bin/jq -r '.. | select(.pid? and .name) | "\(.pid) | \(.app_id // .window_properties.class // .name)"')
