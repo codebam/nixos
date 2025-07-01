@@ -313,6 +313,7 @@
         format = lib.concatStrings [
           "$line_break"
           "$package"
+          "$directory"
           "$git_branch"
           "$git_commit"
           "$git_state"
@@ -320,12 +321,11 @@
           "$git_status"
           "$line_break"
           "$jobs"
-          "$directory"
           "$character"
         ];
         scan_timeout = 10;
         character = {
-          success_symbol = "\\$";
+          success_symbol = "";
           error_symbol = "🔴";
         };
       };
