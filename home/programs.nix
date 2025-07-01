@@ -325,7 +325,7 @@
         ];
         scan_timeout = 10;
         character = {
-          success_symbol = "🟢";
+          success_symbol = "\\$";
           error_symbol = "🔴";
         };
       };
