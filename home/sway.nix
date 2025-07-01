@@ -18,7 +18,7 @@
         menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 131721 -n 59c2ff -M 131721 -m 59c2ff -S 59c2ff -s e6e1cf";
         seat = {
           "*" = {
-            xcursor_theme = "Bibata-Modern-Ice";
+            xcursor_theme = "Bibata-Modern-Classic";
           };
         };
         output = {
