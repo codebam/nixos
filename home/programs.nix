@@ -308,6 +308,27 @@
       enableBashIntegration = true;
       enableFishIntegration = true;
       enableNushellIntegration = true;
+      settings = {
+        add_newline = false;
+        format = lib.concatStrings [
+          "$line_break"
+          "$package"
+          "$git_branch"
+          "$git_commit"
+          "$git_state"
+          "$git_metrics"
+          "$git_status"
+          "$line_break"
+          "$jobs"
+          "$directory"
+          "$character"
+        ];
+        scan_timeout = 10;
+        character = {
+          success_symbol = "🟢";
+          error_symbol = "🔴";
+        };
+      };
     };
   };
 }
