@@ -26,6 +26,7 @@
           end-of-line-diagnostics = "hint";
           inline-diagnostics.cursor-line = "warning";
           scrolloff = 0;
+          bufferline = "multiple";
         };
       };
     };
