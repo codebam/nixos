@@ -234,6 +234,9 @@
         bind k select-pane -U
         bind l select-pane -R
         set -sg escape-time 100
+        set-option -g status-interval 5
+        set-option -g automatic-rename on
+        set-option -g automatic-rename-format '#{b:pane_current_path}'
       '';
       plugins = with pkgs.tmuxPlugins; [
         {
