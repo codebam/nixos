@@ -3,7 +3,7 @@
 {
   programs = {
     ghostty = {
-      enable = true;
+      enable = false;
       enableFishIntegration = true;
       clearDefaultKeybinds = true;
       settings = {
@@ -23,6 +23,8 @@
         theme = lib.mkForce "ayu_dark";
         editor = {
           lsp.display-inlay-hints = true;
+          end-of-line-diagnostics = "hint";
+          inline-diagnostics.cursor-line = "warning";
         };
       };
     };
