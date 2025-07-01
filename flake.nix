@@ -119,6 +119,7 @@
             nil
             nixd
             nixpkgs-fmt
+            helix
           ];
         };
       });
