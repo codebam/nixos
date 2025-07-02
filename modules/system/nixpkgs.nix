@@ -29,6 +29,7 @@
           "vscode"
           "via"
           "claude-code"
+          "google-cloud-sdk"
         ];
     };
     overlays = [

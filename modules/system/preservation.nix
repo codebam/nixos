@@ -111,6 +111,7 @@ _:
             ".config/qmk"
             ".cache/nix-index"
             ".config/github-copilot"
+            ".config/gcloud"
           ];
         };
       };
