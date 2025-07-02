@@ -85,28 +85,30 @@
           pass-genphrase
         ]
       ))
-      grim
-      rcm
-      ripgrep
-      slurp
-      weechat
       (discord.override {
         withOpenASAR = true;
         withVencord = true;
       })
+      bat
+      discord-rpc
+      element-desktop
+      gemini-cli
+      google-cloud-sdk
+      grim
+      heroic
+      nil
+      nixd
+      nodePackages_latest.nodejs
+      opentofu
+      pavucontrol
+      playerctl
+      rcm
+      ripgrep
+      slurp
       telegram-desktop
       tor-browser
+      weechat
       youtube-music
-      element-desktop
-      discord-rpc
-      pavucontrol
-      heroic
-      playerctl
-      nixd
-      nil
-      nodePackages_latest.nodejs
-      gemini-cli
-      bat
     ];
 
     file.".gitignore".text = ''
