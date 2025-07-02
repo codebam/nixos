@@ -38,14 +38,10 @@
         set -euo pipefail
         if [[ $# -eq 0 ]]; then
           echo "Usage: $(basename "$0") <pattern>"
-          echo "Searches for a pattern, lets you select a result, and opens it in Helix."
+          echo "Searches for a pattern and opens ALL matches in Helix."
           exit 1
         fi
-        selection=$(${pkgs.ripgrep}/bin/rg --vimgrep "$1" | ${pkgs.fzf}/bin/fzf --delimiter ':' --preview '${pkgs.bat}/bin/bat --style=plain --color=always --highlight-line {2} {1}')
-        if [[ -n "$selection" ]]; then
-          file_to_open="$(echo "$selection" | cut -d ':' -f 1-3)"
-          hx "$file_to_open"
-        fi
+        ${pkgs.ripgrep}/bin/rg --vimgrep "$1" | cut -d ':' -f 1-3 | xargs --no-run-if-empty hx
       '')
       (writeShellScriptBin "trace" ''
         nu -e '${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace | lines | parse "{key}={value}"'
