@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   programs = {
+    ccache = {
+      enable = true;
+    };
     fish = {
       enable = true;
     };

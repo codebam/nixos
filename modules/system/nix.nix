@@ -1,4 +1,4 @@
-_:
+{ config, ... }:
 {
   nix = {
     settings = {
@@ -18,6 +18,7 @@ _:
       ];
       max-jobs = "auto";
       cores = 0;
+      extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
     };
     gc = {
       automatic = true;
