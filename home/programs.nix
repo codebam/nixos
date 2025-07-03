@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   programs = {
@@ -18,6 +18,7 @@
     };
     helix = {
       enable = true;
+      package = inputs.helix.packages.${pkgs.system}.helix;
       defaultEditor = true;
       settings = {
         theme = lib.mkForce "ayu_dark";

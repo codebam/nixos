@@ -36,6 +36,10 @@
       url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    helix = {
+      url = "github:helix-editor/helix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -119,7 +123,7 @@
             nil
             nixd
             nixpkgs-fmt
-            helix
+            inputs.helix.packages.${pkgs.system}.helix
           ];
         };
       });
