@@ -1,4 +1,8 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs
+, lib
+, inputs
+, ...
+}:
 
 {
   programs = {
@@ -161,6 +165,9 @@
         set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
         set -gx PROTON_ENABLE_WAYLAND 1
         set -gx PROTON_ENABLE_HDR 1
+        function __hm_play_bell_on_postexec --on-event fish_postexec
+          tput bel
+        end
       '';
       plugins = [
         {
