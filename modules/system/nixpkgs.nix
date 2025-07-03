@@ -64,23 +64,22 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "f5e7caf59994cfa08650cade41374e23779a24a4";
-            hash = "sha256-h4yl6USEm4jQKknBu5LXTmjkJVfMeC5xz/xI6M8hy08=";
+            rev = "31b78a4f3afe86b0406bcde89ca8db1b5f338d85";
+            hash = "sha256-G2L+loelr2iEPLyqh29MyoUqLzIf8t5adEXG009+Sjo=";
           };
         });
         sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "c2f08075ec00632293bbc63582c7f3ffd75441af";
-            hash = "sha256-kwDv9TP3oIxfk7x8zRFzSiecTKPqZwDg+AA9cdeDXCg=";
+            rev = "a1ac2a2e93ffb3341253af30603cf16483d766bb";
+            hash = "sha256-+Horc7rdcgHMz0Pr5EaLtbaibzToQLjqv3+vj1J1RzM=";
           };
           patches = old.patches ++ [
             (prev.fetchurl {
               url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
-              hash = "sha256-7QesKqsk/oR56KNCr276afGc52VZhlDNL9qcK979a+M=";
+              hash = "sha256-wekk6bXwiSL0VCgJGEXuiMUGv9MxjG/8JmDfHlMtBMo=";
             })
-            ../sway-patches/sway-hdr.patch
           ];
         });
       })
