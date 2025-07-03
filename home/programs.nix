@@ -288,9 +288,6 @@
           command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
           command-focused = "yes";
         };
-        colors = {
-          alpha = lib.mkForce 0.9;
-        };
       };
     };
     direnv = {
