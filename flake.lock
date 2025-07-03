@@ -437,11 +437,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1751489990,
-        "narHash": "sha256-ENTd/sd4Vz/VJYn14SVqW1OH2m7WIAvsm9A9SrmDZRY=",
+        "lastModified": 1751513147,
+        "narHash": "sha256-idSXM3Y0KNf/WDDqGfthiOSQMwZYwis1JZhTkdWrr6A=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "89af52d9a893af013f5f4c1d2d56912106827153",
+        "rev": "426b405d979d893832549b95f23c13537c65d244",
         "type": "github"
       },
       "original": {
@@ -519,11 +519,11 @@
     "lix": {
       "flake": false,
       "locked": {
-        "lastModified": 1751404369,
-        "narHash": "sha256-Owax1UlwBjDUQSH1koTfW9ttoqLpQsHlE3qL58ff2BM=",
+        "lastModified": 1751497867,
+        "narHash": "sha256-f8Grrh1VU/sPsEXlHazQ8XS4/2d4xJgWVtr/N0blj2Q=",
         "ref": "refs/heads/main",
-        "rev": "bfabaa688ffdea6f64042b266ee020d2f55bdadc",
-        "revCount": 18110,
+        "rev": "61c276e8589d00af699c6fb3d9a4f66445365eb0",
+        "revCount": 18111,
         "type": "git",
         "url": "https://git.lix.systems/lix-project/lix.git"
       },
@@ -877,11 +877,11 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1751478235,
-        "narHash": "sha256-fzU40SfJxDQlsWabd7ApiGiJHJVLe+vjCm8JtJU9mwc=",
+        "lastModified": 1751498047,
+        "narHash": "sha256-2T/VKbqqp4KTz3szFl58AaI+LBg9ctLjnP1IQA8sPg8=",
         "owner": "danth",
         "repo": "stylix",
-        "rev": "3f71d154867b457adbef04b4982e78b5dc225e62",
+        "rev": "d21cfb364a78ad72935625e79b8c5d497f0b7616",
         "type": "github"
       },
       "original": {
