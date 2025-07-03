@@ -166,7 +166,11 @@
         set -gx PROTON_ENABLE_WAYLAND 1
         set -gx PROTON_ENABLE_HDR 1
         function __hm_play_bell_on_postexec --on-event fish_postexec
-          tput bel
+          if test $status -eq 0
+            tput bel
+          else
+            ${pkgs.pipewire}/bin/pw-play ${../error.wav}
+          end
         end
       '';
       plugins = [
@@ -292,7 +296,7 @@
         };
         bell = {
           urgent = "yes";
-          command = "${pkgs.pipewire}/bin/pw-play /run/current-system/sw/share/sounds/freedesktop/stereo/bell.oga";
+          command = "${pkgs.pipewire}/bin/pw-play ${ ../bell.wav }";
           command-focused = "yes";
         };
       };
