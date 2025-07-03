@@ -18,6 +18,11 @@
     image = ../wallpaper.png;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
     fonts = {
+      sizes = {
+        desktop = 14;
+        terminal = 14;
+      };
+
       serif = {
         package = pkgs.noto-fonts;
         name = "Noto Serif";
