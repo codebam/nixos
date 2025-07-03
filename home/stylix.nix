@@ -5,12 +5,10 @@
     enable = true;
 
     targets = {
-      mangohud.enable = false;
       librewolf = {
         profileNames = [ "codebam" ];
       };
-      nushell.enable = false;
-      fish.enable = false;
+      mangohud.enable = false;
       neovide.enable = false;
     };
 
