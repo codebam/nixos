@@ -109,6 +109,8 @@
       tor-browser
       weechat
       youtube-music
+      gimp
+      kdePackages.kdenlive
     ];
 
     file.".gitignore".text = ''
