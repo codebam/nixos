@@ -272,6 +272,9 @@
       };
     };
     foot = {
+      server = {
+        enable = true;
+      };
       enable = true;
       settings = {
         main = {
