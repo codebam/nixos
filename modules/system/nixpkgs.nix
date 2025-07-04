@@ -35,9 +35,19 @@
     };
     overlays = [
       (final: prev: {
+        foot = prev.foot.overrideAttrs (new: old: {
+          version = "0-unstable-2025-07-03";
+          src = prev.fetchFromGitea {
+            domain = "codeberg.org";
+            owner = "dnkl";
+            repo = "foot";
+            rev = "968bc05c32a2e68282fd28e840b06ac63556d82e";
+            hash = "sha256-p9PJFJ1lj4nPbdBpSV6JM3XmBjnucSUdFPwq52Gp/fM=";
+          };
+        });
         fish = prev.fish.overrideAttrs (
           new: old: {
-            version = "4.0.2-e9bb150";
+            version = "0-unstable-2025-07-03";
             src = prev.fetchFromGitHub {
               owner = "fish-shell";
               repo = "fish-shell";
