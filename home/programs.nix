@@ -265,7 +265,7 @@
       ];
     };
     kitty = {
-      enable = true;
+      enable = false;
       enableGitIntegration = true;
       shellIntegration = {
         mode = "no-cursor";

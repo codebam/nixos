@@ -35,6 +35,70 @@
     };
     overlays = [
       (final: prev: {
+        fish = prev.fish.overrideAttrs (
+          new: old: {
+            version = "4.0.2-e9bb150";
+            src = prev.fetchFromGitHub {
+              owner = "fish-shell";
+              repo = "fish-shell";
+              rev = "e9bb150a41b64bc0d4cd3784d6fd54e0eabb4b42";
+              hash = "sha256-Hia69h9A6dkeEd6sBDPWmTVr/3OCZujasyp6I2Qwoyc=";
+            };
+            cargoDeps = prev.rustPlatform.fetchCargoVendor {
+              inherit (new) src patches;
+              hash = "sha256-HFY3/upUnc1CYhxFq8MOSaN6ZnnC/ScyPiYzdG77Wu4=";
+            };
+            postPatch =
+              ''
+                substituteInPlace src/builtins/tests/test_tests.rs \
+                  --replace-fail '"/bin/ls"' '"${lib.getExe' prev.coreutils "ls"}"'
+
+                substituteInPlace src/highlight/tests.rs \
+                  --replace-fail '"/bin/echo"' '"${lib.getExe' prev.coreutils "echo"}"' \
+                  --replace-fail '"/bin/c"' '"${lib.getExe' prev.coreutils "c"}"' \
+                  --replace-fail '"/bin/ca"' '"${lib.getExe' prev.coreutils "ca"}"' \
+                  --replace-fail '/usr' '/'
+
+                substituteInPlace tests/checks/cd.fish \
+                  --replace-fail '/bin/pwd' '${lib.getExe' prev.coreutils "pwd"}'
+
+                substituteInPlace tests/checks/redirect.fish \
+                  --replace-fail '/bin/echo' '${lib.getExe' prev.coreutils "echo"}'
+
+                substituteInPlace tests/checks/vars_as_commands.fish \
+                  --replace-fail '/usr/bin' '${prev.coreutils}/bin'
+
+                substituteInPlace tests/checks/jobs.fish \
+                  --replace-fail 'ps -o' '${lib.getExe' prev.procps "ps"} -o' \
+                  --replace-fail '/bin/echo' '${lib.getExe' prev.coreutils "echo"}'
+
+                substituteInPlace tests/checks/job-control-noninteractive.fish \
+                  --replace-fail '/bin/echo' '${lib.getExe' prev.coreutils "echo"}'
+
+                substituteInPlace tests/checks/complete.fish \
+                  --replace-fail '/bin/ls' '${lib.getExe' prev.coreutils "ls"}'
+
+                # Several pexpect tests are flaky
+                # See https://github.com/fish-shell/fish-shell/issues/8789
+                rm tests/pexpects/exit_handlers.py
+                rm tests/pexpects/private_mode.py
+                rm tests/pexpects/history.py
+              ''
+              + lib.optionalString prev.stdenv.hostPlatform.isDarwin ''
+                # Tests use pkill/pgrep which are currently not built on Darwin
+                # See https://github.com/NixOS/nixpkgs/pull/103180
+                # and https://github.com/NixOS/nixpkgs/issues/141157
+                rm tests/pexpects/exit.py
+                rm tests/pexpects/job_summary.py
+                rm tests/pexpects/signals.py
+                rm tests/pexpects/fg.py
+              ''
+              + lib.optionalString (prev.stdenv.hostPlatform.isAarch64 || prev.stdenv.hostPlatform.isDarwin) ''
+                # This test seems to consistently fail on aarch64 and darwin
+                rm tests/checks/cd.fish
+              '';
+          }
+        );
         ccacheWrapper = prev.ccacheWrapper.override {
           extraConfig = ''
             export CCACHE_COMPRESS=1
