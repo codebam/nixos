@@ -1,5 +1,4 @@
-_:
-{
+_: {
   preservation = {
     enable = true;
     preserveAt."/persistent" = {
@@ -19,16 +18,21 @@ _:
           user = "codebam";
           group = "users";
         }
-        "/var/lib/sbctl"
-        "/var/log"
-        "/var/lib/bluetooth"
-        "/var/lib/nixos"
-        "/var/lib/OpenRGB"
-        "/var/lib/tailscale"
-        "/var/lib/systemd/coredump"
+        {
+          directory = "/var/cache/ccache";
+          user = "root";
+          group = "nixbld";
+        }
         "/etc/NetworkManager/system-connections"
-        "/var/lib/iwd"
         "/etc/ssh"
+        "/var/lib/OpenRGB"
+        "/var/lib/bluetooth"
+        "/var/lib/iwd"
+        "/var/lib/nixos"
+        "/var/lib/sbctl"
+        "/var/lib/systemd/coredump"
+        "/var/lib/tailscale"
+        "/var/log"
         {
           directory = "/var/lib/colord";
           user = "colord";
