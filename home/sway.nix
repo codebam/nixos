@@ -41,6 +41,7 @@
           };
           "1133:49291:Logitech_G502_HERO_Gaming_Mouse" = {
             events = "enabled";
+            accel_profile = "flat";
           };
           "13364:832:Keychron_Keychron_V4" = {
             events = "enabled";
