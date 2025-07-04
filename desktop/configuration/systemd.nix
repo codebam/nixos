@@ -33,14 +33,10 @@
         script = ''
           while true
           do
-          if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
-          				nmcli connection up "BeeNetwork-5GHz"
-          				sleep 15
-          				if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
-          								nmcli connection up "BeeNetwork"
-          				fi
-          				sleep 60
-          fi
+            if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
+            				nmcli connection up "BeeNetwork-5GHz"
+            				sleep 60
+            fi
           done
         '';
       };
