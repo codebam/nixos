@@ -47,7 +47,7 @@
         });
         fish = prev.fish.overrideAttrs (
           new: old: {
-            version = "0-unstable-2025-07-03";
+            version = "4.1.0-alpha0-unstable-2025-07-03";
             src = prev.fetchFromGitHub {
               owner = "fish-shell";
               repo = "fish-shell";
