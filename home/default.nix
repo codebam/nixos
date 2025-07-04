@@ -8,5 +8,6 @@ _:
     ./services.nix
     ./xdg.nix
     ./stylix.nix
+    ./systemd.nix
   ];
 }
