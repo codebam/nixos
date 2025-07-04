@@ -31,13 +31,17 @@
           pkgs.gnugrep
         ];
         script = ''
-          while true
-          do
-            if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
-            				nmcli connection up "BeeNetwork-5GHz"
-            				sleep 60
-            fi
-          done
+              while true
+              do
+                if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
+          				for i in {1..3}; do nmcli connection up "BeeNetwork-5GHz" && break || sleep 1; done
+          				sleep 60
+                  if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
+                    systemctl restart NetworkManager
+                  fi
+                fi
+                sleep 10
+              done
         '';
       };
       nix-build-steamdeck = {
