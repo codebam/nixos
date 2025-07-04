@@ -44,9 +44,6 @@
         ${pkgs.ripgrep}/bin/rg --vimgrep "$1" | cut -d ':' -f 1-3 | xargs --no-run-if-empty hx
       '')
       (writeShellScriptBin "trace" ''
-        nu -e '${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace | lines | parse "{key}={value}"'
-      '')
-      (writeShellScriptBin "trace-old" ''
         ${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace
       '')
       (writeShellScriptBin "sway-kill-parent-fzf" ''
