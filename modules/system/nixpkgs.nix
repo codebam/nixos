@@ -47,6 +47,7 @@
         });
         fish = prev.fish.overrideAttrs (
           new: old: {
+            stdenv = prev.ccacheStdenv;
             version = "4.1.0-alpha0-unstable-2025-07-03";
             src = prev.fetchFromGitHub {
               owner = "fish-shell";
