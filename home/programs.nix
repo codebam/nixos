@@ -327,19 +327,6 @@
       enableNushellIntegration = true;
       settings = {
         add_newline = false;
-        format = lib.concatStrings [
-          "$line_break"
-          "$package"
-          "$directory"
-          "$git_branch"
-          "$git_commit"
-          "$git_state"
-          "$git_metrics"
-          "$git_status"
-          "$line_break"
-          "$jobs"
-          "$character"
-        ];
         git_metrics.disabled = false;
         scan_timeout = 10;
         character = {
