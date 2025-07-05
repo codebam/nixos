@@ -49,7 +49,7 @@
         after = [ "network.target" ];
         serviceConfig = {
           Type = "oneshot";
-          WorkingDirectory = "/etc/nixos/steamdeck-cache";
+          WorkingDirectory = "/etc/nixos/cache/steamdeck";
           ExecStart = "/run/current-system/sw/bin/nix build /etc/nixos#nixosConfigurations.nixos-steamdeck.config.system.build.toplevel --print-build-logs";
         };
         path = [ pkgs.git ];
