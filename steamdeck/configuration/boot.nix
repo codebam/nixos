@@ -6,7 +6,7 @@
         services = {
           create-needed-for-boot-dirs = {
             after = [
-              "cleanup-root.service"
+              # "cleanup-root.service"
             ];
             serviceConfig.KeyringMode = "inherit";
           };
@@ -15,13 +15,15 @@
             serviceConfig.Type = "oneshot";
             serviceConfig.KeyringMode = "inherit";
             requiredBy = [
-              "initrd.target"
+              # "initrd.target"
             ];
             after = [
-              "local-fs-pre.target"
-              "systemd-udev-settle.service"
+              # "local-fs-pre.target"
+              # "systemd-udev-settle.service"
             ];
-            before = [ "sysroot.mount" ];
+            before = [
+              # "sysroot.mount"
+            ];
 
             path = with pkgs; [
               util-linux # Provides mount, umount
