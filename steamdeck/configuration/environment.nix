@@ -18,11 +18,11 @@
         beetle-psx-hw # PlayStation
         dolphin # GameCube / Wii
         stella # Atari 2600
-        mame # MAME
-        mame2000 # MAME
-        mame2003 # MAME
-        mame2015 # MAME
-        mame2016 # MAME
+        # mame # MAME
+        # mame2000 # MAME
+        # mame2003 # MAME
+        # mame2015 # MAME
+        # mame2016 # MAME
         neocd # Neo ?
         fbneo # Neo ?
         mupen64plus # Nintendo 64
