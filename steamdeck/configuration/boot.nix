@@ -2,7 +2,7 @@
 {
   boot = {
     initrd = {
-      extraUtils = with pkgs; [
+      extraPackages = with pkgs; [
         util-linux # Provides mount, umount
         btrfs-progs # Provides btrfs
         coreutils # Provides sleep, date, stat, mv, mkdir, ls, rm
@@ -28,7 +28,6 @@
               "systemd-udev-settle.service"
             ];
             before = [ "sysroot.mount" ];
-
             script = ''
               set -euo pipefail
 
@@ -38,7 +37,6 @@
 
               fail() {
                 log "FATAL: $*"
-                sleep 300
                 exit 1
               }
 
