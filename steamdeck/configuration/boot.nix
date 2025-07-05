@@ -17,17 +17,20 @@
             requiredBy = [ "initrd.target" ];
             after = [
               "local-fs-pre.target"
-              "systemd-udev-settle.service"
+              "systemd-udev-settle.service" # This ensures udev is ready before we start
             ];
             before = [ "sysroot.mount" ];
+            # We still need the btrfs command, but not udevadm.
             path = [ pkgs.btrfs-progs ];
             script = ''
               set -euo pipefail
 
+              # Function to log messages with a clear tag
               log() {
                 echo "[cleanup-root] $*" >&2
               }
 
+              # Function for critical, unrecoverable errors
               fail() {
                 log "FATAL: $*"
                 # Keep the initrd running for 5 minutes for debugging
@@ -37,14 +40,15 @@
 
               log "--- Starting cleanup-root service ---"
 
+              # --- 1. Find the target device ---
               DEVICE_PATH="/dev/disk/by-id/nvme-Micron_2500_MTFDKBK1T0QGN_25024D7C572C-part3"
               FALLBACK_DEVICE="/dev/nvme0n1p3"
               ACTUAL_DEVICE=""
 
               log "Waiting for device to become available..."
+              # The systemd `after` dependency handles the main wait.
+              # This loop is a final, robust check for slow devices.
               for attempt in {1..30}; do
-                udevadm settle
-
                 if [[ -e "$DEVICE_PATH" ]]; then
                   ACTUAL_DEVICE="$DEVICE_PATH"
                   break
@@ -68,6 +72,7 @@
 
               log "Found device: $ACTUAL_DEVICE"
 
+              # --- 2. Mount the filesystem ---
               MOUNT_POINT="/btrfs_tmp"
               mkdir -p "$MOUNT_POINT"
 
@@ -77,16 +82,14 @@
               fi
               log "Mount successful."
 
+              # --- 3. Safely replace @root subvolume ---
               if [[ -e "$MOUNT_POINT/@root" ]]; then
                 log "Found existing @root subvolume. Preparing to replace it."
                 
-                # Create a temporary backup name for this specific boot operation
-                # This makes it easy to restore if the next step fails.
                 BOOT_BACKUP_NAME="@root.bak-$(date +%s)"
                 
                 log "Moving @root to $BOOT_BACKUP_NAME as a temporary backup."
                 if ! mv "$MOUNT_POINT/@root" "$MOUNT_POINT/$BOOT_BACKUP_NAME"; then
-                    # If we can't even move the old root, something is seriously wrong.
                     umount "$MOUNT_POINT" || log "Warning: Failed to unmount $MOUNT_POINT on failure."
                     fail "Could not move existing @root. Aborting."
                 fi
@@ -94,29 +97,23 @@
                 log "Creating new @root subvolume..."
                 btrfs subvolume create "$MOUNT_POINT/@root"
 
-                # *** CRITICAL CHECK AND RESTORE LOGIC ***
                 if [[ ! -d "$MOUNT_POINT/@root" ]]; then
                   log "ERROR: FAILED TO CREATE NEW @root subvolume!"
                   log "Attempting to restore from backup: $BOOT_BACKUP_NAME"
                   
                   if mv "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$MOUNT_POINT/@root"; then
                     log "SUCCESS: Restored previous @root. System will boot with the old root."
-                    # We exit with 0 because we successfully restored a valid state.
-                    # The system can boot, even though it's not a fresh state.
                     umount "$MOUNT_POINT"
                     log "--- cleanup-root service finished with a restored root ---"
                     exit 0
                   else
-                    # This is a disaster scenario. We have no @root and couldn't restore it.
                     umount "$MOUNT_POINT" || log "Warning: Failed to unmount $MOUNT_POINT on final failure."
                     fail "Could not restore backup. Filesystem is in an inconsistent state. NO @root EXISTS."
                   fi
                 else
                   log "New @root subvolume created successfully."
-                  # Now that we have a new, valid @root, we can archive the backup.
                   log "Moving temporary backup to long-term storage."
                   mkdir -p "$MOUNT_POINT/old_roots"
-                  # Use the modification time of the original subvolume for the archive name
                   timestamp=$(date --date="@$(stat -c %Y "$MOUNT_POINT/$BOOT_BACKUP_NAME")" "+%Y-%m-%d_%H-%M-%S")
                   mv "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$MOUNT_POINT/old_roots/$timestamp" || log "Warning: Could not move backup to old_roots."
                 fi
@@ -130,6 +127,7 @@
                 log "New @root subvolume created successfully."
               fi
 
+              # --- 4. Non-critical cleanup of old backups ---
               (
                 log "Starting non-critical cleanup of old subvolumes (older than 30 days)."
                 if [[ -d "$MOUNT_POINT/old_roots" ]]; then
@@ -157,6 +155,7 @@
                 log "Non-critical cleanup finished."
               ) || log "Warning: Non-critical cleanup of old roots encountered an error. Continuing..."
 
+              # --- 5. Finalize ---
               log "Unmounting btrfs filesystem..."
               umount "$MOUNT_POINT"
 
