@@ -26,21 +26,18 @@
               pkgs.coreutils
               pkgs.findutils
               pkgs.gawk
+              pkgs.util-linux
             ];
 
             script = ''
               set -euo pipefail
 
-              # Function to log messages with a clear tag
               log() {
                 echo "[cleanup-root] $*" >&2
               }
 
-              # Function for critical, unrecoverable errors
               fail() {
                 log "FATAL: $*"
-                # Keep the initrd running for 5 minutes for debugging
-                sleep 300
                 exit 1
               }
 
@@ -67,9 +64,7 @@
 
               if [[ -z "$ACTUAL_DEVICE" ]]; then
                 log "ERROR: Could not find NVMe device after 30 attempts."
-                log "Available devices in /dev/disk/by-id/:"
                 ls -la /dev/disk/by-id/ || true
-                log "Available devices in /dev/:"
                 ls -la /dev/nvme* || true
                 fail "Device discovery failed."
               fi
