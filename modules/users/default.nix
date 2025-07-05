@@ -26,6 +26,7 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFm8MinRasfhAbMOkQhz+/yXgKBgV1N2J98dlLJ70daz" # servercat
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL7yDL3drFmgNAFIaTgoamlGaTBiKdm+eIK8q3JJTpKh codebam@nixos-steamdeck" # nixos-steamdeck
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKnwv9Ifx6b82N/oRMCAKYi0vWCDyue9Mkf2Fh8lLidm codebam@nixos-laptop" # nixos-laptop
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkBfTf9i6kG6P+HGWN3ghszdxQYmXzxllIlxPkwuyCo codebam@nixos-desktop" # nixos-desktop
         ];
       };
     };
