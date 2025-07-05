@@ -17,11 +17,17 @@
             requiredBy = [ "initrd.target" ];
             after = [
               "local-fs-pre.target"
-              "systemd-udev-settle.service" # This ensures udev is ready before we start
+              "systemd-udev-settle.service"
             ];
             before = [ "sysroot.mount" ];
-            # We still need the btrfs command, but not udevadm.
-            path = [ pkgs.btrfs-progs ];
+
+            path = [
+              pkgs.btrfs-progs
+              pkgs.coreutils
+              pkgs.findutils
+              pkgs.gawk
+            ];
+
             script = ''
               set -euo pipefail
 
@@ -46,8 +52,6 @@
               ACTUAL_DEVICE=""
 
               log "Waiting for device to become available..."
-              # The systemd `after` dependency handles the main wait.
-              # This loop is a final, robust check for slow devices.
               for attempt in {1..30}; do
                 if [[ -e "$DEVICE_PATH" ]]; then
                   ACTUAL_DEVICE="$DEVICE_PATH"
