@@ -2,14 +2,6 @@
 {
   boot = {
     initrd = {
-      extraPackages = with pkgs; [
-        util-linux # Provides mount, umount
-        btrfs-progs # Provides btrfs
-        coreutils # Provides sleep, date, stat, mv, mkdir, ls, rm
-        findutils # Provides find
-        gawk # Provides awk
-      ];
-
       systemd = {
         services = {
           create-needed-for-boot-dirs = {
@@ -28,6 +20,15 @@
               "systemd-udev-settle.service"
             ];
             before = [ "sysroot.mount" ];
+
+            path = with pkgs; [
+              util-linux # Provides mount, umount
+              btrfs-progs # Provides btrfs
+              coreutils # Provides sleep, date, stat, mv, mkdir, ls, rm
+              findutils # Provides find
+              gawk # Provides awk
+            ];
+
             script = ''
               set -euo pipefail
 
@@ -63,7 +64,9 @@
 
               if [[ -z "$ACTUAL_DEVICE" ]]; then
                 log "ERROR: Could not find NVMe device after 30 attempts."
+                log "Available devices in /dev/disk/by-id/:"
                 ls -la /dev/disk/by-id/ || true
+                log "Available devices in /dev/:"
                 ls -la /dev/nvme* || true
                 fail "Device discovery failed."
               fi
