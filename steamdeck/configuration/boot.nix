@@ -2,6 +2,14 @@
 {
   boot = {
     initrd = {
+      extraUtils = with pkgs; [
+        util-linux # Provides mount, umount
+        btrfs-progs # Provides btrfs
+        coreutils # Provides sleep, date, stat, mv, mkdir, ls, rm
+        findutils # Provides find
+        gawk # Provides awk
+      ];
+
       systemd = {
         services = {
           create-needed-for-boot-dirs = {
@@ -21,14 +29,6 @@
             ];
             before = [ "sysroot.mount" ];
 
-            path = [
-              pkgs.btrfs-progs
-              pkgs.coreutils
-              pkgs.findutils
-              pkgs.gawk
-              pkgs.util-linux
-            ];
-
             script = ''
               set -euo pipefail
 
@@ -38,6 +38,7 @@
 
               fail() {
                 log "FATAL: $*"
+                sleep 300
                 exit 1
               }
 
