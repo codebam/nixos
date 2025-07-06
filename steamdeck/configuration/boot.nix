@@ -136,7 +136,7 @@
                       delete_subvolume_recursively "$MOUNT_POINT/$i"
                     done
                     
-                    if [[ -f "$subvol_path/var/empty" ]]; then
+                    if [[ -d "$subvol_path/var/empty" ]]; then
                         log "Removing immutable flag from $subvol_path/var/empty"
                         chattr -i "$subvol_path/var/empty" || log "Warning: could not chattr -i on $subvol_path/var/empty"
                     fi
@@ -150,7 +150,7 @@
                           delete_subvolume_recursively "$old_subvol"
                       else
                           log "Warning: $old_subvol is not a btrfs subvolume, removing with rm -rf"
-                          if [[ -f "$old_subvol/var/empty" ]]; then
+                          if [[ -d "$old_subvol/var/empty" ]]; then
                               log "Removing immutable flag from $old_subvol/var/empty"
                               chattr -i "$old_subvol/var/empty" || log "Warning: could not chattr -i on $old_subvol/var/empty"
                           fi
