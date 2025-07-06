@@ -19,6 +19,7 @@
         seat = {
           "*" = {
             xcursor_theme = "Bibata-Modern-Classic";
+            hide_cursor = "1000";
           };
         };
         output = {
