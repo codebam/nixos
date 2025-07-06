@@ -138,7 +138,7 @@
                     btrfs subvolume delete "$subvol_path"
                   }
                   
-                  $find "$MOUNT_POINT/old_roots/" -mindepth 1 -mtime +30 -type d | while read -r old_subvol; do
+                  find "$MOUNT_POINT/old_roots/" -mindepth 1 -mtime +30 -type d | while read -r old_subvol; do
                       log "Found old backup to delete: $old_subvol"
                       if btrfs subvolume show "$old_subvol" &>/dev/null; then
                           delete_subvolume_recursively "$old_subvol"
