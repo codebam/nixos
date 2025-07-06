@@ -125,7 +125,7 @@
 
               # --- 4. Non-critical cleanup of old backups ---
               (
-                log "Starting non-critical cleanup of old subvolumes (older than 30 days)."
+                log "Starting non-critical cleanup of old subvolumes."
                 if [[ -d "$MOUNT_POINT/old_roots" ]]; then
                   delete_subvolume_recursively() {
                     local subvol_path="$1"
@@ -143,18 +143,29 @@
                     
                     btrfs subvolume delete "$subvol_path"
                   }
+
+                  now_seconds=$(date +%s)
+                  thirty_days_ago_seconds=$((now_seconds - 30 * 24 * 60 * 60))
+                  cutoff_date_str=$(date --date="@$thirty_days_ago_seconds" "+%Y-%m-%d_%H-%M-%S")
                   
-                  find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -mtime +30 -type d | while read -r old_subvol; do
-                      log "Found old backup to delete: $old_subvol"
-                      if btrfs subvolume show "$old_subvol" &>/dev/null; then
-                          delete_subvolume_recursively "$old_subvol"
-                      else
-                          log "Warning: $old_subvol is not a btrfs subvolume, removing with rm -rf"
-                          if [[ -d "$old_subvol/var/empty" ]]; then
-                              log "Removing immutable flag from $old_subvol/var/empty"
-                              chattr -i "$old_subvol/var/empty" || log "Warning: could not chattr -i on $old_subvol/var/empty"
-                          fi
-                          rm -rf "$old_subvol"
+                  log "Will delete backups older than: $cutoff_date_str"
+
+                  find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while read -r old_subvol; do
+                      subvol_basename=$(basename "$old_subvol")
+
+                      # Use string comparison. This works because of the YYYY-MM-DD_HH-MM-SS format.
+                      if [[ "$subvol_basename" < "$cutoff_date_str" ]]; then
+                        log "Found old backup to delete: $old_subvol"
+                        if btrfs subvolume show "$old_subvol" &>/dev/null; then
+                            delete_subvolume_recursively "$old_subvol"
+                        else
+                            log "Warning: $old_subvol is not a btrfs subvolume, removing with rm -rf"
+                            if [[ -d "$old_subvol/var/empty" ]]; then
+                                log "Removing immutable flag from $old_subvol/var/empty"
+                                chattr -i "$old_subvol/var/empty" || log "Warning: could not chattr -i on $old_subvol/var/empty"
+                            fi
+                            rm -rf "$old_subvol"
+                        fi
                       fi
                   done
                 fi
