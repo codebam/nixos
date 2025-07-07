@@ -2,9 +2,6 @@
 
 {
   boot = {
-    plymouth = {
-      enable = true;
-    };
     kernelPackages = pkgs.linuxPackages_xanmod_latest;
     supportedFilesystems = [ "bcachefs" ];
     initrd = {
