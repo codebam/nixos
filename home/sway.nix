@@ -113,6 +113,17 @@
             "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "shift+XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+            "${modifier}+shift+v" = "exec ${(pkgs.writeShellScript "play-youtube-pinned" ''
+              url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
+              if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)'; then
+                ${pkgs.mpv}/bin/mpv \
+                  --title="mpv-pip" \
+                  --autofit=25% \
+                  --geometry=-20+20 \
+                  --ytdl-format="bestvideo[height<=720]+bestaudio/best[height<=720]" \
+                  "$url"
+              fi
+            '')}";
             "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+c" = "exec ${pkgs.mako}/bin/makoctl invoke default";
             "${modifier}+z" = "exec ${pkgs.mako}/bin/makoctl restore";
@@ -163,6 +174,8 @@
           inherit modifier;
         in
         ''
+          for_window [title="^mpv-pip$"] floating enable, sticky enable
+
           bindsym --whole-window {
             ${modifier}+Shift+button4 exec "${pkgs.brightnessctl}/bin/brightnessctl set +1%"
             ${modifier}+Shift+button5 exec "${pkgs.brightnessctl}/bin/brightnessctl set 1%-"
