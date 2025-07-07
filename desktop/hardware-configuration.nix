@@ -32,7 +32,6 @@
     extraModulePackages = [ ];
     kernelParams = [
       "drm.panic_screen=qr_code"
-      "quiet"
     ];
     kernel.sysctl."kernel.sysrq" = 1;
   };
