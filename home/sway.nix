@@ -63,21 +63,18 @@
           };
         };
         bars = [
-          (lib.mkMerge [
-            config.lib.stylix.sway.bar
-            {
-              statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
-              mode = "dock";
-              fonts = lib.mkForce {
-                names = [ "Fira Code NerdFont" ];
-                size = 11.0;
-              };
-              position = "top";
-              hiddenState = "hide";
-              trayOutput = "none";
-              colors.background = lib.mkForce "#00000000";
-            }
-          ])
+          {
+            statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+            mode = "dock";
+            fonts = lib.mkForce {
+              names = [ "Fira Code NerdFont" ];
+              size = 11.0;
+            };
+            position = "top";
+            hiddenState = "hide";
+            trayOutput = "none";
+            colors.background = lib.mkForce "#00000000";
+          }
         ];
         window = {
           titlebar = false;
