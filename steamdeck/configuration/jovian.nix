@@ -11,7 +11,7 @@ _:
       enable = true;
       user = "codebam";
       autoStart = true;
-      desktopSession = "gnome";
+      desktopSession = "plasma";
     };
     devices = {
       steamdeck = {
