@@ -73,9 +73,6 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
-      (writeShellScriptBin "nvimdiff" ''
-        nvim -d $@
-      '')
       (pass.withExtensions (
         subpkgs: with subpkgs; [
           pass-otp
