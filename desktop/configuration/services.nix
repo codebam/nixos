@@ -60,6 +60,7 @@
       settings = {
         server = {
           secret_key = "$''{SECRET_KEY}";
+          bind_address = "0.0.0.0";
           port = 8081;
         };
         search = {
@@ -73,6 +74,7 @@
     };
     ollama = {
       enable = true;
+      host = "0.0.0.0";
       acceleration = "rocm";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
