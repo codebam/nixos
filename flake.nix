@@ -134,9 +134,11 @@
           system = "x86_64-linux";
           extraModules = [
             ./desktop/configuration
+            ./desktop-laptop/configuration
             {
               home-manager.users.codebam.imports = [
                 ./desktop/home.nix
+                ./desktop-laptop/home.nix
               ];
               home-manager.users.makano.imports = [ ./desktop/makano-home.nix ];
             }
@@ -146,7 +148,13 @@
           system = "x86_64-linux";
           extraModules = [
             ./laptop/configuration
-            { home-manager.users.codebam.imports = [ ./laptop/home.nix ]; }
+            ./desktop-laptop/configuration
+            {
+              home-manager.users.codebam.imports = [
+                ./laptop/home.nix
+                ./desktop-laptop/home.nix
+              ];
+            }
           ];
         };
         nixos-steamdeck = mkNixosSystem {

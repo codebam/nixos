@@ -108,10 +108,6 @@
         resume-playback = true;
       };
     };
-    obs-studio = {
-      enable = true;
-      plugins = [ pkgs.obs-studio-plugins.obs-vaapi ];
-    };
     swaylock = {
       enable = true;
     };
