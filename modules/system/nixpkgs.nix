@@ -147,15 +147,15 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "a1ac2a2e93ffb3341253af30603cf16483d766bb";
-            hash = "sha256-+Horc7rdcgHMz0Pr5EaLtbaibzToQLjqv3+vj1J1RzM=";
+            rev = "94c819cc1f9328223509883e4b62939bdf85b760";
+            hash = "sha256-4KEJUq5J/NL8x2UeI9skVxJew2RGjqJLdmH63yylj60=";
           };
-          patches = old.patches ++ [
-            (prev.fetchurl {
-              url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
-              hash = "sha256-wekk6bXwiSL0VCgJGEXuiMUGv9MxjG/8JmDfHlMtBMo=";
-            })
-          ];
+          # patches = old.patches ++ [
+          #   (prev.fetchurl {
+          #     url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
+          #     hash = "sha256-wekk6bXwiSL0VCgJGEXuiMUGv9MxjG/8JmDfHlMtBMo=";
+          #   })
+          # ];
         });
       })
     ];
