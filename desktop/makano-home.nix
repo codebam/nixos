@@ -21,9 +21,6 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
-      (writeShellScriptBin "nvimdiff" ''
-        nvim -d $@
-      '')
       (pass.withExtensions (
         subpkgs: with subpkgs; [
           pass-otp
@@ -130,11 +127,6 @@
       enable = true;
       userEmail = "makanobush@gmail.com";
       userName = "Kevin";
-      extraConfig = {
-        merge = {
-          tool = "nvimdiff";
-        };
-      };
     };
     tmux = {
       enable = true;

@@ -202,9 +202,6 @@
       userEmail = "codebam@riseup.net";
       userName = "Sean Behan";
       extraConfig = {
-        merge = {
-          tool = "nvimdiff";
-        };
         pull = {
           rebase = true;
         };
