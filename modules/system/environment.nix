@@ -4,18 +4,15 @@
     systemPackages = with pkgs; [
       claude-code
       dig
-      distrobox
       git
       gparted
       libnotify
       mangohud
       nix-output-monitor
       nushell
-      podman-compose
       rclone
       run0-sudo-shim
       via
-      virt-manager
       wl-clipboard
       xdg-utils
       # System monitoring and debugging tools
