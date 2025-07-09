@@ -8,7 +8,7 @@
       fish.enable = false;
       gnome.enable = true;
       gtk.enable = true;
-      qt.enable = false;
+      qt.enable = true;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
     fonts = {
