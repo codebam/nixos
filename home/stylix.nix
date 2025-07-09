@@ -11,7 +11,7 @@
       foot.enable = true;
       gtk.enable = true;
       mako.enable = true;
-      qt.enable = true;
+      qt.enable = false;
       sway.enable = true;
       swaylock.enable = true;
       tmux.enable = true;
