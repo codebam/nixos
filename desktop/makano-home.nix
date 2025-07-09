@@ -4,6 +4,13 @@
 }:
 
 {
+  stylix = {
+    enable = true;
+    targets = {
+      qt.enable = false;
+    };
+  };
+
   home = {
     username = "makano";
     homeDirectory = "/home/makano";
