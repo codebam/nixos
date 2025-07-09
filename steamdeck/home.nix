@@ -1,6 +1,12 @@
 { pkgs, lib, ... }:
 
 {
+  stylix = {
+    targets = {
+      qt.enable = lib.mkForce false;
+    };
+  };
+
   home = {
     file.".local/share/kio/servicemenus/steam.desktop".text = ''
       [Desktop Entry]
