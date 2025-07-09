@@ -1,10 +1,6 @@
 { pkgs, lib, ... }:
 
 {
-  stylix = {
-    enable = lib.mkForce false;
-  };
-
   home = {
     file.".local/share/kio/servicemenus/steam.desktop".text = ''
       [Desktop Entry]
