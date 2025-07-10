@@ -124,6 +124,12 @@
             "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+c" = "exec ${pkgs.mako}/bin/makoctl invoke default";
             "${modifier}+z" = "exec ${pkgs.mako}/bin/makoctl restore";
+            "${modifier}+shift+t" = "exec ${(pkgs.writeShellScript "trim-yt-url" ''
+              url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
+              if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://((www|music)\.)?youtube\.com/|youtu\.be/)'; then
+                echo "$url" | ${pkgs.gnused}/bin/sed 's/&.*//' | ${pkgs.wl-clipboard}/bin/wl-copy
+              fi
+            '')}";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
               ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
