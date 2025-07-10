@@ -6,6 +6,9 @@
     supportedFilesystems = [ "bcachefs" ];
     initrd = {
       systemd = {
+        extraBin = {
+          chattr = pkgs.busybox;
+        };
         services = {
           create-needed-for-boot-dirs = {
             after = [
