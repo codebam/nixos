@@ -5,7 +5,7 @@
     initrd = {
       systemd = {
         extraBin = {
-          chattr = pkgs.busybox;
+          chattr = "${pkgs.busybox}/bin/chattr";
         };
         services = {
           create-needed-for-boot-dirs = {
