@@ -6,6 +6,9 @@
     kernelPackages = pkgs.linuxPackages_latest;
     initrd = {
       systemd = {
+        extraBin = {
+          chattr = pkgs.busybox;
+        };
         services = {
           create-needed-for-boot-dirs = {
             after = [
