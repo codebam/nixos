@@ -12,5 +12,6 @@ _:
     ./programs.nix
     ./nixpkgs.nix
     ./system.nix
+    ./preservation.nix
   ];
 }
