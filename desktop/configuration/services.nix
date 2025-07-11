@@ -13,7 +13,12 @@
         apps = [
           {
             name = "Steam";
-            command = "${pkgs.steam}/bin/steam";
+            cmd = "${pkgs.steam}/bin/steam";
+            auto-detach = "true";
+          }
+          {
+            name = "Steam Big Picture";
+            cmd = "${pkgs.steam}/bin/steam -gamepadui";
             auto-detach = "true";
           }
         ];
