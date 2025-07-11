@@ -25,6 +25,7 @@
       rpcs3
       prismlauncher
       ryubing
+      moonlight-embedded
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
         add_to_steam() {
