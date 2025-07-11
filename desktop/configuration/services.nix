@@ -5,6 +5,20 @@
 
 {
   services = {
+    sunshine = {
+      enable = true;
+      openFirewall = true;
+      autoStart = true;
+      applications = {
+        apps = [
+          {
+            name = "Steam";
+            command = "${pkgs.steam}/bin/steam";
+            auto-detach = "true";
+          }
+        ];
+      };
+    };
     ddclient = {
       enable = true;
       protocol = "duckdns";
