@@ -8,5 +8,6 @@ _:
     ./systemd.nix
     ./nixpkgs.nix
     ./system.nix
+    ./specialisation.nix
   ];
 }
