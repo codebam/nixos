@@ -6,7 +6,7 @@
     #   ./secrets/identities/yubikey-5c.txt
     #   ./secrets/identities/yubikey-5c-nfc.txt
     # ];
-    secrets.duckdns-token.file = ../secrets/duckdns-token.age;
+    # secrets.duckdns-token.file = ../secrets/duckdns-token.age;
   };
 
   home = {
