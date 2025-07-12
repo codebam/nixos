@@ -13,5 +13,6 @@ _:
     ./nixpkgs.nix
     ./system.nix
     ./preservation.nix
+    ./specialisation.nix
   ];
 }

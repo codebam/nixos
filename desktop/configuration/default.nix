@@ -15,6 +15,7 @@ _:
     ./preservation.nix
     ./nix.nix
     ./nixpkgs.nix
+    ./specialisation.nix
     ./system.nix
   ];
 }
