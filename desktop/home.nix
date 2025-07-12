@@ -34,6 +34,11 @@
             OLLAMA_BASE_URL = "http://host.containers.internal:11434";
             SEARXNG_QUERY_URL = "http://host.containers.internal:8081/search?q=<query>";
           };
+          extraConfig = {
+            Service = {
+              TimeoutStartSec = 1800;
+            };
+          };
         };
       };
     };

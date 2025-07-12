@@ -109,6 +109,7 @@ _: {
             ".config/mnw"
             ".local/share/PrismLauncher"
             ".local/share/mnw"
+            ".local/share/containers"
             ".config/OpenRGB"
             ".config/heroic"
             ".config/nushell"
