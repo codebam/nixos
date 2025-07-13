@@ -169,10 +169,10 @@
           "2" = [
             { app_id = "^librewolf$"; }
           ];
-          "4" = [
+          "5" = [{ app_id = "^com\.github\.th_ch\.youtube_music$"; }];
+          "10" = [
             { class = "^steam$"; }
           ];
-          "5" = [{ app_id = "^com\.github\.th_ch\.youtube_music$"; }];
         };
       };
       extraConfig =
