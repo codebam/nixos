@@ -33,6 +33,7 @@
         desmume # Nintendo DS
         desmume2015 # Nintendo DS
         ppsspp # PlayStation Portable
+        citra # Nintendo 3DS
       ];
     })
   ];
