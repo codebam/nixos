@@ -10,6 +10,12 @@
       openFirewall = true;
       autoStart = true;
       capSysAdmin = true;
+      settings = {
+        output_name = "1";
+        capture = "wlr";
+        encoder = "vaapi";
+        hevc_mode = "1";
+      };
       applications = {
         apps = [
           {
