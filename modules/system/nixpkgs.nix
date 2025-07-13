@@ -139,8 +139,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "f4327f52cf18fea41c08e054012b5a85967b18b1";
-            hash = "sha256-oNKyITN9tCiEyvFBNrlilxcSnvrXqsA7poP/uWP2Hd0=";
+            rev = "c39b3ce7a3c4380d7a77f4cb97b3604c227c04d0";
+            hash = "sha256-3u2lgAeSDp2g855gfwBBpFQO10AmjQOof8anYiWOMsI=";
           };
         });
         sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
