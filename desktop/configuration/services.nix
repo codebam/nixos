@@ -9,6 +9,7 @@
       enable = true;
       openFirewall = true;
       autoStart = true;
+      capSysAdmin = true;
       applications = {
         apps = [
           {
