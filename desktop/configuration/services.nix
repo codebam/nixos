@@ -9,7 +9,6 @@
       enable = true;
       openFirewall = true;
       autoStart = true;
-      capSysAdmin = true;
       settings = {
         output_name = "1";
         capture = "wlr";
