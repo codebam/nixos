@@ -30,13 +30,13 @@
             render_bit_depth = "8";
             allow_tearing = "yes";
             max_render_time = "off";
-            hdr = "on";
+            # hdr = "on";
           };
           "eDP-1" = {
             scale = "1.5";
           };
           "HEADLESS-1" = {
-            mode = "1200x800@60.00Hz";
+            mode = "1280x800@60.00Hz";
           };
         };
         input = {
@@ -186,6 +186,7 @@
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
           exec '${pkgs.mako}/bin/mako'
+          exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
         '';
     };
 }
