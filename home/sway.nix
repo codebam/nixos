@@ -169,6 +169,9 @@
           "2" = [
             { app_id = "^librewolf$"; }
           ];
+          "4" = [
+            { class = "^steam$"; }
+          ];
           "5" = [{ app_id = "^com\.github\.th_ch\.youtube_music$"; }];
         };
       };
