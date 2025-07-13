@@ -39,6 +39,9 @@
             mode = "1280x800@60.00Hz";
           };
         };
+        workspaceOutputAssign = [
+          { workspace = "10"; output = "HEADLESS-1"; }
+        ];
         input = {
           "*" = {
             events = "enabled";
