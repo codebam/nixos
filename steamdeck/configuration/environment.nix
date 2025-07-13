@@ -32,6 +32,7 @@
         melonds # Nintendo DS
         desmume # Nintendo DS
         desmume2015 # Nintendo DS
+        ppsspp # PlayStation Portable
       ];
     })
   ];
