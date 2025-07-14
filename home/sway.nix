@@ -12,6 +12,7 @@
     {
       enable = true;
       systemd.enable = true;
+      wrapperFeatures.gtk = true;
       config = rec {
         inherit modifier;
         terminal = "${pkgs.foot}/bin/footclient";
