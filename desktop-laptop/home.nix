@@ -11,7 +11,7 @@
       enable = true;
       settings = {
         layer = "overlay";
-        default-timeout = 10;
+        default-timeout = 10000;
       };
     };
   };
