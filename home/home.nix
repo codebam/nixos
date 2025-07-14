@@ -103,7 +103,6 @@
       tor-browser
       weechat
       youtube-music
-      gimp
       kdePackages.kdenlive
     ];
 
