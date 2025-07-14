@@ -36,6 +36,7 @@
       url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    scx-latest-pr.url = "github:gliczy/nixpkgs/scx-1.0.14";
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
