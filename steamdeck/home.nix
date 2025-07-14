@@ -23,7 +23,7 @@
     '';
     packages = with pkgs; [
       rpcs3
-      prismlauncher
+      # prismlauncher
       ryubing
       moonlight-qt
       (writeShellScriptBin "steamos-add-to-steam" ''
