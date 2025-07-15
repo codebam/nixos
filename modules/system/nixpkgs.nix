@@ -42,8 +42,8 @@
             domain = "codeberg.org";
             owner = "dnkl";
             repo = "foot";
-            rev = "968bc05c32a2e68282fd28e840b06ac63556d82e";
-            hash = "sha256-p9PJFJ1lj4nPbdBpSV6JM3XmBjnucSUdFPwq52Gp/fM=";
+            rev = "693aefa96a74b0e4b9117a0c4ffe8c95b35b0c8b";
+            hash = "sha256-oY8tiyDFzC7xD6QfalYGLvjz3xpVBYl26eum8ZER/3g=";
           };
         });
         fish = prev.fish.overrideAttrs (
@@ -53,8 +53,8 @@
             src = prev.fetchFromGitHub {
               owner = "fish-shell";
               repo = "fish-shell";
-              rev = "e9bb150a41b64bc0d4cd3784d6fd54e0eabb4b42";
-              hash = "sha256-Hia69h9A6dkeEd6sBDPWmTVr/3OCZujasyp6I2Qwoyc=";
+              rev = "f4ddcfa694f02d56eeda47586d936e36fe5c7854";
+              hash = "sha256-YSLtqTwmxl0I8WIYmPbEh27Q2CQXaExuA4JIqaLO6dc=";
             };
             cargoDeps = prev.rustPlatform.fetchCargoVendor {
               inherit (new) src patches;
