@@ -5,6 +5,10 @@
 
 {
   services = {
+    iperf3 = {
+      enable = true;
+      openFirewall = true;
+    };
     sunshine = {
       enable = true;
       openFirewall = true;

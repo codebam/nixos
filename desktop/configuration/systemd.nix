@@ -17,6 +17,7 @@
     };
     services = {
       wifi-reconnect = {
+        enable = false;
         description = "Reconnect Wi-Fi if disconnected";
         after = [ "network.target" ];
         wantedBy = [ "multi-user.target" ];
