@@ -88,7 +88,7 @@
       environmentFile = config.age.secrets.searx-secret.path;
       settings = {
         server = {
-          secret_key = "$''{SECRET_KEY}";
+          secret_key = "$SECRET_KEY";
           bind_address = "0.0.0.0";
           port = 8081;
         };
