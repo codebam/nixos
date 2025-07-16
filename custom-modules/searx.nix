@@ -1,8 +1,9 @@
-{ options
-, config
-, lib
-, pkgs
-, ...
+{
+  options,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 
 with lib;
@@ -84,12 +85,12 @@ in
         example = literalExpression ''
           { server.port = 8080;
             server.bind_address = "0.0.0.0";
-            server.secret_key = "''${SEARX_SECRET_KEY}";
+            server.secret_key = "$SEARX_SECRET_KEY";
 
             engines = lib.singleton
               { name = "wolframalpha";
                 shortcut = "wa";
-                api_key = "''${WOLFRAM_API_KEY}";
+                api_key = "$WOLFRAM_API_KEY";
                 engine = "wolframalpha_api";
               };
           }
@@ -99,7 +100,7 @@ in
           the default configuration. It's also possible to refer to
           environment variables
           (defined in [](#opt-services.searx.environmentFile))
-          using the syntax `''${VARIABLE_NAME}`.
+          using the syntax `$VARIABLE_NAME` or ''${VARIABLE_NAME}.
 
           ::: {.note}
           For available settings, see the Searx
@@ -246,12 +247,12 @@ in
 
     systemd.services.searx = mkIf (!cfg.runInUwsgi) {
       description = "Searx server, the meta search engine.";
-      wantedBy = [
-        "network.target"
-        "multi-user.target"
-      ];
+      wantedBy = [ "multi-user.target" ];
       requires = [ "searx-init.service" ];
-      after = [ "searx-init.service" ];
+      after = [
+        "searx-init.service"
+        "network.target"
+      ];
       serviceConfig =
         {
           User = "searx";
