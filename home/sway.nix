@@ -174,9 +174,6 @@
             { app_id = "^librewolf$"; }
           ];
           "5" = [{ app_id = "^com\.github\.th_ch\.youtube_music$"; }];
-          "10" = [
-            { class = "^steam$"; }
-          ];
         };
       };
       extraConfig =
