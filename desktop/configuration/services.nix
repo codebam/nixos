@@ -36,9 +36,8 @@
                 text = ''
                   # --- LOGGING ---
                   # Redirect all output (stdout and stderr) from this script to a log file.
-                  exec >> "$HOME/sunshine-steam-script.log" 2>&1
+                  # exec >> "$HOME/sunshine-steam-script.log" 2>&1
                   # --- END LOGGING ---
-
                   echo "=========================================================="
                   echo "Log started at: $(date)"
 
