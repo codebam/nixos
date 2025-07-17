@@ -8,6 +8,7 @@ _:
           directories = [
             ".cache/moonlight"
             ".config/Moonlight Game Streaming Project"
+            ".local/share/vulkan"
           ];
         };
       };
