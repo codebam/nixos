@@ -16,6 +16,7 @@
       swaylock.enable = true;
       tmux.enable = true;
       fish.enable = false;
+      mangohud.enable = false;
     };
 
     polarity = "dark";
