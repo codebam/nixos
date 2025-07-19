@@ -8,6 +8,14 @@
   };
 
   home = {
+    file.".config/lsfg-vk/conf.toml".text = ''
+      version = 1
+      [global]
+      [[game]]
+      exe = "decky-lsfg-vk"
+      multiplier = 2
+      performance_mode = true
+    '';
     file.".local/share/kio/servicemenus/steam.desktop".text = ''
       [Desktop Entry]
       Type=Service
