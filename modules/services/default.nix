@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   services = {
+    lsfg-vk = {
+      enable = true;
+    };
     tailscale = {
       enable = true;
       openFirewall = true;
