@@ -16,8 +16,6 @@
       [[game]]
       exe = "decky-lsfg-vk"
       multiplier = 4
-      experimental_present_mode = "immediate"
-      performance_mode = true
     '';
     packages = with pkgs; [
       (writeShellScriptBin "lsfg" ''
