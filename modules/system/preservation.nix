@@ -117,6 +117,8 @@ _: {
             ".cache/nix-index"
             ".config/github-copilot"
             ".config/gcloud"
+            ".local/share/vulkan"
+            ".local/lib"
           ];
         };
       };
