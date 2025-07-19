@@ -117,6 +117,7 @@ _: {
             ".cache/nix-index"
             ".config/github-copilot"
             ".config/gcloud"
+            ".config/lsfg-vk"
           ];
         };
       };
