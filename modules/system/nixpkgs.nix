@@ -35,7 +35,6 @@
     };
     overlays = [
       (final: prev: {
-        inherit (inputs.scx-latest-pr.legacyPackages.${prev.system}) scx;
         foot = prev.foot.overrideAttrs (new: old: {
           version = "0-unstable-2025-07-03";
           src = prev.fetchFromGitea {
