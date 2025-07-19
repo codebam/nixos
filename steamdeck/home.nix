@@ -26,6 +26,10 @@
       # prismlauncher
       ryubing
       moonlight-qt
+      (writeShellScriptBin "lsfg" ''
+        export LSFG_PROCESS=decky-lsfg-vk
+        exec "$@"
+      '')
       (writeShellScriptBin "steamos-add-to-steam" ''
         set -e
         add_to_steam() {
