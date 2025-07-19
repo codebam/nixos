@@ -37,6 +37,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     scx-latest-pr.url = "github:gliczy/nixpkgs/scx-1.0.14";
+    lsfg-vk-flake = {
+      url = "github:pabloaul/lsfg-vk-flake/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
@@ -99,6 +103,7 @@
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
             inputs.run0-sudo-shim.nixosModules.default
+            inputs.lsfg-vk-flake.nixosModules.default
             ./modules
             {
               home-manager = {

@@ -452,6 +452,27 @@
         "url": "https://git.lix.systems/lix-project/nixos-module.git"
       }
     },
+    "lsfg-vk-flake": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1752867845,
+        "narHash": "sha256-ZQDL4JYS9C56pMHd1ZfkQLGm+uCq9UVsNqnLGhpG9V8=",
+        "owner": "pabloaul",
+        "repo": "lsfg-vk-flake",
+        "rev": "51fc478daee163a812e8dc2a22ba358f4c5df4bd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pabloaul",
+        "ref": "main",
+        "repo": "lsfg-vk-flake",
+        "type": "github"
+      }
+    },
     "nix-github-actions": {
       "inputs": {
         "nixpkgs": [
@@ -654,6 +675,7 @@
         "lanzaboote": "lanzaboote",
         "lix": "lix",
         "lix-module": "lix-module",
+        "lsfg-vk-flake": "lsfg-vk-flake",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
