@@ -10,7 +10,7 @@ _:
     steam = {
       enable = true;
       user = "codebam";
-      autoStart = true;
+      autoStart = false;
       desktopSession = "sway";
     };
     devices = {
