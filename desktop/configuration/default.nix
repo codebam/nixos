@@ -17,5 +17,6 @@ _:
     ./nixpkgs.nix
     ./specialisation.nix
     ./system.nix
+    ./jovian.nix
   ];
 }
