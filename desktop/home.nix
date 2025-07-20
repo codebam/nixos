@@ -16,8 +16,6 @@
       [[game]]
       exe = "decky-lsfg-vk"
       multiplier = 2
-      performance_mode = true
-      flow_scale = 0.75
     '';
     packages = with pkgs; [
       (writeShellScriptBin "lsfg" ''
