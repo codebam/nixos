@@ -138,6 +138,7 @@
         nixos-desktop = mkNixosSystem {
           system = "x86_64-linux";
           extraModules = [
+            inputs.jovian.nixosModules.default
             ./desktop/configuration
             ./desktop-laptop/configuration
             {
