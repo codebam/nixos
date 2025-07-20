@@ -13,7 +13,8 @@
       [global]
       [[game]]
       exe = "decky-lsfg-vk"
-      multiplier = 2
+      multiplier = 3
+      performance_mode = true
     '';
     file.".local/share/kio/servicemenus/steam.desktop".text = ''
       [Desktop Entry]
