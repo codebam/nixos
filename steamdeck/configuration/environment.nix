@@ -23,12 +23,12 @@
         # mame2003 # MAME
         # mame2015 # MAME
         # mame2016 # MAME
-        neocd # Neo ?
-        fbneo # Neo ?
+        # neocd # Neo ?
+        # fbneo # Neo ?
         mupen64plus # Nintendo 64
         nestopia # Nintendo NES
         mgba # Game Boy Advance
-        fuse # ZX Spectrum
+        # fuse # ZX Spectrum
         melonds # Nintendo DS
         desmume # Nintendo DS
         desmume2015 # Nintendo DS
