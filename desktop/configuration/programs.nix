@@ -11,6 +11,9 @@
       extest = {
         enable = true;
       };
+      protontricks = {
+        enable = true;
+      };
     };
     gamescope = {
       enable = true;
