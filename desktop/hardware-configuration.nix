@@ -43,7 +43,7 @@
   };
 
   fileSystems."/backup" = {
-    device = "/dev/disk/by-uuid/a4058013-b85c-4bf0-a187-b459a23267a9";
+    device = "/dev/disk/by-uuid/eb973c9e-8d9f-4aaa-9d8c-65486256d1c4";
     fsType = "btrfs";
     options = [
       "compress=zstd"
