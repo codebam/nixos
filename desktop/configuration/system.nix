@@ -3,7 +3,7 @@ _:
 {
   system = {
     autoUpgrade = {
-      enable = true;
+      enable = false;
       flake = "/etc/nixos";
       operation = "switch";
       dates = "daily";
