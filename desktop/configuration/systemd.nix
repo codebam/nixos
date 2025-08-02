@@ -4,6 +4,24 @@
   powerManagement.enable = true;
 
   systemd = {
+    targets = {
+      sleep = {
+        enable = false;
+        unitConfig.DefaultDependencies = "no";
+      };
+      suspend = {
+        enable = false;
+        unitConfig.DefaultDependencies = "no";
+      };
+      hibernate = {
+        enable = false;
+        unitConfig.DefaultDependencies = "no";
+      };
+      "hybrid-sleep" = {
+        enable = false;
+        unitConfig.DefaultDependencies = "no";
+      };
+    };
     timers = {
       nix-build-steamdeck = {
         description = "Daily NixOS Build Timer for Steam Deck Configuration";
