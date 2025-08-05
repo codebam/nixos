@@ -98,9 +98,6 @@
       domains = [ "codebam" ];
       passwordFile = config.age.secrets.duckdns-token.path;
     };
-    scx = {
-      enable = true;
-    };
     nginx = {
       enable = true;
       virtualHosts = {

@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   services = {
+    scx = {
+      enable = true;
+    };
     lsfg-vk = {
       enable = true;
     };
