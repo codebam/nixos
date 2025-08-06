@@ -24,6 +24,7 @@
     };
     timers = {
       nix-build-steamdeck = {
+        enable = false;
         description = "Daily NixOS Build Timer for Steam Deck Configuration";
         wantedBy = [ "timers.target" ];
         timerConfig = {
