@@ -7,6 +7,7 @@ _:
         codebam = {
           directories = [
             ".config/sunshine"
+            ".config/bolt-launcher"
           ];
         };
         makano = {
