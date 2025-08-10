@@ -22,7 +22,7 @@
         export LSFG_PROCESS=decky-lsfg-vk
         exec "$@"
       '')
-      runelite
+      bolt-launcher
     ];
   };
 
