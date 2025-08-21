@@ -10,7 +10,7 @@ _:
       systemd-boot = {
         enable = true;
         memtest86.enable = true;
-        configurationLimit = 50;
+        configurationLimit = 10;
       };
       timeout = 0;
       efi.canTouchEfiVariables = true;
