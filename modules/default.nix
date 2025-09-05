@@ -15,6 +15,7 @@
     ./system/virtualisation.nix
     ./system/xdg.nix
     ./system/zram.nix
+    ./system/qt.nix
 
     ./programs/default.nix
     ./services/default.nix
