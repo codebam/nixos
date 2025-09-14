@@ -161,6 +161,7 @@
         set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
         set -gx PROTON_ENABLE_WAYLAND 1
         set -gx PROTON_ENABLE_HDR 1
+        set -gx PROTON_USE_NTSYNC 1
         function __hm_play_bell_on_postexec --on-event fish_postexec
           if test $status -eq 0
             tput bel
