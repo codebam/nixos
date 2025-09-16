@@ -9,7 +9,7 @@
       localNetworkGameTransfers.openFirewall = true;
       extraCompatPackages = [ pkgs.proton-ge-bin ];
       extest = {
-        enable = true;
+        enable = false;
       };
       protontricks = {
         enable = true;
