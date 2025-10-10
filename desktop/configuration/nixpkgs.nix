@@ -1,6 +1,6 @@
 _:
 
 {
-  nixpkgs.config.rocmSupport = true;
+  # nixpkgs.config.rocmSupport = true;
   nixpkgs.overlays = [ (final: prev: { }) ];
 }

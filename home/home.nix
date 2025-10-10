@@ -85,7 +85,6 @@
         withVencord = true;
       })
       bat
-      discord-rpc
       element-desktop
       gemini-cli
       google-cloud-sdk
