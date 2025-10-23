@@ -56,29 +56,29 @@
     };
   };
 
-  systemd = {
-    user = {
-      services = {
-        openrgb-apply = {
-          Unit = {
-            Description = "Apply OpenRGB settings on login and resume";
-            After = [
-              "default.target"
-            ];
-          };
-          Service = {
-            Type = "oneshot";
-            ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
-          };
-          Install = {
-            WantedBy = [
-              "default.target"
-            ];
-          };
-        };
-      };
-    };
-  };
+  # systemd = {
+  #   user = {
+  #     services = {
+  #       openrgb-apply = {
+  #         Unit = {
+  #           Description = "Apply OpenRGB settings on login and resume";
+  #           After = [
+  #             "default.target"
+  #           ];
+  #         };
+  #         Service = {
+  #           Type = "oneshot";
+  #           ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
+  #         };
+  #         Install = {
+  #           WantedBy = [
+  #             "default.target"
+  #           ];
+  #         };
+  #       };
+  #     };
+  #   };
+  # };
 
   programs = {
     git = {
