@@ -118,6 +118,7 @@ _: {
             ".config/github-copilot"
             ".config/gcloud"
             ".config/lsfg-vk"
+            ".local/share/steel"
           ];
         };
       };

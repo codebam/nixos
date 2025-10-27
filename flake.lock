@@ -391,11 +391,11 @@
         "steel-flake": "steel-flake"
       },
       "locked": {
-        "lastModified": 1761601172,
-        "narHash": "sha256-B/92X4fR76728swg5sMltfKxN94hb64VoIcnh0Cwpd8=",
+        "lastModified": 1761602518,
+        "narHash": "sha256-CjCgqsaThO1qshr/TOFSreG8mVMnBKujaUPAGyJn1uQ=",
         "owner": "codebam",
         "repo": "helix-steel-flake",
-        "rev": "55e78232b501fc100211c1371c3e8d329c0c4506",
+        "rev": "8cb5c11b94d21a941621bf347ff40a8eda71f007",
         "type": "github"
       },
       "original": {

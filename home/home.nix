@@ -106,9 +106,40 @@
       kdePackages.kdenlive
     ];
 
+    file.".config/helix/helix.scm".text = ''
+      (require "helix/editor.scm")
+      (require (prefix-in helix. "helix/commands.scm"))
+      
+      (provide hello-world)
+      
+      ;;@doc
+      ;; Prints "Hello, World!" to the status line
+      (define (hello-world)
+        (helix.echo "Hello, World!"))
+    '';
+
+    file.".config/helix/init.scm".text = ''
+      (require-builtin steel/random as rand::)
+      (require (prefix-in helix. "helix/commands.scm"))
+      (require (prefix-in helix.static. "helix/static.scm"))
+      
+      ;; Picking one from the possible themes
+      ; (define possible-themes '("ayu_mirage" "tokyonight_storm" "catppuccin_macchiato"))
+      
+      ; (define (select-random lst)
+      ;   (let ([index (rand::rng->gen-range 0 (length lst))]) (list-ref lst index)))
+      
+      ; (define (randomly-pick-theme options)
+      ;   ;; Randomly select the theme from the possible themes list
+      ;   (helix.theme (select-random options)))
+      
+      ; (randomly-pick-theme possible-themes)
+    '';
+
     file.".gitignore".text = ''
       Session.vim
       .claude/
+      .gemini/
     '';
 
     stateVersion = "25.11";
