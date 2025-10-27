@@ -1,6 +1,7 @@
-{ pkgs
-, config
-, ...
+{
+  pkgs,
+  config,
+  ...
 }:
 
 {
@@ -132,8 +133,12 @@
     };
     git = {
       enable = true;
-      userEmail = "makanobush@gmail.com";
-      userName = "Kevin";
+      settings = {
+        user = {
+          email = "makanobush@gmail.com";
+          name = "Kevin";
+        };
+      };
     };
     tmux = {
       enable = true;

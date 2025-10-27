@@ -1,7 +1,8 @@
-{ pkgs
-, lib
-, inputs
-, ...
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
 }:
 
 {
@@ -22,7 +23,7 @@
     };
     helix = {
       enable = true;
-      #package = inputs.helix.packages.${pkgs.system}.helix;
+      package = inputs.helix.packages.${pkgs.system}.default;
       defaultEditor = true;
       settings = {
         theme = lib.mkForce "ayu_dark";
@@ -196,9 +197,11 @@
     };
     git = {
       enable = true;
-      userEmail = "codebam@riseup.net";
-      userName = "Sean Behan";
-      extraConfig = {
+      settings = {
+        user = {
+          email = "codebam@riseup.net";
+          name = "Sean Behan";
+        };
         pull = {
           rebase = true;
         };
@@ -290,7 +293,7 @@
         };
         bell = {
           urgent = "yes";
-          command = "${pkgs.pipewire}/bin/pw-play ${ ../bell.wav }";
+          command = "${pkgs.pipewire}/bin/pw-play ${../bell.wav}";
           command-focused = "yes";
         };
       };
