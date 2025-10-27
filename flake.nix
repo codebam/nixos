@@ -40,6 +40,10 @@
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    helix = {
+      url = "github:codebam/helix-steel-flake/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
@@ -108,6 +112,7 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
+                backupFileExtension = "backup";
                 extraSpecialArgs = { inherit inputs; };
                 users.codebam = {
                   imports = [ ./home ];
