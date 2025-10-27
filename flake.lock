@@ -391,11 +391,11 @@
         "steel-flake": "steel-flake"
       },
       "locked": {
-        "lastModified": 1761596746,
-        "narHash": "sha256-+VLeg14Arjc53Vw90xGz4/2EyY/+y32a9aeflhXQUzM=",
+        "lastModified": 1761601172,
+        "narHash": "sha256-B/92X4fR76728swg5sMltfKxN94hb64VoIcnh0Cwpd8=",
         "owner": "codebam",
         "repo": "helix-steel-flake",
-        "rev": "fea1233bc3893ba0839c5551479c761a625534f7",
+        "rev": "55e78232b501fc100211c1371c3e8d329c0c4506",
         "type": "github"
       },
       "original": {
@@ -414,15 +414,15 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1761331241,
-        "narHash": "sha256-RsmkQj9xXB/fYD6LQnDRZD/xVPcuzXTBzJvlEEazEFk=",
-        "owner": "mattwparas",
+        "lastModified": 1761600882,
+        "narHash": "sha256-xn+NQ5TslLFuajpApdfCIT72l0vLaEV8owX369yBF5s=",
+        "owner": "codebam",
         "repo": "helix",
-        "rev": "9fdc8ec8da5011a792df2ff76e58475533edc5a0",
+        "rev": "d1d4ed4184ec05595a69e08220e604d0f7e08edd",
         "type": "github"
       },
       "original": {
-        "owner": "mattwparas",
+        "owner": "codebam",
         "ref": "steel-event-system",
         "repo": "helix",
         "type": "github"
