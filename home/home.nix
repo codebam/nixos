@@ -109,6 +109,14 @@
     file.".config/helix/helix.scm".text = ''
       (require "helix/editor.scm")
       (require (prefix-in helix. "helix/commands.scm"))
+      (require "helix-file-watcher/file-watcher.scm")
+
+      (provide file-watcher)
+
+      ;;@doc
+      ;; File watcher plugin
+      (define (file-watcher)
+        (spawn-watcher))
       
       (provide hello-world)
       
