@@ -110,6 +110,14 @@
       (require "helix/editor.scm")
       (require (prefix-in helix. "helix/commands.scm"))
       (require "helix-file-watcher/file-watcher.scm")
+      (require "helix-discord-rpc/helix-discord-rpc.scm")
+
+      (provide discord-rpc)
+
+      ;;@doc
+      ;; Discord RPC plugin
+      (define (discord-rpc)
+        (discord-rpc-connect))
 
       (provide file-watcher)
 
@@ -130,6 +138,7 @@
       (require-builtin steel/random as rand::)
       (require (prefix-in helix. "helix/commands.scm"))
       (require (prefix-in helix.static. "helix/static.scm"))
+      (require "scooter/scooter.scm")
       
       ;; Picking one from the possible themes
       ; (define possible-themes '("ayu_mirage" "tokyonight_storm" "catppuccin_macchiato"))
