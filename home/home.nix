@@ -35,6 +35,9 @@
     };
 
     packages = with pkgs; [
+      (pkgs.writeShellScriptBin "vim" ''
+        hx $@
+      '')
       (pkgs.writeShellScriptBin "hxg" ''
         set -euo pipefail
         if [[ $# -eq 0 ]]; then
@@ -125,9 +128,9 @@
       ;; File watcher plugin
       (define (file-watcher)
         (spawn-watcher))
-      
+
       (provide hello-world)
-      
+
       ;;@doc
       ;; Prints "Hello, World!" to the status line
       (define (hello-world)
@@ -139,17 +142,17 @@
       (require (prefix-in helix. "helix/commands.scm"))
       (require (prefix-in helix.static. "helix/static.scm"))
       (require "scooter/scooter.scm")
-      
+
       ;; Picking one from the possible themes
       ; (define possible-themes '("ayu_mirage" "tokyonight_storm" "catppuccin_macchiato"))
-      
+
       ; (define (select-random lst)
       ;   (let ([index (rand::rng->gen-range 0 (length lst))]) (list-ref lst index)))
-      
+
       ; (define (randomly-pick-theme options)
       ;   ;; Randomly select the theme from the possible themes list
       ;   (helix.theme (select-random options)))
-      
+
       ; (randomly-pick-theme possible-themes)
     '';
 
