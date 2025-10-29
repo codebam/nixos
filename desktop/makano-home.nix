@@ -1,6 +1,8 @@
 {
   pkgs,
   config,
+  inputs,
+  lib,
   ...
 }:
 
@@ -45,6 +47,21 @@
     carapace = {
       enable = true;
       enableNushellIntegration = true;
+    };
+    helix = {
+      enable = true;
+      package = inputs.helix.packages.${pkgs.system}.default;
+      defaultEditor = true;
+      settings = {
+        theme = lib.mkForce "catppuccin_mocha";
+        editor = {
+          lsp.display-inlay-hints = true;
+          end-of-line-diagnostics = "hint";
+          inline-diagnostics.cursor-line = "warning";
+          scrolloff = 0;
+          bufferline = "multiple";
+        };
+      };
     };
     nushell = {
       enable = true;

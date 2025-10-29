@@ -576,6 +576,27 @@
         "type": "github"
       }
     },
+    "lulu": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1761729029,
+        "narHash": "sha256-h7KbVLsAMTNstgsgNy42rr7sSdLsyRIq1TdeeLIipQk=",
+        "owner": "kevinJ045",
+        "repo": "lulu",
+        "rev": "0d89592ec47098c3fbce01695d43d2f35d79fccb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kevinJ045",
+        "ref": "main",
+        "repo": "lulu",
+        "type": "github"
+      }
+    },
     "nix-github-actions": {
       "inputs": {
         "nixpkgs": [
@@ -780,6 +801,7 @@
         "lix": "lix",
         "lix-module": "lix-module",
         "lsfg-vk-flake": "lsfg-vk-flake",
+        "lulu": "lulu",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
