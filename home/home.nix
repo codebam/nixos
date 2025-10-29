@@ -114,6 +114,14 @@
       (require (prefix-in helix. "helix/commands.scm"))
       (require "helix-file-watcher/file-watcher.scm")
       (require "helix-discord-rpc/helix-discord-rpc.scm")
+      (require "colors-steel/main.scm")
+
+      (provide colorize)
+
+      ;;@doc
+      ;; Colorize plugin
+      (define (colorize)
+        (colors-steel-colorize))
 
       (provide discord-rpc)
 
