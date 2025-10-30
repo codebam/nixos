@@ -26,7 +26,7 @@
       package = inputs.helix.packages.${pkgs.system}.default;
       defaultEditor = true;
       settings = {
-        theme = lib.mkForce "ayu_dark";
+        theme = lib.mkForce "default";
         editor = {
           lsp.display-inlay-hints = true;
           end-of-line-diagnostics = "hint";
