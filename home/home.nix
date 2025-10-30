@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 
 {
   home = {
@@ -113,36 +113,12 @@
       (require "helix/editor.scm")
       (require (prefix-in helix. "helix/commands.scm"))
       (require "helix-file-watcher/file-watcher.scm")
-      (require "helix-discord-rpc/helix-discord-rpc.scm")
-      (require "colors-steel/main.scm")
-
-      (provide colorize)
-
-      ;;@doc
-      ;; Colorize plugin
-      (define (colorize)
-        (colors-steel-colorize))
-
-      (provide discord-rpc)
-
-      ;;@doc
-      ;; Discord RPC plugin
-      (define (discord-rpc)
-        (discord-rpc-connect))
 
       (provide file-watcher)
-
       ;;@doc
       ;; File watcher plugin
       (define (file-watcher)
         (spawn-watcher))
-
-      (provide hello-world)
-
-      ;;@doc
-      ;; Prints "Hello, World!" to the status line
-      (define (hello-world)
-        (helix.echo "Hello, World!"))
     '';
 
     file.".config/helix/init.scm".text = ''
@@ -150,18 +126,6 @@
       (require (prefix-in helix. "helix/commands.scm"))
       (require (prefix-in helix.static. "helix/static.scm"))
       (require "scooter/scooter.scm")
-
-      ;; Picking one from the possible themes
-      ; (define possible-themes '("ayu_mirage" "tokyonight_storm" "catppuccin_macchiato"))
-
-      ; (define (select-random lst)
-      ;   (let ([index (rand::rng->gen-range 0 (length lst))]) (list-ref lst index)))
-
-      ; (define (randomly-pick-theme options)
-      ;   ;; Randomly select the theme from the possible themes list
-      ;   (helix.theme (select-random options)))
-
-      ; (randomly-pick-theme possible-themes)
     '';
 
     file.".gitignore".text = ''

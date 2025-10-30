@@ -137,7 +137,7 @@
             nil
             nixd
             nixpkgs-fmt
-            helix
+            inputs.helix.packages.${pkgs.system}.default
           ];
         };
       });
