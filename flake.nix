@@ -44,6 +44,10 @@
       url = "github:codebam/helix-steel-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    steel = {
+      url = "github:mattwparas/steel/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     lulu = {
       url = "github:kevinJ045/lulu/main";
       inputs.nixpkgs.follows = "nixpkgs";
