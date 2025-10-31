@@ -159,6 +159,7 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
+        set -gx PATH $PATH /home/codebam/.cargo/bin
         set -gx SEARXNG_API_URL http://localhost:8081
         set -gx EDITOR hx
         set -gx NIXOS_OZONE_WL 1
