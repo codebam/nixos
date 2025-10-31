@@ -116,6 +116,7 @@
       (require "scooter/scooter.scm")
       (require "helixwiki/main.scm")
       (wiki-set-path! "~/Documents/wiki")
+      (require "colors-steel/main.scm")
     '';
 
     file.".config/helix/helix.scm".text = ''
