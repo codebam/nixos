@@ -109,6 +109,15 @@
       kdePackages.kdenlive
     ];
 
+    file.".config/helix/init.scm".text = ''
+      (require-builtin steel/random as rand::)
+      (require (prefix-in helix. "helix/commands.scm"))
+      (require (prefix-in helix.static. "helix/static.scm"))
+      (require "scooter/scooter.scm")
+      (require "helixwiki/main.scm")
+      (wiki-set-path! "~/Documents/wiki")
+    '';
+
     file.".config/helix/helix.scm".text = ''
       (require "helix/editor.scm")
       (require (prefix-in helix. "helix/commands.scm"))
@@ -119,13 +128,6 @@
       ;; File watcher plugin
       (define (file-watcher)
         (spawn-watcher))
-    '';
-
-    file.".config/helix/init.scm".text = ''
-      (require-builtin steel/random as rand::)
-      (require (prefix-in helix. "helix/commands.scm"))
-      (require (prefix-in helix.static. "helix/static.scm"))
-      (require "scooter/scooter.scm")
     '';
 
     file.".gitignore".text = ''
