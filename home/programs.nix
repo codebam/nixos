@@ -31,8 +31,13 @@
           lsp.display-inlay-hints = true;
           end-of-line-diagnostics = "hint";
           inline-diagnostics.cursor-line = "warning";
-          scrolloff = 0;
           bufferline = "multiple";
+        };
+        keys = {
+          normal = {
+            X = "select_line_above";
+            x = "select_line_below";
+          };
         };
       };
     };
