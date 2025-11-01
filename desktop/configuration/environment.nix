@@ -5,7 +5,7 @@
     cargo
     gcc
     blender-hip
-    inputs.steel.packages.${pkgs.system}.default
-    inputs.lulu.packages.${pkgs.system}.default
+    inputs.steel.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.lulu.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }
