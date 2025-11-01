@@ -143,4 +143,7 @@
 
     stateVersion = "25.11";
   };
+  gtk = {
+    gtk2.force = true;
+  };
 }
