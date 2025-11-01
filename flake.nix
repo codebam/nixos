@@ -140,7 +140,7 @@
             nil
             nixd
             nixpkgs-fmt
-            inputs.helix.packages.${pkgs.system}.default
+            inputs.helix.packages.${stdenv.hostPlatform.system}.default
           ];
         };
       });
