@@ -21,7 +21,7 @@
       inputs.lix.follows = "lix";
     };
     lanzaboote = {
-      url = "github:nix-community/lanzaboote";
+      url = "github:codebam/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agenix.url = "github:ryantm/agenix";
