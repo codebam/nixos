@@ -2,8 +2,10 @@
 
 {
   environment.systemPackages = with pkgs; [
-    inputs.steel.packages.${pkgs.system}.default
+    cargo
+    gcc
     blender-hip
+    inputs.steel.packages.${pkgs.system}.default
     inputs.lulu.packages.${pkgs.system}.default
   ];
 }
