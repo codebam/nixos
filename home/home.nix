@@ -107,6 +107,7 @@
       weechat
       youtube-music
       kdePackages.kdenlive
+      calcurse
     ];
 
     file.".config/helix/init.scm".text = ''
