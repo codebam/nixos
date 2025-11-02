@@ -119,6 +119,8 @@ _: {
             ".config/gcloud"
             ".config/lsfg-vk"
             ".local/share/steel"
+            ".config/calcurse"
+            ".local/share/calcurse"
           ];
         };
       };
