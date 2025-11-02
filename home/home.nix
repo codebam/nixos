@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   home = {
@@ -108,6 +108,7 @@
       youtube-music
       kdePackages.kdenlive
       calcurse
+      inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 
     file.".config/helix/init.scm".text = ''

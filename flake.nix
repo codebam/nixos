@@ -52,6 +52,10 @@
       url = "github:kevinJ045/lulu/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    bsav = {
+      url = "github:codebam/bsav/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
