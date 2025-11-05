@@ -121,6 +121,7 @@ _: {
             ".local/share/steel"
             ".config/calcurse"
             ".local/share/calcurse"
+            ".config/retroarch"
           ];
         };
       };

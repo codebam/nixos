@@ -41,7 +41,6 @@
             ".config/heroic"
             ".config/kdeconnect"
             ".config/rpcs3"
-            ".config/retroarch"
             ".config/Ryujinx"
             ".config/decky-loader"
           ];
