@@ -10,18 +10,7 @@
   };
 
   home = {
-    file.".config/lsfg-vk/conf.toml".text = ''
-      version = 1
-      [global]
-      [[game]]
-      exe = "decky-lsfg-vk"
-      multiplier = 2
-    '';
     packages = with pkgs; [
-      (writeShellScriptBin "lsfg" ''
-        export LSFG_PROCESS=decky-lsfg-vk
-        exec "$@"
-      '')
       bolt-launcher
     ];
   };
