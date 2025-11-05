@@ -24,7 +24,7 @@
         # mame2015 # MAME
         # mame2016 # MAME
         # neocd # Neo ?
-        # fbneo # Neo ?
+        fbneo # various
         mupen64plus # Nintendo 64
         nestopia # Nintendo NES
         mgba # Game Boy Advance
