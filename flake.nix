@@ -63,6 +63,9 @@
       url = "github:codebam/bsav/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    freesimplegui = {
+      url = "github:codebam/nixpkgs/python-freesimplegui";
+    };
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";

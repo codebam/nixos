@@ -109,6 +109,13 @@
       kdePackages.kdenlive
       calcurse
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
+      (pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
+        virtualenv
+        tkinter
+        pip
+        requests
+        inputs.freesimplegui.legacyPackages.${pkgs.stdenv.hostPlatform.system}.python3Packages.freesimplegui
+      ]))
     ];
 
     file.".config/helix/init.scm".text = ''

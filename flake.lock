@@ -402,6 +402,22 @@
         "type": "github"
       }
     },
+    "freesimplegui": {
+      "locked": {
+        "lastModified": 1762423680,
+        "narHash": "sha256-emP+1wg6wFjh94uhuysfAko4/GbYCW4Yj63SNMYAy2s=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "ba83d4afb5fbb1ff1a73fe7309099f33982d4bb4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "python-freesimplegui",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "fromYaml": {
       "flake": false,
       "locked": {
@@ -873,6 +889,7 @@
         "agenix": "agenix",
         "bsav": "bsav",
         "disko": "disko",
+        "freesimplegui": "freesimplegui",
         "helix": "helix",
         "home-manager": "home-manager_2",
         "jovian": "jovian",
