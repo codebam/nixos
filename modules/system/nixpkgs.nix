@@ -31,6 +31,7 @@
           "via"
           "claude-code"
           "google-cloud-sdk"
+          "cuda_nvcc"
         ];
     };
     overlays = [

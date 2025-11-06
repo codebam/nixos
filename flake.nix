@@ -89,6 +89,7 @@
                 config = {
                   # You can add common pkgs configurations here, e.g.:
                   # allowUnfree = true;
+                  cudaSupport = false;
                 };
               }
             )
