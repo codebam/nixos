@@ -7,6 +7,11 @@ _:
     };
     wireless.iwd = {
       enable = true;
+      settings = {
+        Rank = {
+          BandModifier5Ghz = 9.0;
+        };
+      };
     };
     nftables = {
       enable = true;
