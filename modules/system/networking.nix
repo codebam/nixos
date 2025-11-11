@@ -34,7 +34,7 @@ _:
         }
       ];
       allowedUDPPortRanges = allowedTCPPortRanges;
-      trustedInterfaces = [ "virbr0" ];
+      trustedInterfaces = [ "virbr0" "tailscale0" ];
     };
   };
 }
