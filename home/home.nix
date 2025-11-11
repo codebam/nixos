@@ -88,7 +88,6 @@
         withVencord = true;
       })
       bat
-      element-desktop
       gemini-cli
       google-cloud-sdk
       grim
