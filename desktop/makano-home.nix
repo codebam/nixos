@@ -117,16 +117,6 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
-        ${builtins.concatStringsSep "\n" (
-          builtins.attrValues (
-            builtins.mapAttrs (name: value: "set -gx ${name} ${value}") (
-              builtins.removeAttrs config.home.sessionVariables [
-                "TMUX_TMPDIR"
-                "XDG_CONFIG_DIRS"
-              ]
-            )
-          )
-        )}
       '';
       plugins = [
         {

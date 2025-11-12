@@ -11,6 +11,11 @@
       qt.enable = true;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
+    cursor = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata Modern Classic";
+      size = 24;
+    };
     iconTheme = {
       package = pkgs.papirus-icon-theme;
       light = "Papirus Light";

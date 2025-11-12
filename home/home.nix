@@ -9,16 +9,16 @@
       enableShellIntegration = true;
     };
 
-    pointerCursor = {
-      package = pkgs.bibata-cursors;
-      name = "Bibata Modern Classic";
-      size = 24;
-      x11 = {
-        enable = true;
-        defaultCursor = "Bibata Modern Classic";
-      };
-      gtk.enable = true;
-    };
+    # pointerCursor = {
+    #   package = pkgs.bibata-cursors;
+    #   name = "Bibata Modern Classic";
+    #   size = 24;
+    #   x11 = {
+    #     enable = true;
+    #     defaultCursor = "Bibata Modern Classic";
+    #   };
+    #   gtk.enable = true;
+    # };
 
     shellAliases = { };
 
