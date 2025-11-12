@@ -11,6 +11,11 @@
       qt.enable = true;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
+    iconTheme = {
+      package = pkgs.papirus-icon-theme;
+      light = "Papirus Light";
+      dark = "Papirus Dark";
+    };
     fonts = {
       serif = {
         package = pkgs.noto-fonts;
