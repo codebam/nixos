@@ -22,6 +22,11 @@
     polarity = "dark";
     image = ../wallpaper.png;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
+    iconTheme = {
+      package = pkgs.papirus-icon-theme;
+      light = "Papirus Light";
+      dark = "Papirus Dark";
+    };
     fonts = {
       sizes = {
         desktop = 14;
