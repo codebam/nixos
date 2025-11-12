@@ -11,6 +11,7 @@
     enable = true;
     targets = {
       qt.enable = false;
+      librewolf.profileNames = ["default"];
     };
   };
 
@@ -44,6 +45,9 @@
   };
 
   programs = {
+    librewolf = {
+      enable = true;
+    };
     carapace = {
       enable = true;
       enableNushellIntegration = true;
