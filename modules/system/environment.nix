@@ -26,6 +26,8 @@
       unzip
       zip
       _7zz
+      # Wayland forwarding over SSH
+      waypipe
       (inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
         ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
       })
