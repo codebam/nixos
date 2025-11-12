@@ -1005,11 +1005,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1762908391,
-        "narHash": "sha256-1Pa8PK7iTRuiId6b1w7u2faeKsQ+Mj90+NDPA+VKkr4=",
+        "lastModified": 1762927053,
+        "narHash": "sha256-9P0cvQddgDMfZNp44l72YHu4PdsVULVCqJGR0zMawCU=",
         "owner": "mattwparas",
         "repo": "steel",
-        "rev": "4f4e5426e63d51a5523ddbd5d1c05c4a05f0c75e",
+        "rev": "8bc2c6aba8d8047415b33a1a3fe4244a74ede2b8",
         "type": "github"
       },
       "original": {
