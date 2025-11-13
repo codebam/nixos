@@ -127,7 +127,7 @@
       enable = false;
     };
     open-webui = {
-      enable = true;
+      enable = false;
       port = 8080;
       environment = {
         ANONYMIZED_TELEMETRY = "False";
@@ -157,7 +157,7 @@
       };
     };
     ollama = {
-      enable = true;
+      enable = false;
       host = "0.0.0.0";
       acceleration = "rocm";
       environmentVariables = {
