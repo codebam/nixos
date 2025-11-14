@@ -163,12 +163,12 @@
         set -gx SEARXNG_API_URL http://localhost:8081
         set -gx EDITOR hx
         set -gx NIXOS_OZONE_WL 1
-        set -gx OBS_VKCAPTURE 1
+        # set -gx OBS_VKCAPTURE 1
         # set -gx WLR_RENDERER vulkan
         set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
-        set -gx PROTON_ENABLE_WAYLAND 1
-        set -gx PROTON_ENABLE_HDR 1
-        set -gx PROTON_USE_NTSYNC 1
+        # set -gx PROTON_ENABLE_WAYLAND 1
+        # set -gx PROTON_ENABLE_HDR 1
+        # set -gx PROTON_USE_NTSYNC 1
         function __hm_play_bell_on_postexec --on-event fish_postexec
           if test $status -eq 0
             tput bel
