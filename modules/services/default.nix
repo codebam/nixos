@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   services = {
+    mullvad-vpn = {
+      enable = true;
+    };
     scx = {
       enable = true;
     };
