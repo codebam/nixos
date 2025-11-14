@@ -25,6 +25,7 @@ _: {
         }
         "/etc/NetworkManager/system-connections"
         "/etc/ssh"
+        "/etc/mullvad-vpn"
         "/var/lib/OpenRGB"
         "/var/lib/bluetooth"
         "/var/lib/iwd"
