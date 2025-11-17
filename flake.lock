@@ -550,11 +550,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763228015,
-        "narHash": "sha256-1rYieMVUyZ3kK/cBIr8mOusxrOEJ1/+2MsOg0oJ7b3A=",
+        "lastModified": 1763313531,
+        "narHash": "sha256-yvdCYUL85zEDp2NzPUBmaNBXP6KnWEOhAk3j7PTfsKw=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "96156a9e86281c4bfc451236bc2ddfe4317e6f39",
+        "rev": "3670a78eee49deebe4825fc8ecc46b172d1a8391",
         "type": "github"
       },
       "original": {
@@ -613,11 +613,11 @@
     "lix": {
       "flake": false,
       "locked": {
-        "lastModified": 1763218479,
-        "narHash": "sha256-fqP9QHlJ5JEcEhZ4wxaLbCxcpnIC15kxZSnOo/D1Nr4=",
+        "lastModified": 1763230907,
+        "narHash": "sha256-UlNr24CkNFmajXkPCzrRrSVMXo1yC0MlszRRPFkCqyo=",
         "ref": "refs/heads/main",
-        "rev": "243836ed0a0b963eebd033d109e6cb817d67fde4",
-        "revCount": 18522,
+        "rev": "fb4cc15f397f82d3e13538b960a136c02a6deac2",
+        "revCount": 18523,
         "type": "git",
         "url": "https://git.lix.systems/lix-project/lix.git"
       },
@@ -679,11 +679,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763201810,
-        "narHash": "sha256-jsUboJ5V2JG8kacnsHRJ6cE7MKoQwKV3eKSNpUnVS2s=",
+        "lastModified": 1763320115,
+        "narHash": "sha256-LAuPSsCC2T91ySIZtB53mc/6iytaF1oKupcwoOD/YSM=",
         "owner": "kevinJ045",
         "repo": "lulu",
-        "rev": "07f9e4869ee59c87aa8ce7fa9b74a025ecfcfdda",
+        "rev": "b9ce3c5a1e2a66665aabc828c636348119d9628f",
         "type": "github"
       },
       "original": {
@@ -743,11 +743,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1762660502,
-        "narHash": "sha256-C9F1C31ys0V7mnp4EcDy7L1cLZw/sCTEXqqTtGnvu08=",
+        "lastModified": 1763265660,
+        "narHash": "sha256-Ad9Rd3ZAidrH01xP73S3CjPiyXo7ywZs3uCESjPwUdc=",
         "owner": "nix-community",
         "repo": "nix-index-database",
-        "rev": "15c5451c63f4c612874a43846bfe3fa828b03eee",
+        "rev": "469ef53571ea80890c9497952787920c79c1ee6e",
         "type": "github"
       },
       "original": {
@@ -790,11 +790,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1763187301,
-        "narHash": "sha256-VgArs7MjFH0XRjZ/dWrUA1bDiJTld9Q824HQdLD3eFU=",
+        "lastModified": 1763291491,
+        "narHash": "sha256-eEYvm+45PPmy+Qe+nZDpn1uhoMUjJwx3PwVVQoO9ksA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "66d930cb8792aea66f1bb2562f26f08d2ce8c3db",
+        "rev": "c543a59edf25ada193719764f3bc0c6ba835f94d",
         "type": "github"
       },
       "original": {
@@ -983,11 +983,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763174172,
-        "narHash": "sha256-u6dcvXk2K6eYVYhmfiN3xmhIf3yUo5KPwm79UOD37Jo=",
+        "lastModified": 1763347184,
+        "narHash": "sha256-6QH8hpCYJxifvyHEYg+Da0BotUn03BwLIvYo3JAxuqQ=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "89af6762b01409edbb595888a69311e8e5954110",
+        "rev": "08895cce80433978d5bfd668efa41c5e24578cbd",
         "type": "github"
       },
       "original": {
@@ -1007,11 +1007,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1763184103,
-        "narHash": "sha256-HoVHF45oF69GmjY52+gSOD1Azj2jWCSKiBFGqZgC6vE=",
+        "lastModified": 1763250164,
+        "narHash": "sha256-7N3LBnDm7qIDR8zBDS0FY6UVp88L/mh8umT/YTTh7HA=",
         "owner": "mattwparas",
         "repo": "steel",
-        "rev": "7ad9d9c268dcee5bc1f86f24a698ac1ab49fdc31",
+        "rev": "90aa39eb0df033a6eeb579d553debc0fc48ef7ee",
         "type": "github"
       },
       "original": {
@@ -1065,11 +1065,11 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1763245881,
-        "narHash": "sha256-0q+4x1Gx3AMIRV8MIN2/WOJOAVMtfqnkY1m3k0iIDkI=",
+        "lastModified": 1763314990,
+        "narHash": "sha256-gs98KFE3X2HQ64gsIpQNsj1lKFTdkNdX+1KMQTDXEus=",
         "owner": "danth",
         "repo": "stylix",
-        "rev": "29dc3dd858c507bfd1038716197f84f40e41f28d",
+        "rev": "b68e8220689a6f0393204b07be1bc14bb973a0ed",
         "type": "github"
       },
       "original": {
