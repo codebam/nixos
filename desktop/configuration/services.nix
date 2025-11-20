@@ -134,7 +134,7 @@
       };
     };
     hardware.openrgb = {
-      enable = false;
+      enable = true;
     };
     open-webui = {
       enable = false;
