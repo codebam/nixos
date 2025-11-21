@@ -3,6 +3,7 @@
   services = {
     scx = {
       enable = true;
+      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     lsfg-vk = {
       enable = true;
@@ -34,9 +35,6 @@
       extraRules = ''
         KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
       '';
-    };
-    scx = {
-      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     desktopManager.plasma6.enable = true;
     openssh = {
