@@ -10,7 +10,7 @@
       openFirewall = true;
     };
     sunshine = {
-      enable = true;
+      enable = false;
       openFirewall = true;
       autoStart = true;
       settings = {
