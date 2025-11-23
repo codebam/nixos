@@ -381,22 +381,6 @@
         "type": "github"
       }
     },
-    "freesimplegui": {
-      "locked": {
-        "lastModified": 1762425654,
-        "narHash": "sha256-lLIUygOXFTyKfDmRjZFdX5t8LRBjwFThDBdSaAHXNKI=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "df0f5b2d63360dbfee693ebd08bc27478e6b84e0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "python-freesimplegui",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "fromYaml": {
       "flake": false,
       "locked": {
@@ -822,6 +806,29 @@
         "type": "github"
       }
     },
+    "plasma-manager": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1762784320,
+        "narHash": "sha256-odsk96Erywk5hs0dhArF38zb7Oe0q6LZ70gXbxAPKno=",
+        "owner": "nix-community",
+        "repo": "plasma-manager",
+        "rev": "7911a0f8a44c7e8b29d031be3149ee8943144321",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "plasma-manager",
+        "type": "github"
+      }
+    },
     "pre-commit": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -865,7 +872,6 @@
         "agenix": "agenix",
         "bsav": "bsav",
         "disko": "disko",
-        "freesimplegui": "freesimplegui",
         "helix": "helix",
         "home-manager": "home-manager_2",
         "jovian": "jovian",
@@ -876,6 +882,7 @@
         "lulu": "lulu",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_3",
+        "plasma-manager": "plasma-manager",
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
         "rust-overlay": "rust-overlay_3",
