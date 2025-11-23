@@ -63,8 +63,10 @@
       url = "github:codebam/bsav/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    freesimplegui = {
-      url = "github:codebam/nixpkgs/python-freesimplegui";
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
     #helix = {
     # url = "github:helix-editor/helix";
@@ -137,10 +139,13 @@
                 useUserPackages = true;
                 extraSpecialArgs = { inherit inputs; };
                 users.codebam = {
-                  imports = [ ./home ];
+                  imports = [
+                    ./home
+                  ];
                 };
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
+                  inputs.plasma-manager.homeModules.plasma-manager
                 ];
               };
             }

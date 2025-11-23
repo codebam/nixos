@@ -113,7 +113,6 @@
         tkinter
         pip
         requests
-        inputs.freesimplegui.legacyPackages.${pkgs.stdenv.hostPlatform.system}.python3Packages.freesimplegui
       ]))
     ];
 
