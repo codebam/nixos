@@ -84,8 +84,8 @@
         ]
       ))
       (discord.override {
-        withOpenASAR = true;
-        withVencord = true;
+        # withOpenASAR = true;
+        # withVencord = true;
       })
       bat
       gemini-cli
