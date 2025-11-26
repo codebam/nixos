@@ -69,6 +69,9 @@ _: {
           commonMountOptions = [
             "x-gvfs-hide"
           ];
+          files = [
+            ".config/kwinoutputconfig.json"
+          ];
           directories = [
             {
               directory = ".ssh";

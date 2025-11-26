@@ -9,6 +9,9 @@ _:
         TerminalService = "foot.desktop";
       };
     };
-    configFile.kcminputrc."Libinput/13364/832/Keychron Keychron V4 Mouse".PointerAccelerationProfile = 1;
+    configFile = {
+      kcminputrc."Libinput/13364/832/Keychron Keychron V4 Mouse".PointerAccelerationProfile = 1;
+      kwinrc.EdgeBarrier.EdgeBarrier = 0;
+    };
   };
 }
