@@ -21,7 +21,7 @@
 
     polarity = "dark";
     image = ../wallpaper.png;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/ayu-dark.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
     cursor = {
       package = pkgs.bibata-cursors;
       name = "Bibata Modern Classic";

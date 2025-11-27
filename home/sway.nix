@@ -19,30 +19,20 @@
         menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 131721 -n 59c2ff -M 131721 -m 59c2ff -S 59c2ff -s e6e1cf";
         seat = {
           "*" = {
-            # xcursor_theme = "Bibata-Modern-Classic";
             hide_cursor = "1000";
           };
         };
         output = {
-          "Dell Inc. Dell AW3821DW #GTIYMxgwABhF" = {
-            mode = "3840x1600@143.998Hz";
-            adaptive_sync = "off";
-            subpixel = "none";
-            render_bit_depth = "8";
+          "*" = {
+            mode = "2560x1440@239.760Hz";
+            adaptive_sync = "on";
+            subpixel = "rgb";
+            render_bit_depth = "10";
             allow_tearing = "yes";
             max_render_time = "off";
             # hdr = "on";
           };
-          "eDP-1" = {
-            scale = "1.5";
-          };
-          "HEADLESS-1" = {
-            mode = "1280x800@60.00Hz";
-          };
         };
-        workspaceOutputAssign = [
-          { workspace = "10"; output = "HEADLESS-1"; }
-        ];
         input = {
           "*" = {
             events = "enabled";
@@ -189,8 +179,8 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          exec '${pkgs.mako}/bin/mako'
-          exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
+          # exec '${pkgs.mako}/bin/mako'
+          # exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
         '';
     };
 }
