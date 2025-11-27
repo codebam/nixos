@@ -46,21 +46,6 @@
       domains = [ "codebam" ];
       passwordFile = config.age.secrets.duckdns-token.path;
     };
-    nginx = {
-      enable = true;
-      virtualHosts = {
-        "ai.seanbehan.ca" = {
-          enableACME = true;
-          addSSL = true;
-          locations = {
-            "/" = {
-              proxyPass = "http://localhost:8080/";
-              proxyWebsockets = true;
-            };
-          };
-        };
-      };
-    };
     pipewire = {
       extraConfig = {
         pipewire = {
