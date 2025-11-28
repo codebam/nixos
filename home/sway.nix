@@ -30,7 +30,7 @@
             render_bit_depth = "10";
             allow_tearing = "yes";
             max_render_time = "off";
-            # hdr = "on";
+            hdr = "on";
           };
         };
         input = {
