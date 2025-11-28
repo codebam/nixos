@@ -90,7 +90,7 @@
           echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "vo -50" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "vo -120" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon7/power1_cap
         '';
