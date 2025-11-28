@@ -32,6 +32,12 @@
             max_render_time = "off";
             hdr = "on";
           };
+          "DP-1" = {
+            position = "0 0";
+          };
+          "DP-3" = {
+            position = "2560 0";
+          };
         };
         input = {
           "*" = {
