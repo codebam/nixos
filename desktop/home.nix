@@ -15,6 +15,24 @@
     ];
   };
 
+  wayland.windowManager.sway.config.output = {
+    "*" = {
+      mode = "2560x1440@239.760Hz";
+      adaptive_sync = "on";
+      subpixel = "rgb";
+      render_bit_depth = "10";
+      allow_tearing = "yes";
+      max_render_time = "off";
+      hdr = "on";
+    };
+    "DP-1" = {
+      position = "0 0";
+    };
+    "DP-3" = {
+      position = "2560 0";
+    };
+  };
+
   services = {
     podman = {
       enable = true;
