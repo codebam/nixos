@@ -35,6 +35,10 @@
           "13364:832:Keychron_Keychron_V4" = {
             events = "enabled";
           };
+          "13364:53288:Keychron_Keychron_Ultra-Link_8K" = {
+            events = "enabled";
+            accel_profile = "flat";
+          };
           "1739:0:Synaptics_TM3289-021" = {
             events = "enabled";
             dwt = "enabled";
