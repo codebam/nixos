@@ -18,5 +18,6 @@ _:
     ./specialisation.nix
     ./system.nix
     ./jovian.nix
+    ./zram.nix
   ];
 }
