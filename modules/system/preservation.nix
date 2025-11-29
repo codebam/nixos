@@ -107,6 +107,7 @@ _: {
             ".local/state/wireplumber"
             ".config/Element"
             ".config/discord"
+            ".config/discordcanary"
             ".local/share/TelegramDesktop"
             ".local/share/zoxide"
             ".config/YouTube Music"
