@@ -83,8 +83,8 @@
           pass-genphrase
         ]
       ))
-      (discord.override {
-        # withOpenASAR = true;
+      (discord-canary.override {
+        withOpenASAR = true;
         # withVencord = true;
       })
       bat
