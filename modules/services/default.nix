@@ -35,10 +35,11 @@
       extraRules = ''
         KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
 
-        SUBSYSTEM!="usb_device", ACTION!="add", GOTO="objdev_rules_end"
-        ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="efe8", MODE="0666"
-        LABEL="objdev_rules_end"
-        SUBSYSTEM=="input", SYMLINK=="input/by-path/*event-mouse", GROUP="users", MODE="0660"
+        # MelGeek Hive Device
+        # Use 'uaccess' to allow the currently logged-in user to access the device
+        # without making it world-writable (0666).
+        SUBSYSTEM=="usb", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
+        SUBSYSTEM=="usb_device", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
       '';
     };
     desktopManager.plasma6.enable = true;
