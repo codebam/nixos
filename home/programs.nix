@@ -7,6 +7,9 @@
 
 {
   programs = {
+    chromium = {
+      enable = true;
+    };
     ghostty = {
       enable = false;
       enableFishIntegration = true;
