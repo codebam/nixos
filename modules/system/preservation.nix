@@ -127,6 +127,7 @@ _: {
             ".config/calcurse"
             ".local/share/calcurse"
             ".config/retroarch"
+            ".config/chromium"
           ];
         };
       };
