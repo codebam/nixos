@@ -26,8 +26,6 @@
     initrd.kernelModules = [ ];
     kernelModules = [
       "kvm-amd"
-      "amd_3d_vcache"
-      "ntsync"
     ];
     extraModulePackages = [ ];
     kernelParams = [
