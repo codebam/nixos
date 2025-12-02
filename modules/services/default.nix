@@ -33,8 +33,6 @@
         yubikey-personalization
       ];
       extraRules = ''
-        KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
-
         # MelGeek Hive Device
         # Use 'uaccess' to allow the currently logged-in user to access the device
         # without making it world-writable (0666).
