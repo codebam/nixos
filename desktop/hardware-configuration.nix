@@ -26,6 +26,7 @@
     initrd.kernelModules = [ ];
     kernelModules = [
       "kvm-amd"
+      "ntsync"
     ];
     extraModulePackages = [ ];
     kernelParams = [
