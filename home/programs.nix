@@ -9,6 +9,7 @@
   programs = {
     chromium = {
       enable = true;
+      package = pkgs.ungoogled-chromium;
     };
     ghostty = {
       enable = false;
