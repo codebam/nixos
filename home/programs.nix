@@ -123,12 +123,12 @@
     };
     mangohud = {
       enable = true;
-      settings = {
-        preset = 4;
-        gamemode = true;
-        hdr = true;
-        full = true;
-      };
+      # settings = {
+      #   preset = 4;
+      #   gamemode = true;
+      #   hdr = true;
+      #   full = true;
+      # };
     };
     wezterm = {
       enable = true;
