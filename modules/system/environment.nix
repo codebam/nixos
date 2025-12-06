@@ -7,7 +7,6 @@
       git
       gparted
       libnotify
-      mangohud
       nh
       nix-output-monitor
       nushell
