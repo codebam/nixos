@@ -46,7 +46,7 @@
 
   programs = {
     librewolf = {
-      enable = true;
+      # enable = true;
     };
     carapace = {
       enable = true;
