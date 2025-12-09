@@ -27,9 +27,11 @@
     };
     "DP-1" = {
       position = "0 0";
+      workspace = "1";
     };
     "DP-3" = {
       position = "2560 0";
+      workspace = "10";
     };
   };
 
