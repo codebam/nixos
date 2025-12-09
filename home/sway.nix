@@ -57,7 +57,7 @@
         bars = [
           {
             statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
-            mode = "dock";
+            mode = "hide";
             fonts = lib.mkForce {
               names = [ "Fira Code NerdFont" ];
               size = 11.0;
