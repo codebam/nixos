@@ -145,7 +145,6 @@
     file.".gitignore".text = ''
       Session.vim
       .claude/
-      .gemini/
     '';
 
     stateVersion = "25.11";
