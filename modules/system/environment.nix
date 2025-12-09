@@ -11,7 +11,6 @@
       nix-output-monitor
       nushell
       rclone
-      run0-sudo-shim
       via
       wl-clipboard
       xdg-utils
