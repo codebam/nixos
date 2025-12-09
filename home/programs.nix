@@ -291,7 +291,7 @@
     };
     foot = {
       server = {
-        enable = true;
+        enable = false;
       };
       enable = true;
       settings = {
