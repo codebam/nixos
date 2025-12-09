@@ -83,7 +83,7 @@
         };
         focus = {
           followMouse = false;
-          wrapping = "workspace";
+          wrapping = "no";
         };
         workspaceAutoBackAndForth = true;
         defaultWorkspace = "workspace number 1";
