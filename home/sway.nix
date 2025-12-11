@@ -123,17 +123,19 @@
               fi
             '')}";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
+              focused=$(${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name')
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
-              ${pkgs.grim}/bin/grim - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
-              ${pkgs.grim}/bin/grim $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
+              ${pkgs.grim}/bin/grim -o "$focused" - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
+              ${pkgs.grim}/bin/grim -o "$focused" $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
             '')}";
             "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
+              focused=$(${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name')
               temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
-              ${pkgs.grim}/bin/grim "$temp_file"
+              ${pkgs.grim}/bin/grim -o "$focused" "$temp_file"
               ${pkgs.imv}/bin/imv -f "$temp_file" &
               imv_pid=$!
               sleep 0.1
-              region=$(${pkgs.slurp}/bin/slurp)
+              region=$(${pkgs.slurp}/bin/slurp -o "$focused")
               if [ -n "$region" ]; then
                   ${pkgs.grim}/bin/grim -g "$region" - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
                   ${pkgs.grim}/bin/grim -g "$region" $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
