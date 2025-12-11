@@ -85,7 +85,12 @@
       ))
       (discord-canary.override {
         withOpenASAR = true;
-        # withVencord = true;
+      })
+      (discord-ptb.override {
+        withOpenASAR = true;
+      })
+      (discord.override {
+        withOpenASAR = true;
       })
       bat
       gemini-cli
