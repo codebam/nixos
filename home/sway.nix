@@ -164,7 +164,7 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          # exec '${pkgs.mako}/bin/mako'
+          exec '${pkgs.mako}/bin/mako'
           # exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
         '';
     };
