@@ -108,6 +108,7 @@ _: {
             ".config/Element"
             ".config/discord"
             ".config/discordcanary"
+            ".config/discordptb"
             ".local/share/TelegramDesktop"
             ".local/share/zoxide"
             ".config/YouTube Music"
