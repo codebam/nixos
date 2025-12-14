@@ -36,6 +36,15 @@
     };
     overlays = [
       (final: prev: {
+        xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
+          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
+          buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
+          postInstall = ''
+            ${oldAttrs.postInstall or ""}
+            wrapProgram $out/libexec/xdg-desktop-portal-wlr \
+              --prefix PATH : ${lib.makeBinPath [ prev.wmenu ]}
+          '';
+        });
         wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
           src = prev.fetchFromGitLab {
             domain = "gitlab.freedesktop.org";
