@@ -93,7 +93,7 @@
           in
           lib.mkOptionDefault {
             "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
-            "${modifier}+shift+p" = "exec ${pkgs.swaylock}/bin/swaylock & systemctl suspend";
+            "${modifier}+shift+p" = "output 'DP-1' toggle; output 'DP-3' toggle";
             "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
             "XF86AudioPlay" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
             "${modifier}+shift+y" = "exec ${pkgs.playerctl}/bin/playerctl previous";
