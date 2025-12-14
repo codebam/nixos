@@ -47,10 +47,10 @@
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    helix = {
-      url = "github:codebam/helix-steel-flake/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # helix = {
+    #   url = "github:codebam/helix-steel-flake/main";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     steel = {
       url = "github:mattwparas/steel/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -160,7 +160,7 @@
             nil
             nixd
             nixpkgs-fmt
-            inputs.helix.packages.${stdenv.hostPlatform.system}.default
+            # inputs.helix.packages.${stdenv.hostPlatform.system}.default
           ];
         };
       });

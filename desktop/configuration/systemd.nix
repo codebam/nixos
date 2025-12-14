@@ -22,6 +22,15 @@
     #     unitConfig.DefaultDependencies = "no";
     #   };
     # };
+    user = {
+      services = {
+        xdg-desktop-portal-wlr = {
+          serviceConfig = {
+            ExecStart = [ "" "${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr -l DEBUG" ];
+          };
+        };
+      };
+    };
     timers = {
       nix-build-steamdeck = {
         enable = false;

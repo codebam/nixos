@@ -27,7 +27,7 @@
     };
     helix = {
       enable = true;
-      package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultEditor = true;
       settings = {
         theme = lib.mkForce "ayu_mirage";
