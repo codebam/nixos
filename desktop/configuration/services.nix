@@ -41,7 +41,7 @@
       };
     };
     ddclient = {
-      enable = true;
+      enable = false;
       protocol = "duckdns";
       domains = [ "codebam" ];
       passwordFile = config.age.secrets.duckdns-token.path;
