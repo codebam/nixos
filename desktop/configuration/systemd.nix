@@ -103,6 +103,7 @@
           echo "vo -110" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon7/power1_cap
+          echo "high" | sudo tee /sys/class/drm/card1/device/power_dpm_force_performance_level
         '';
       };
       nixos-upgrade = {
