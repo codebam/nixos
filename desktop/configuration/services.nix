@@ -5,6 +5,20 @@
 
 {
   services = {
+    pipewire.wireplumber.extraConfig = {
+      "10-disable-suspend" = {
+        "monitor.alsa.rules" = [
+          {
+            matches = [{ "node.name" = "~alsa_output.*"; } { "node.name" = "~alsa_input.*"; }];
+            actions = {
+              update-props = {
+                "session.suspend-timeout-seconds" = 0;
+              };
+            };
+          }
+        ];
+      };
+    };
     iperf3 = {
       enable = true;
       openFirewall = true;
