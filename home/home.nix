@@ -109,7 +109,7 @@
       telegram-desktop
       tor-browser
       weechat
-      youtube-music
+      pear-desktop
       kdePackages.kdenlive
       calcurse
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
