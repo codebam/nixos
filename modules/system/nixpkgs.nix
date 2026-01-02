@@ -50,16 +50,16 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "ba931024a514be75a8a84a21483f9a888e0a9f1c";
-            hash = "sha256-vNsnDWQJ7044FLBIYAjEtONQXJAn/6yDC24Hg3lXhko=";
+            rev = "53cdceb371f31be8e58705ac53bee375283bbb91";
+            hash = "sha256-lf/ecOUoSxeLRgqN89yItOX2PdLJuhNcMxjaS9P/Ts0=";
           };
         });
         sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "f4aba22582184c9a4a20fd7a9ffd70c63b4b393d";
-            hash = "sha256-2k4M3H5E4+9QVR7uV2+R834fiA8vFNjUSDEZpR0fM/I=";
+            rev = "dbe86400357fb1d41693874f7d9f70f285fd1737";
+            hash = "sha256-/X+pBt45Zqq6G7z/9phbfolCvR97/fyKDpSju6T1YhU=";
           };
           # patches = old.patches ++ [
           #   (prev.fetchurl {
