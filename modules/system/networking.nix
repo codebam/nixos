@@ -7,6 +7,14 @@ _:
     };
     wireless.iwd = {
       enable = true;
+      settings = {
+        Scan = {
+          DisableScanningWhileConnected = true;
+        };
+        General = {
+          EnableNetworkConfiguration = true;
+        };
+      };
       # settings = {
       #   Rank = {
       #     BandModifier2_4GHz = 0.0;
