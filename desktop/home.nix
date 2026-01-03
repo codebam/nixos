@@ -43,6 +43,20 @@
         output = "DP-3";
       }
     ];
+    window.commands = [
+      {
+        command = "tearing enable";
+        criteria = { class = "cs2"; };
+      }
+      {
+        command = "border none";
+        criteria = { class = "cs2"; };
+      }
+      {
+        command = "max_render_time off";
+        criteria = { class = "cs2"; };
+      }
+    ];
   };
 
   services = {
