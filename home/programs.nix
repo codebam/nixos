@@ -169,6 +169,7 @@
         set -gx NIXOS_OZONE_WL 1
         # set -gx OBS_VKCAPTURE 1
         set -gx WLR_RENDERER vulkan
+        set -gx WLR_DRM_NO_ATOMIC 1
         # set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
         # set -gx PROTON_ENABLE_WAYLAND 1
         # set -gx PROTON_ENABLE_HDR 1
