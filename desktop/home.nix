@@ -56,10 +56,6 @@
         command = "max_render_time off";
         criteria = { class = "cs2"; };
       }
-      {
-        command = "cursor bypass"; 
-        criteria = { class = "cs2"; };
-      }
     ];
   };
 
