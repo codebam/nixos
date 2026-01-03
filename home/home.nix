@@ -27,6 +27,8 @@
       NIXOS_OZONE_WL = "1";
       # OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
+      AMD_USERQ = "1";
+      RADV_PERFTEST = "userq";
       # WLR_DRM_NO_ATOMIC = "1"; # screen tearing support
       # MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
       # PROTON_ENABLE_WAYLAND = "1";
