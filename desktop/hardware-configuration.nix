@@ -33,6 +33,8 @@
       "drm.panic_screen=qr_code"
     ];
     kernel.sysctl."kernel.sysrq" = 1;
+    kernel.sysctl."net.core.default_qdisc" = "cake";
+    kernel.sysctl."net.ipv4.tcp_congestion_control" = "bbr";
   };
 
   fileSystems."/games" = {
