@@ -1,4 +1,4 @@
-_:
+{pkgs, ...}:
 {
   networking = {
     networkmanager = {
@@ -43,6 +43,16 @@ _:
       ];
       allowedUDPPortRanges = allowedTCPPortRanges;
       trustedInterfaces = [ "virbr0" "tailscale0" ];
+    };
+  };
+  systemd.services.wifi-performance = {
+    description = "Disable Wi-Fi Power Save";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.iw}/bin/iw dev wlan0 set power_save off";
+      RemainAfterExit = true;
     };
   };
 }
