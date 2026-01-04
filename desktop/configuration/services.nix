@@ -5,6 +5,15 @@
 
 {
   services = {
+    timesyncd.enable = false;
+    chrony = {
+      enable = true;
+      servers = [ "time.cloudflare.com" "time.google.com" ];
+      extraConfig = ''
+        makestep 1.0 3
+      '';
+    };
+    
     pipewire.wireplumber.extraConfig = {
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
