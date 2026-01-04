@@ -4,7 +4,12 @@
   boot = {
     supportedFilesystems = [ "bcachefs" ];
     kernelPackages = pkgs.linuxPackages_xanmod_latest;
-    kernelParams = [ "usbcore.autosuspend=-1" ];
+    kernelParams = [
+      "usbcore.autosuspend=-1"
+      "processor.max_cstate=1"
+      "idle=nomwait"
+      "amd_pstate=active"
+    ];
     initrd = {
       systemd = {
         extraBin = {
