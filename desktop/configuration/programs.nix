@@ -17,6 +17,7 @@
     };
     gamescope = {
       enable = true;
+      capSysNice = true;
     };
     gamemode = {
       enable = true;
