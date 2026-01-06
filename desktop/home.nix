@@ -166,14 +166,14 @@
               path = "/games";
               warning = 20.0;
             }
-            {
-              alert = 10.0;
-              block = "disk_space";
-              info_type = "available";
-              interval = 60;
-              path = "/backup";
-              warning = 20.0;
-            }
+            # {
+            #   alert = 10.0;
+            #   block = "disk_space";
+            #   info_type = "available";
+            #   interval = 60;
+            #   path = "/backup";
+            #   warning = 20.0;
+            # }
             {
               block = "memory";
               format = "$icon $mem_used_percents ";
