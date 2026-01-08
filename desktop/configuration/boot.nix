@@ -9,6 +9,7 @@
       "processor.max_cstate=1"
       "idle=nomwait"
       "amd_pstate=active"
+      "transparent_hugepage=never"
     ];
     initrd = {
       systemd = {
