@@ -23,7 +23,7 @@
         subpixel = "rgb";
         # render_bit_depth = "10";
         allow_tearing = "yes";
-        max_render_time = "off";
+        # max_render_time = "off";
         # hdr = "on";
       };
       "DP-1" = {
@@ -55,6 +55,18 @@
       {
         command = "max_render_time off";
         criteria = { class = "cs2"; };
+      }
+      {
+        command = "border none";
+        criteria = { app_id = "cs2"; };
+      }
+      {
+        command = "floating disable";
+        criteria = { app_id = "cs2"; };
+      }
+      {
+        command = "inhibit_idle focus";
+        criteria = { app_id = "cs2"; };
       }
     ];
   };

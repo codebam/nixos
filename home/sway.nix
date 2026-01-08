@@ -168,6 +168,7 @@
           }
           exec '${pkgs.mako}/bin/mako'
           # exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
+          mouse_warping none
         '';
     };
 }
