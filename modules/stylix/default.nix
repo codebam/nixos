@@ -16,7 +16,7 @@
       name = "Bibata Modern Classic";
       size = 24;
     };
-    iconTheme = {
+    icons = {
       package = pkgs.papirus-icon-theme;
       light = "Papirus Light";
       dark = "Papirus Dark";
