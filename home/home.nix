@@ -109,11 +109,11 @@
       rcm
       ripgrep
       slurp
-      telegram-desktop
+      # telegram-desktop
       tor-browser
       weechat
       pear-desktop
-      kdePackages.kdenlive
+      # kdePackages.kdenlive
       calcurse
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
