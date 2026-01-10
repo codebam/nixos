@@ -1,4 +1,4 @@
 { lib, ... }:
 {
-  qt.platformTheme = lib.mkForce "kde";
+  # qt.platformTheme = lib.mkForce "kde";
 }

@@ -27,7 +27,7 @@
       enableSSHSupport = true;
       pinentryPackage = pkgs.pinentry-tty;
     };
-    kdeconnect.enable = true;
+    kdeconnect.enable = false;
     sway.enable = true;
     dconf.enable = true;
   };
