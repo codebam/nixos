@@ -1,7 +1,7 @@
-_:
+{lib, ...}:
 
 {
   services = {
-    desktopManager.gnome.enable = true;
+    desktopManager.plasma6.enable = lib.mkForce true;
   };
 }
