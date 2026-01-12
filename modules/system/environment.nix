@@ -2,7 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
-      claude-code
+      # claude-code
       dig
       git
       gparted
