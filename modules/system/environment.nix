@@ -29,7 +29,6 @@
       # Wallpaper Engine
       linux-wallpaperengine
       # easyeffects
-      vibrantlinux
       # kdePackages.wallpaper-engine-plugin
       (inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
         ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
