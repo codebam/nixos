@@ -163,6 +163,10 @@
   };
 
   xdg.configFile = {
+    "vkBasalt/vkBasalt.conf".text = ''
+      effects = vibrance
+      vibrance = 0.5
+    '';
     "gtk-3.0/gtk.css".force = true;
     "gtk-4.0/gtk.css".force = true;
   };
