@@ -15,6 +15,10 @@ _:
     firewall.allowedUDPPorts = [
       8211 # PalWorld port
       27015 # Steam query port
+      1900 # UPnP
+    ];
+    firewall.allowedUDPPortRanges = [
+      { from = 32768; to = 61000; } # UPnP
     ];
   };
 }
