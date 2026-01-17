@@ -9,14 +9,14 @@
   programs = {
     chromium = {
       enable = true;
-      # package = pkgs.ungoogled-chromium;
-      package = (import (fetchTarball {
-          url = "https://github.com/NixOS/nixpkgs/archive/c88b7058bbe09dc88150441cc5af0fca27c2065a.tar.gz";
-          sha256 = "sha256-Lf1csETc+Tz9ygesd20UR4d7HtwUxcLcUEKiIIRaTEc=";
-        }) {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
-      }).ungoogled-chromium;
+      package = pkgs.ungoogled-chromium;
+      # package = (import (fetchTarball {
+      #     url = "https://github.com/NixOS/nixpkgs/archive/c88b7058bbe09dc88150441cc5af0fca27c2065a.tar.gz";
+      #     sha256 = "sha256-Lf1csETc+Tz9ygesd20UR4d7HtwUxcLcUEKiIIRaTEc=";
+      #   }) {
+      #     system = "x86_64-linux";
+      #     config.allowUnfree = true;
+      # }).ungoogled-chromium;
     };
     ghostty = {
       enable = false;
