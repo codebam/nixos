@@ -176,8 +176,8 @@
         set -gx NIXOS_OZONE_WL 1
         # set -gx OBS_VKCAPTURE 1
         set -gx WLR_RENDERER vulkan
-        set -gx AMD_USERQ 1
-        set -gx RADV_PERFTEST userq
+        # set -gx AMD_USERQ 1
+        # set -gx RADV_PERFTEST userq
         set -gx GTK_USE_PORTAL 1
         # set -gx WLR_DRM_NO_ATOMIC 1
         # set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
