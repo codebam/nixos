@@ -191,8 +191,8 @@ in {
         reshadeTexturePath = ${sweetfx-src}/Textures
         effects = vibrance:cas
         vibrance = ${reshade-shaders}/SweetFX/Vibrance.fx
-        Vibrance = 0.2
-        casSharpness = 0.4
+        Vibrance = 0.25
+        casSharpness = 0.35
       '';
     };
   };
