@@ -189,9 +189,10 @@ in {
       "vkBasalt/vkBasalt.conf".text = ''
         reshadeIncludePath = ${reshade-shaders}
         reshadeTexturePath = ${sweetfx-src}/Textures
-        effects = vibrance
+        effects = vibrance:cas
         vibrance = ${reshade-shaders}/SweetFX/Vibrance.fx
-        Vibrance = 0.5
+        Vibrance = 0.2
+        casSharpness = 0.4
       '';
     };
   };
