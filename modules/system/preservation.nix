@@ -105,6 +105,7 @@ _: {
             ".librewolf"
             ".password-store"
             ".local/state/wireplumber"
+            ".config/vesktop"
             ".config/Element"
             ".config/discord"
             ".config/discordcanary"
