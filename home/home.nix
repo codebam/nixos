@@ -1,6 +1,26 @@
 { pkgs, inputs, ... }:
 
-{
+let
+  sweetfx-src = pkgs.fetchFromGitHub {
+    owner = "CeeJayDK";
+    repo = "SweetFX";
+    rev = "master";
+    hash = "sha256-h7nqn4aQHomrI/NG0Oj2R9bBT8VfzRGVSZ/CSi/Ishs=";
+  };
+  reshade-headers = pkgs.fetchFromGitHub {
+    owner = "crosire";
+    repo = "reshade-shaders";
+    rev = "slim";
+    hash = "sha256-87Z+4p4Sx5FcTIvh9cMcHvjySWg5ohHAwvNV6RbLq4A=";
+  };
+  reshade-shaders = pkgs.symlinkJoin {
+    name = "reshade-shaders";
+    paths = [
+      "${sweetfx-src}/Shaders"
+      "${reshade-headers}/Shaders"
+    ];
+  };
+in {
   home = {
     username = "codebam";
     homeDirectory = "/home/codebam";
@@ -162,8 +182,17 @@
     gtk2.force = true;
   };
 
-  xdg.configFile = {
-    "gtk-3.0/gtk.css".force = true;
-    "gtk-4.0/gtk.css".force = true;
+  xdg = {
+    configFile = {
+      "gtk-3.0/gtk.css".force = true;
+      "gtk-4.0/gtk.css".force = true;
+      "vkBasalt/vkBasalt.conf".text = ''
+        reshadeIncludePath = ${reshade-shaders}
+        reshadeTexturePath = ${sweetfx-src}/Textures
+        effects = vibrance
+        vibrance = ${reshade-shaders}/SweetFX/Vibrance.fx
+        Vibrance = 0.5
+      '';
+    };
   };
 }

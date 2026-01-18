@@ -30,6 +30,7 @@
       linux-wallpaperengine
       # easyeffects
       # kdePackages.wallpaper-engine-plugin
+      vkbasalt
       (inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
         ageBin = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
       })
