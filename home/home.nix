@@ -107,15 +107,27 @@ in {
           pass-genphrase
         ]
       ))
-      (discord-canary.override {
-        withOpenASAR = true;
-      })
-      (discord-ptb.override {
-        withOpenASAR = true;
-      })
-      (discord.override {
-        withOpenASAR = true;
-      })
+      # (discord-canary.override {
+      #   withOpenASAR = true;
+      # })
+      # (discord-ptb.override {
+      #   withOpenASAR = true;
+      # })
+      # (discord.override {
+      #   withOpenASAR = true;
+      # })
+      (pkgs.discord.overrideAttrs (oldAttrs: {
+        src = pkgs.fetchurl {
+          url = "https://discord.com/api/download?platform=linux&format=tar.gz";
+          curlOptsList = [ 
+            "--user-agent" 
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" 
+          ];
+          name = "discord.tar.gz";
+          sha256 = "sha256-4rJ0l0zSoOz7L65sy3Gegcsb/nJGGFu6h5TGAb0fqUI="; 
+        };
+        pname = "discord"; 
+      }))
       bat
       gemini-cli
       google-cloud-sdk
