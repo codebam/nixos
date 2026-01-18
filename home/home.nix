@@ -189,13 +189,9 @@ in {
       "vkBasalt/vkBasalt.conf".text = ''
         reshadeIncludePath = ${reshade-shaders}
         reshadeTexturePath = ${sweetfx-src}/Textures
-        effects = vibrance:lumasharpen
+        effects = vibrance
         vibrance = ${reshade-shaders}/SweetFX/Vibrance.fx
         Vibrance = 0.5
-        lumasharpen = ${reshade-shaders}/SweetFX/LumaSharpen.fx
-        sharp_strength = 0.80
-        sharp_clamp = 0.050
-        pattern = 2
       '';
     };
   };
