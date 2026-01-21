@@ -13,6 +13,7 @@
       enable = true;
       systemd.enable = true;
       wrapperFeatures.gtk = true;
+      xwayland = true;
       config = rec {
         inherit modifier;
         terminal = "${pkgs.foot}/bin/foot";
@@ -72,6 +73,12 @@
           titlebar = false;
           border = 1;
           hideEdgeBorders = "smart";
+          commands = [
+            {
+              command = "tearing enable";
+              criteria = { class = "cs2"; };
+            }
+          ];
         };
         floating = {
           titlebar = false;
@@ -166,9 +173,8 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
-          exec '${pkgs.mako}/bin/mako'
-          # exec '${pkgs.sway}/bin/swaymsg create_output HEADLESS-1'
           mouse_warping none
+          exec '${pkgs.mako}/bin/mako'
         '';
     };
 }
