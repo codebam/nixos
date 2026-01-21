@@ -130,12 +130,33 @@
     };
     mangohud = {
       enable = true;
-      # settings = {
-      #   preset = 4;
-      #   gamemode = true;
-      #   hdr = true;
-      #   full = true;
-      # };
+      settings = {
+        legacy_layout = false;
+        horizontal = true;
+        font_size = 20;
+        background_alpha = 0.0;
+        hud_no_margin = true;
+        present_mode = true;
+        fps = true;
+        frametime = true;
+        frame_timing = true;
+        histogram = true;
+        gpu_stats = true;
+        gpu_temp = true;
+        gpu_load_change = true;
+        gpu_power = true;
+        gpu_mhz = true;
+        vram = true;
+        cpu_stats = true;
+        cpu_temp = true;
+        cpu_load_change = true;
+        cpu_mhz = true;
+        cpu_power = true;
+        ram = true;
+        vulkan_driver = true;
+        engine_version = true;
+        display_server = true;
+      };
     };
     wezterm = {
       enable = true;
