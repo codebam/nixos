@@ -19,7 +19,7 @@
       output = {
       "*" = {
         mode = "2560x1440@239.760Hz";
-        adaptive_sync = "on";
+        adaptive_sync = "off";
         subpixel = "rgb";
         # render_bit_depth = "10";
         allow_tearing = "yes";
