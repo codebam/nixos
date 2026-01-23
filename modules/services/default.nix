@@ -44,11 +44,6 @@
         # MelGeek Made68 Ultra
         SUBSYSTEM=="usb", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
         SUBSYSTEM=="usb_device", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
-
-        # Pulsar X2 Crazylight Mini
-        SUBSYSTEM=="usb", ATTR{idVendor}=="3710", ATTR{idProduct}=="0101", TAG+="uaccess"
-        SUBSYSTEM=="usb_device", ATTR{idVendor}=="3710", ATTR{idProduct}=="0101", TAG+="uaccess"
-        SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3710", ATTRS{idProduct}=="0101", TAG+="uaccess"
       '';
     };
     desktopManager.plasma6.enable = false;
