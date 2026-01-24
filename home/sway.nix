@@ -29,6 +29,8 @@
           "*" = {
             events = "enabled";
             accel_profile = "flat";
+            scroll_method = "on_button_down";
+            scroll_button = "274";
           };
           "1739:0:Synaptics_TM3289-021" = {
             events = "enabled";
