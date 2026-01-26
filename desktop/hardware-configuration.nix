@@ -43,14 +43,14 @@
     options = [ "compress=zstd" ];
   };
 
-  fileSystems."/backup" = {
-    device = "/dev/disk/by-uuid/eb973c9e-8d9f-4aaa-9d8c-65486256d1c4";
-    fsType = "btrfs";
-    options = [
-      "compress=zstd"
-      "nofail"
-    ];
-  };
+  # fileSystems."/backup" = {
+  #   device = "/dev/disk/by-uuid/eb973c9e-8d9f-4aaa-9d8c-65486256d1c4";
+  #   fsType = "btrfs";
+  #   options = [
+  #     "compress=zstd"
+  #     "nofail"
+  #   ];
+  # };
 
   swapDevices = [
   ];
