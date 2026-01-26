@@ -6,8 +6,8 @@
       package = pkgs.mullvad-vpn;
     };
     displayManager = {
-      gdm = {
-        enable = false;
+      ly = {
+        enable = true;
       };
     };
   };
