@@ -11,6 +11,7 @@
           "wheel"
           "networkmanager"
           "libvirtd"
+          "audio"
           "video"
           "uinput"
           "wireshark"
