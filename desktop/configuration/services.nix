@@ -75,7 +75,7 @@
           "92-low-latency" = {
             "context.properties" = {
               "default.clock.quantum" = 128;
-              "default.clock.min-quantum" = 96;
+              "default.clock.min-quantum" = 64;
               "default.clock.max-quantum" = 512;
             };
           };
