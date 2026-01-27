@@ -74,16 +74,15 @@
         pipewire = {
           "92-low-latency" = {
             "context.properties" = {
-              "default.clock.quantum" = 64;
-              "default.clock.min-quantum" = 32;
-              "default.clock.max-quantum" = 1024;
+              "default.clock.quantum" = 128;
+              "default.clock.min-quantum" = 96;
+              "default.clock.max-quantum" = 512;
             };
           };
-          "10-high-sample-rate" = {
+          "10-high-sample-rates" = {
             "context.properties" = {
               "default.clock.allowed-rates" = [ 44100 48000 192000 384000 768000 ];
               "default.clock.rate" = 48000;
-              # "default.clock.rate" = 192000;
             };
           };
         };
