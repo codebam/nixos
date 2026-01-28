@@ -5,6 +5,10 @@
 
 {
   services = {
+    irqbalance = {
+      enable = false;
+    };
+
     timesyncd.enable = false;
     chrony = {
       enable = true;
