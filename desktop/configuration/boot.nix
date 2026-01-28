@@ -6,14 +6,10 @@
     kernelPackages = pkgs.linuxPackages_xanmod_latest;
     kernelParams = [
       "usbcore.autosuspend=-1"
-      "processor.max_cstate=1"
-      "idle=nomwait"
       "amd_pstate=active"
       "transparent_hugepage=always"
       "split_lock_detect=off"
-      "pcie_aspm=off"
       "preempt=full"
-      "threadirqs"
     ];
     initrd = {
       systemd = {
