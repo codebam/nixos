@@ -9,7 +9,11 @@
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
-      extraArgs = [ "--performance" "--no-core-compaction" "--no-freq-scaling" ];
+      extraArgs = [
+        "--performance"
+        "--no-core-compaction"
+        "--no-freq-scaling"
+      ];
     };
     lsfg-vk = {
       enable = true;
