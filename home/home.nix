@@ -122,7 +122,6 @@ in {
       gemini-cli
       google-cloud-sdk
       grim
-      heroic
       nil
       nixd
       nodePackages_latest.nodejs
@@ -135,7 +134,6 @@ in {
       # telegram-desktop
       # tor-browser
       weechat
-      pear-desktop
       # kdePackages.kdenlive
       calcurse
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
