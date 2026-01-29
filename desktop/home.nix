@@ -72,6 +72,11 @@
   };
 
   services = {
+    mako = {
+      settings = {
+        output = "DP-3";
+      };
+    };
     podman = {
       enable = true;
       containers = {
