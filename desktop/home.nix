@@ -19,12 +19,10 @@
       output = {
       "*" = {
         mode = "2560x1440@239.760Hz";
-        adaptive_sync = "off";
+        adaptive_sync = "on";
         subpixel = "rgb";
-        # render_bit_depth = "10";
+        render_bit_depth = "8";
         allow_tearing = "yes";
-        # max_render_time = "off";
-        # hdr = "on";
       };
       "DP-1" = {
         position = "0 0";
