@@ -7,19 +7,19 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lix = {
-      url = "git+https://git.lix.systems/lix-project/lix.git";
-      flake = false;
-    };
+    # lix = {
+    #   url = "git+https://git.lix.systems/lix-project/lix.git";
+    #   flake = false;
+    # };
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lix-module = {
-      url = "git+https://git.lix.systems/lix-project/nixos-module.git";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.lix.follows = "lix";
-    };
+    # lix-module = {
+    #   url = "git+https://git.lix.systems/lix-project/nixos-module.git";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.lix.follows = "lix";
+    # };
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs = {
@@ -111,7 +111,7 @@
           # Pass all flake inputs to NixOS modules
           specialArgs = { inherit inputs; };
           modules = [
-            inputs.lix-module.nixosModules.default
+            # inputs.lix-module.nixosModules.default
             inputs.disko.nixosModules.disko
             inputs.lanzaboote.nixosModules.lanzaboote
             (
