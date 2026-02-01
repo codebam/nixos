@@ -76,6 +76,27 @@
     pipewire = {
       extraConfig = {
         pipewire = {
+          "99-iem-safe" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-loopback";
+                args = {
+                  "node.description" = "IEM (Safe Mode)";
+                  "capture.props" = {
+                    "node.name" = "iem_safe_sink";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "iem_safe_out";
+                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                    "node.passive" = true;
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                };
+              }
+            ];
+          };
           "92-low-latency" = {
             "context.properties" = {
               "default.clock.quantum" = 128;
