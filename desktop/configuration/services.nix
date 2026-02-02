@@ -76,6 +76,141 @@
     pipewire = {
       extraConfig = {
         pipewire = {
+          "99-m50x-music" = {
+            "context.modules" = [
+              {
+                "name" = "libpipewire-module-filter-chain";
+                "args" = {
+                  "node.description" = "ATH-M50x (Clarity)";
+                  "media.name" = "ATH-M50x (Clarity)";
+                  "filter.graph" = {
+                    "nodes" = [
+                      {
+                        "type" = "builtin";
+                        "name" = "preamp";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 0.0; "Gain" = -2.0; "Q" = 1.0; };
+                      }
+                      # Band 1: Cut Mid-Bass Bloat (Crucial for M50x)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_1";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 200.0; "Gain" = -3.0; "Q" = 1.0; };
+                      }
+                      # Band 2: Boost Mids (Restores lost vocals)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_2";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 1000.0; "Gain" = 1.5; "Q" = 1.4; };
+                      }
+                      # Band 3: Tame Sibilance (Reduces the "Sss" sharpness)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_3";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 8500.0; "Gain" = -2.5; "Q" = 2.0; };
+                      }
+                    ];
+                    "links" = [
+                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
+                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
+                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
+                    ];
+                    "inputs"  = [ "preamp:In" ];
+                    "outputs" = [ "band_3:Out" ];
+                  };
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.passive" = false;
+                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
+                };
+              }
+            ];
+          };
+          "99-m50x-cs2" = {
+            "context.modules" = [
+              {
+                "name" = "libpipewire-module-filter-chain";
+                "args" = {
+                  "node.description" = "ATH-M50x (CS2 Comp)";
+                  "media.name" = "ATH-M50x (CS2 Comp)";
+                  "filter.graph" = {
+                    "nodes" = [
+                      # Preamp: Safety
+                      {
+                        "type" = "builtin";
+                        "name" = "preamp";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 0.0; "Gain" = -4.0; "Q" = 1.0; };
+                      }
+                      # Band 1: Heavy Bass Cut (M50x bass drowns out everything in CS2)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_1";
+                        "label" = "bq_lowshelf";
+                        "control" = { "Freq" = 150.0; "Gain" = -6.0; "Q" = 0.7; };
+                      }
+                      # Band 2: Remove Boxiness
+                      {
+                        "type" = "builtin";
+                        "name" = "band_2";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 350.0; "Gain" = -2.5; "Q" = 1.0; };
+                      }
+                      # Band 3: Aggressive Footstep Boost
+                      {
+                        "type" = "builtin";
+                        "name" = "band_3";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 2000.0; "Gain" = 3.5; "Q" = 1.4; };
+                      }
+                      # Band 4: Info/Reload Boost
+                      {
+                        "type" = "builtin";
+                        "name" = "band_4";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 4000.0; "Gain" = 3.0; "Q" = 1.4; };
+                      }
+                      # Band 5: High Treble Cut (Reduces ear fatigue from AWP cracks)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_5";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 9000.0; "Gain" = -3.0; "Q" = 0.7; };
+                      }
+                    ];
+                    "links" = [
+                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
+                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
+                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
+                      { "output" = "band_3:Out"; "input" = "band_4:In"; }
+                      { "output" = "band_4:Out"; "input" = "band_5:In"; }
+                    ];
+                    "inputs"  = [ "preamp:In" ];
+                    "outputs" = [ "band_5:Out" ];
+                  };
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.passive" = false;
+                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
+                };
+              }
+            ];
+          };
           "99-simgot-eq" = {
             "context.modules" = [
               {
