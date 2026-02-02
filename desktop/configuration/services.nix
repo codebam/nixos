@@ -76,6 +76,82 @@
     pipewire = {
       extraConfig = {
         pipewire = {
+          "99-simgot-eq" = {
+            "context.modules" = [
+              {
+                "name" = "libpipewire-module-filter-chain";
+                "args" = {
+                  "node.description" = "Simgot SuperMix 4 (Warmth)";
+                  "media.name" = "Simgot SuperMix 4 (Warmth)";
+                  "filter.graph" = {
+                    "nodes" = [
+                      # Preamp: Using a High Shelf at 0Hz acts as a global gain reduction
+                      {
+                        "type" = "builtin";
+                        "name" = "preamp";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 0.0; "Gain" = -2.0; "Q" = 1.0; };
+                      }
+                      # Band 1: Low Shelf 100Hz +2dB (Bass thump)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_1";
+                        "label" = "bq_lowshelf";
+                        "control" = { "Freq" = 100.0; "Gain" = 2.0; "Q" = 0.7; };
+                      }
+                      # Band 2: Peak 250Hz +1.5dB (Body)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_2";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 250.0; "Gain" = 1.5; "Q" = 1.0; };
+                      }
+                      # Band 3: Peak 3000Hz -2.5dB (Anti-shout)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_3";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 3000.0; "Gain" = -2.5; "Q" = 1.5; };
+                      }
+                      # Band 4: Peak 6000Hz -1.5dB (Sibilance)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_4";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 6000.0; "Gain" = -1.5; "Q" = 2.0; };
+                      }
+                      # Band 5: Peak 12000Hz -3.0dB (Piezo tame)
+                      {
+                        "type" = "builtin";
+                        "name" = "band_5";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 12000.0; "Gain" = -3.0; "Q" = 3.0; };
+                      }
+                    ];
+                    "links" = [
+                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
+                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
+                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
+                      { "output" = "band_3:Out"; "input" = "band_4:In"; }
+                      { "output" = "band_4:Out"; "input" = "band_5:In"; }
+                    ];
+                    "inputs"  = [ "preamp:In" ];
+                    "outputs" = [ "band_5:Out" ];
+                  };
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.passive" = false;
+                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
+                };
+              }
+            ];
+          };
           "99-iem-safe" = {
             "context.modules" = [
               {
