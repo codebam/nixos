@@ -12,6 +12,45 @@
   home = {
     packages = with pkgs; [
       bolt-launcher
+      (writeShellScriptBin "toggle-cs2-audio" ''
+        #!/usr/bin/env bash
+    
+        # dependencies
+        PATH=${lib.makeBinPath [ pkgs.jq pkgs.pipewire pkgs.wireplumber ]}:$PATH
+
+        # --- CONFIGURATION ---
+        # The Description of your EQ (Must match your nix config exactly)
+        EQ_DESC="Simgot SuperMix 4 (CS2 Comp)"
+        # The Node Name of your FiiO (Must match 'pw-dump' output)
+        DAC_NAME="alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo"
+
+        # --- GET IDs ---
+        # We still need the IDs to execute the switch command
+        DAC_ID=$(pw-dump | jq -r --arg name "$DAC_NAME" '.[] | select(.info.props."node.name" == $name) | .id')
+        EQ_ID=$(pw-dump | jq -r --arg desc "$EQ_DESC" '.[] | select(.info.props."node.description" == $desc) | .id')
+
+        # --- SAFETY CHECKS ---
+        if [ -z "$DAC_ID" ] || [ "$DAC_ID" == "null" ]; then
+            notify-send -u critical "Audio Error" "FiiO KA3 not found!"
+            exit 1
+        fi
+        if [ -z "$EQ_ID" ] || [ "$EQ_ID" == "null" ]; then
+            notify-send -u critical "Audio Error" "CS2 Profile not found!"
+            exit 1
+        fi
+
+        # --- TOGGLE LOGIC (FIXED) ---
+        # Check if the current default sink's description contains our EQ name
+        if wpctl inspect @DEFAULT_AUDIO_SINK@ | grep -q "$EQ_DESC"; then
+            # CASE: EQ is currently Active -> Switch to FiiO (Stock)
+            wpctl set-default "$DAC_ID"
+            notify-send -u low -t 2000 "Audio: Music Mode" "Switched to FiiO KA3 (Stock)"
+        else
+            # CASE: EQ is NOT Active -> Switch to EQ (CS2)
+            wpctl set-default "$EQ_ID"
+            notify-send -u low -t 2000 "Audio: CS2 Mode" "Switched to SuperMix 4 (EQ)"
+        fi
+      '')
     ];
   };
 
