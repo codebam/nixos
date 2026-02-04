@@ -89,7 +89,6 @@
             inherit modifier;
           in
           lib.mkOptionDefault {
-            "${modifier}+shift+a" = "exec toggle-cs2-audio";
             "${modifier}+p" = "exec ${pkgs.swaylock}/bin/swaylock";
             "${modifier}+shift+p" = "output 'DP-1' toggle; output 'DP-3' toggle";
             "${modifier}+shift+u" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
