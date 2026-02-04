@@ -76,67 +76,67 @@
     pipewire = {
       extraConfig = {
         pipewire = {
-          "99-simgot-eq" = {
+          "99-simgot-music-eq" = {
             "context.modules" = [
               {
                 "name" = "libpipewire-module-filter-chain";
                 "args" = {
-                  "node.description" = "Simgot SuperMix 4 (Warmth)";
-                  "media.name" = "Simgot SuperMix 4 (Warmth)";
+                  "node.description" = "Simgot SuperMix 4 (Music)";
+                  "media.name" = "Simgot SuperMix 4 (Music)";
                   "filter.graph" = {
                     "nodes" = [
-                      # Preamp: Using a High Shelf at 0Hz acts as a global gain reduction
+                      # Preamp: High Shelf at 0Hz acts as global gain (-3dB to prevent clipping)
                       {
                         "type" = "builtin";
                         "name" = "preamp";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 0.0; "Gain" = -2.0; "Q" = 1.0; };
+                        "control" = { "Freq" = 0.0; "Gain" = -3.0; "Q" = 1.0; };
                       }
-                      # Band 1: Low Shelf 100Hz +2dB (Bass thump)
+                      # Band 1: Bass Boost (Low Shelf @ 105Hz) - Adds thump/impact
                       {
                         "type" = "builtin";
-                        "name" = "band_1";
+                        "name" = "band_bass";
                         "label" = "bq_lowshelf";
-                        "control" = { "Freq" = 100.0; "Gain" = 2.0; "Q" = 0.7; };
+                        "control" = { "Freq" = 105.0; "Gain" = 3.0; "Q" = 0.7; };
                       }
-                      # Band 2: Peak 250Hz +1.5dB (Body)
+                      # Band 2: Warmth/Body (Peak @ 250Hz) - Fixes "thin" male vocals
                       {
                         "type" = "builtin";
-                        "name" = "band_2";
+                        "name" = "band_body";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 250.0; "Gain" = 1.5; "Q" = 1.0; };
+                        "control" = { "Freq" = 250.0; "Gain" = 1.8; "Q" = 1.0; };
                       }
-                      # Band 3: Peak 3000Hz -2.5dB (Anti-shout)
+                      # Band 3: Anti-Shout (Peak @ 3000Hz) - Relaxes harsh vocals
                       {
                         "type" = "builtin";
-                        "name" = "band_3";
+                        "name" = "band_shout";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 3000.0; "Gain" = -2.5; "Q" = 1.5; };
+                        "control" = { "Freq" = 3000.0; "Gain" = -2.5; "Q" = 1.4; };
                       }
-                      # Band 4: Peak 6000Hz -1.5dB (Sibilance)
+                      # Band 4: Sibilance Cut (Peak @ 6000Hz) - Softens "S" and "T" sounds
                       {
                         "type" = "builtin";
-                        "name" = "band_4";
+                        "name" = "band_sibilance";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 6000.0; "Gain" = -1.5; "Q" = 2.0; };
+                        "control" = { "Freq" = 6000.0; "Gain" = -2.0; "Q" = 2.0; };
                       }
-                      # Band 5: Peak 12000Hz -3.0dB (Piezo tame)
+                      # Band 5: PZT Tame (High Shelf @ 11000Hz) - Smooths the metallic planar zing
                       {
                         "type" = "builtin";
-                        "name" = "band_5";
-                        "label" = "bq_peaking";
-                        "control" = { "Freq" = 12000.0; "Gain" = -3.0; "Q" = 3.0; };
+                        "name" = "band_air";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 11000.0; "Gain" = -2.0; "Q" = 1.0; };
                       }
                     ];
                     "links" = [
-                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
-                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
-                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
-                      { "output" = "band_3:Out"; "input" = "band_4:In"; }
-                      { "output" = "band_4:Out"; "input" = "band_5:In"; }
+                      { "output" = "preamp:Out"; "input" = "band_bass:In"; }
+                      { "output" = "band_bass:Out"; "input" = "band_body:In"; }
+                      { "output" = "band_body:Out"; "input" = "band_shout:In"; }
+                      { "output" = "band_shout:Out"; "input" = "band_sibilance:In"; }
+                      { "output" = "band_sibilance:Out"; "input" = "band_air:In"; }
                     ];
                     "inputs"  = [ "preamp:In" ];
-                    "outputs" = [ "band_5:Out" ];
+                    "outputs" = [ "band_air:Out" ];
                   };
                   "audio.channels" = 2;
                   "audio.position" = [ "FL" "FR" ];
