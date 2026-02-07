@@ -81,51 +81,56 @@
               {
                 "name" = "libpipewire-module-filter-chain";
                 "args" = {
-                  "node.description" = "Simgot SuperMix 4 (Music)";
-                  "media.name" = "Simgot SuperMix 4 (Music)";
+                  "node.description" = "Simgot SuperMix 4 (Reference)";
+                  "media.name" = "Simgot SuperMix 4 (Reference)";
                   "filter.graph" = {
                     "nodes" = [
-                      # Preamp: High Shelf at 0Hz acts as global gain (-3dB to prevent clipping)
+                      # Preamp: Adjusted for safety (-2dB is usually sufficient for cuts)
                       {
                         "type" = "builtin";
                         "name" = "preamp";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 0.0; "Gain" = -3.0; "Q" = 1.0; };
+                        "control" = { "Freq" = 0.0; "Gain" = -2.0; "Q" = 1.0; };
                       }
-                      # Band 1: Bass Boost (Low Shelf @ 105Hz) - Adds thump/impact
+                      # Band 1: Bass Reduction (Low Shelf @ 110Hz) 
+                      # Stock SM4 has a ~10dB Harman bass shelf. We cut this to flatten the response.
                       {
                         "type" = "builtin";
                         "name" = "band_bass";
                         "label" = "bq_lowshelf";
-                        "control" = { "Freq" = 105.0; "Gain" = 3.0; "Q" = 0.7; };
+                        "control" = { "Freq" = 110.0; "Gain" = -2.5; "Q" = 0.7; };
                       }
-                      # Band 2: Warmth/Body (Peak @ 250Hz) - Fixes "thin" male vocals
+                      # Band 2: Lower-Mid Fill (Peak @ 250Hz) 
+                      # Fixes the Harman "scoop" to restore natural note weight and vocal body.
                       {
                         "type" = "builtin";
                         "name" = "band_body";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 250.0; "Gain" = 1.8; "Q" = 1.0; };
+                        "control" = { "Freq" = 250.0; "Gain" = 1.5; "Q" = 1.0; };
                       }
-                      # Band 3: Anti-Shout (Peak @ 3000Hz) - Relaxes harsh vocals
+                      # Band 3: Upper-Mid Correction (Peak @ 3000Hz) 
+                      # Slight reduction of the ear-gain peak for a more neutral, less forward presentation.
                       {
                         "type" = "builtin";
                         "name" = "band_shout";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 3000.0; "Gain" = -2.5; "Q" = 1.4; };
+                        "control" = { "Freq" = 3000.0; "Gain" = -1.5; "Q" = 1.4; };
                       }
-                      # Band 4: Sibilance Cut (Peak @ 6000Hz) - Softens "S" and "T" sounds
+                      # Band 4: Sibilance Control (Peak @ 6000Hz)
+                      # Essential for SM4 to remove harshness on "S" and "T" sounds.
                       {
                         "type" = "builtin";
                         "name" = "band_sibilance";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 6000.0; "Gain" = -2.0; "Q" = 2.0; };
+                        "control" = { "Freq" = 6000.0; "Gain" = -2.5; "Q" = 2.0; };
                       }
-                      # Band 5: PZT Tame (High Shelf @ 11000Hz) - Smooths the metallic planar zing
+                      # Band 5: PZT Timbre Tame (High Shelf @ 11500Hz)
+                      # Smooths out the artificial "zing" from the Piezo driver.
                       {
                         "type" = "builtin";
                         "name" = "band_air";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 11000.0; "Gain" = -2.0; "Q" = 1.0; };
+                        "control" = { "Freq" = 11500.0; "Gain" = -3.0; "Q" = 0.7; };
                       }
                     ];
                     "links" = [
