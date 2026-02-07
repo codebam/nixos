@@ -246,7 +246,7 @@
                         type = "builtin";
                         name = "mix_L";
                         label = "mixer";
-                        control = { "Gain 1" = 1.259; }; # +2.0 dB Boost
+                        control = { "Gain 1" = 1.413; }; # +3.0 dB Boost
                       }
                       {
                         type = "builtin";
