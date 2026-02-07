@@ -233,6 +233,47 @@
               }
             ];
           };
+          "99-balance-correction" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "Simgot SuperMix 4 Balance Correction";
+                  "media.name" = "Simgot SuperMix 4 Balance Correction";
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "builtin";
+                        name = "mix_L";
+                        label = "mixer";
+                        control = { "Gain 1" = 1.1885; }; # +1.5 dB Boost
+                      }
+                      {
+                        type = "builtin";
+                        name = "mix_R";
+                        label = "mixer";
+                        control = { "Gain 1" = 1.0; };    # 0 dB (Neutral)
+                      }
+                    ];
+                    # Map Graph Inputs (FL/FR) to the specific mixer inputs
+                    inputs = [ "mix_L:In 1" "mix_R:In 1" ];
+                    outputs = [ "mix_L:Out" "mix_R:Out" ];
+                  };
+                  "capture.props" = {
+                    "node.name" = "correction_input";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "correction_output";
+                    "node.passive" = true;
+                    "audio.position" = [ "FL" "FR" ];
+                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
+                };
+              }
+            ];
+          };
           "99-iem-safe" = {
             "context.modules" = [
               {
