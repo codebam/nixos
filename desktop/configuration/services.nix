@@ -76,6 +76,62 @@
     pipewire = {
       extraConfig = {
         pipewire = {
+          "99-mono-downmix" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "FiiO KA3 Mono Downmix";
+                  "media.name" = "FiiO KA3 Mono Downmix";
+                  "filter.graph" = {
+                    nodes = [
+                      # 1. Mix Left+Right into a single Mono signal
+                      {
+                        type = "builtin";
+                        name = "mix_mono";
+                        label = "mixer";
+                        control = { "Gain 1" = 0.5; "Gain 2" = 0.5; };
+                      }
+                      # 2. Create a dedicated node for the Left Output
+                      {
+                        type = "builtin";
+                        name = "copy_L";
+                        label = "copy";
+                      }
+                      # 3. Create a dedicated node for the Right Output
+                      {
+                        type = "builtin";
+                        name = "copy_R";
+                        label = "copy";
+                      }
+                    ];
+                    # Map System Inputs -> Mixer Inputs
+                    inputs = [ "mix_mono:In 1" "mix_mono:In 2" ];
+          
+                    # Map Copy Nodes -> System Outputs (Each output gets its own unique node)
+                    outputs = [ "copy_L:Out" "copy_R:Out" ];
+          
+                    # Internal Wiring: Send the Mono Mix to BOTH Copy nodes
+                    links = [
+                      { output = "mix_mono:Out"; input = "copy_L:In"; }
+                      { output = "mix_mono:Out"; input = "copy_R:In"; }
+                    ];
+                  };
+                  "capture.props" = {
+                    "node.name" = "mono_input";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "mono_output";
+                    "node.passive" = true;
+                    "audio.position" = [ "FL" "FR" ];
+                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
+                };
+              }
+            ];
+          };
           "99-simgot-music-eq" = {
             "context.modules" = [
               {
