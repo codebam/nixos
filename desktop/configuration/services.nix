@@ -126,7 +126,7 @@
                     "node.name" = "mono_output";
                     "node.passive" = true;
                     "audio.position" = [ "FL" "FR" ];
-                    "node.target" = "correction_input";
+                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
                   };
                 };
               }
@@ -228,7 +228,7 @@
                   };
                   "playback.props" = {
                     "node.passive" = false;
-                    "target.object" = "correction_input";
+                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
                   };
                 };
               }
@@ -347,8 +347,7 @@
                   };
                   "playback.props" = {
                     "node.passive" = false;
-                    # This connects the EQ output INTO your Balance Correction input
-                    "node.target" = "correction_input";
+                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
                   };
                 };
               }
