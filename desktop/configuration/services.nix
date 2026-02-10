@@ -126,7 +126,7 @@
                     "node.name" = "mono_output";
                     "node.passive" = true;
                     "audio.position" = [ "FL" "FR" ];
-                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                    "node.target" = "correction_input";
                   };
                 };
               }
@@ -207,7 +207,127 @@
                   };
                   "playback.props" = {
                     "node.passive" = false;
-                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                    "target.object" = "correction_input";
+                  };
+                };
+              }
+            ];
+          };
+          "99-simgot-eq" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "Simgot SuperMix 4 EQ";
+                  "media.name" = "Simgot SuperMix 4 EQ";
+                  "filter.graph" = {
+                    nodes = [
+                      # Preamp (-3.0 dB) -> Linear Gain ~0.707
+                      {
+                        type = "builtin";
+                        name = "preamp";
+                        label = "copy";
+                        control = { "Gain" = 0.7079; };
+                      }
+                      # Band 1
+                      {
+                        type = "builtin";
+                        name = "band_1";
+                        label = "bq_peaking";
+                        control = { "Freq" = 20.0; "Gain" = -0.9; "Q" = 2.0; };
+                      }
+                      # Band 2
+                      {
+                        type = "builtin";
+                        name = "band_2";
+                        label = "bq_peaking";
+                        control = { "Freq" = 53.0; "Gain" = -1.6; "Q" = 1.1; };
+                      }
+                      # Band 3
+                      {
+                        type = "builtin";
+                        name = "band_3";
+                        label = "bq_peaking";
+                        control = { "Freq" = 160.0; "Gain" = 0.6; "Q" = 0.8; };
+                      }
+                      # Band 4
+                      {
+                        type = "builtin";
+                        name = "band_4";
+                        label = "bq_peaking";
+                        control = { "Freq" = 170.0; "Gain" = -1.7; "Q" = 2.0; };
+                      }
+                      # Band 5
+                      {
+                        type = "builtin";
+                        name = "band_5";
+                        label = "bq_peaking";
+                        control = { "Freq" = 390.0; "Gain" = 3.0; "Q" = 1.0; };
+                      }
+                      # Band 6
+                      {
+                        type = "builtin";
+                        name = "band_6";
+                        label = "bq_peaking";
+                        control = { "Freq" = 1600.0; "Gain" = -1.9; "Q" = 1.2; };
+                      }
+                      # Band 7
+                      {
+                        type = "builtin";
+                        name = "band_7";
+                        label = "bq_peaking";
+                        control = { "Freq" = 3500.0; "Gain" = 1.9; "Q" = 2.0; };
+                      }
+                      # Band 8
+                      {
+                        type = "builtin";
+                        name = "band_8";
+                        label = "bq_peaking";
+                        control = { "Freq" = 5200.0; "Gain" = -3.6; "Q" = 2.0; };
+                      }
+                      # Band 9
+                      {
+                        type = "builtin";
+                        name = "band_9";
+                        label = "bq_peaking";
+                        control = { "Freq" = 9300.0; "Gain" = 4.8; "Q" = 2.0; };
+                      }
+                      # Band 10
+                      {
+                        type = "builtin";
+                        name = "band_10";
+                        label = "bq_peaking";
+                        control = { "Freq" = 13000.0; "Gain" = -6.7; "Q" = 1.3; };
+                      }
+                    ];
+          
+                    # Chain: Preamp -> Band 1 -> Band 2 ... -> Band 10
+                    links = [
+                      { output = "preamp:Out"; input = "band_1:In"; }
+                      { output = "band_1:Out"; input = "band_2:In"; }
+                      { output = "band_2:Out"; input = "band_3:In"; }
+                      { output = "band_3:Out"; input = "band_4:In"; }
+                      { output = "band_4:Out"; input = "band_5:In"; }
+                      { output = "band_5:Out"; input = "band_6:In"; }
+                      { output = "band_6:Out"; input = "band_7:In"; }
+                      { output = "band_7:Out"; input = "band_8:In"; }
+                      { output = "band_8:Out"; input = "band_9:In"; }
+                      { output = "band_9:Out"; input = "band_10:In"; }
+                    ];
+          
+                    inputs  = [ "preamp:In" ];
+                    outputs = [ "band_10:Out" ];
+                  };
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.passive" = false;
+                    # This connects the EQ output INTO your Balance Correction input
+                    "node.target" = "correction_input";
                   };
                 };
               }
@@ -283,7 +403,7 @@
                   };
                   "playback.props" = {
                     "node.passive" = false;
-                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                    "target.object" = "correction_input";
                   };
                 };
               }
@@ -325,27 +445,6 @@
                     "node.passive" = true;
                     "audio.position" = [ "FL" "FR" ];
                     "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
-                  };
-                };
-              }
-            ];
-          };
-          "99-iem-safe" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-loopback";
-                args = {
-                  "node.description" = "IEM (Safe Mode)";
-                  "capture.props" = {
-                    "node.name" = "iem_safe_sink";
-                    "media.class" = "Audio/Sink";
-                    "audio.position" = [ "FL" "FR" ];
-                  };
-                  "playback.props" = {
-                    "node.name" = "iem_safe_out";
-                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
-                    "node.passive" = true;
-                    "audio.position" = [ "FL" "FR" ];
                   };
                 };
               }
