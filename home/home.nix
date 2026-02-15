@@ -120,6 +120,7 @@ in {
       vesktop
       bat
       gemini-cli
+      antigravity
       google-cloud-sdk
       grim
       nil
