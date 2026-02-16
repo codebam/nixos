@@ -153,72 +153,96 @@
               }
             ];
           };
-          "99-simgot-music-eq" = {
+          "99-letshuoer-s12-pro-eq" = {
             "context.modules" = [
               {
                 "name" = "libpipewire-module-filter-chain";
                 "args" = {
-                  "node.description" = "Simgot SuperMix 4 (Reference)";
-                  "media.name" = "Simgot SuperMix 4 (Reference)";
+                  "node.description" = "Letshuoer S12 Pro";
+                  "media.name" = "Letshuoer S12 Pro";
                   "filter.graph" = {
                     "nodes" = [
-                      # Preamp: Adjusted for safety (-2dB is usually sufficient for cuts)
                       {
                         "type" = "builtin";
                         "name" = "preamp";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 0.0; "Gain" = -2.0; "Q" = 1.0; };
+                        "control" = { "Freq" = 0.0; "Gain" = -1.5; "Q" = 1.0; };
                       }
-                      # Band 1: Bass Reduction (Low Shelf @ 110Hz) 
-                      # Stock SM4 has a ~10dB Harman bass shelf. We cut this to flatten the response.
                       {
                         "type" = "builtin";
-                        "name" = "band_bass";
-                        "label" = "bq_lowshelf";
-                        "control" = { "Freq" = 110.0; "Gain" = -2.5; "Q" = 0.7; };
-                      }
-                      # Band 2: Lower-Mid Fill (Peak @ 250Hz) 
-                      # Fixes the Harman "scoop" to restore natural note weight and vocal body.
-                      {
-                        "type" = "builtin";
-                        "name" = "band_body";
+                        "name" = "band_1";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 250.0; "Gain" = 1.5; "Q" = 1.0; };
+                        "control" = { "Freq" = 21.0; "Gain" = 1.6; "Q" = 0.7; };
                       }
-                      # Band 3: Upper-Mid Correction (Peak @ 3000Hz) 
-                      # Slight reduction of the ear-gain peak for a more neutral, less forward presentation.
                       {
                         "type" = "builtin";
-                        "name" = "band_shout";
+                        "name" = "band_2";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 3000.0; "Gain" = -1.5; "Q" = 1.4; };
+                        "control" = { "Freq" = 140.0; "Gain" = -1.5; "Q" = 0.5; };
                       }
-                      # Band 4: Sibilance Control (Peak @ 6000Hz)
-                      # Essential for SM4 to remove harshness on "S" and "T" sounds.
                       {
                         "type" = "builtin";
-                        "name" = "band_sibilance";
+                        "name" = "band_3";
                         "label" = "bq_peaking";
-                        "control" = { "Freq" = 6000.0; "Gain" = -2.5; "Q" = 2.0; };
+                        "control" = { "Freq" = 250.0; "Gain" = -0.9; "Q" = 1.2; };
                       }
-                      # Band 5: PZT Timbre Tame (High Shelf @ 11500Hz)
-                      # Smooths out the artificial "zing" from the Piezo driver.
                       {
                         "type" = "builtin";
-                        "name" = "band_air";
+                        "name" = "band_4";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 760.0; "Gain" = 0.8; "Q" = 1.7; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_5";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 4100.0; "Gain" = 3.5; "Q" = 2.0; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_6";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 5400.0; "Gain" = 4.0; "Q" = 2.0; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_7";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 6250.0; "Gain" = -11.0; "Q" = 1.0; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_8";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 9000.0; "Gain" = 5.5; "Q" = 1.5; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_9";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 11500.0; "Gain" = -3.0; "Q" = 0.7; };
+                        "control" = { "Freq" = 10000.0; "Gain" = 1.7; "Q" = 0.707; };
+                      }
+                      {
+                        "type" = "builtin";
+                        "name" = "band_10";
+                        "label" = "bq_peaking";
+                        "control" = { "Freq" = 12500.0; "Gain" = -4.0; "Q" = 2.0; };
                       }
                     ];
                     "links" = [
-                      { "output" = "preamp:Out"; "input" = "band_bass:In"; }
-                      { "output" = "band_bass:Out"; "input" = "band_body:In"; }
-                      { "output" = "band_body:Out"; "input" = "band_shout:In"; }
-                      { "output" = "band_shout:Out"; "input" = "band_sibilance:In"; }
-                      { "output" = "band_sibilance:Out"; "input" = "band_air:In"; }
+                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
+                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
+                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
+                      { "output" = "band_3:Out"; "input" = "band_4:In"; }
+                      { "output" = "band_4:Out"; "input" = "band_5:In"; }
+                      { "output" = "band_5:Out"; "input" = "band_6:In"; }
+                      { "output" = "band_6:Out"; "input" = "band_7:In"; }
+                      { "output" = "band_7:Out"; "input" = "band_8:In"; }
+                      { "output" = "band_8:Out"; "input" = "band_9:In"; }
+                      { "output" = "band_9:Out"; "input" = "band_10:In"; }
                     ];
                     "inputs"  = [ "preamp:In" ];
-                    "outputs" = [ "band_air:Out" ];
+                    "outputs" = [ "band_10:Out" ];
                   };
                   "audio.channels" = 2;
                   "audio.position" = [ "FL" "FR" ];
@@ -229,242 +253,6 @@
                   "playback.props" = {
                     "node.passive" = false;
                     "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
-                  };
-                };
-              }
-            ];
-          };
-          "99-simgot-eq" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-filter-chain";
-                args = {
-                  "node.description" = "Simgot SuperMix 4 EQ";
-                  "media.name" = "Simgot SuperMix 4 EQ";
-                  "filter.graph" = {
-                    nodes = [
-                      # Preamp (-3.0 dB) -> Linear Gain ~0.707
-                      {
-                        type = "builtin";
-                        name = "preamp";
-                        label = "copy";
-                        control = { "Gain" = 0.7079; };
-                      }
-                      # Band 1
-                      {
-                        type = "builtin";
-                        name = "band_1";
-                        label = "bq_peaking";
-                        control = { "Freq" = 20.0; "Gain" = -0.9; "Q" = 2.0; };
-                      }
-                      # Band 2
-                      {
-                        type = "builtin";
-                        name = "band_2";
-                        label = "bq_peaking";
-                        control = { "Freq" = 53.0; "Gain" = -1.6; "Q" = 1.1; };
-                      }
-                      # Band 3
-                      {
-                        type = "builtin";
-                        name = "band_3";
-                        label = "bq_peaking";
-                        control = { "Freq" = 160.0; "Gain" = 0.6; "Q" = 0.8; };
-                      }
-                      # Band 4
-                      {
-                        type = "builtin";
-                        name = "band_4";
-                        label = "bq_peaking";
-                        control = { "Freq" = 170.0; "Gain" = -1.7; "Q" = 2.0; };
-                      }
-                      # Band 5
-                      {
-                        type = "builtin";
-                        name = "band_5";
-                        label = "bq_peaking";
-                        control = { "Freq" = 390.0; "Gain" = 3.0; "Q" = 1.0; };
-                      }
-                      # Band 6
-                      {
-                        type = "builtin";
-                        name = "band_6";
-                        label = "bq_peaking";
-                        control = { "Freq" = 1600.0; "Gain" = -1.9; "Q" = 1.2; };
-                      }
-                      # Band 7
-                      {
-                        type = "builtin";
-                        name = "band_7";
-                        label = "bq_peaking";
-                        control = { "Freq" = 3500.0; "Gain" = 1.9; "Q" = 2.0; };
-                      }
-                      # Band 8
-                      {
-                        type = "builtin";
-                        name = "band_8";
-                        label = "bq_peaking";
-                        control = { "Freq" = 5200.0; "Gain" = -3.6; "Q" = 2.0; };
-                      }
-                      # Band 9
-                      {
-                        type = "builtin";
-                        name = "band_9";
-                        label = "bq_peaking";
-                        control = { "Freq" = 9300.0; "Gain" = 4.8; "Q" = 2.0; };
-                      }
-                      # Band 10
-                      {
-                        type = "builtin";
-                        name = "band_10";
-                        label = "bq_peaking";
-                        control = { "Freq" = 13000.0; "Gain" = -6.7; "Q" = 1.3; };
-                      }
-                    ];
-          
-                    # Chain: Preamp -> Band 1 -> Band 2 ... -> Band 10
-                    links = [
-                      { output = "preamp:Out"; input = "band_1:In"; }
-                      { output = "band_1:Out"; input = "band_2:In"; }
-                      { output = "band_2:Out"; input = "band_3:In"; }
-                      { output = "band_3:Out"; input = "band_4:In"; }
-                      { output = "band_4:Out"; input = "band_5:In"; }
-                      { output = "band_5:Out"; input = "band_6:In"; }
-                      { output = "band_6:Out"; input = "band_7:In"; }
-                      { output = "band_7:Out"; input = "band_8:In"; }
-                      { output = "band_8:Out"; input = "band_9:In"; }
-                      { output = "band_9:Out"; input = "band_10:In"; }
-                    ];
-          
-                    inputs  = [ "preamp:In" ];
-                    outputs = [ "band_10:Out" ];
-                  };
-                  "audio.channels" = 2;
-                  "audio.position" = [ "FL" "FR" ];
-                  "capture.props" = {
-                    "node.passive" = true;
-                    "media.class" = "Audio/Sink";
-                  };
-                  "playback.props" = {
-                    "node.passive" = false;
-                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
-                  };
-                };
-              }
-            ];
-          };
-          "99-simgot-cs2" = {
-            "context.modules" = [
-              {
-                "name" = "libpipewire-module-filter-chain";
-                "args" = {
-                  "node.description" = "Simgot SuperMix 4 (CS2 Comp)";
-                  "media.name" = "Simgot SuperMix 4 (CS2 Comp)";
-                  "filter.graph" = {
-                    "nodes" = [
-                      # Preamp: Safety reduction
-                      {
-                        "type" = "builtin";
-                        "name" = "preamp";
-                        "label" = "bq_highshelf";
-                        "control" = { "Freq" = 0.0; "Gain" = -4.0; "Q" = 1.0; };
-                      }
-                      # Band 1: Low Shelf 125Hz -4.0dB (CUTS Explosion Rumble)
-                      {
-                        "type" = "builtin";
-                        "name" = "band_1";
-                        "label" = "bq_lowshelf";
-                        "control" = { "Freq" = 125.0; "Gain" = -4.0; "Q" = 0.7; };
-                      }
-                      # Band 2: Peak 250Hz -2.0dB (Removes Mud)
-                      {
-                        "type" = "builtin";
-                        "name" = "band_2";
-                        "label" = "bq_peaking";
-                        "control" = { "Freq" = 250.0; "Gain" = -2.0; "Q" = 1.0; };
-                      }
-                      # Band 3: Peak 2000Hz +2.0dB (BOOSTS Footsteps)
-                      {
-                        "type" = "builtin";
-                        "name" = "band_3";
-                        "label" = "bq_peaking";
-                        "control" = { "Freq" = 2000.0; "Gain" = 2.0; "Q" = 1.4; };
-                      }
-                      # Band 4: Peak 4000Hz +2.5dB (BOOSTS Info/Reloads)
-                      {
-                        "type" = "builtin";
-                        "name" = "band_4";
-                        "label" = "bq_peaking";
-                        "control" = { "Freq" = 4000.0; "Gain" = 2.5; "Q" = 1.4; };
-                      }
-                      # Band 5: High Shelf 10000Hz -1.5dB (Reduces Fatigue/Piezo Zing)
-                      {
-                        "type" = "builtin";
-                        "name" = "band_5";
-                        "label" = "bq_highshelf";
-                        "control" = { "Freq" = 10000.0; "Gain" = -1.5; "Q" = 0.7; };
-                      }
-                    ];
-                    "links" = [
-                      { "output" = "preamp:Out"; "input" = "band_1:In"; }
-                      { "output" = "band_1:Out"; "input" = "band_2:In"; }
-                      { "output" = "band_2:Out"; "input" = "band_3:In"; }
-                      { "output" = "band_3:Out"; "input" = "band_4:In"; }
-                      { "output" = "band_4:Out"; "input" = "band_5:In"; }
-                    ];
-                    "inputs"  = [ "preamp:In" ];
-                    "outputs" = [ "band_5:Out" ];
-                  };
-                  "audio.channels" = 2;
-                  "audio.position" = [ "FL" "FR" ];
-                  "capture.props" = {
-                    "node.passive" = true;
-                    "media.class" = "Audio/Sink";
-                  };
-                  "playback.props" = {
-                    "node.passive" = false;
-                    "target.object" = "correction_input";
-                  };
-                };
-              }
-            ];
-          };
-          "99-balance-correction" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-filter-chain";
-                args = {
-                  "node.description" = "Simgot SuperMix 4 Balance Correction";
-                  "media.name" = "Simgot SuperMix 4 Balance Correction";
-                  "filter.graph" = {
-                    nodes = [
-                      {
-                        type = "builtin";
-                        name = "mix_L";
-                        label = "mixer";
-                        control = { "Gain 1" = 1.318; }; # +2.4 dB Boost
-                      }
-                      {
-                        type = "builtin";
-                        name = "mix_R";
-                        label = "mixer";
-                        control = { "Gain 1" = 1.0; };    # 0 dB (Neutral)
-                      }
-                    ];
-                    # Map Graph Inputs (FL/FR) to the specific mixer inputs
-                    inputs = [ "mix_L:In 1" "mix_R:In 1" ];
-                    outputs = [ "mix_L:Out" "mix_R:Out" ];
-                  };
-                  "capture.props" = {
-                    "node.name" = "correction_input";
-                    "media.class" = "Audio/Sink";
-                    "audio.position" = [ "FL" "FR" ];
-                  };
-                  "playback.props" = {
-                    "node.name" = "correction_output";
-                    "node.passive" = true;
-                    "audio.position" = [ "FL" "FR" ];
-                    "node.target" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
                   };
                 };
               }
