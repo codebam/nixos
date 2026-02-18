@@ -158,83 +158,41 @@
               {
                 "name" = "libpipewire-module-filter-chain";
                 "args" = {
-                  "node.description" = "Letshuoer S12 Pro (31-Band GEQ)";
-                  "media.name" = "Letshuoer S12 Pro (31-Band GEQ)";
+                  "node.description" = "Letshuoer S12 Pro (PEQ)";
+                  "media.name" = "Letshuoer S12 Pro (PEQ)";
                   "filter.graph" = {
                     "nodes" = [
                       {
                         "type" = "builtin";
                         "name" = "preamp";
                         "label" = "bq_highshelf";
-                        "control" = { "Freq" = 0.0; "Gain" = -1.5; "Q" = 1.0; };
+                        "control" = { "Freq" = 0.0; "Gain" = -0.5; "Q" = 1.0; };
                       }
-                      { "type" = "builtin"; "name" = "band_20";    "label" = "bq_peaking"; "control" = { "Freq" = 20.0;    "Gain" = -0.03; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_25";    "label" = "bq_peaking"; "control" = { "Freq" = 25.0;    "Gain" = -0.18; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_31";    "label" = "bq_peaking"; "control" = { "Freq" = 31.5;    "Gain" = -0.59; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_40";    "label" = "bq_peaking"; "control" = { "Freq" = 40.0;    "Gain" = -1.11; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_50";    "label" = "bq_peaking"; "control" = { "Freq" = 50.0;    "Gain" = -1.57; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_63";    "label" = "bq_peaking"; "control" = { "Freq" = 63.0;    "Gain" = -2.02; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_80";    "label" = "bq_peaking"; "control" = { "Freq" = 80.0;    "Gain" = -2.46; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_100";   "label" = "bq_peaking"; "control" = { "Freq" = 100.0;   "Gain" = -2.82; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_125";   "label" = "bq_peaking"; "control" = { "Freq" = 125.0;   "Gain" = -3.10; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_160";   "label" = "bq_peaking"; "control" = { "Freq" = 160.0;   "Gain" = -3.31; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_200";   "label" = "bq_peaking"; "control" = { "Freq" = 200.0;   "Gain" = -3.47; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_250";   "label" = "bq_peaking"; "control" = { "Freq" = 250.0;   "Gain" = -3.44; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_315";   "label" = "bq_peaking"; "control" = { "Freq" = 315.0;   "Gain" = -2.95; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_400";   "label" = "bq_peaking"; "control" = { "Freq" = 400.0;   "Gain" = -2.37; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_500";   "label" = "bq_peaking"; "control" = { "Freq" = 500.0;   "Gain" = -1.91; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_630";   "label" = "bq_peaking"; "control" = { "Freq" = 630.0;   "Gain" = -1.41; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_800";   "label" = "bq_peaking"; "control" = { "Freq" = 800.0;   "Gain" = -1.10; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_1000";  "label" = "bq_peaking"; "control" = { "Freq" = 1000.0;  "Gain" = -1.44; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_1250";  "label" = "bq_peaking"; "control" = { "Freq" = 1250.0;  "Gain" = -1.73; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_1600";  "label" = "bq_peaking"; "control" = { "Freq" = 1600.0;  "Gain" = -1.98; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_2000";  "label" = "bq_peaking"; "control" = { "Freq" = 2000.0;  "Gain" = -2.23; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_2500";  "label" = "bq_peaking"; "control" = { "Freq" = 2500.0;  "Gain" = -2.48; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_3150";  "label" = "bq_peaking"; "control" = { "Freq" = 3150.0;  "Gain" = -2.40; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_4000";  "label" = "bq_peaking"; "control" = { "Freq" = 4000.0;  "Gain" = -1.56; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_5000";  "label" = "bq_peaking"; "control" = { "Freq" = 5000.0;  "Gain" = -3.54; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_6300";  "label" = "bq_peaking"; "control" = { "Freq" = 6300.0;  "Gain" = -7.05; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_8000";  "label" = "bq_peaking"; "control" = { "Freq" = 8000.0;  "Gain" = -3.78; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_10000"; "label" = "bq_peaking"; "control" = { "Freq" = 10000.0; "Gain" = -1.52; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_12500"; "label" = "bq_peaking"; "control" = { "Freq" = 12500.0; "Gain" = -4.52; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_16000"; "label" = "bq_peaking"; "control" = { "Freq" = 16000.0; "Gain" = -1.00; "Q" = 4.3; }; }
-                      { "type" = "builtin"; "name" = "band_20000"; "label" = "bq_peaking"; "control" = { "Freq" = 20000.0; "Gain" = 0.01;  "Q" = 4.3; }; }
+                      { "type" = "builtin"; "name" = "filter_1";  "label" = "bq_peaking"; "control" = { "Freq" = 60.0;    "Gain" = -7.0; "Q" = 0.2; }; }
+                      { "type" = "builtin"; "name" = "filter_2";  "label" = "bq_peaking"; "control" = { "Freq" = 61.0;    "Gain" = 1.0;  "Q" = 0.4; }; }
+                      { "type" = "builtin"; "name" = "filter_3";  "label" = "bq_peaking"; "control" = { "Freq" = 1000.0;  "Gain" = -1.0; "Q" = 1.3; }; }
+                      { "type" = "builtin"; "name" = "filter_4";  "label" = "bq_peaking"; "control" = { "Freq" = 2000.0;  "Gain" = -5.0; "Q" = 1.0; }; }
+                      { "type" = "builtin"; "name" = "filter_5";  "label" = "bq_peaking"; "control" = { "Freq" = 3300.0;  "Gain" = 5.0;  "Q" = 2.0; }; }
+                      { "type" = "builtin"; "name" = "filter_6";  "label" = "bq_peaking"; "control" = { "Freq" = 7000.0;  "Gain" = -9.0; "Q" = 1.2; }; }
+                      { "type" = "builtin"; "name" = "filter_7";  "label" = "bq_peaking"; "control" = { "Freq" = 17000.0; "Gain" = -9.0; "Q" = 0.6; }; }
+                      { "type" = "builtin"; "name" = "filter_8";  "label" = "bq_peaking"; "control" = { "Freq" = 8600.0;  "Gain" = 3.0;  "Q" = 5.0; }; }
+                      { "type" = "builtin"; "name" = "filter_9";  "label" = "bq_peaking"; "control" = { "Freq" = 150.0;   "Gain" = 0.0;  "Q" = 0.7; }; }
+                      { "type" = "builtin"; "name" = "filter_10"; "label" = "bq_peaking"; "control" = { "Freq" = 10000.0; "Gain" = 0.0;  "Q" = 1.0; }; }
                     ];
                     "links" = [
-                      { "output" = "preamp:Out"; "input" = "band_20:In"; }
-                      { "output" = "band_20:Out"; "input" = "band_25:In"; }
-                      { "output" = "band_25:Out"; "input" = "band_31:In"; }
-                      { "output" = "band_31:Out"; "input" = "band_40:In"; }
-                      { "output" = "band_40:Out"; "input" = "band_50:In"; }
-                      { "output" = "band_50:Out"; "input" = "band_63:In"; }
-                      { "output" = "band_63:Out"; "input" = "band_80:In"; }
-                      { "output" = "band_80:Out"; "input" = "band_100:In"; }
-                      { "output" = "band_100:Out"; "input" = "band_125:In"; }
-                      { "output" = "band_125:Out"; "input" = "band_160:In"; }
-                      { "output" = "band_160:Out"; "input" = "band_200:In"; }
-                      { "output" = "band_200:Out"; "input" = "band_250:In"; }
-                      { "output" = "band_250:Out"; "input" = "band_315:In"; }
-                      { "output" = "band_315:Out"; "input" = "band_400:In"; }
-                      { "output" = "band_400:Out"; "input" = "band_500:In"; }
-                      { "output" = "band_500:Out"; "input" = "band_630:In"; }
-                      { "output" = "band_630:Out"; "input" = "band_800:In"; }
-                      { "output" = "band_800:Out"; "input" = "band_1000:In"; }
-                      { "output" = "band_1000:Out"; "input" = "band_1250:In"; }
-                      { "output" = "band_1250:Out"; "input" = "band_1600:In"; }
-                      { "output" = "band_1600:Out"; "input" = "band_2000:In"; }
-                      { "output" = "band_2000:Out"; "input" = "band_2500:In"; }
-                      { "output" = "band_2500:Out"; "input" = "band_3150:In"; }
-                      { "output" = "band_3150:Out"; "input" = "band_4000:In"; }
-                      { "output" = "band_4000:Out"; "input" = "band_5000:In"; }
-                      { "output" = "band_5000:Out"; "input" = "band_6300:In"; }
-                      { "output" = "band_6300:Out"; "input" = "band_8000:In"; }
-                      { "output" = "band_8000:Out"; "input" = "band_10000:In"; }
-                      { "output" = "band_10000:Out"; "input" = "band_12500:In"; }
-                      { "output" = "band_12500:Out"; "input" = "band_16000:In"; }
-                      { "output" = "band_16000:Out"; "input" = "band_20000:In"; }
+                      { "output" = "preamp:Out";    "input" = "filter_1:In"; }
+                      { "output" = "filter_1:Out";  "input" = "filter_2:In"; }
+                      { "output" = "filter_2:Out";  "input" = "filter_3:In"; }
+                      { "output" = "filter_3:Out";  "input" = "filter_4:In"; }
+                      { "output" = "filter_4:Out";  "input" = "filter_5:In"; }
+                      { "output" = "filter_5:Out";  "input" = "filter_6:In"; }
+                      { "output" = "filter_6:Out";  "input" = "filter_7:In"; }
+                      { "output" = "filter_7:Out";  "input" = "filter_8:In"; }
+                      { "output" = "filter_8:Out";  "input" = "filter_9:In"; }
+                      { "output" = "filter_9:Out";  "input" = "filter_10:In"; }
                     ];
                     "inputs"  = [ "preamp:In" ];
-                    "outputs" = [ "band_20000:Out" ];
+                    "outputs" = [ "filter_10:Out" ];
                   };
                   "audio.channels" = 2;
                   "audio.position" = [ "FL" "FR" ];
