@@ -35,6 +35,7 @@
     kernel.sysctl."kernel.sysrq" = 1;
     kernel.sysctl."net.core.default_qdisc" = "cake";
     kernel.sysctl."net.ipv4.tcp_congestion_control" = "bbr";
+    kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
   };
 
   fileSystems."/games" = {
