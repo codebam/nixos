@@ -125,7 +125,7 @@ in {
       grim
       nil
       nixd
-      nodePackages_latest.nodejs
+      nodejs_latest
       opentofu
       pavucontrol
       playerctl
