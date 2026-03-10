@@ -11,6 +11,8 @@
       allowUnfreePredicate =
         pkg:
         builtins.elem (lib.getName pkg) [
+          "android-studio"
+          "android-sdk-platform-tools"
           "steam"
           "steam-original"
           "steam-run"
@@ -68,6 +70,13 @@
           #     hash = "sha256-wekk6bXwiSL0VCgJGEXuiMUGv9MxjG/8JmDfHlMtBMo=";
           #   })
           # ];
+        });
+        android-tools = prev.androidenv.androidPkgs.platform-tools.overrideAttrs (oldAttrs: rec {
+          version = "36.0.0";
+          src = prev.fetchurl {
+            url = "https://dl.google.com/android/repository/platform-tools_r${version}-linux.zip";
+            sha256 = "sha256-Dq1kLJQ//nlwH8zKj18cacTOT0PfLu/uVT9syyfL++g=";
+          };
         });
       })
     ];
