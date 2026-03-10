@@ -6,6 +6,8 @@ _:
       users = {
         codebam = {
           directories = [
+            "Android"
+            ".android"
             ".config/sunshine"
             ".config/bolt-launcher"
           ];

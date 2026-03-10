@@ -5,5 +5,6 @@
     podman-compose
     virt-manager
     distrobox
+    android-tools
   ];
 }
