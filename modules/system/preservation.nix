@@ -131,6 +131,7 @@ _: {
             ".local/share/calcurse"
             ".config/retroarch"
             ".config/chromium"
+            ".config/google-chrome"
             ".local/share/vkBasalt/shaders"
           ];
         };
