@@ -8,10 +8,10 @@
     iodine = {
       server = {
         enable = true;
-        password = "ceasefire";
+        passwordFile = "/etc/nixos/iodine-password.txt";
         domain = "codebam.tplinkdns.com";
         ip = "10.0.0.1/24";
-        extraArgs = "-c";
+        extraConfig = "-c";
       };
     };
 
