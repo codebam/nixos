@@ -10,7 +10,7 @@
         enable = true;
         passwordFile = "/etc/nixos/iodine-password.txt";
         domain = "codebam.tplinkdns.com";
-        ip = "10.0.0.1/24";
+        ip = "10.0.0.1";
         extraConfig = "-c";
       };
     };

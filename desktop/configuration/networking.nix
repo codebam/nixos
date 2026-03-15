@@ -2,6 +2,11 @@ _:
 
 {
   networking = {
+    nat = {
+      enable = true;
+      internalInterfaces = [ "dns0" ];
+      externalInterface = "wlan0";
+    };
     timeServers = [
       "time.cloudflare.com"
       "time.google.com"
