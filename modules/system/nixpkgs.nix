@@ -33,6 +33,7 @@
           "via"
           "claude-code"
           "google-cloud-sdk"
+          "google-chrome"
           "antigravity"
           "cuda_nvcc"
         ];

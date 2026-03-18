@@ -7,6 +7,9 @@
 
 {
   programs = {
+    google-chrome = {
+      enable = true;
+    };
     chromium = {
       enable = true;
       package = pkgs.ungoogled-chromium;
