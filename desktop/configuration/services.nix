@@ -5,6 +5,86 @@
 
 {
   services = {
+    nginx = {
+      enable = true;
+      virtualHosts."codebam.tplinkdns.com" = {
+        listen = [{
+          addr = "127.0.0.1";
+          port = 8080;
+          proxyProtocol = true;
+        }];
+        root = "/var/www/xray-site";
+        extraConfig = ''
+          index index.html;
+        '';
+      };
+    };
+    xray = {
+      enable = true;
+      settings = {
+        domainStrategy = "UseIPv4";
+        inbounds = [{
+          listen = "0.0.0.0";
+          port = 443;
+          protocol = "vless";
+          settings = {
+            clients = [{
+              id = "19872fad-62ec-47b2-bc7a-4923ec9e18b4";
+              flow = "xtls-rprx-vision";
+            }];
+            decryption = "none";
+            fallbacks = [
+              {
+                dest = "127.0.0.1:8080";
+                xver = 1;
+              }
+            ];
+          };
+          streamSettings = {
+            network = "tcp";
+            security = "reality";
+            realitySettings = {
+              show = false;
+              dest = "www.bing.com:443";
+              serverNames = [
+                "www.bing.com"
+                "www.microsoft.com"
+                "login.microsoftonline.com"
+                "www.office.com"
+                "www.apple.com"
+                "updates.cdn-apple.com"
+               ];
+              privateKey = "8JXPmRKIPSONGTeEHJ6DxFZHmdRdJdCI211puUKqoUw";
+              shortIds = [ "6ba85179e30d4fc2" ];
+            };
+            tcpSettings = {
+              header = {
+                type = "none";
+              };
+            };
+          };
+        }];
+        outbounds = [
+          {
+            protocol = "freedom";
+            tag = "direct";
+          }
+        ];
+        routing = {
+          domainStrategy = "AsIs";
+          rules = [
+            {
+              type = "field";
+              outboundTag = "direct";
+              ip = [ "0.0.0.0/0" "::/0" ];
+            }
+          ];
+        };
+        dns = {
+          servers = [ "1.1.1.1" "8.8.8.8" ];
+        };
+      };
+    };
     iodine = {
       server = {
         enable = true;

@@ -37,6 +37,8 @@
     kernel.sysctl."net.ipv4.tcp_congestion_control" = "bbr";
     kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
     kernel.sysctl."net.ipv4.ip_forward" = 1;
+    kernel.sysctl."net.ipv4.conf.all.rp_filter" = 0;
+    kernel.sysctl."net.ipv4.conf.default.rp_filter" = 0;
   };
 
   fileSystems."/games" = {
