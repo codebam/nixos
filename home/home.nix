@@ -132,6 +132,7 @@ in {
       rcm
       ripgrep
       slurp
+      jq
       # telegram-desktop
       # tor-browser
       weechat
