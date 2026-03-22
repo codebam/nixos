@@ -20,7 +20,7 @@
       };
     };
     xray = {
-      enable = true;
+      enable = false;
       settings = {
         domainStrategy = "UseIPv4";
         inbounds = [{
@@ -87,7 +87,7 @@
     };
     iodine = {
       server = {
-        enable = true;
+        enable = false;
         passwordFile = "/etc/nixos/iodine-password.txt";
         domain = "codebam.tplinkdns.com";
         ip = "10.0.0.1";
