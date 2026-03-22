@@ -34,6 +34,7 @@
           "claude-code"
           "google-cloud-sdk"
           "google-chrome"
+          "google-chrome-unstable"
           "antigravity"
           "cuda_nvcc"
         ];

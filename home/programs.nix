@@ -5,10 +5,57 @@
   ...
 }:
 
+let
+  google-chrome-unstable = pkgs.google-chrome.override {
+    channel = "unstable";
+  };
+in
 {
   programs = {
     google-chrome = {
       enable = true;
+      package = (pkgs.google-chrome.override {
+        # These flags are baked into the wrapper
+        commandLineArgs = [
+          "--enable-features=Glic,GlicSidePanel,GlicActor"
+          "--variations-override-country=us"
+        ];
+      }).overrideAttrs (oldAttrs: rec {
+        pname = "google-chrome-unstable";
+        version = "147.0.6890.0"; # Current Unstable as of late March 2026
+
+        src = pkgs.fetchurl {
+          url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
+          # Replace this with the 'got' hash from the build error
+          hash = "sha256-hyziYE33PBu/OX4diL5ZFYfscsCQWI6a8ncpLuyvxUc="; 
+        };
+
+        installPhase = builtins.replaceStrings 
+          [
+            "appname=chrome" 
+            "dist=stable" 
+            "opt/google/chrome" 
+            "google-chrome-stable"
+            "com.google.Chrome.desktop"
+          ] 
+          [
+            "appname=chrome-unstable" 
+            "dist=unstable" 
+            "opt/google/chrome-unstable" 
+            "google-chrome-unstable"
+            "com.google.Chrome.unstable.desktop"
+          ] 
+          oldAttrs.installPhase;
+
+        postInstall = ''
+          ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
+        '';
+
+        # Update metadata so Nix knows the new binary name
+        meta = oldAttrs.meta // { 
+          mainProgram = "google-chrome-unstable"; 
+        };
+      });
     };
     chromium = {
       enable = true;
