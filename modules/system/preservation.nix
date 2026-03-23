@@ -132,6 +132,7 @@ _: {
             ".config/retroarch"
             ".config/chromium"
             ".config/google-chrome"
+            ".config/google-chrome-unstable"
             ".local/share/vkBasalt/shaders"
           ];
         };
