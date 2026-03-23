@@ -6,10 +6,10 @@ _:
     mimeApps = {
       enable = true;
       defaultApplications = {
-        "text/html" = "chromium-browser.desktop";
-        "x-scheme-handler/http"  = "chromium-browser.desktop";
-        "x-scheme-handler/https" = "chromium-browser.desktop";
-        "x-scheme-handler/about" = "chromium-browser.desktop";
+        "text/html" = "google-chrome-unstable.desktop";
+        "x-scheme-handler/http"  = "google-chrome-unstable.desktop";
+        "x-scheme-handler/https" = "google-chrome-unstable.desktop";
+        "x-scheme-handler/about" = "google-chrome-unstable.desktop";
       };
     };
   };
