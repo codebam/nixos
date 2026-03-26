@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, config, ... }:
 
 let
   sweetfx-src = pkgs.fetchFromGitHub {
@@ -190,6 +190,7 @@ in {
   };
   gtk = {
     gtk2.force = true;
+    gtk4.theme = null;
   };
 
   xdg = {
