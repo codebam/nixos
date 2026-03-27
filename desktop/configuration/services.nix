@@ -172,25 +172,25 @@
     pipewire = {
       extraConfig = {
         pipewire = {
-          "99-shure-mv6-fix" = {
-            "monitor.alsa.rules" = [
-              {
-                matches = [
-                  {
-                    "node.name" = "alsa_input.usb-Shure_Inc_Shure_MV6_MV6_5-46eb059a33dea45395003fb898472029-01.mono-fallback";
-                  }
-                ];
-                actions = {
-                  update-props = {
-                    "api.alsa.soft-mixer" = true;
-                    "device.vcp-usage" = "none"; 
-                    "node.pause-on-idle" = false;
-                    "api.dbus.ReserveDevice" = false;
-                  };
-                };
-              }
-            ];
-          };
+          # "99-shure-mv6-fix" = {
+          #   "monitor.alsa.rules" = [
+          #     {
+          #       matches = [
+          #         {
+          #           "node.name" = "alsa_input.usb-Shure_Inc_Shure_MV6_MV6_5-46eb059a33dea45395003fb898472029-01.mono-fallback";
+          #         }
+          #       ];
+          #       actions = {
+          #         update-props = {
+          #           "api.alsa.soft-mixer" = true;
+          #           "device.vcp-usage" = "none"; 
+          #           "node.pause-on-idle" = false;
+          #           "api.dbus.ReserveDevice" = false;
+          #         };
+          #       };
+          #     }
+          #   ];
+          # };
           "99-mono-downmix" = {
             "context.modules" = [
               {
