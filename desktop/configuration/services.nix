@@ -269,60 +269,60 @@
             ];
           };
           "99-crinear-daybreak-eq" = {
-          "context.modules" = [
-            {
-              "name" = "libpipewire-module-filter-chain";
-              "args" = {
-                "node.description" = "Crinear Daybreak (PEQ)";
-                "media.name" = "Crinear Daybreak (PEQ)";
-                "filter.graph" = {
-                  "nodes" = [
-                    {
-                      "type" = "builtin";
-                      "name" = "preamp";
-                      "label" = "bq_highshelf";
-                      "control" = { "Freq" = 0.0; "Gain" = -3.5; "Q" = 1.0; };
-                    }
-                    { "type" = "builtin"; "name" = "filter_1";  "label" = "bq_lowshelf"; "control" = { "Freq" = 105.0;  "Gain" = 3.5;  "Q" = 0.7; }; }
-                    { "type" = "builtin"; "name" = "filter_2";  "label" = "bq_peaking";  "control" = { "Freq" = 220.0;  "Gain" = -1.2; "Q" = 0.5; }; }
-                    { "type" = "builtin"; "name" = "filter_3";  "label" = "bq_peaking";  "control" = { "Freq" = 1200.0; "Gain" = -1.5; "Q" = 1.4; }; }
-                    { "type" = "builtin"; "name" = "filter_4";  "label" = "bq_peaking";  "control" = { "Freq" = 2800.0; "Gain" = 2.0;  "Q" = 1.8; }; }
-                    { "type" = "builtin"; "name" = "filter_5";  "label" = "bq_peaking";  "control" = { "Freq" = 4500.0; "Gain" = -2.5; "Q" = 2.0; }; }
-                    { "type" = "builtin"; "name" = "filter_6";  "label" = "bq_peaking";  "control" = { "Freq" = 6000.0; "Gain" = 1.5;  "Q" = 3.0; }; }
-                    { "type" = "builtin"; "name" = "filter_7";  "label" = "bq_peaking";  "control" = { "Freq" = 8000.0; "Gain" = -3.0; "Q" = 4.0; }; }
-                    { "type" = "builtin"; "name" = "filter_8";  "label" = "bq_peaking";  "control" = { "Freq" = 10500.0;"Gain" = 2.0;  "Q" = 2.5; }; }
-                    { "type" = "builtin"; "name" = "filter_9";  "label" = "bq_peaking";  "control" = { "Freq" = 13000.0;"Gain" = -4.0; "Q" = 1.0; }; }
-                    { "type" = "builtin"; "name" = "filter_10"; "label" = "bq_peaking";  "control" = { "Freq" = 15000.0;"Gain" = 2.0;  "Q" = 1.5; }; }
-                  ];
-                  "links" = [
-                    { "output" = "preamp:Out";    "input" = "filter_1:In"; }
-                    { "output" = "filter_1:Out";  "input" = "filter_2:In"; }
-                    { "output" = "filter_2:Out";  "input" = "filter_3:In"; }
-                    { "output" = "filter_3:Out";  "input" = "filter_4:In"; }
-                    { "output" = "filter_4:Out";  "input" = "filter_5:In"; }
-                    { "output" = "filter_5:Out";  "input" = "filter_6:In"; }
-                    { "output" = "filter_6:Out";  "input" = "filter_7:In"; }
-                    { "output" = "filter_7:Out";  "input" = "filter_8:In"; }
-                    { "output" = "filter_8:Out";  "input" = "filter_9:In"; }
-                    { "output" = "filter_9:Out";  "input" = "filter_10:In"; }
-                  ];
-                  "inputs"  = [ "preamp:In" ];
-                  "outputs" = [ "filter_10:Out" ];
+            "context.modules" = [
+              {
+                "name" = "libpipewire-module-filter-chain";
+                "args" = {
+                  "node.description" = "Crinear Daybreak (PEQ)";
+                  "media.name" = "Crinear Daybreak (PEQ)";
+                  "filter.graph" = {
+                    "nodes" = [
+                      {
+                        "type" = "builtin";
+                        "name" = "preamp";
+                        "label" = "bq_highshelf";
+                        "control" = { "Freq" = 0.0; "Gain" = -3.5; "Q" = 1.0; };
+                      }
+                      { "type" = "builtin"; "name" = "filter_1";  "label" = "bq_lowshelf"; "control" = { "Freq" = 105.0;  "Gain" = 3.5;  "Q" = 0.7; }; }
+                      { "type" = "builtin"; "name" = "filter_2";  "label" = "bq_peaking";  "control" = { "Freq" = 220.0;  "Gain" = -1.2; "Q" = 0.5; }; }
+                      { "type" = "builtin"; "name" = "filter_3";  "label" = "bq_peaking";  "control" = { "Freq" = 1200.0; "Gain" = -1.5; "Q" = 1.4; }; }
+                      { "type" = "builtin"; "name" = "filter_4";  "label" = "bq_peaking";  "control" = { "Freq" = 2800.0; "Gain" = 2.0;  "Q" = 1.8; }; }
+                      { "type" = "builtin"; "name" = "filter_5";  "label" = "bq_peaking";  "control" = { "Freq" = 4500.0; "Gain" = -2.5; "Q" = 2.0; }; }
+                      { "type" = "builtin"; "name" = "filter_6";  "label" = "bq_peaking";  "control" = { "Freq" = 6000.0; "Gain" = 1.5;  "Q" = 3.0; }; }
+                      { "type" = "builtin"; "name" = "filter_7";  "label" = "bq_peaking";  "control" = { "Freq" = 8000.0; "Gain" = -3.0; "Q" = 4.0; }; }
+                      { "type" = "builtin"; "name" = "filter_8";  "label" = "bq_peaking";  "control" = { "Freq" = 10500.0;"Gain" = 2.0;  "Q" = 2.5; }; }
+                      { "type" = "builtin"; "name" = "filter_9";  "label" = "bq_peaking";  "control" = { "Freq" = 13000.0;"Gain" = -4.0; "Q" = 1.0; }; }
+                      { "type" = "builtin"; "name" = "filter_10"; "label" = "bq_peaking";  "control" = { "Freq" = 15000.0;"Gain" = 2.0;  "Q" = 1.5; }; }
+                    ];
+                    "links" = [
+                      { "output" = "preamp:Out";    "input" = "filter_1:In"; }
+                      { "output" = "filter_1:Out";  "input" = "filter_2:In"; }
+                      { "output" = "filter_2:Out";  "input" = "filter_3:In"; }
+                      { "output" = "filter_3:Out";  "input" = "filter_4:In"; }
+                      { "output" = "filter_4:Out";  "input" = "filter_5:In"; }
+                      { "output" = "filter_5:Out";  "input" = "filter_6:In"; }
+                      { "output" = "filter_6:Out";  "input" = "filter_7:In"; }
+                      { "output" = "filter_7:Out";  "input" = "filter_8:In"; }
+                      { "output" = "filter_8:Out";  "input" = "filter_9:In"; }
+                      { "output" = "filter_9:Out";  "input" = "filter_10:In"; }
+                    ];
+                    "inputs"  = [ "preamp:In" ];
+                    "outputs" = [ "filter_10:Out" ];
+                  };
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.passive" = false;
+                    "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
+                  };
                 };
-                "audio.channels" = 2;
-                "audio.position" = [ "FL" "FR" ];
-                "capture.props" = {
-                  "node.passive" = true;
-                  "media.class" = "Audio/Sink";
-                };
-                "playback.props" = {
-                  "node.passive" = false;
-                  "target.object" = "alsa_output.usb-FiiO_FiiO_KA3_FiiO_KA3-00.analog-stereo";
-                };
-              };
-            }
-          ];
-        };
+              }
+            ];
+          };
           "99-letshuoer-s12-pro-eq" = {
             "context.modules" = [
               {
