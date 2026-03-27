@@ -109,12 +109,12 @@
     };
     
     pipewire.wireplumber.extraConfig = {
-      "51-bluez-codecs" = {
-        "monitor.bluez.properties" = {
-          # Omitting aptx and aptx_hd forces the fallback to ldac or sbc_xq.
-          "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
-        };
-      };
+      # "51-bluez-codecs" = {
+      #   "monitor.bluez.properties" = {
+      #     "bluez5.roles" = [ "a2dp_sink" "a2dp_source" "hsp_hs" "hsp_ag" "hfp_hf" "hfp_ag" ];
+      #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
+      #   };
+      # };
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
           {
