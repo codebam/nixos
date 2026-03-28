@@ -1,5 +1,8 @@
 { pkgs, ... }:
 {
+  imports = [
+    ./noizdns.nix
+  ];
   services = {
     ananicy = {
       enable = true;
