@@ -2,7 +2,7 @@
   disko.devices = {
     disk = {
       nixos = {
-        device = "/dev/disk/by-id/nvme-Sabrent_Rocket_Q_FC6207030D4501357285";
+        device = "/dev/disk/by-id/nvme-Patriot_P400L_1000GB_P400LZDCB25091507418";
         type = "disk";
         content = {
           type = "gpt";
@@ -18,43 +18,52 @@
               };
             };
             swap = {
-              size = "30G";
+              size = "2G";
               content = {
                 type = "swap";
               };
             };
-            root = {
+            luks = {
               size = "100%";
               content = {
-                type = "bcachefs";
-                filesystem = "impermanence_subvolumes";
+                type = "luks";
+                name = "crypted";
+                extraFormatArgs = [ "--key-file /tmp/secret.key" ];
+                settings = {
+                  keyFile = "/tmp/secret.key";
+                  allowDiscards = true;
+                };
+                content = {
+                  type = "btrfs";
+                  extraArgs = [ "-f" ];
+                  subvolumes = {
+                    "/@root" = {
+                      mountOptions = [ "compress=zstd" ];
+                      mountpoint = "/";
+                    };
+                    "/@nix" = {
+                      mountOptions = [ "compress=zstd" ];
+                      mountpoint = "/nix";
+                    };
+                    "/@persist" = {
+                      mountOptions = [ "compress=zstd" ];
+                      mountpoint = "/persistent";
+                    };
+                    "/@swap" = {
+                      mountpoint = "/swap";
+                      swap = {
+                        swapfile.size = "2G";
+                      };
+                    };
+                  };
+                };
               };
             };
-          };
-        };
-      };
-    };
-    bcachefs_filesystems = {
-      impermanence_subvolumes = {
-        type = "bcachefs_filesystem";
-        passwordFile = "/tmp/secret.key";
-        extraFormatArgs = [
-          "--compression=lz4"
-          "--background_compression=lz4"
-        ];
-        subvolumes = {
-          "@root" = {
-            mountpoint = "/";
-            mountOptions = [ "verbose" ];
-          };
-          "@nix" = {
-            mountpoint = "/nix";
-          };
-          "@persist" = {
-            mountpoint = "/persistent";
           };
         };
       };
     };
   };
+
+  fileSystems."/persistent".neededForBoot = true;
 }
