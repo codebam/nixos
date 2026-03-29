@@ -41,11 +41,11 @@
     kernel.sysctl."net.ipv4.conf.default.rp_filter" = 0;
   };
 
-  fileSystems."/games" = {
-    device = "/dev/disk/by-uuid/7d57a643-ac36-4e54-b873-0e19bd8a8645";
-    fsType = "btrfs";
-    options = [ "compress=zstd" ];
-  };
+  # fileSystems."/games" = {
+  #   device = "/dev/disk/by-uuid/7d57a643-ac36-4e54-b873-0e19bd8a8645";
+  #   fsType = "btrfs";
+  #   options = [ "compress=zstd" ];
+  # };
 
   # fileSystems."/backup" = {
   #   device = "/dev/disk/by-uuid/eb973c9e-8d9f-4aaa-9d8c-65486256d1c4";
