@@ -24,67 +24,173 @@
             ];
             serviceConfig.KeyringMode = "inherit";
           };
+
           cleanup-root = {
             unitConfig.DefaultDependencies = false;
             serviceConfig.Type = "oneshot";
             serviceConfig.KeyringMode = "inherit";
-            requiredBy = [ "initrd.target" ];
-            after = [
-              "unlock-bcachefs--.service"
-              "local-fs-pre.target"
+            requiredBy = [
+              "initrd.target"
             ];
-            before = [ "sysroot.mount" ];
+            after = [
+              "local-fs-pre.target"
+              "systemd-udev-settle.service"
+            ];
+            before = [
+              "sysroot.mount"
+            ];
+
             script = ''
-              # Mount the bcachefs filesystem to a temporary location
-              mkdir -p /bcachefs_tmp
-              mount -t bcachefs /dev/disk/by-id/nvme-Sabrent_Rocket_Q_FC6207030D4501357285-part3 /bcachefs_tmp
+              log() {
+                echo "[cleanup-root] $*" >&2
+              }
 
-              # If a @root subvolume exists, archive it
-              if [[ -e /bcachefs_tmp/@root ]]; then
-                echo "Archiving existing @root subvolume..."
-                mkdir -p /bcachefs_tmp/old_roots
-                timestamp=$(date --date="@$(stat -c %Y /bcachefs_tmp/@root)" "+%Y-%m-%d_%H:%M:%S")
-                mv /bcachefs_tmp/@root "/bcachefs_tmp/old_roots/$timestamp"
+              fail() {
+                log "FATAL: $*"
+                exit 1
+              }
+
+              log "--- Starting cleanup-root service ---"
+
+              # --- 1. Find the target device ---
+              DEVICE_PATH="/dev/disk/by-id/nvme-Patriot_P400L_1000GB_P400LZDCB25091507418-part3"
+              FALLBACK_DEVICE="/dev/nvme0n1p3"
+              ACTUAL_DEVICE=""
+
+              log "Waiting for device to become available..."
+              for attempt in {1..30}; do
+                if [[ -e "$DEVICE_PATH" ]]; then
+                  ACTUAL_DEVICE="$DEVICE_PATH"
+                  break
+                elif [[ -e "$FALLBACK_DEVICE" ]]; then
+                  ACTUAL_DEVICE="$FALLBACK_DEVICE"
+                  break
+                else
+                  log "Attempt $attempt: Device not found, waiting 1s..."
+                  sleep 1
+                fi
+              done
+
+              if [[ -z "$ACTUAL_DEVICE" ]]; then
+                log "ERROR: Could not find NVMe device after 30 attempts."
+                log "Available devices in /dev/disk/by-id/:"
+                ls -la /dev/disk/by-id/ || true
+                log "Available devices in /dev/:"
+                ls -la /dev/nvme* || true
+                fail "Device discovery failed."
               fi
 
-              # Clean up archived roots older than 30 days
-              if [[ -d /bcachefs_tmp/old_roots ]]; then
-                echo "Checking for old roots to clean up..."
-                # Get the current time and the cutoff time (30 days ago) in seconds since epoch
-                cutoff_date_sec=$(date -d "30 days ago" +%s)
+              log "Found device: $ACTUAL_DEVICE"
 
-                # Use a subshell to safely change directory
-                (
-                  cd /bcachefs_tmp/old_roots || exit 1
-                  for old_root_dir in *; do
-                    # Ensure we are only looking at directories (our snapshots)
-                    if [[ -d "$old_root_dir" ]]; then
-                      # The directory name is a timestamp. Convert it to seconds since epoch.
-                      # 'date' can parse "YYYY-MM-DD HH:MM:SS", so we replace the underscore.
-                      dir_timestamp_str="''${old_root_dir//_/' '}"
-                      dir_date_sec=$(date -d "$dir_timestamp_str" +%s)
+              # --- 2. Mount the filesystem ---
+              MOUNT_POINT="/btrfs_tmp"
+              mkdir -p "$MOUNT_POINT"
 
-                      # If the directory's date is before our cutoff date, delete it
-                      if (( dir_date_sec < cutoff_date_sec )); then
-                      echo "Preparing to delete old root snapshot: $old_root_dir"
-                      
-                      echo "Recursively removing immutable flag from $old_root_dir..."
-                      chattr -R -i "/bcachefs_tmp/old_roots/$old_root_dir"
-                      
-                      echo "Deleting subvolume: $old_root_dir"
-                      bcachefs subvolume delete "/bcachefs_tmp/old_roots/$old_root_dir"
-                      fi
+              log "Mounting btrfs filesystem from $ACTUAL_DEVICE to $MOUNT_POINT"
+              if ! mount -t btrfs -o "defaults,compress=zstd" "$ACTUAL_DEVICE" "$MOUNT_POINT"; then
+                fail "Failed to mount $ACTUAL_DEVICE"
+              fi
+              log "Mount successful."
+
+              # --- 3. Safely replace @root subvolume ---
+              if [[ -e "$MOUNT_POINT/@root" ]]; then
+                log "Found existing @root subvolume. Preparing to replace it."
+                
+                BOOT_BACKUP_NAME="@root.bak-$(date +%s)"
+                
+                log "Moving @root to $BOOT_BACKUP_NAME as a temporary backup."
+                if ! mv "$MOUNT_POINT/@root" "$MOUNT_POINT/$BOOT_BACKUP_NAME"; then
+                    umount "$MOUNT_POINT" || log "Warning: Failed to unmount $MOUNT_POINT on failure."
+                    fail "Could not move existing @root. Aborting."
+                fi
+
+                log "Creating new @root subvolume..."
+                btrfs subvolume create "$MOUNT_POINT/@root"
+
+                if [[ ! -d "$MOUNT_POINT/@root" ]]; then
+                  log "ERROR: FAILED TO CREATE NEW @root subvolume!"
+                  log "Attempting to restore from backup: $BOOT_BACKUP_NAME"
+                  
+                  if mv "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$MOUNT_POINT/@root"; then
+                    log "SUCCESS: Restored previous @root. System will boot with the old root."
+                    umount "$MOUNT_POINT"
+                    log "--- cleanup-root service finished with a restored root ---"
+                    exit 0
+                  else
+                    umount "$MOUNT_POINT" || log "Warning: Failed to unmount $MOUNT_POINT on final failure."
+                    fail "Could not restore backup. Filesystem is in an inconsistent state. NO @root EXISTS."
+                  fi
+                else
+                  log "New @root subvolume created successfully."
+                  log "Moving temporary backup to long-term storage."
+                  mkdir -p "$MOUNT_POINT/old_roots"
+                  timestamp=$(date --date="@$(stat -c %Y "$MOUNT_POINT/$BOOT_BACKUP_NAME")" "+%Y-%m-%d_%H-%M-%S")
+                  mv "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$MOUNT_POINT/old_roots/$timestamp" || log "Warning: Could not move backup to old_roots."
+                fi
+              else
+                log "No existing @root found. Creating a new one."
+                btrfs subvolume create "$MOUNT_POINT/@root"
+                if [[ ! -d "$MOUNT_POINT/@root" ]]; then
+                    umount "$MOUNT_POINT" || log "Warning: Failed to unmount $MOUNT_POINT on failure."
+                    fail "Failed to create initial @root subvolume."
+                fi
+                log "New @root subvolume created successfully."
+              fi
+
+              # --- 4. Non-critical cleanup of old backups ---
+              (
+                log "Starting non-critical cleanup of old subvolumes."
+                if [[ -d "$MOUNT_POINT/old_roots" ]]; then
+                  delete_subvolume_recursively() {
+                    local subvol_path="$1"
+                    log "Deleting subvolume: $subvol_path"
+                    local nested_subvols
+                    nested_subvols=$(btrfs subvolume list -o "$subvol_path" | awk '{print $9}')
+                    for i in $nested_subvols; do
+                      delete_subvolume_recursively "$MOUNT_POINT/$i"
+                    done
+                    
+                    if [[ -d "$subvol_path/var/empty" ]]; then
+                        log "Removing immutable flag from $subvol_path/var/empty"
+                        chattr -i "$subvol_path/var/empty" || log "Warning: could not chattr -i on $subvol_path/var/empty"
                     fi
+                    
+                    btrfs subvolume delete "$subvol_path"
+                  }
+
+                  now_seconds=$(date +%s)
+                  thirty_days_ago_seconds=$((now_seconds - 30 * 24 * 60 * 60))
+                  cutoff_date_str=$(date --date="@$thirty_days_ago_seconds" "+%Y-%m-%d_%H-%M-%S")
+                  
+                  log "Will delete backups older than: $cutoff_date_str"
+
+                  find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while read -r old_subvol; do
+                      subvol_basename=$(basename "$old_subvol")
+
+                      # Use string comparison. This works because of the YYYY-MM-DD_HH-MM-SS format.
+                      if [[ "$subvol_basename" < "$cutoff_date_str" ]]; then
+                        log "Found old backup to delete: $old_subvol"
+                        if btrfs subvolume show "$old_subvol" &>/dev/null; then
+                            delete_subvolume_recursively "$old_subvol"
+                        else
+                            log "Warning: $old_subvol is not a btrfs subvolume, removing with rm -rf"
+                            if [[ -d "$old_subvol/var/empty" ]]; then
+                                log "Removing immutable flag from $old_subvol/var/empty"
+                                chattr -i "$old_subvol/var/empty" || log "Warning: could not chattr -i on $old_subvol/var/empty"
+                            fi
+                            rm -rf "$old_subvol"
+                        fi
+                      fi
                   done
-                )
-              fi
+                fi
+                log "Non-critical cleanup finished."
+              ) || log "Warning: Non-critical cleanup of old roots encountered an error. Continuing..."
 
-              # Create the new, clean @root subvolume for the new generation
-              echo "Creating new @root subvolume..."
-              bcachefs subvolume create /bcachefs_tmp/@root
+              # --- 5. Finalize ---
+              log "Unmounting btrfs filesystem..."
+              umount "$MOUNT_POINT"
 
-              # Clean up the temporary mount
-              umount /bcachefs_tmp
+              log "--- cleanup-root service completed successfully ---"
             '';
           };
         };

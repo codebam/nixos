@@ -28,7 +28,6 @@
               content = {
                 type = "luks";
                 name = "crypted";
-                extraFormatArgs = [ "--key-file /tmp/secret.key" ];
                 settings = {
                   keyFile = "/tmp/secret.key";
                   allowDiscards = true;
