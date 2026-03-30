@@ -3,6 +3,9 @@
   users = {
     mutableUsers = false;
     users = {
+      root = {
+        hashedPassword = "$6$GKIRYDCTJO3SOTfb$nZuvpwjNYh./Sxc3WFB4.Y7rGx6XcmPYhYZ.bmDGExMkouIsKf.tYefX6LEhOGLMdlQ8.ipovClQ6U8ZtQNBm0";
+      };
       codebam = {
         isNormalUser = true;
         home = "/home/codebam";

@@ -33,6 +33,7 @@
               "initrd.target"
             ];
             after = [
+              "cryptsetup.target"
               "local-fs-pre.target"
               "systemd-udev-settle.service"
             ];
@@ -53,8 +54,8 @@
               log "--- Starting cleanup-root service ---"
 
               # --- 1. Find the target device ---
-              DEVICE_PATH="/dev/disk/by-id/nvme-Patriot_P400L_1000GB_P400LZDCB25091507418-part3"
-              FALLBACK_DEVICE="/dev/nvme0n1p3"
+              DEVICE_PATH="/dev/mapper/crypted"
+              FALLBACK_DEVICE="/dev/mapper/crypted"
               ACTUAL_DEVICE=""
 
               log "Waiting for device to become available..."
