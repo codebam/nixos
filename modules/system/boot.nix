@@ -4,7 +4,7 @@ _:
   boot = {
     initrd.systemd = {
       enable = true;
-      emergencyAccess = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
+      emergencyAccess = "$6$GKIRYDCTJO3SOTfb$nZuvpwjNYh./Sxc3WFB4.Y7rGx6XcmPYhYZ.bmDGExMkouIsKf.tYefX6LEhOGLMdlQ8.ipovClQ6U8ZtQNBm0";
     };
     loader = {
       systemd-boot = {

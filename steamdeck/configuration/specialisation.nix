@@ -10,7 +10,6 @@ _: {
         serviceConfig.KeyringMode = "inherit";
         requiredBy = [ "initrd.target" ];
         after = [
-          "unlock-bcachefs--.service"
           "local-fs-pre.target"
         ];
         before = [ "sysroot.mount" ];
