@@ -5,6 +5,23 @@
 
 {
   services = {
+    v2ray = {
+      enable = true;
+      config = {
+        inbounds = [{
+          port = 10086;
+          protocol = "vmess";
+          settings = {
+            clients = [{
+              id = "b831381d-6324-4d53-ad4f-8cda48b30811";
+            }];
+          };
+        }];
+        outbounds = [{
+          protocol = "freedom";
+        }];
+      };
+    };
     nginx = {
       enable = true;
       virtualHosts."codebam.tplinkdns.com" = {
