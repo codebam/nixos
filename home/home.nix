@@ -1,4 +1,4 @@
-{ pkgs, inputs, config, ... }:
+{ pkgs, inputs, lib, config, ... }:
 
 let
   sweetfx-src = pkgs.fetchFromGitHub {
@@ -186,17 +186,17 @@ in {
       .claude/
     '';
 
-    stateVersion = "25.11";
+    stateVersion = "26.05";
   };
   gtk = {
-    gtk2.force = true;
+    # gtk2.force = true;
     gtk4.theme = null;
   };
 
   xdg = {
     configFile = {
-      "gtk-3.0/gtk.css".force = true;
-      "gtk-4.0/gtk.css".force = true;
+      # "gtk-3.0/gtk.css".force = true;
+      # "gtk-4.0/gtk.css".force = true;
       "vkBasalt/vkBasalt.conf".text = ''
         reshadeIncludePath = ${reshade-shaders}
         reshadeTexturePath = ${sweetfx-src}/Textures

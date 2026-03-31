@@ -9,7 +9,7 @@
         profileNames = [ "codebam" ];
       };
       foot.enable = false;
-      gtk.enable = true;
+      gtk.enable = false;
       mako.enable = true;
       qt.enable = false;
       sway.enable = true;
