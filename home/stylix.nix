@@ -8,7 +8,7 @@
       librewolf = {
         profileNames = [ "codebam" ];
       };
-      foot.enable = true;
+      foot.enable = false;
       gtk.enable = true;
       mako.enable = true;
       qt.enable = false;

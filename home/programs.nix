@@ -380,7 +380,6 @@
           command = "${pkgs.pipewire}/bin/pw-play ${../bell.wav}";
           command-focused = "yes";
         };
-        colors.alpha = lib.mkForce 0.8;
       };
     };
     direnv = {
