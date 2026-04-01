@@ -51,27 +51,24 @@
           '';
         });
         wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
+          pname = "wlroots";
+          version = "0.21.0-dev";
           src = prev.fetchFromGitLab {
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "1ce992d7cb5023a7a7c91ed6ce156529e3709657";
-            hash = "sha256-2iVbJK4i37DIsTCy8cGsjsVoJobJe5kfGa1VCe9bmmQ=";
+            rev = "e22084f63967aa72cb56873aeb48b01fb8dc2c9b";
+            hash = "sha256-6eOqeq9yYeY815rad1Pw2XhF1Y/eee9HwWlCNVZpfFo=";
           };
+          mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
         sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "c57daaf0d1640b45579d75ce9775b8c0d03299b7";
-            hash = "sha256-zP+cgC/sv5hxcH50z5h0nji1YEMEpQfZUR3n3OrN1nY=";
+            rev = "909a2ddb5fff528e735341529a028d2ef21836db";
+            hash = "sha256-Qjz4XGiggSj6kg6GXMMPl4JYE8yYy1byvNNBvvXnuZI=";
           };
-          # patches = old.patches ++ [
-          #   (prev.fetchurl {
-          #     url = "https://github.com/swaywm/sway/compare/master..emersion:hdr10.patch";
-          #     hash = "sha256-wekk6bXwiSL0VCgJGEXuiMUGv9MxjG/8JmDfHlMtBMo=";
-          #   })
-          # ];
         });
         android-tools = prev.androidenv.androidPkgs.platform-tools.overrideAttrs (oldAttrs: rec {
           version = "36.0.0";
