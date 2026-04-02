@@ -34,7 +34,8 @@
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
     preservation.url = "github:nix-community/preservation";
-    jovian.url = "github:jovian-experiments/jovian-nixos/development";
+    jovian.url = "github:jovian-experiments/jovian-nixos/steamos-manager-shenanigans";
+    # jovian.url = "github:jovian-experiments/jovian-nixos/development";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
