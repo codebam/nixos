@@ -31,7 +31,7 @@
     '';
     packages = with pkgs; [
       rpcs3
-      # prismlauncher
+      prismlauncher
       ryubing
       moonlight-qt
       (writeShellScriptBin "lsfg" ''
