@@ -5,7 +5,6 @@
   networking.hostName = "nixos-avf";
   networking.useDHCP = lib.mkForce true;
   hardware.graphics.enable32Bit = lib.mkForce false;
-  services.scx.enable = lib.mkForce false;
   nixpkgs.hostPlatform = "aarch64-linux";
   avf.defaultUser = "codebam";
   environment = lib.mkForce {
@@ -18,6 +17,15 @@
       zip
       _7zz
     ];
+  };
+  services = lib.mkForce {
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+      };
+      openFirewall = true;
+    };
   };
   system.stateVersion = "26.05";
 }
