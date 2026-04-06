@@ -213,6 +213,11 @@
           extraModules = [
             inputs.nixos-avf.nixosModules.avf
             ./avf/configuration.nix
+            {
+              home-manager.users.codebam.imports = [
+                ./avf/home.nix
+              ];
+            }
           ];
         };
       };
