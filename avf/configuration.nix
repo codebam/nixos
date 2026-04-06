@@ -8,5 +8,16 @@
   services.scx.enable = lib.mkForce false;
   nixpkgs.hostPlatform = "aarch64-linux";
   avf.defaultUser = "codebam";
+  environment = lib.mkForce {
+    systemPackages = with pkgs; [
+      dig
+      git
+      nushell
+      rclone
+      unzip
+      zip
+      _7zz
+    ];
+  };
   system.stateVersion = "26.05";
 }
