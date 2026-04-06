@@ -43,5 +43,6 @@
       openFirewall = true;
     };
   };
+  zramSwap.enable = lib.mkForce false;
   system.stateVersion = "26.05";
 }
