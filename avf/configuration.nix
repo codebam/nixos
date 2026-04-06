@@ -19,22 +19,22 @@
     ];
   };
   services = lib.mkForce {
-    scx.enable = lib.mkForce false;
-    lsfg-vk.enable = lib.mkForce false;
-    tailscale.enable = lib.mkForce false;
-    networkd-dispatcher.enable = lib.mkForce false;
-    ratbagd.enable = lib.mkForce false;
+    scx.enable = false;
+    lsfg-vk.enable = false;
+    tailscale.enable = false;
+    networkd-dispatcher.enable = false;
+    ratbagd.enable = false;
     resolved.enable = true;
-    speechd.enable = lib.mkForce false;
+    speechd.enable = false;
     udev = {
-      packages = lib.mkForce [];
-      extraRules = lib.mkForce "";
+      packages = [];
+      extraRules = "";
     };
-    fwupd.enable = lib.mkForce false;
-    pipewire.enable = lib.mkForce false;
-    udisks2.enable = lib.mkForce false;
-    gnome.gnome-keyring.enable = lib.mkForce false;
-    pcscd.enable = lib.mkForce false;
+    fwupd.enable = false;
+    pipewire.enable = false;
+    udisks2.enable = false;
+    gnome.gnome-keyring.enable = false;
+    pcscd.enable = false;
     openssh = {
       enable = true;
       settings = {
