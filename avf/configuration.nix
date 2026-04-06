@@ -18,7 +18,23 @@
       _7zz
     ];
   };
-  services = lib.mkOverride 0 {
+  services = lib.mkForce {
+    scx.enable = lib.mkForce false;
+    lsfg-vk.enable = lib.mkForce false;
+    tailscale.enable = lib.mkForce false;
+    networkd-dispatcher.enable = lib.mkForce false;
+    ratbagd.enable = lib.mkForce false;
+    resolved.enable = lib.mkForce true;
+    speechd.enable = lib.mkForce false;
+    udev = {
+      packages = lib.mkForce [];
+      extraRules = lib.mkForce "";
+    };
+    fwupd.enable = lib.mkForce false;
+    pipewire.enable = lib.mkForce false;
+    udisks2.enable = lib.mkForce false;
+    gnome.gnome-keyring.enable = lib.mkForce false;
+    pcscd.enable = lib.mkForce false;
     openssh = {
       enable = true;
       settings = {
