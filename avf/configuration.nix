@@ -18,7 +18,7 @@
       _7zz
     ];
   };
-  services = lib.mkForce {
+  services = lib.mkOverride 0 {
     openssh = {
       enable = true;
       settings = {
