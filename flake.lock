@@ -464,6 +464,26 @@
         "type": "github"
       }
     },
+    "nixos-avf": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769132082,
+        "narHash": "sha256-cJVUBVP3qmRO2HGHqj18ChjOSztyo7eqElQJMRpWXw8=",
+        "owner": "nix-community",
+        "repo": "nixos-avf",
+        "rev": "d0a62c3f64b45a39570fde31a3a490b214bf19ee",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixos-avf",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1754028485,
@@ -601,10 +621,12 @@
         "lanzaboote": "lanzaboote",
         "lsfg-vk-flake": "lsfg-vk-flake",
         "nix-index-database": "nix-index-database",
+        "nixos-avf": "nixos-avf",
         "nixpkgs": "nixpkgs_3",
         "preservation": "preservation",
         "run0-sudo-shim": "run0-sudo-shim",
         "rust-overlay": "rust-overlay",
+        "staging": "staging",
         "stylix": "stylix"
       }
     },
@@ -647,6 +669,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "staging": {
+      "locked": {
+        "lastModified": 1775500864,
+        "narHash": "sha256-0uv/VTcLozsCThQUj2o0aSVh4j2reV4Q5bsg/M93w4I=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "89ec4ded9539a40dcdcaaf04627f0b1c90197630",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "staging",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
