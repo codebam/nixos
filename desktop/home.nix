@@ -13,6 +13,7 @@
     packages = with pkgs; [
       bolt-launcher
       android-studio
+      vllm
     ];
   };
 
