@@ -24,7 +24,7 @@
     tailscale.enable = lib.mkForce false;
     networkd-dispatcher.enable = lib.mkForce false;
     ratbagd.enable = lib.mkForce false;
-    resolved.enable = lib.mkForce true;
+    resolved.enable = true;
     speechd.enable = lib.mkForce false;
     udev = {
       packages = lib.mkForce [];
