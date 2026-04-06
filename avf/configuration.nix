@@ -5,6 +5,7 @@
   networking.hostName = "nixos-avf";
   networking.useDHCP = lib.mkForce true;
   hardware.graphics.enable32Bit = lib.mkForce false;
+  services.scx.enable = lib.mkForce false;
   nixpkgs.hostPlatform = "aarch64-linux";
   avf.defaultUser = "codebam";
   system.stateVersion = "26.05";
