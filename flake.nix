@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
+    staging.url = "github:nixos/nixpkgs/staging";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -72,6 +73,10 @@
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
     #};
+    nixos-avf = {
+      url = "github:nix-community/nixos-avf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -201,6 +206,13 @@
             inputs.jovian.nixosModules.default
             ./steamdeck/configuration
             { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
+          ];
+        };
+        nixos-avf = mkNixosSystem {
+          system = "aarch64-linux";
+          extraModules = [
+            inputs.nixos-avf.nixosModules.avf
+            ./avf/configuration.nix
           ];
         };
       };
