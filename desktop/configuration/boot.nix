@@ -11,6 +11,7 @@
       "split_lock_detect=off"
       "preempt=full"
     ];
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
     initrd = {
       systemd = {
         extraBin = {

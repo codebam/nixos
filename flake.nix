@@ -3,11 +3,16 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
-    staging.url = "github:nixos/nixpkgs/staging";
+    # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    # staging.url = "github:nixos/nixpkgs/staging";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # home-manager-unstable = {
+    #   url = "github:nix-community/home-manager";
+    #   inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # };
     # lix = {
     #   url = "git+https://git.lix.systems/lix-project/lix.git";
     #   flake = false;
@@ -105,11 +110,10 @@
             )
           );
 
-      # Helper function to define a NixOS system
+      # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
       mkNixosSystem =
         { system
         , extraModules ? [ ]
-        ,
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -208,15 +212,24 @@
             { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
           ];
         };
-        nixos-avf = mkNixosSystem {
+
+        # Defining nixos-avf entirely standalone to prevent loading heavy default modules
+        nixos-avf = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
-          extraModules = [
+          specialArgs = { inherit inputs; };
+          modules = [
             inputs.nixos-avf.nixosModules.avf
             ./avf/configuration.nix
+            inputs.home-manager.nixosModules.home-manager
             {
-              home-manager.users.codebam.imports = [
-                ./avf/home.nix
-              ];
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = { inherit inputs; };
+                users.codebam.imports = [
+                  ./avf/home.nix
+                ];
+              };
             }
           ];
         };

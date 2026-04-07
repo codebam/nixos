@@ -1,10 +1,15 @@
 { pkgs, lib, ... }:
 
 {
-  boot.lanzaboote.enable = lib.mkForce false;
-  networking.hostName = "nixos-avf";
-  networking.useDHCP = lib.mkForce true;
-  hardware.graphics.enable32Bit = lib.mkForce false;
+  imports = [
+    ../modules/users/default.nix
+  ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  boot = lib.mkForce {
+    loader = {
+      systemd-boot.enable = false;
+    };
+  };
   nixpkgs.hostPlatform = "aarch64-linux";
   avf.defaultUser = "codebam";
   environment = lib.mkForce {
@@ -18,10 +23,36 @@
       _7zz
     ];
   };
+  networking = lib.mkForce {
+    hostName = "nixos-avf";
+    useDHCP = true;
+    networkmanager = {
+      enable = false;
+    };
+    wireless.iwd = {
+      enable = false;
+    };
+    nftables = {
+      enable = true;
+    };
+    firewall = rec {
+      enable = true;
+      allowedTCPPorts = [
+      ];
+      allowedUDPPorts = allowedTCPPorts;
+      allowedTCPPortRanges = [];
+      allowedUDPPortRanges = allowedTCPPortRanges;
+      trustedInterfaces = [ "enp0s12" "tailscale0" ];
+    };
+  };
   services = lib.mkForce {
+    ananicy.enable = false;
     scx.enable = false;
-    lsfg-vk.enable = false;
-    tailscale.enable = false;
+    tailscale = {
+      enable = true;
+      openFirewall = true;
+      useRoutingFeatures = "both";
+    };
     networkd-dispatcher.enable = false;
     ratbagd.enable = false;
     resolved.enable = true;
@@ -37,12 +68,41 @@
     pcscd.enable = false;
     openssh = {
       enable = true;
+      ports = [ 8022 ];
       settings = {
         PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+        PermitRootLogin = "no";
       };
       openFirewall = true;
     };
   };
   zramSwap.enable = lib.mkForce false;
+  systemd.services.wifi-performance.enable = lib.mkForce false;
+  documentation.enable = false;
+  documentation.nixos.enable = false;
+  documentation.man.enable = false;
+  documentation.man.cache.enable = false;
+  xdg = lib.mkForce {
+    portal.enable = false;
+    portal.wlr.enable = false;
+  };
+  programs = lib.mkForce {
+    uwsm.enable = false;
+    ccache.enable = false;
+    wireshark.enable = false;
+    sway.enable = false;
+    dconf.enable = false;
+    gnupg.agent.enable = false;
+    fish.enable = true;
+  };
+  fonts.packages = lib.mkForce [];
+  hardware = lib.mkForce {
+    bluetooth.enable = false;
+    uinput.enable = false;
+    graphics.enable = false;
+    graphics.enable32Bit = false;
+    keyboard.qmk.enable = false;
+  };
   system.stateVersion = "26.05";
 }
