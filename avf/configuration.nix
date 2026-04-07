@@ -24,7 +24,7 @@
       helix
     ];
   };
-  networking = lib.mkForce {
+  networking = {
     hostName = "nixos-avf";
     useDHCP = true;
     networkmanager = {
@@ -80,10 +80,6 @@
   };
   zramSwap.enable = lib.mkForce false;
   systemd.services.wifi-performance.enable = lib.mkForce false;
-  # documentation.enable = false;
-  # documentation.nixos.enable = false;
-  # documentation.man.enable = false;
-  # documentation.man.cache.enable = false;
   xdg = lib.mkForce {
     portal.enable = false;
     portal.wlr.enable = false;
