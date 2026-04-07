@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   programs = {
+    ccache = {
+      enable = true;
+    };
     uwsm = {
       enable = true;
       waylandCompositors = {
@@ -10,9 +13,6 @@
           binPath = "/run/current-system/sw/bin/sway";
         };
       };
-    };
-    ccache = {
-      enable = true;
     };
     fish = {
       enable = true;
