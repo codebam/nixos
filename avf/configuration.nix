@@ -21,6 +21,7 @@
       unzip
       zip
       _7zz
+      helix
     ];
   };
   networking = lib.mkForce {
