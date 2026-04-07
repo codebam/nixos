@@ -5,6 +5,7 @@
     ../modules/users/default.nix
   ];
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  documentation.enable = false;
   avf.defaultUser = "codebam";
   environment = {
     systemPackages = with pkgs; [
