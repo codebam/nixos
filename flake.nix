@@ -213,24 +213,12 @@
           ];
         };
 
-        # Defining nixos-avf entirely standalone to prevent loading heavy default modules
         nixos-avf = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = { inherit inputs; };
           modules = [
             inputs.nixos-avf.nixosModules.avf
             ./avf/configuration.nix
-            inputs.home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                extraSpecialArgs = { inherit inputs; };
-                users.codebam.imports = [
-                  ./avf/home.nix
-                ];
-              };
-            }
           ];
         };
       };
