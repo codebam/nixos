@@ -6,13 +6,13 @@
 {
   services = {
     meilisearch = {
-      enable = true;
+      enable = false;
       masterKeyFile = "/var/lib/meilisearch-master-key"; 
     };
     librechat = {
       enable = true;
       enableLocalDB = true;
-      meilisearch.enable = true;
+      meilisearch.enable = false;
       env = {
         PORT = 3080;
         CREDS_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
