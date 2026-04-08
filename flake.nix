@@ -82,6 +82,7 @@
       url = "github:nix-community/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
   };
 
   outputs =

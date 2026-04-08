@@ -5,6 +5,43 @@
 
 {
   services = {
+    meilisearch = {
+      enable = true;
+      masterKeyFile = "/var/lib/meilisearch-master-key"; 
+    };
+    librechat = {
+      enable = true;
+      enableLocalDB = true;
+      meilisearch.enable = true;
+      env = {
+        PORT = 3080;
+        CREDS_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        CREDS_IV = "0123456789abcdef0123456789abcdef";
+        JWT_SECRET = "secure-jwt-secret-here";
+        JWT_REFRESH_SECRET = "secure-refresh-token-secret-here";
+        MEILI_MASTER_KEY = "your-secret-string-here"; 
+        OPENAI_API_KEY = "user_provided";
+        ALLOW_REGISTRATION = "true";
+        ALLOW_SOCIAL_REGISTRATION = "false"; 
+      };
+      settings = {
+        version = "1.3.5";
+        cache = true;
+        endpoints = {
+          custom = [
+            {
+              name = "vLLM Gemma";
+              apiKey = "vllm";
+              baseURL = "http://127.0.0.1:8000/v1";
+              models = {
+                default = [ "google/gemma-4-E4B-it" ];
+                fetch = true;
+              };
+            }
+          ];
+        };
+      };
+    };
     v2ray = {
       enable = true;
       config = {
