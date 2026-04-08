@@ -1,6 +1,7 @@
 { lib
 , inputs
 , config
+, pkgs
 , ...
 }:
 {
@@ -37,10 +38,55 @@
           "google-chrome-unstable"
           "antigravity"
           "cuda_nvcc"
+          "mongodb"
         ];
     };
     overlays = [
       (final: prev: {
+        vllm = (import inputs.vllm-update {
+          system = prev.stdenv.hostPlatform.system;
+          config.allowUnfree = true;
+          config.rocmSupport = true;
+          overlays = [
+            (pythonFinal: pythonPrev: {
+              python313 = pythonPrev.python313.override {
+                packageOverrides = self: super: {
+                  mistral-common = super.mistral-common.overridePythonAttrs (old: rec {
+                    version = "1.10.0";
+                    src = prev.fetchFromGitHub {
+                      owner = "mistralai";
+                      repo = "mistral-common";
+                      rev = "v${version}";
+                      hash = "sha256-If0nukwe/9W4i42S+lE52lT/AU77VK0S9LKG1AyWzjA=";
+                    };
+                    doCheck = false;
+                  });
+                  compressed-tensors = super.compressed-tensors.overridePythonAttrs (old: {
+                    version = "0.14.0.1";
+                    doCheck = false;
+                  });
+                  outlines = super.outlines.overridePythonAttrs (old: {
+                    version = "1.2.12";
+                    doCheck = false;
+                  });
+                  accelerate = super.accelerate.overridePythonAttrs (old: {
+                    doCheck = false;
+                  });
+                  transformers = super.transformers.overrideAttrs (old: {
+                    version = "5.5.0-dev";
+                    doCheck = false;
+                    src = prev.fetchFromGitHub {
+                      owner = "huggingface";
+                      repo = "transformers";
+                      rev = "main";
+                      hash = "sha256-M5FMLe6CnC5cIFoSSP4t9F8ZJtSlPagzHyYtOO71vbs=";
+                    };
+                  });
+                };
+              };
+            })
+          ];
+        }).python3Packages.vllm;
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
           buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];

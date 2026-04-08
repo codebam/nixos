@@ -18,6 +18,7 @@ _:
       8212 # PalWorld
       8081 # Expo
       56789 # XRay
+      3080 # LibreChat
     ];
     firewall.allowedUDPPorts = [
       8211 # PalWorld port
