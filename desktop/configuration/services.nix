@@ -235,7 +235,7 @@
           };
           "10-high-sample-rates" = {
             "context.properties" = {
-              "default.clock.allowed-rates" = [ 44100 48000 192000 384000 768000 ];
+              "default.clock.allowed-rates" = [ 44100 48000 192000 ];
               "default.clock.rate" = 48000;
             };
           };
