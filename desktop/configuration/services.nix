@@ -236,7 +236,7 @@
           "10-high-sample-rates" = {
             "context.properties" = {
               "default.clock.allowed-rates" = [ 44100 48000 88200 96000 176400 192000 352800 384000 ];
-              "default.clock.rate" = 192000; # the highest sample rate available on tidal
+              "default.clock.rate" = 48000;
             };
           };
         };
