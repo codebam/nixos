@@ -141,7 +141,7 @@ in {
       ripgrep
       slurp
       jq
-      # telegram-desktop
+      telegram-desktop
       # tor-browser
       weechat
       # kdePackages.kdenlive
