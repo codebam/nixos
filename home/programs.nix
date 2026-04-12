@@ -155,7 +155,7 @@
       };
     };
     librewolf = {
-      enable = true;
+      enable = false;
     };
     yt-dlp = {
       enable = true;
