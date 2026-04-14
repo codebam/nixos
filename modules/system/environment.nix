@@ -28,7 +28,7 @@
       waypipe
       # Wallpaper Engine
       linux-wallpaperengine
-      # easyeffects
+      easyeffects
       # kdePackages.wallpaper-engine-plugin
       vkbasalt
       (inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
