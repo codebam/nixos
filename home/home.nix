@@ -147,6 +147,7 @@ in {
       # kdePackages.kdenlive
       calcurse
       high-tide
+      ytmdesktop
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
         virtualenv
