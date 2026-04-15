@@ -247,6 +247,7 @@
         # set -gx PROTON_ENABLE_WAYLAND 1
         # set -gx PROTON_ENABLE_HDR 1
         # set -gx PROTON_USE_NTSYNC 1
+        set _JAVA_AWT_WM_NONREPARENTING 1
         function __hm_play_bell_on_postexec --on-event fish_postexec
           if test $status -eq 0
             tput bel
