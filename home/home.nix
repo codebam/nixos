@@ -56,6 +56,7 @@ in {
       # PROTON_ENABLE_HDR = "1";
       # PROTON_USE_NTSYNC = "1";
       SEARXNG_API_URL = "http://localhost:8081";
+      _JAVA_AWT_WM_NONREPARENTING = "1";
     };
 
     packages = with pkgs; [
