@@ -112,6 +112,7 @@ _: {
             ".config/discordcanary"
             ".config/discordptb"
             ".local/share/TelegramDesktop"
+            ".local/share/bolt-launcher"
             ".local/share/zoxide"
             ".config/YouTube Music"
             ".config/YouTube Music Desktop"
