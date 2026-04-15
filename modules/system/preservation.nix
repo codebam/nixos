@@ -114,8 +114,6 @@ _: {
             ".local/share/TelegramDesktop"
             ".local/share/bolt-launcher"
             ".local/share/zoxide"
-            ".config/YouTube Music"
-            ".config/YouTube Music Desktop"
             ".config/YouTube Music Desktop App"
             ".config/mnw"
             ".local/share/PrismLauncher"
