@@ -104,8 +104,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "e22084f63967aa72cb56873aeb48b01fb8dc2c9b";
-            hash = "sha256-6eOqeq9yYeY815rad1Pw2XhF1Y/eee9HwWlCNVZpfFo=";
+            rev = "e8c03e9ce9aa54b6c1866c8086cdcd8830399830";
+            hash = "sha256-tYq0ROSL+YH/gaXhjOrS+Yel2JPYU4aVswhGZTCjbi4=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -113,8 +113,8 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "909a2ddb5fff528e735341529a028d2ef21836db";
-            hash = "sha256-Qjz4XGiggSj6kg6GXMMPl4JYE8yYy1byvNNBvvXnuZI=";
+            rev = "e51f9d7183c89706558015ce61e0460631ba3577";
+            hash = "sha256-5vHfxrerNGvlM8BMLO0Ak4g+E/dwQ11gAZQnyJMywlo=";
           };
         });
         android-tools = prev.androidenv.androidPkgs.platform-tools.overrideAttrs (oldAttrs: rec {
