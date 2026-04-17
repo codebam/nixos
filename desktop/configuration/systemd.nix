@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   powerManagement.enable = true;
@@ -45,6 +45,9 @@
       };
     };
     services = {
+      navidrome = {
+        serviceConfig.ProtectHome = lib.mkForce "read-only";
+      };
       wifi-reconnect = {
         enable = false;
         description = "Reconnect Wi-Fi if disconnected";

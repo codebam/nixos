@@ -3,21 +3,22 @@ _:
 {
   imports = [
     ../hardware-configuration.nix
-    ./networking.nix
-    ./environment.nix
     ./age.nix
-    ./users.nix
     ./boot.nix
-    ./systemd.nix
-    ./services.nix
-    ./programs.nix
+    ./environment.nix
     ./hardware.nix
-    ./preservation.nix
+    ./jovian.nix
+    ./networking.nix
     ./nix.nix
     ./nixpkgs.nix
+    ./preservation.nix
+    ./programs.nix
+    ./services.nix
     ./specialisation.nix
     ./system.nix
-    ./jovian.nix
+    ./systemd.nix
+    ./users.nix
+    ./virtualisation.nix
     ./zram.nix
   ];
 }
