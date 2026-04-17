@@ -5,6 +5,41 @@
 
 {
   services = {
+    lidarr = {
+      enable = true;
+      openFirewall = true;
+      user = "codebam";
+      group = "users";
+    };
+    prowlarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    transmission = {
+      enable = true;
+      openFirewall = true;
+      user = "codebam";
+      settings = {
+        download-dir = "/home/codebam/Music/.downloads";
+        incomplete-dir = "/home/codebam/Music/.incomplete";
+        rpc-bind-address = "0.0.0.0";
+        rpc-whitelist = "127.0.0.1";
+        umask = 2;
+      };
+    };
+    navidrome = {
+      enable = true;
+      settings = {
+        MusicFolder = "/home/codebam/Music";
+        Address = "0.0.0.0";
+        Port = 4533;
+        ScanSchedule = "@every 1h";
+        DefaultLanguage = "en";
+        EnableExternalServices = true;
+        LastFM.Enabled = false;
+      };
+      openFirewall = true;
+    };
     meilisearch = {
       enable = false;
       masterKeyFile = "/var/lib/meilisearch-master-key"; 
