@@ -143,6 +143,7 @@ in {
       slurp
       jq
       telegram-desktop
+      aonsoku
       # tor-browser
       weechat
       # kdePackages.kdenlive
