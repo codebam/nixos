@@ -75,8 +75,8 @@
       openFirewall = true;
       user = "codebam";
       settings = {
-        download-dir = "/home/codebam/Music/.downloads";
-        incomplete-dir = "/home/codebam/Music/.incomplete";
+        download-dir = "/home/codebam/Downloads/Music/.downloads";
+        incomplete-dir = "/home/codebam/Downloads/Music/.incomplete";
         rpc-bind-address = "0.0.0.0";
         rpc-whitelist = "127.0.0.1";
         umask = 2;
