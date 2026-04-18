@@ -1,5 +1,6 @@
 { pkgs
 , config
+, lib
 , ...
 }:
 
@@ -9,8 +10,56 @@
     owner = "navidrome";
     group = "navidrome";
   };
+  age.secrets.mopidy-subidy = {
+    file = ../../secrets/mopidy-subidy.age;
+    owner = "codebam";
+    group = "users";
+  };
+
+  systemd.services.mopidy = {
+    environment = {
+      GST_PLUGIN_SYSTEM_PATH_1_0 = lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [
+        pkgs.gst_all_1.gst-plugins-base
+        pkgs.gst_all_1.gst-plugins-good
+        pkgs.pipewire
+      ];
+      PIPEWIRE_RUNTIME_DIR = "/run/user/1000";
+      PIPEWIRE_REMOTE = "pipewire-0";
+    };
+    serviceConfig = {
+      BindReadOnlyPaths = [ "/run/user/1000" ];
+      User = lib.mkForce "codebam"; 
+      Group = lib.mkForce "users";
+    };
+  };
 
   services = {
+    mopidy = {
+      enable = true;
+      extensionPackages = with pkgs; [
+        mopidy-subidy
+        mopidy-mpd
+        gst_all_1.gst-plugins-base
+        gst_all_1.gst-plugins-good
+        pipewire
+      ];
+      settings = {
+        core = {
+          restore_state = true;
+        };
+        audio = {
+          output = "pipewiresink";
+        };
+        mpd = {
+          enabled = true;
+          hostname = "0.0.0.0";
+          port = 6600;
+        };
+      };
+      extraConfigFiles = [
+        config.age.secrets.mopidy-subidy.path
+      ];
+    };
     lidarr = {
       enable = true;
       openFirewall = true;

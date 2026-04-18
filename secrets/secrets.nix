@@ -21,4 +21,9 @@ in
     users.yubikey-5c
     users.yubikey-5c-nfc
   ];
+  "mopidy-subidy.age".publicKeys = [
+    users.desktop
+    users.yubikey-5c
+    users.yubikey-5c-nfc
+  ];
 }
