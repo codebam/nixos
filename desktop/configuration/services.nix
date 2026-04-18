@@ -4,6 +4,12 @@
 }:
 
 {
+  age.secrets.navidrome-lastfm = {
+    file = ../../secrets/navidrome-lastfm.age;
+    owner = "navidrome";
+    group = "navidrome";
+  };
+
   services = {
     lidarr = {
       enable = true;
@@ -29,6 +35,7 @@
     };
     navidrome = {
       enable = true;
+      environmentFile = config.age.secrets.navidrome-lastfm.path;
       settings = {
         MusicFolder = "/home/codebam/Music";
         Address = "0.0.0.0";
