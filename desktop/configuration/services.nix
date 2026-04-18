@@ -86,7 +86,7 @@
       enable = true;
       environmentFile = config.age.secrets.navidrome-lastfm.path;
       settings = {
-        MusicFolder = "/home/codebam/Music";
+        MusicFolder = "/home/codebam/Downloads/Lidarr";
         Address = "0.0.0.0";
         Port = 4533;
         ScanSchedule = "@every 1h";
