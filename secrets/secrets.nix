@@ -16,4 +16,9 @@ in
     users.yubikey-5c
     users.yubikey-5c-nfc
   ];
+  "navidrome-lastfm.age".publicKeys = [
+    users.desktop
+    users.yubikey-5c
+    users.yubikey-5c-nfc
+  ];
 }
