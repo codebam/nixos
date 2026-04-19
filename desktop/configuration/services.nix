@@ -330,6 +330,56 @@
               "default.clock.rate" = 44100;
             };
           };
+          "eq" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "EQ";
+                  "media.name" = "EQ";
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "builtin";
+                        name = "preamp";
+                        label = "bq_highshelf";
+                        control = { "Freq" = 0; "Gain" = -4.2; "Q" = 1.0; };
+                      }
+                      {
+                        type = "builtin";
+                        name = "filter9";
+                        label = "bq_lowshelf";
+                        control = { "Freq" = 145; "Gain" = 4.2; "Q" = 0.8; };
+                      }
+                      {
+                        type = "builtin";
+                        name = "filter10";
+                        label = "bq_lowshelf";
+                        control = { "Freq" = 45; "Gain" = -2.2; "Q" = 0.9; };
+                      }
+                    ];
+                    links = [
+                      { output = "preamp:Out"; input = "filter9:In"; }
+                      { output = "filter9:Out"; input = "filter10:In"; }
+                    ];
+                  };
+                  "capture.props" = {
+                    "node.name" = "effect_input.eq_shelves";
+                    "media.class" = "Audio/Sink";
+                    "audio.channels" = 2;
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "effect_output.eq_shelves";
+                    "node.passive" = true;
+                    "target.object" = "alsa_output.usb-GuangZhou_FiiO_Electronics_Co._Ltd_FIIO_BTR15_EQ-00.analog-stereo";
+                    "audio.channels" = 2;
+                    "audio.position" = [ "FL" "FR" ];
+                  };
+                };
+              }
+            ];
+          };
         };
       };
     };
