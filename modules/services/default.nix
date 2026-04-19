@@ -48,8 +48,6 @@
       extraRules = ''
         KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
 
-        SUBSYSTEM=="usbmon", GROUP="wireshark", MODE="0640"
-
         # MelGeek Made68 Ultra
         SUBSYSTEM=="usb", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
         SUBSYSTEM=="usb_device", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"

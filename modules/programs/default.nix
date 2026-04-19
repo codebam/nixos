@@ -20,6 +20,7 @@
     nix-ld.enable = true;
     wireshark = {
       enable = true;
+      usbmon.enable = true;
       package = pkgs.wireshark;
     };
     gnupg.agent = {
