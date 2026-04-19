@@ -28,6 +28,8 @@ _: {
         "/etc/mullvad-vpn"
         "/var/lib/OpenRGB"
         "/var/lib/transmission"
+        "/var/lib/lidarr"
+        "/var/lib/navidrome"
         "/var/lib/bluetooth"
         "/var/lib/iwd"
         "/var/lib/nixos"
