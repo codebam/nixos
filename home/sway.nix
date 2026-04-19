@@ -99,6 +99,16 @@
             "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl next";
             "shift+XF86Macro1" = "exec ${pkgs.playerctl}/bin/playerctl previous";
+            "${modifier}+m" = "exec ${(pkgs.writeShellScript "toggle-mic-monitor" ''
+              MODULE_ID=$(pactl list modules short | grep "module-loopback" | awk '{print $1}')
+              if [ -n "$MODULE_ID" ]; then
+                  pactl unload-module "$MODULE_ID"
+                  notify-send "Transparency Mode" "OFF"
+              else
+                  pactl load-module module-loopback latency_msec=2
+                  notify-send "Transparency Mode" "ON"
+              fi
+            '')}";
             "${modifier}+shift+v" = "exec ${(pkgs.writeShellScript "play-youtube-pinned" ''
               url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
               if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)'; then
