@@ -34,6 +34,7 @@ _: {
           group = "lidarr";
         }
         "/var/lib/navidrome"
+        "/var/lib/private/prowlarr"
         "/var/lib/bluetooth"
         "/var/lib/iwd"
         "/var/lib/nixos"
