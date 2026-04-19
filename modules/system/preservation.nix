@@ -28,7 +28,11 @@ _: {
         "/etc/mullvad-vpn"
         "/var/lib/OpenRGB"
         "/var/lib/transmission"
-        "/var/lib/lidarr"
+        {
+          directory = "/var/lib/lidarr";
+          user = "lidarr";
+          group = "lidarr";
+        }
         "/var/lib/navidrome"
         "/var/lib/bluetooth"
         "/var/lib/iwd"
