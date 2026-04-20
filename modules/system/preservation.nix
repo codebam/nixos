@@ -137,6 +137,7 @@ _: {
             ".config/gcloud"
             ".config/lsfg-vk"
             ".config/supersonic"
+            ".config/feishin"
             ".local/share/steel"
             ".config/calcurse"
             ".local/share/calcurse"
