@@ -135,6 +135,7 @@ _: {
             ".config/github-copilot"
             ".config/gcloud"
             ".config/lsfg-vk"
+            ".config/supersonic"
             ".local/share/steel"
             ".config/calcurse"
             ".local/share/calcurse"
