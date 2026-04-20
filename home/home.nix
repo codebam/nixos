@@ -108,9 +108,9 @@ in {
           pass-genphrase
         ]
       ))
-      # (discord-canary.override {
-      #   withOpenASAR = true;
-      # })
+      (discord-canary.override {
+        withOpenASAR = true;
+      })
       # (discord-ptb.override {
       #   withOpenASAR = true;
       # })
