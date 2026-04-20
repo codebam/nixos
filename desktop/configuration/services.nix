@@ -87,12 +87,14 @@
       environmentFile = config.age.secrets.navidrome-lastfm.path;
       settings = {
         MusicFolder = "/home/codebam/Downloads/Lidarr";
+        BaseUrl = "https://codebam.tplinkdns.com";
         Address = "0.0.0.0";
         Port = 4533;
         ScanSchedule = "@every 1h";
         DefaultLanguage = "en";
         EnableExternalServices = true;
         LastFM.Enabled = false;
+        EnableSharing = true;
       };
       openFirewall = true;
     };
@@ -134,7 +136,7 @@
       };
     };
     v2ray = {
-      enable = true;
+      enable = false;
       config = {
         inbounds = [{
           port = 10086;
@@ -152,16 +154,18 @@
     };
     nginx = {
       enable = true;
+      recommendedProxySettings = true;
+      recommendedTlsSettings = true;
       virtualHosts."codebam.tplinkdns.com" = {
-        listen = [{
-          addr = "127.0.0.1";
-          port = 8080;
-          proxyProtocol = true;
-        }];
-        root = "/var/www/xray-site";
-        extraConfig = ''
-          index index.html;
-        '';
+        addSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:4533";
+          proxyWebsockets = true;
+          extraConfig = ''
+            proxy_set_header X-Forwarded-Protocol $scheme;
+          '';
+        };
       };
     };
     xray = {
