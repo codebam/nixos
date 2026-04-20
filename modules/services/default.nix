@@ -3,6 +3,18 @@
   imports = [
     ./noizdns.nix
   ];
+  systemd.user.services.mprisence = {
+    description = "Discord Rich Presence for MPRIS";
+    unitConfig = {
+      Requires = [ "dbus.socket" ];
+      After = [ "dbus.socket" "graphical-session.target" ];
+    };
+    serviceConfig = {
+      ExecStart = "${pkgs.mprisence}/bin/mprisence";
+      Restart = "always";
+    };
+    wantedBy = [ "default.target" ];
+  };
   services = {
     ananicy = {
       enable = true;
