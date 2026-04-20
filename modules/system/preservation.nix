@@ -113,6 +113,7 @@ _: {
             ".librewolf"
             ".password-store"
             ".local/state/wireplumber"
+            ".config/mprisence"
             ".config/Antigravity"
             ".config/vesktop"
             ".config/Element"
