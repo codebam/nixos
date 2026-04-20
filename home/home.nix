@@ -150,6 +150,7 @@ in {
       calcurse
       high-tide
       ytmdesktop
+      supersonic-wayland
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
         virtualenv
