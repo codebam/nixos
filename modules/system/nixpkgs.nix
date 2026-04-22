@@ -88,15 +88,6 @@
         #     })
         #   ];
         # }).python3Packages.vllm;
-        # xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
-        #   nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
-        #   buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
-        #   postInstall = ''
-        #     ${oldAttrs.postInstall or ""}
-        #     wrapProgram $out/libexec/xdg-desktop-portal-wlr \
-        #       --prefix PATH : ${lib.makeBinPath [ prev.wmenu ]}
-        #   '';
-        # });
         wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
           pname = "wlroots";
           version = "0.21.0-dev";
@@ -104,8 +95,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "70d99eefef44f4c0db1923c5dd89cf7059f5e97a";
-            hash = "sha256-WhmS4xJAj9+RY0FMujYqUyU3gJuJefysPLBaF8kJ2qs=";
+            rev = "700ee83ab805b01bec3ccb072844e67d21d0986d";
+            hash = "sha256-IOtlKzsHIUi4ZjAvmN8tPbB4AVv+XKFMDFAgCKrWhWE=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -116,6 +107,21 @@
             rev = "9a5f09c867894dacf25f54929cfd808b301712b1";
             hash = "sha256-pRSV2Z40FPoo1MDWWGgM+rQXs9Q47Iz7rspyV9d1JjE=";
           };
+        });
+        xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
+          src = prev.fetchFromGitHub {
+            owner = "emersion";
+            repo = "xdg-desktop-portal-wlr";
+            rev = "01171a150b705cf07066ebc0fb7e1ff537027bec";
+            hash = "sha256-HITf/hgiASWvn/z49mzS8IS1vuyXwdk1JiAOOHRSQMo=";
+          };
+          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
+          buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
+          postInstall = ''
+            ${oldAttrs.postInstall or ""}
+            wrapProgram $out/libexec/xdg-desktop-portal-wlr \
+              --prefix PATH : ${lib.makeBinPath [ prev.wmenu ]}
+          '';
         });
         android-tools = prev.androidenv.androidPkgs.platform-tools.overrideAttrs (oldAttrs: rec {
           version = "36.0.0";
