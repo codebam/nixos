@@ -103,7 +103,7 @@
       masterKeyFile = "/var/lib/meilisearch-master-key"; 
     };
     librechat = {
-      enable = true;
+      enable = false;
       enableLocalDB = true;
       meilisearch.enable = false;
       env = {

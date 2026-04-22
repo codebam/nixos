@@ -20,7 +20,7 @@
 
         src = pkgs.fetchurl {
           url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
-          hash = "sha256-gwDUpsRPYUtrhuccKWT64KWgQcJy7c9DRJNb6Ki0NgE="; 
+          hash = "sha256-uYHpayPpWUI1FaS1gDg2yStEuZ02vbtZG791YkozBTE="; 
         };
 
         installPhase = builtins.replaceStrings 
