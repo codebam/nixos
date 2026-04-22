@@ -27,8 +27,8 @@
       # Wayland forwarding over SSH
       waypipe
       # Wallpaper Engine
-      linux-wallpaperengine
-      easyeffects
+      # linux-wallpaperengine
+      # easyeffects
       # kdePackages.wallpaper-engine-plugin
       vkbasalt
       (inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
