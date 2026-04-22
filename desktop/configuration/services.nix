@@ -323,8 +323,8 @@
         pipewire = {
           "92-low-latency" = {
             "context.properties" = {
-              "default.clock.quantum" = 128;
-              "default.clock.min-quantum" = 64;
+              "default.clock.quantum" = 256;
+              "default.clock.min-quantum" = 256;
               "default.clock.max-quantum" = 512;
             };
           };
