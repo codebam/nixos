@@ -373,7 +373,17 @@
                     nodes = [
                       {
                         type = "builtin";
-                        name = "eq_band_1";
+                        name = "preamp";
+                        label = "bq_highshelf";
+                        control = {
+                          "Freq" = 0;
+                          "Gain" = -4.0;
+                          "Q" = 1.0;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "band1";
                         label = "bq_lowshelf";
                         control = {
                           "Freq" = 150.0;
@@ -383,7 +393,7 @@
                       }
                       {
                         type = "builtin";
-                        name = "eq_band_2";
+                        name = "band2";
                         label = "bq_peaking";
                         control = {
                           "Freq" = 400.0;
@@ -393,7 +403,7 @@
                       }
                       {
                         type = "builtin";
-                        name = "eq_band_3";
+                        name = "band3";
                         label = "bq_peaking";
                         control = {
                           "Freq" = 2500.0;
@@ -403,7 +413,7 @@
                       }
                       {
                         type = "builtin";
-                        name = "eq_band_4";
+                        name = "band4";
                         label = "bq_peaking";
                         control = {
                           "Freq" = 4000.0;
@@ -413,7 +423,7 @@
                       }
                       {
                         type = "builtin";
-                        name = "eq_band_5";
+                        name = "band5";
                         label = "bq_peaking";
                         control = {
                           "Freq" = 8000.0;
@@ -423,7 +433,7 @@
                       }
                       {
                         type = "builtin";
-                        name = "eq_band_6";
+                        name = "band6";
                         label = "bq_highshelf";
                         control = {
                           "Freq" = 12000.0;
@@ -432,15 +442,51 @@
                         };
                       }
                     ];
+                    links = [
+                      {
+                        output = "preamp:Out";
+                        input = "band1:In";
+                      }
+                      {
+                        output = "band1:Out";
+                        input = "band2:In";
+                      }
+                      {
+                        output = "band2:Out";
+                        input = "band3:In";
+                      }
+                      {
+                        output = "band3:Out";
+                        input = "band4:In";
+                      }
+                      {
+                        output = "band4:Out";
+                        input = "band5:In";
+                      }
+                      {
+                        output = "band5:Out";
+                        input = "band6:In";
+                      }
+                    ];
                   };
                   "capture.props" = {
                     "node.name" = "cs2_optimized_peq_input";
                     "media.class" = "Audio/Sink";
+                    "audio.channels" = 2;
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
                   };
                   "playback.props" = {
                     "node.name" = "cs2_optimized_peq_output";
-                    "node.target" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                     "node.passive" = true;
+                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+                    "audio.channels" = 2;
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
                   };
                 };
               }
