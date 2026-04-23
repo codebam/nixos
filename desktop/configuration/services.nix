@@ -1,7 +1,8 @@
-{ pkgs
-, config
-, lib
-, ...
+{
+  pkgs,
+  config,
+  lib,
+  ...
 }:
 
 {
@@ -28,7 +29,7 @@
     };
     serviceConfig = {
       BindReadOnlyPaths = [ "/run/user/1000" ];
-      User = lib.mkForce "codebam"; 
+      User = lib.mkForce "codebam";
       Group = lib.mkForce "users";
     };
   };
@@ -100,7 +101,7 @@
     };
     meilisearch = {
       enable = false;
-      masterKeyFile = "/var/lib/meilisearch-master-key"; 
+      masterKeyFile = "/var/lib/meilisearch-master-key";
     };
     librechat = {
       enable = false;
@@ -112,10 +113,10 @@
         CREDS_IV = "0123456789abcdef0123456789abcdef";
         JWT_SECRET = "secure-jwt-secret-here";
         JWT_REFRESH_SECRET = "secure-refresh-token-secret-here";
-        MEILI_MASTER_KEY = "your-secret-string-here"; 
+        MEILI_MASTER_KEY = "your-secret-string-here";
         OPENAI_API_KEY = "user_provided";
         ALLOW_REGISTRATION = "true";
-        ALLOW_SOCIAL_REGISTRATION = "false"; 
+        ALLOW_SOCIAL_REGISTRATION = "false";
       };
       settings = {
         version = "1.3.5";
@@ -138,18 +139,24 @@
     v2ray = {
       enable = false;
       config = {
-        inbounds = [{
-          port = 10086;
-          protocol = "vmess";
-          settings = {
-            clients = [{
-              id = "b831381d-6324-4d53-ad4f-8cda48b30811";
-            }];
-          };
-        }];
-        outbounds = [{
-          protocol = "freedom";
-        }];
+        inbounds = [
+          {
+            port = 10086;
+            protocol = "vmess";
+            settings = {
+              clients = [
+                {
+                  id = "b831381d-6324-4d53-ad4f-8cda48b30811";
+                }
+              ];
+            };
+          }
+        ];
+        outbounds = [
+          {
+            protocol = "freedom";
+          }
+        ];
       };
     };
     nginx = {
@@ -172,47 +179,51 @@
       enable = false;
       settings = {
         domainStrategy = "UseIPv4";
-        inbounds = [{
-          listen = "0.0.0.0";
-          port = 443;
-          protocol = "vless";
-          settings = {
-            clients = [{
-              id = "19872fad-62ec-47b2-bc7a-4923ec9e18b4";
-              flow = "xtls-rprx-vision";
-            }];
-            decryption = "none";
-            fallbacks = [
-              {
-                dest = "127.0.0.1:8080";
-                xver = 1;
-              }
-            ];
-          };
-          streamSettings = {
-            network = "tcp";
-            security = "reality";
-            realitySettings = {
-              show = false;
-              dest = "www.bing.com:443";
-              serverNames = [
-                "www.bing.com"
-                "www.microsoft.com"
-                "login.microsoftonline.com"
-                "www.office.com"
-                "www.apple.com"
-                "updates.cdn-apple.com"
-               ];
-              privateKey = "8JXPmRKIPSONGTeEHJ6DxFZHmdRdJdCI211puUKqoUw";
-              shortIds = [ "6ba85179e30d4fc2" ];
+        inbounds = [
+          {
+            listen = "0.0.0.0";
+            port = 443;
+            protocol = "vless";
+            settings = {
+              clients = [
+                {
+                  id = "19872fad-62ec-47b2-bc7a-4923ec9e18b4";
+                  flow = "xtls-rprx-vision";
+                }
+              ];
+              decryption = "none";
+              fallbacks = [
+                {
+                  dest = "127.0.0.1:8080";
+                  xver = 1;
+                }
+              ];
             };
-            tcpSettings = {
-              header = {
-                type = "none";
+            streamSettings = {
+              network = "tcp";
+              security = "reality";
+              realitySettings = {
+                show = false;
+                dest = "www.bing.com:443";
+                serverNames = [
+                  "www.bing.com"
+                  "www.microsoft.com"
+                  "login.microsoftonline.com"
+                  "www.office.com"
+                  "www.apple.com"
+                  "updates.cdn-apple.com"
+                ];
+                privateKey = "8JXPmRKIPSONGTeEHJ6DxFZHmdRdJdCI211puUKqoUw";
+                shortIds = [ "6ba85179e30d4fc2" ];
+              };
+              tcpSettings = {
+                header = {
+                  type = "none";
+                };
               };
             };
-          };
-        }];
+          }
+        ];
         outbounds = [
           {
             protocol = "freedom";
@@ -225,12 +236,18 @@
             {
               type = "field";
               outboundTag = "direct";
-              ip = [ "0.0.0.0/0" "::/0" ];
+              ip = [
+                "0.0.0.0/0"
+                "::/0"
+              ];
             }
           ];
         };
         dns = {
-          servers = [ "1.1.1.1" "8.8.8.8" ];
+          servers = [
+            "1.1.1.1"
+            "8.8.8.8"
+          ];
         };
       };
     };
@@ -251,12 +268,15 @@
     timesyncd.enable = false;
     chrony = {
       enable = true;
-      servers = [ "time.cloudflare.com" "time.google.com" ];
+      servers = [
+        "time.cloudflare.com"
+        "time.google.com"
+      ];
       extraConfig = ''
         makestep 1.0 3
       '';
     };
-    
+
     pipewire.wireplumber.extraConfig = {
       # "51-bluez-codecs" = {
       #   "monitor.bluez.properties" = {
@@ -267,7 +287,10 @@
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
           {
-            matches = [{ "node.name" = "~alsa_output.*"; } { "node.name" = "~alsa_input.*"; }];
+            matches = [
+              { "node.name" = "~alsa_output.*"; }
+              { "node.name" = "~alsa_input.*"; }
+            ];
             actions = {
               update-props = {
                 "session.suspend-timeout-seconds" = 0;
@@ -330,9 +353,98 @@
           };
           "10-high-sample-rates" = {
             "context.properties" = {
-              "default.clock.allowed-rates" = [ 44100 48000 88200 96000 ];
+              "default.clock.allowed-rates" = [
+                44100
+                48000
+                88200
+                96000
+              ];
               "default.clock.rate" = 44100;
             };
+          };
+          "99-cs2-hype4-peq" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "Hype 4 MKII - CS2 Competitive";
+                  "media.name" = "Hype 4 MKII - CS2 Competitive";
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "builtin";
+                        name = "eq_band_1";
+                        label = "bq_lowshelf";
+                        control = {
+                          "Freq" = 150.0;
+                          "Gain" = -7.0;
+                          "Q" = 0.71;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "eq_band_2";
+                        label = "bq_peaking";
+                        control = {
+                          "Freq" = 400.0;
+                          "Gain" = -2.0;
+                          "Q" = 1.0;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "eq_band_3";
+                        label = "bq_peaking";
+                        control = {
+                          "Freq" = 2500.0;
+                          "Gain" = 3.5;
+                          "Q" = 1.5;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "eq_band_4";
+                        label = "bq_peaking";
+                        control = {
+                          "Freq" = 4000.0;
+                          "Gain" = 3.0;
+                          "Q" = 1.5;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "eq_band_5";
+                        label = "bq_peaking";
+                        control = {
+                          "Freq" = 8000.0;
+                          "Gain" = -4.5;
+                          "Q" = 2.0;
+                        };
+                      }
+                      {
+                        type = "builtin";
+                        name = "eq_band_6";
+                        label = "bq_highshelf";
+                        control = {
+                          "Freq" = 12000.0;
+                          "Gain" = -2.0;
+                          "Q" = 0.71;
+                        };
+                      }
+                    ];
+                  };
+                  "capture.props" = {
+                    "node.name" = "cs2_optimized_peq_input";
+                    "media.class" = "Audio/Sink";
+                  };
+                  "playback.props" = {
+                    "node.name" = "cs2_optimized_peq_output";
+                    "node.target" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+                    "node.passive" = true;
+                  };
+                };
+              }
+            ];
           };
         };
       };
