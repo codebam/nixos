@@ -170,6 +170,7 @@
             nil
             nixd
             nixpkgs-fmt
+            nixfmt
             # inputs.helix.packages.${stdenv.hostPlatform.system}.default
           ];
         };

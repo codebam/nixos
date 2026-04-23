@@ -78,6 +78,17 @@
       enable = true;
       # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultEditor = true;
+      languages = {
+        language = [
+          {
+            name = "nix";
+            auto-format = true;
+            formatter = { command = "${pkgs.nixfmt}/bin/nixfmt"; };
+            language-servers = [ "nil" ];
+          }
+        ];
+        language-server.nil.config.nix.formatting.command = [ "nixfmt" ];
+      };
       settings = {
         theme = lib.mkForce "ayu_mirage";
         editor = {

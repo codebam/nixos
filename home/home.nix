@@ -133,6 +133,7 @@ in {
       google-cloud-sdk
       grim
       nil
+      nixfmt
       nixd
       nodejs_latest
       opentofu
