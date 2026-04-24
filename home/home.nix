@@ -138,6 +138,7 @@ in
         '';
       })
       google-cloud-sdk
+      arrpc
       grim
       nil
       nixfmt

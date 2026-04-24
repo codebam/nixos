@@ -3,11 +3,29 @@
   imports = [
     ./noizdns.nix
   ];
+  systemd.user.services.arrpc = {
+    description = "arRPC - Discord RPC Bridge";
+    unitConfig = {
+      Requires = [ "dbus.socket" ];
+      After = [
+        "dbus.socket"
+        "graphical-session.target"
+      ];
+    };
+    serviceConfig = {
+      ExecStart = "${pkgs.arrpc}/bin/arrpc";
+      Restart = "always";
+    };
+    wantedBy = [ "default.target" ];
+  };
   systemd.user.services.mprisence = {
     description = "Discord Rich Presence for MPRIS";
     unitConfig = {
       Requires = [ "dbus.socket" ];
-      After = [ "dbus.socket" "graphical-session.target" ];
+      After = [
+        "dbus.socket"
+        "graphical-session.target"
+      ];
     };
     serviceConfig = {
       ExecStart = "${pkgs.mprisence}/bin/mprisence";
