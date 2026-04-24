@@ -9,56 +9,59 @@
   programs = {
     google-chrome = {
       enable = true;
-      package = (pkgs.google-chrome.override {
-        commandLineArgs = [
-          "--enable-features=Glic,GlicSidePanel,GlicActor"
-          "--variations-override-country=us"
-        ];
-      }).overrideAttrs (oldAttrs: rec {
-        pname = "google-chrome-unstable";
-        version = "147.0.6890.0";
+      package =
+        (pkgs.google-chrome.override {
+          commandLineArgs = [
+            "--enable-features=Glic,GlicSidePanel,GlicActor"
+            "--variations-override-country=us"
+          ];
+        }).overrideAttrs
+          (oldAttrs: rec {
+            pname = "google-chrome-unstable";
+            version = "147.0.6890.0";
 
-        src = pkgs.fetchurl {
-          url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
-          hash = "sha256-uYHpayPpWUI1FaS1gDg2yStEuZ02vbtZG791YkozBTE="; 
-        };
+            src = pkgs.fetchurl {
+              url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
+              hash = "sha256-uYHpayPpWUI1FaS1gDg2yStEuZ02vbtZG791YkozBTE=";
+            };
 
-        installPhase = builtins.replaceStrings 
-          [
-            "appname=chrome" 
-            "dist=stable" 
-            "opt/google/chrome" 
-            "google-chrome-stable"
-            "com.google.Chrome.desktop"
-          ] 
-          [
-            "appname=chrome-unstable" 
-            "dist=unstable" 
-            "opt/google/chrome-unstable" 
-            "google-chrome-unstable"
-            "com.google.Chrome.unstable.desktop"
-          ] 
-          oldAttrs.installPhase;
+            installPhase =
+              builtins.replaceStrings
+                [
+                  "appname=chrome"
+                  "dist=stable"
+                  "opt/google/chrome"
+                  "google-chrome-stable"
+                  "com.google.Chrome.desktop"
+                ]
+                [
+                  "appname=chrome-unstable"
+                  "dist=unstable"
+                  "opt/google/chrome-unstable"
+                  "google-chrome-unstable"
+                  "com.google.Chrome.unstable.desktop"
+                ]
+                oldAttrs.installPhase;
 
-        postInstall = ''
-          ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
-        '';
+            postInstall = ''
+              ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
+            '';
 
-        meta = oldAttrs.meta // { 
-          mainProgram = "google-chrome-unstable"; 
-        };
-      });
+            meta = oldAttrs.meta // {
+              mainProgram = "google-chrome-unstable";
+            };
+          });
     };
     chromium = {
       enable = true;
       package = pkgs.ungoogled-chromium;
-    #   # package = (import (fetchTarball {
-    #   #     url = "https://github.com/NixOS/nixpkgs/archive/c88b7058bbe09dc88150441cc5af0fca27c2065a.tar.gz";
-    #   #     sha256 = "sha256-Lf1csETc+Tz9ygesd20UR4d7HtwUxcLcUEKiIIRaTEc=";
-    #   #   }) {
-    #   #     system = "x86_64-linux";
-    #   #     config.allowUnfree = true;
-    #   # }).ungoogled-chromium;
+      #   # package = (import (fetchTarball {
+      #   #     url = "https://github.com/NixOS/nixpkgs/archive/c88b7058bbe09dc88150441cc5af0fca27c2065a.tar.gz";
+      #   #     sha256 = "sha256-Lf1csETc+Tz9ygesd20UR4d7HtwUxcLcUEKiIIRaTEc=";
+      #   #   }) {
+      #   #     system = "x86_64-linux";
+      #   #     config.allowUnfree = true;
+      #   # }).ungoogled-chromium;
     };
     ghostty = {
       enable = false;
@@ -83,14 +86,16 @@
           {
             name = "nix";
             auto-format = true;
-            formatter = { command = "${pkgs.nixfmt}/bin/nixfmt"; };
+            formatter = {
+              command = "${pkgs.nixfmt}/bin/nixfmt";
+            };
             language-servers = [ "nil" ];
           }
         ];
         language-server.nil.config.nix.formatting.command = [ "nixfmt" ];
       };
       settings = {
-        theme = lib.mkForce "ayu_mirage";
+        theme = lib.mkForce "rose_pine";
         editor = {
           lsp.display-inlay-hints = true;
           end-of-line-diagnostics = "hint";
