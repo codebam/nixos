@@ -3,6 +3,7 @@
 {
   stylix = {
     enable = true;
+    autoEnable = false;
 
     targets = {
       librewolf = {

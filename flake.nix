@@ -113,8 +113,9 @@
 
       # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
       mkNixosSystem =
-        { system
-        , extraModules ? [ ]
+        {
+          system,
+          extraModules ? [ ],
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -159,7 +160,8 @@
                 ];
               };
             }
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
     in

@@ -2,12 +2,13 @@
 {
   stylix = {
     enable = true;
+    autoEnable = false;
     polarity = "dark";
     targets = {
       console.enable = false;
       fish.enable = false;
       gnome.enable = true;
-      gtk.enable = true;
+      gtk.enable = false;
       qt.enable = true;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";

@@ -1,7 +1,8 @@
-{ pkgs
-, lib
-, config
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  ...
 }:
 
 {
@@ -66,7 +67,9 @@
           commands = [
             {
               command = "tearing enable";
-              criteria = { class = "cs2"; };
+              criteria = {
+                class = "cs2";
+              };
             }
           ];
         };
@@ -158,7 +161,7 @@
             "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
             "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
           };
-        assigns = {};
+        assigns = { };
       };
       extraConfig =
         let

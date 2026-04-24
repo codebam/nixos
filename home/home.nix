@@ -1,4 +1,10 @@
-{ pkgs, inputs, lib, config, ... }:
+{
+  pkgs,
+  inputs,
+  lib,
+  config,
+  ...
+}:
 
 let
   sweetfx-src = pkgs.fetchFromGitHub {
@@ -20,7 +26,8 @@ let
       "${reshade-headers}/Shaders"
     ];
   };
-in {
+in
+{
   home = {
     username = "codebam";
     homeDirectory = "/home/codebam";
@@ -108,9 +115,9 @@ in {
           pass-genphrase
         ]
       ))
-      (discord-canary.override {
-        withOpenASAR = true;
-      })
+      # (discord-canary.override {
+      #   withOpenASAR = true;
+      # })
       # (discord-ptb.override {
       #   withOpenASAR = true;
       # })
@@ -118,7 +125,7 @@ in {
       #   withOpenASAR = true;
       #   withVencord = true;
       # })
-      vesktop
+      # vesktop
       bat
       gemini-cli
       (pkgs.symlinkJoin {
@@ -143,22 +150,28 @@ in {
       ripgrep
       slurp
       jq
-      telegram-desktop
-      aonsoku
+      # telegram-desktop
+      # aonsoku
+      # disabled because electron
+      supersonic-wayland
       # tor-browser
       weechat
       # kdePackages.kdenlive
       calcurse
       high-tide
-      ytmdesktop
-      feishin
+      # ytmdesktop
+      # disabled because electron
+      # feishin
+      # disabled because dart
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
-      (pkgs.python3.withPackages (python-pkgs: with python-pkgs; [
-        virtualenv
-        tkinter
-        pip
-        requests
-      ]))
+      (pkgs.python3.withPackages (
+        python-pkgs: with python-pkgs; [
+          virtualenv
+          tkinter
+          pip
+          requests
+        ]
+      ))
     ];
 
     file.".config/helix/init.scm".text = ''
@@ -194,10 +207,10 @@ in {
 
     stateVersion = "26.05";
   };
-  gtk = {
-    # gtk2.force = true;
-    gtk4.theme = null;
-  };
+  # gtk = {
+  #   # gtk2.force = true;
+  #   gtk4.theme = null;
+  # };
 
   xdg = {
     configFile = {

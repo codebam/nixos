@@ -11,14 +11,15 @@
 
   home = {
     packages = with pkgs; [
-      bolt-launcher
+      # bolt-launcher
+      # disabled until they use modern openssl
       android-studio
       # vllm
     ];
   };
 
   wayland.windowManager.sway.config = {
-      output = {
+    output = {
       "*" = {
         mode = "2560x1440@239.760Hz";
         adaptive_sync = "on";
@@ -46,27 +47,39 @@
     window.commands = [
       {
         command = "tearing enable";
-        criteria = { class = "cs2"; };
+        criteria = {
+          class = "cs2";
+        };
       }
       {
         command = "border none";
-        criteria = { class = "cs2"; };
+        criteria = {
+          class = "cs2";
+        };
       }
       {
         command = "max_render_time off";
-        criteria = { class = "cs2"; };
+        criteria = {
+          class = "cs2";
+        };
       }
       {
         command = "border none";
-        criteria = { app_id = "cs2"; };
+        criteria = {
+          app_id = "cs2";
+        };
       }
       {
         command = "floating disable";
-        criteria = { app_id = "cs2"; };
+        criteria = {
+          app_id = "cs2";
+        };
       }
       {
         command = "inhibit_idle focus";
-        criteria = { app_id = "cs2"; };
+        criteria = {
+          app_id = "cs2";
+        };
       }
     ];
   };
