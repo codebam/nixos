@@ -11,14 +11,12 @@
     serviceConfig = {
       ExecStart =
         let
-          # Creating a self-contained environment for the script
           pythonEnv = pkgs.python3.withPackages (ps: [ ps.flask ]);
           script = pkgs.writeText "bridge.py" ''
             from flask import Flask, request
             import subprocess
             import logging
 
-            # Disable flask logging to keep journalctl clean
             log = logging.getLogger('werkzeug')
             log.setLevel(logging.ERROR)
 
@@ -27,12 +25,23 @@
             @app.route("/", methods=['POST'])
             def gsi_listener():
                 data = request.json
-                if "round" in data and "phase" in data["round"]:
-                    phase = data["round"]["phase"]
-                    if phase == "live":
-                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
-                    elif phase in ["over", "freezetime"]:
+                
+                # 1. Check if we are in a casual match
+                map_data = data.get("map", {})
+                mode = map_data.get("mode")
+                
+                # 2. Check player health
+                player_state = data.get("player", {}).get("state", {})
+                health = player_state.get("health")
+
+                # Logic: If it's casual and you are dead (health 0), play music.
+                # Otherwise (alive or different mode), keep it paused.
+                if mode == "casual":
+                    if health == 0:
                         subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
+                    else:
+                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
+                
                 return "", 204
 
             if __name__ == "__main__":
