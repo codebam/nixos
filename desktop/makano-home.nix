@@ -11,7 +11,7 @@
     enable = true;
     targets = {
       qt.enable = false;
-      librewolf.profileNames = ["default"];
+      librewolf.profileNames = [ "default" ];
     };
   };
 
@@ -97,7 +97,7 @@
       '';
     };
     yt-dlp = {
-      enable = true;
+      enable = false;
     };
     gh = {
       enable = true;
