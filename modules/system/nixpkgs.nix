@@ -1,8 +1,9 @@
-{ lib
-, inputs
-, config
-, pkgs
-, ...
+{
+  lib,
+  inputs,
+  config,
+  pkgs,
+  ...
 }:
 {
   nixpkgs = {
@@ -95,8 +96,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "700ee83ab805b01bec3ccb072844e67d21d0986d";
-            hash = "sha256-IOtlKzsHIUi4ZjAvmN8tPbB4AVv+XKFMDFAgCKrWhWE=";
+            rev = "8d0597e3dbc9b6ab9fb9413be1d72bb5cec653cd";
+            hash = "sha256-PyDWibxV06MdPUcN+/X/T9urRMYRxTe9vfhLZ934oQg=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -104,8 +105,8 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "9a5f09c867894dacf25f54929cfd808b301712b1";
-            hash = "sha256-pRSV2Z40FPoo1MDWWGgM+rQXs9Q47Iz7rspyV9d1JjE=";
+            rev = "1cbb8a440f157047292709c171e59f0feeb26475";
+            hash = "sha256-K0h1ubMY0H+bB5Y3mdjvADG8wIfaHHrPrupiJD2sEd4=";
           };
         });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
