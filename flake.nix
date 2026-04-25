@@ -14,19 +14,19 @@
     #   url = "github:nix-community/home-manager";
     #   inputs.nixpkgs.follows = "nixpkgs-unstable";
     # };
-    # lix = {
-    #   url = "git+https://git.lix.systems/lix-project/lix.git";
-    #   flake = false;
-    # };
+    lix = {
+      url = "git+https://git.lix.systems/lix-project/lix.git";
+      flake = false;
+    };
+    lix-module = {
+      url = "git+https://git.lix.systems/lix-project/nixos-module.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.lix.follows = "lix";
+    };
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # lix-module = {
-    #   url = "git+https://git.lix.systems/lix-project/nixos-module.git";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.lix.follows = "lix";
-    # };
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs = {
@@ -137,6 +137,7 @@
                 };
               }
             )
+            inputs.lix-module.nixosModules.default
             inputs.preservation.nixosModules.default
             inputs.stylix.nixosModules.stylix
             inputs.agenix.nixosModules.default
