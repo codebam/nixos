@@ -17,8 +17,11 @@
             import subprocess
             import logging
 
+            # Silence flask logging
             log = logging.getLogger('werkzeug')
             log.setLevel(logging.ERROR)
+
+            MY_STEAM_ID = "76561198064631737"
 
             app = Flask(__name__)
 
@@ -26,20 +29,28 @@
             def gsi_listener():
                 data = request.json
                 
-                # 1. Check if we are in a casual match
+                # Extract map mode
                 map_data = data.get("map", {})
                 mode = map_data.get("mode")
                 
-                # 2. Check player health
-                player_state = data.get("player", {}).get("state", {})
-                health = player_state.get("health")
+                # Extract player info
+                player = data.get("player", {})
+                current_player_steamid = player.get("steamid")
+                health = player.get("state", {}).get("health", 100)
 
-                # Logic: If it's casual and you are dead (health 0), play music.
-                # Otherwise (alive or different mode), keep it paused.
+                # We only care about Casual mode
                 if mode == "casual":
-                    if health == 0:
+                    # Condition 1: We are spectating someone else
+                    is_spectating = (current_player_steamid != MY_STEAM_ID)
+                    
+                    # Condition 2: It is our data, but we are dead
+                    is_dead = (current_player_steamid == MY_STEAM_ID and health == 0)
+
+                    if is_spectating or is_dead:
+                        # You are dead or watching someone else: Play Music
                         subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
                     else:
+                        # You are alive and it's your character: Pause Music
                         subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
                 
                 return "", 204
