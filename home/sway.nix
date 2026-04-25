@@ -112,17 +112,17 @@
                   notify-send "Transparency Mode" "ON"
               fi
             '')}";
-            "${modifier}+shift+v" = "exec ${(pkgs.writeShellScript "play-youtube-pinned" ''
-              url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
-              if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)'; then
-                ${pkgs.mpv}/bin/mpv \
-                  --title="mpv-pip" \
-                  --autofit=25% \
-                  --geometry=-20+20 \
-                  --ytdl-format="bestvideo[height<=720]+bestaudio/best[height<=720]" \
-                  "$url"
-              fi
-            '')}";
+            # "${modifier}+shift+v" = "exec ${(pkgs.writeShellScript "play-youtube-pinned" ''
+            #   url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
+            #   if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)'; then
+            #     ${pkgs.mpv}/bin/mpv \
+            #       --title="mpv-pip" \
+            #       --autofit=25% \
+            #       --geometry=-20+20 \
+            #       --ytdl-format="bestvideo[height<=720]+bestaudio/best[height<=720]" \
+            #       "$url"
+            #   fi
+            # '')}";
             "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
             "${modifier}+c" = "exec ${pkgs.mako}/bin/makoctl invoke default";
             "${modifier}+z" = "exec ${pkgs.mako}/bin/makoctl restore";
