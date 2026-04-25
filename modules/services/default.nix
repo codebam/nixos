@@ -3,6 +3,49 @@
   imports = [
     ./noizdns.nix
   ];
+  systemd.user.services.cs2-playerctl-bridge = {
+    unitConfig = {
+      Description = "CS2 GSI Playerctl Bridge";
+      After = [ "graphical-session.target" ];
+    };
+    serviceConfig = {
+      ExecStart =
+        let
+          # Creating a self-contained environment for the script
+          pythonEnv = pkgs.python3.withPackages (ps: [ ps.flask ]);
+          script = pkgs.writeText "bridge.py" ''
+            from flask import Flask, request
+            import subprocess
+            import logging
+
+            # Disable flask logging to keep journalctl clean
+            log = logging.getLogger('werkzeug')
+            log.setLevel(logging.ERROR)
+
+            app = Flask(__name__)
+
+            @app.route("/", methods=['POST'])
+            def gsi_listener():
+                data = request.json
+                if "round" in data and "phase" in data["round"]:
+                    phase = data["round"]["phase"]
+                    if phase == "live":
+                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
+                    elif phase in ["over", "freezetime"]:
+                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
+                return "", 204
+
+            if __name__ == "__main__":
+                app.run(port=3000, host="127.0.0.1")
+          '';
+        in
+        "${pythonEnv}/bin/python ${script}";
+
+      Restart = "on-failure";
+      RestartSec = "5s";
+    };
+    wantedBy = [ "default.target" ];
+  };
   systemd.user.services.arrpc = {
     description = "arRPC - Discord RPC Bridge";
     unitConfig = {
