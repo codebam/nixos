@@ -15,48 +15,51 @@
           script = pkgs.writeText "bridge.py" ''
             from flask import Flask, request
             import subprocess
-            import logging
+            import sys
 
-            # Silence flask logging
-            log = logging.getLogger('werkzeug')
-            log.setLevel(logging.ERROR)
+            app = Flask(__name__)
 
             MY_STEAM_ID = "76561198064631737"
 
-            app = Flask(__name__)
+            class State:
+                is_alive = None # Use None so first packet always triggers
+
+            state = State()
 
             @app.route("/", methods=['POST'])
             def gsi_listener():
                 data = request.json
                 
-                # Extract map mode
-                map_data = data.get("map", {})
-                mode = map_data.get("mode")
-                
-                # Extract player info
+                # Extract info
                 player = data.get("player", {})
-                current_player_steamid = player.get("steamid")
-                health = player.get("state", {}).get("health", 100)
+                current_id = player.get("steamid")
+                health = player.get("state", {}).get("health")
+                
+                # Log raw data for debugging
+                print(f"DEBUG: Received Packet - ID: {current_id}, Health: {health}", file=sys.stderr)
 
-                # We only care about Casual mode
-                if mode == "casual":
-                    # Condition 1: We are spectating someone else
-                    is_spectating = (current_player_steamid != MY_STEAM_ID)
-                    
-                    # Condition 2: It is our data, but we are dead
-                    is_dead = (current_player_steamid == MY_STEAM_ID and health == 0)
+                # Ignore packets that don't have the data we need
+                if current_id is None or health is None:
+                    print("DEBUG: Skipping partial packet (missing ID or Health)", file=sys.stderr)
+                    return "", 204
 
-                    if is_spectating or is_dead:
-                        # You are dead or watching someone else: Play Music
-                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
-                    else:
-                        # You are alive and it's your character: Pause Music
+                # Decision Logic
+                currently_alive = (current_id == MY_STEAM_ID and health > 0)
+
+                if currently_alive != state.is_alive:
+                    state.is_alive = currently_alive
+                    if currently_alive:
+                        print("ACTION: You are ALIVE. Pausing music.", file=sys.stderr)
                         subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
+                    else:
+                        print(f"ACTION: You are DEAD/SPECTATING (ID: {current_id}, Health: {health}). Playing music.", file=sys.stderr)
+                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
                 
                 return "", 204
 
             if __name__ == "__main__":
-                app.run(port=3000, host="127.0.0.1")
+                # Run with threaded=True to handle rapid GSI updates better
+                app.run(port=3000, host="127.0.0.1", threaded=True)
           '';
         in
         "${pythonEnv}/bin/python ${script}";
