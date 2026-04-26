@@ -17,12 +17,10 @@
     group = "users";
   };
 
-  # systemd.user.services.pipewire.environment = lib.mkForce {
-  #   SPA_PLUGIN_DIR = "${pkgs.pipewire}/lib/spa-0.2";
-  #   LADSPA_PATH = "${pkgs.ladspaPlugins}/lib/ladspa";
-  # };
   systemd.user.services.pipewire.environment = {
-    LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2:${pkgs.lsp-plugins}/lib/lv2";
+    SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
+    LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa";
+    LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2";
   };
 
   systemd.services.mopidy = {
@@ -292,6 +290,21 @@
       #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
       #   };
       # };
+      "99-chromium-stereo" = {
+        "node.rules" = [
+          {
+            matches = [
+              { "application.name" = "~[Cc]hromium*"; }
+            ];
+            actions = {
+              "update-props" = {
+                "audio.channels" = 2;
+                "audio.position" = "[ FL, FR ]";
+              };
+            };
+          }
+        ];
+      };
       "10-disable-communication-role" = {
         "wireplumber.settings" = {
           "policy.role-priorities" = {
@@ -358,7 +371,6 @@
     };
     pipewire = {
       extraConfig = {
-        # 1. PulseAudio rules (Catches Chromium AND CS2's default SDL Pulse audio)
         pipewire-pulse = {
           "99-routing" = {
             "pulse.rules" = [
@@ -366,7 +378,7 @@
                 matches = [ { "application.name" = "~[Cc]hromium*"; } ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "ducking_sink";
+                    "node.target" = "chromium_input";
                   };
                 };
               }
@@ -384,20 +396,21 @@
             ];
           };
         };
-        # 2. Native PipeWire rules (Catches CS2 if SDL_AUDIODRIVER=pipewire is set)
         pipewire = {
           "99-routing" = {
             "node.rules" = [
               {
                 matches = [
-                  { "node.name" = "~.*SDL Application.*"; }
-                  { "client.name" = "~.*SDL Application.*"; }
-                  { "application.process.binary" = "cs2"; }
+                  {
+                    "node.name" = "SDL Application";
+                    "media.role" = "Game";
+                  }
                 ];
                 actions = {
                   "update-props" = {
                     "node.target" = "cs2_router";
-                    "target.object" = "cs2_router"; # WirePlumber relies on target.object
+                    "target.object" = "cs2_router";
+                    "volume" = 2.0;
                   };
                 };
               }
@@ -405,15 +418,13 @@
           };
           "99-cs2-ducking-system" = {
             "context.modules" = [
-              # ---------------------------------------------------------
-              # 1. First Loopback: The Game Sink & Sidechain Trigger
-              # ---------------------------------------------------------
+              # CS2 sink — direct to DAC
               {
                 name = "libpipewire-module-loopback";
                 args = {
-                  "node.description" = "CS2 Sidechain Trigger";
+                  "node.description" = "CS2 Router";
                   "capture.props" = {
-                    "node.name" = "cs2_router"; # Creates the sink your game connects to
+                    "node.name" = "cs2_router";
                     "media.class" = "Audio/Sink";
                     "audio.position" = [
                       "FL"
@@ -421,36 +432,59 @@
                     ];
                   };
                   "playback.props" = {
-                    "node.name" = "cs2_trigger_out";
-                    "target.object" = "ducking_sink"; # Sends to compressor sidechain
-                    "audio.position" = [
-                      "AUX0"
-                      "AUX1"
-                    ];
-                  };
-                };
-              }
-              # ---------------------------------------------------------
-              # 2. Second Loopback: Sends Game Audio to your Headphones
-              # ---------------------------------------------------------
-              {
-                name = "libpipewire-module-loopback";
-                args = {
-                  "node.description" = "CS2 Audio Passthrough";
-                  "capture.props" = {
-                    "node.name" = "cs2_monitor_in";
-                    "node.target" = "cs2_router"; # Listens to the sink we created above
-                    "stream.capture.sink" = true; # Specifically captures its output
-                  };
-                  "playback.props" = {
                     "node.name" = "cs2_dac_out";
                     "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                   };
                 };
               }
-              # ---------------------------------------------------------
-              # 3. The Ducking Sink: ONLY runs the compressor on Music
-              # ---------------------------------------------------------
+              # Combine-stream sink: merges Chromium (FL/FR) and CS2 monitor (RL/RR)
+              # into a single 4-channel stream feeding the filter-chain
+              {
+                name = "libpipewire-module-combine-stream";
+                args = {
+                  "node.name" = "chromium_input";
+                  "node.description" = "Chromium Input";
+                  "combine.mode" = "sink";
+                  "audio.channels" = 4;
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                    "RL"
+                    "RR"
+                  ];
+                  "stream.props" = {
+                    "node.passive" = false;
+                    "target.object" = "ducking_sink";
+                  };
+                  "stream.rules" = [
+                    {
+                      matches = [ { "application.name" = "~[Cc]hromium*"; } ];
+                      actions = {
+                        "create-stream" = {
+                          "audio.position" = [
+                            "FL"
+                            "FR"
+                          ];
+                          "channelmix.upmix" = false;
+                        };
+                      };
+                    }
+                    {
+                      matches = [ { "node.name" = "cs2_router"; } ];
+                      actions = {
+                        "create-stream" = {
+                          "audio.position" = [
+                            "RL"
+                            "RR"
+                          ];
+                          "channelmix.upmix" = false;
+                        };
+                      };
+                    }
+                  ];
+                };
+              }
+              # Filter-chain ducker
               {
                 name = "libpipewire-module-filter-chain";
                 args = {
@@ -462,34 +496,30 @@
                         name = "ducker";
                         plugin = "http://lsp-plug.in/plugins/lv2/sc_compressor_stereo";
                         control = {
-                          "enabled" = 1.0; # Force plugin on
-                          "scs" = 1.0; # Sidechain source (1 = External / AUX ports)
-
-                          # -- Ducking Parameters --
-                          "cr" = 6.0; # Ratio (6 = 6:1 ratio. How intensely the music ducks)
-                          "at" = 3.0; # Attack (ms. How fast the music drops)
-                          "rt" = 300.0; # Release (ms. How fast the music fades back in)
-
-                          # Attack Threshold ("al"): How loud CS2 needs to be to trigger ducking.
-                          # Since this is Linear Math, here is a cheat sheet:
-                          # 1.0   =   0 dB (Highest threshold, game has to be max volume)
-                          # 0.25  = -12 dB
-                          # 0.125 = -18 dB
-                          # 0.063 = -24 dB (A good starting point)
-                          # 0.031 = -30 dB (Highly sensitive, quiet gunshots will trigger it)
-                          "al" = 0.063;
+                          "scr" = 2;
+                          "sct" = 0;
+                          "scm" = 0;
+                          "shpm" = 1.0;
+                          "al" = 0.1;
+                          "at" = 5.0;
+                          "rt" = 500.0;
+                          "cr" = 10.0;
+                          "kn" = 0.5;
+                          "mk" = 1.0;
+                          "cdr" = 0.0;
+                          "cwt" = 1.0;
                         };
                       }
                     ];
-                    "inputs" = [
-                      "ducker:in_l" # Channel 0 (FL): Music
-                      "ducker:in_r" # Channel 1 (FR): Music
-                      "ducker:sc_l" # Channel 2 (AUX0): CS2 Trigger
-                      "ducker:sc_r" # Channel 3 (AUX1): CS2 Trigger
+                    inputs = [
+                      "ducker:in_l"
+                      "ducker:in_r"
+                      "ducker:sc_l"
+                      "ducker:sc_r"
                     ];
-                    "outputs" = [
-                      "ducker:out_l" # Compressed Music Out L
-                      "ducker:out_r" # Compressed Music Out R
+                    outputs = [
+                      "ducker:out_l"
+                      "ducker:out_r"
                     ];
                   };
                   "capture.props" = {
@@ -499,14 +529,14 @@
                     "audio.position" = [
                       "FL"
                       "FR"
-                      "AUX0"
-                      "AUX1"
+                      "RL"
+                      "RR"
                     ];
                     "channelmix.upmix" = false;
                   };
                   "playback.props" = {
                     "node.name" = "ducking_output";
-                    "node.passive" = false; # Prevents the graph from going to sleep
+                    "node.passive" = false;
                     "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                   };
                 };
@@ -531,136 +561,6 @@
               "default.clock.rate" = 44100;
             };
           };
-          # "99-cs2-hype4-peq" = {
-          #   "context.modules" = [
-          #     {
-          #       name = "libpipewire-module-filter-chain";
-          #       args = {
-          #         "node.description" = "Hype 4 MKII - CS2 Competitive";
-          #         "media.name" = "Hype 4 MKII - CS2 Competitive";
-          #         "filter.graph" = {
-          #           nodes = [
-          #             {
-          #               type = "builtin";
-          #               name = "preamp";
-          #               label = "bq_highshelf";
-          #               control = {
-          #                 "Freq" = 0;
-          #                 "Gain" = -4.0;
-          #                 "Q" = 1.0;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band1";
-          #               label = "bq_lowshelf";
-          #               control = {
-          #                 "Freq" = 150.0;
-          #                 "Gain" = -7.0;
-          #                 "Q" = 0.71;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band2";
-          #               label = "bq_peaking";
-          #               control = {
-          #                 "Freq" = 400.0;
-          #                 "Gain" = -2.0;
-          #                 "Q" = 1.0;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band3";
-          #               label = "bq_peaking";
-          #               control = {
-          #                 "Freq" = 2500.0;
-          #                 "Gain" = 3.5;
-          #                 "Q" = 1.5;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band4";
-          #               label = "bq_peaking";
-          #               control = {
-          #                 "Freq" = 4000.0;
-          #                 "Gain" = 3.0;
-          #                 "Q" = 1.5;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band5";
-          #               label = "bq_peaking";
-          #               control = {
-          #                 "Freq" = 8000.0;
-          #                 "Gain" = -4.5;
-          #                 "Q" = 2.0;
-          #               };
-          #             }
-          #             {
-          #               type = "builtin";
-          #               name = "band6";
-          #               label = "bq_highshelf";
-          #               control = {
-          #                 "Freq" = 12000.0;
-          #                 "Gain" = -2.0;
-          #                 "Q" = 0.71;
-          #               };
-          #             }
-          #           ];
-          #           links = [
-          #             {
-          #               output = "preamp:Out";
-          #               input = "band1:In";
-          #             }
-          #             {
-          #               output = "band1:Out";
-          #               input = "band2:In";
-          #             }
-          #             {
-          #               output = "band2:Out";
-          #               input = "band3:In";
-          #             }
-          #             {
-          #               output = "band3:Out";
-          #               input = "band4:In";
-          #             }
-          #             {
-          #               output = "band4:Out";
-          #               input = "band5:In";
-          #             }
-          #             {
-          #               output = "band5:Out";
-          #               input = "band6:In";
-          #             }
-          #           ];
-          #         };
-          #         "capture.props" = {
-          #           "node.name" = "cs2_optimized_peq_input";
-          #           "media.class" = "Audio/Sink";
-          #           "audio.channels" = 2;
-          #           "audio.position" = [
-          #             "FL"
-          #             "FR"
-          #           ];
-          #         };
-          #         "playback.props" = {
-          #           "node.name" = "cs2_optimized_peq_output";
-          #           "node.passive" = true;
-          #           "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
-          #           "audio.channels" = 2;
-          #           "audio.position" = [
-          #             "FL"
-          #             "FR"
-          #           ];
-          #         };
-          #       };
-          #     }
-          #   ];
-          # };
         };
       };
     };

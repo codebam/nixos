@@ -2,6 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
+      ladspaPlugins
       lsp-plugins
       # claude-code
       dig
