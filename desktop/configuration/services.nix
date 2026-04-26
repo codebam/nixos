@@ -17,6 +17,11 @@
     group = "users";
   };
 
+  systemd.user.services.pipewire.environment = lib.mkForce {
+    SPA_PLUGIN_DIR = "${pkgs.pipewire}/lib/spa-0.2";
+    LADSPA_PATH = "${pkgs.ladspaPlugins}/lib/ladspa";
+  };
+
   systemd.services.mopidy = {
     environment = {
       GST_PLUGIN_SYSTEM_PATH_1_0 = lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [
@@ -284,6 +289,13 @@
       #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
       #   };
       # };
+      "10-disable-communication-role" = {
+        "wireplumber.settings" = {
+          "policy.role-priorities" = {
+            "Communication" = 0; # Stops it from hijacking "headsets"
+          };
+        };
+      };
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
           {
@@ -343,7 +355,130 @@
     };
     pipewire = {
       extraConfig = {
+        pipewire-pulse = {
+          "99-music-routing" = {
+            "pulse.rules" = [
+              {
+                matches = [
+                  { "application.name" = "~Chromium*"; }
+                ];
+                actions = {
+                  "update-props" = {
+                    "target.object" = "ducking_sink";
+                  };
+                };
+              }
+            ];
+          };
+        };
         pipewire = {
+          "99-cs2-routing" = {
+            "node.rules" = [
+              {
+                matches = [ { "node.name" = "~SDL Application*"; } ];
+                actions = {
+                  "update-props" = {
+                    "node.target" = "cs2_router";
+                    "node.autoconnect" = true;
+                  };
+                };
+              }
+            ];
+          };
+          "99-cs2-ducking-system" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-loopback";
+                args = {
+                  "node.name" = "cs2_router";
+                  "node.description" = "CS2 Audio Router";
+                  "media.class" = "Audio/Sink";
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                  ];
+                  "capture.props" = {
+                    "node.name" = "cs2_router_input";
+                    "media.class" = "Audio/Sink";
+                    "node.passive" = false;
+                    "priority.session" = 2000;
+                    "priority.driver" = 2000;
+                  };
+                  "playback.props" = {
+                    "node.name" = "cs2_router_output";
+                    "media.class" = "Stream/Output/Audio";
+                    "node.passive" = false;
+                    "node.autoconnect" = true;
+                    "target.object" = "ducking_sink";
+                    "audio.position" = [
+                      "RL"
+                      "RR"
+                    ];
+                  };
+                };
+              }
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "Music Ducking Sink";
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "ladspa";
+                        name = "comp_L";
+                        plugin = "${pkgs.ladspaPlugins}/lib/ladspa/sc4_1882.so";
+                        label = "sc4";
+                        control = {
+                          "Threshold level (dB)" = -30;
+                          "Ratio (1:n)" = 8;
+                          "Attack time (ms)" = 2;
+                          "Release time (ms)" = 500;
+                        };
+                      }
+                      {
+                        type = "ladspa";
+                        name = "comp_R";
+                        plugin = "${pkgs.ladspaPlugins}/lib/ladspa/sc4_1882.so";
+                        label = "sc4";
+                        control = {
+                          "Threshold level (dB)" = -30;
+                          "Ratio (1:n)" = 8;
+                          "Attack time (ms)" = 2;
+                          "Release time (ms)" = 500;
+                        };
+                      }
+                    ];
+                    inputs = [
+                      "comp_L:Input"
+                      "comp_R:Input"
+                      "comp_L:Sidechain"
+                      "comp_R:Sidechain"
+                    ];
+                    outputs = [
+                      "comp_L:Output"
+                      "comp_R:Output"
+                    ];
+                  };
+                  "capture.props" = {
+                    "node.name" = "ducking_sink";
+                    "media.class" = "Audio/Sink";
+                    "audio.channels" = 4;
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                      "RL"
+                      "RR"
+                    ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "ducking_output";
+                    "node.passive" = false;
+                    "node.autoconnect" = true;
+                  };
+                };
+              }
+            ];
+          };
           "92-low-latency" = {
             "context.properties" = {
               "default.clock.quantum" = 256;
@@ -362,136 +497,136 @@
               "default.clock.rate" = 44100;
             };
           };
-          "99-cs2-hype4-peq" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-filter-chain";
-                args = {
-                  "node.description" = "Hype 4 MKII - CS2 Competitive";
-                  "media.name" = "Hype 4 MKII - CS2 Competitive";
-                  "filter.graph" = {
-                    nodes = [
-                      {
-                        type = "builtin";
-                        name = "preamp";
-                        label = "bq_highshelf";
-                        control = {
-                          "Freq" = 0;
-                          "Gain" = -4.0;
-                          "Q" = 1.0;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band1";
-                        label = "bq_lowshelf";
-                        control = {
-                          "Freq" = 150.0;
-                          "Gain" = -7.0;
-                          "Q" = 0.71;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band2";
-                        label = "bq_peaking";
-                        control = {
-                          "Freq" = 400.0;
-                          "Gain" = -2.0;
-                          "Q" = 1.0;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band3";
-                        label = "bq_peaking";
-                        control = {
-                          "Freq" = 2500.0;
-                          "Gain" = 3.5;
-                          "Q" = 1.5;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band4";
-                        label = "bq_peaking";
-                        control = {
-                          "Freq" = 4000.0;
-                          "Gain" = 3.0;
-                          "Q" = 1.5;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band5";
-                        label = "bq_peaking";
-                        control = {
-                          "Freq" = 8000.0;
-                          "Gain" = -4.5;
-                          "Q" = 2.0;
-                        };
-                      }
-                      {
-                        type = "builtin";
-                        name = "band6";
-                        label = "bq_highshelf";
-                        control = {
-                          "Freq" = 12000.0;
-                          "Gain" = -2.0;
-                          "Q" = 0.71;
-                        };
-                      }
-                    ];
-                    links = [
-                      {
-                        output = "preamp:Out";
-                        input = "band1:In";
-                      }
-                      {
-                        output = "band1:Out";
-                        input = "band2:In";
-                      }
-                      {
-                        output = "band2:Out";
-                        input = "band3:In";
-                      }
-                      {
-                        output = "band3:Out";
-                        input = "band4:In";
-                      }
-                      {
-                        output = "band4:Out";
-                        input = "band5:In";
-                      }
-                      {
-                        output = "band5:Out";
-                        input = "band6:In";
-                      }
-                    ];
-                  };
-                  "capture.props" = {
-                    "node.name" = "cs2_optimized_peq_input";
-                    "media.class" = "Audio/Sink";
-                    "audio.channels" = 2;
-                    "audio.position" = [
-                      "FL"
-                      "FR"
-                    ];
-                  };
-                  "playback.props" = {
-                    "node.name" = "cs2_optimized_peq_output";
-                    "node.passive" = true;
-                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
-                    "audio.channels" = 2;
-                    "audio.position" = [
-                      "FL"
-                      "FR"
-                    ];
-                  };
-                };
-              }
-            ];
-          };
+          # "99-cs2-hype4-peq" = {
+          #   "context.modules" = [
+          #     {
+          #       name = "libpipewire-module-filter-chain";
+          #       args = {
+          #         "node.description" = "Hype 4 MKII - CS2 Competitive";
+          #         "media.name" = "Hype 4 MKII - CS2 Competitive";
+          #         "filter.graph" = {
+          #           nodes = [
+          #             {
+          #               type = "builtin";
+          #               name = "preamp";
+          #               label = "bq_highshelf";
+          #               control = {
+          #                 "Freq" = 0;
+          #                 "Gain" = -4.0;
+          #                 "Q" = 1.0;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band1";
+          #               label = "bq_lowshelf";
+          #               control = {
+          #                 "Freq" = 150.0;
+          #                 "Gain" = -7.0;
+          #                 "Q" = 0.71;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band2";
+          #               label = "bq_peaking";
+          #               control = {
+          #                 "Freq" = 400.0;
+          #                 "Gain" = -2.0;
+          #                 "Q" = 1.0;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band3";
+          #               label = "bq_peaking";
+          #               control = {
+          #                 "Freq" = 2500.0;
+          #                 "Gain" = 3.5;
+          #                 "Q" = 1.5;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band4";
+          #               label = "bq_peaking";
+          #               control = {
+          #                 "Freq" = 4000.0;
+          #                 "Gain" = 3.0;
+          #                 "Q" = 1.5;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band5";
+          #               label = "bq_peaking";
+          #               control = {
+          #                 "Freq" = 8000.0;
+          #                 "Gain" = -4.5;
+          #                 "Q" = 2.0;
+          #               };
+          #             }
+          #             {
+          #               type = "builtin";
+          #               name = "band6";
+          #               label = "bq_highshelf";
+          #               control = {
+          #                 "Freq" = 12000.0;
+          #                 "Gain" = -2.0;
+          #                 "Q" = 0.71;
+          #               };
+          #             }
+          #           ];
+          #           links = [
+          #             {
+          #               output = "preamp:Out";
+          #               input = "band1:In";
+          #             }
+          #             {
+          #               output = "band1:Out";
+          #               input = "band2:In";
+          #             }
+          #             {
+          #               output = "band2:Out";
+          #               input = "band3:In";
+          #             }
+          #             {
+          #               output = "band3:Out";
+          #               input = "band4:In";
+          #             }
+          #             {
+          #               output = "band4:Out";
+          #               input = "band5:In";
+          #             }
+          #             {
+          #               output = "band5:Out";
+          #               input = "band6:In";
+          #             }
+          #           ];
+          #         };
+          #         "capture.props" = {
+          #           "node.name" = "cs2_optimized_peq_input";
+          #           "media.class" = "Audio/Sink";
+          #           "audio.channels" = 2;
+          #           "audio.position" = [
+          #             "FL"
+          #             "FR"
+          #           ];
+          #         };
+          #         "playback.props" = {
+          #           "node.name" = "cs2_optimized_peq_output";
+          #           "node.passive" = true;
+          #           "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+          #           "audio.channels" = 2;
+          #           "audio.position" = [
+          #             "FL"
+          #             "FR"
+          #           ];
+          #         };
+          #       };
+          #     }
+          #   ];
+          # };
         };
       };
     };
