@@ -439,49 +439,74 @@
               }
               # Combine-stream sink: merges Chromium (FL/FR) and CS2 monitor (RL/RR)
               # into a single 4-channel stream feeding the filter-chain
+              # 1. Chromium Input
+              # Acts as a strict 2-channel sink so Chromium cannot upmix itself.
+              # Forwards cleanly to the main inputs (FL/FR) of the ducker.
               {
-                name = "libpipewire-module-combine-stream";
+                name = "libpipewire-module-loopback";
                 args = {
-                  "node.name" = "chromium_input";
                   "node.description" = "Chromium Input";
-                  "combine.mode" = "sink";
-                  "audio.channels" = 4;
-                  "audio.position" = [
-                    "FL"
-                    "FR"
-                    "RL"
-                    "RR"
-                  ];
-                  "stream.props" = {
-                    "node.passive" = false;
-                    "target.object" = "ducking_sink";
+                  "capture.props" = {
+                    "node.name" = "chromium_input";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
                   };
-                  "stream.rules" = [
-                    {
-                      matches = [ { "application.name" = "~[Cc]hromium*"; } ];
-                      actions = {
-                        "create-stream" = {
-                          "audio.position" = [
-                            "FL"
-                            "FR"
-                          ];
-                          "channelmix.upmix" = false;
-                        };
-                      };
-                    }
-                    {
-                      matches = [ { "node.name" = "cs2_router"; } ];
-                      actions = {
-                        "create-stream" = {
-                          "audio.position" = [
-                            "RL"
-                            "RR"
-                          ];
-                          "channelmix.upmix" = false;
-                        };
-                      };
-                    }
-                  ];
+                  "playback.props" = {
+                    "node.name" = "chromium_to_ducker";
+                    "target.object" = "ducking_sink";
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                      "RL"
+                      "RR"
+                    ];
+                    "channelmix.upmix" = false;
+                    "channelmix.matrix" = [
+                      [ 1.0 0.0 ] # Out FL <- In FL
+                      [ 0.0 1.0 ] # Out FR <- In FR
+                      [ 0.0 0.0 ] # Out RL
+                      [ 0.0 0.0 ] # Out RR
+                    ];
+                  };
+                };
+              }
+
+              # 2. CS2 Sidechain Tap
+              # Silently taps the monitor of the cs2_router.
+              # Forwards cleanly to the sidechain trigger inputs (RL/RR) of the ducker.
+              {
+                name = "libpipewire-module-loopback";
+                args = {
+                  "node.description" = "CS2 Sidechain Tap";
+                  "capture.props" = {
+                    "node.name" = "cs2_sidechain_cap";
+                    "node.target" = "cs2_router";
+                    "stream.capture.sink" = true; # Explicitly grab the monitor output
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "cs2_to_sidechain";
+                    "target.object" = "ducking_sink";
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                      "RL"
+                      "RR"
+                    ];
+                    "channelmix.upmix" = false;
+                    "channelmix.matrix" = [
+                      [ 0.0 0.0 ] # Out FL
+                      [ 0.0 0.0 ] # Out FR
+                      [ 1.0 0.0 ] # Out RL <- In FL
+                      [ 0.0 1.0 ] # Out RR <- In FR
+                    ];
+                  };
                 };
               }
               # Filter-chain ducker
@@ -496,18 +521,20 @@
                         name = "ducker";
                         plugin = "http://lsp-plug.in/plugins/lv2/sc_compressor_stereo";
                         control = {
-                          "scr" = 2;
-                          "sct" = 0;
-                          "scm" = 0;
-                          "shpm" = 1.0;
-                          "al" = 0.1;
-                          "at" = 5.0;
-                          "rt" = 500.0;
-                          "cr" = 10.0;
-                          "kn" = 0.5;
-                          "mk" = 1.0;
-                          "cdr" = 0.0;
-                          "cwt" = 1.0;
+                          "sct" = 2;      # Sidechain type = External
+                          "scl" = 0;      # Sidechain listen = OFF
+                          "scm" = 0;      # Sidechain mode = Peak
+                          "scs" = 5;      # Sidechain source = Max (loudest channel)
+                          "scp" = 100.0;  # Sidechain preamp = +40dB (insane boost)
+                          "cm"  = 0;      # Compression mode = Downward
+                          "al"  = 0.001;  # Attack threshold = -60dB
+                          "at"  = 1.0;    # Attack time = 1ms
+                          "rt"  = 200.0;  # Release time = 200ms
+                          "cr"  = 100.0;  # Ratio = 100:1 (brickwall)
+                          "kn"  = 0.0632; # Knee = Hard knee
+                          "mk"  = 1.0;    # Makeup gain = 0dB
+                          "cdr" = 0.0;    # Dry gain = 0
+                          "cwt" = 1.0;    # Wet gain = 100%
                         };
                       }
                     ];
@@ -532,7 +559,8 @@
                       "RL"
                       "RR"
                     ];
-                    "channelmix.upmix" = false;
+                    "channelmix.disable" = true;
+                    "channelmix.upmix-method" = "none";
                   };
                   "playback.props" = {
                     "node.name" = "ducking_output";
