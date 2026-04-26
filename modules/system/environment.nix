@@ -2,6 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
+      lsp-plugins
       # claude-code
       dig
       git
