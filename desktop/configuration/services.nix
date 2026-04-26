@@ -17,9 +17,12 @@
     group = "users";
   };
 
-  systemd.user.services.pipewire.environment = lib.mkForce {
-    SPA_PLUGIN_DIR = "${pkgs.pipewire}/lib/spa-0.2";
-    LADSPA_PATH = "${pkgs.ladspaPlugins}/lib/ladspa";
+  # systemd.user.services.pipewire.environment = lib.mkForce {
+  #   SPA_PLUGIN_DIR = "${pkgs.pipewire}/lib/spa-0.2";
+  #   LADSPA_PATH = "${pkgs.ladspaPlugins}/lib/ladspa";
+  # };
+  systemd.user.services.pipewire.environment = {
+    LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2:${pkgs.lsp-plugins}/lib/lv2";
   };
 
   systemd.services.mopidy = {
@@ -355,31 +358,46 @@
     };
     pipewire = {
       extraConfig = {
+        # 1. PulseAudio rules (Catches Chromium AND CS2's default SDL Pulse audio)
         pipewire-pulse = {
-          "99-music-routing" = {
+          "99-routing" = {
             "pulse.rules" = [
               {
+                matches = [ { "application.name" = "~[Cc]hromium*"; } ];
+                actions = {
+                  "update-props" = {
+                    "node.target" = "ducking_sink";
+                  };
+                };
+              }
+              {
                 matches = [
-                  { "application.name" = "~Chromium*"; }
+                  { "application.name" = "~SDL Application*"; }
+                  { "application.name" = "~cs2*"; }
                 ];
                 actions = {
                   "update-props" = {
-                    "target.object" = "ducking_sink";
+                    "node.target" = "cs2_router";
                   };
                 };
               }
             ];
           };
         };
+        # 2. Native PipeWire rules (Catches CS2 if SDL_AUDIODRIVER=pipewire is set)
         pipewire = {
-          "99-cs2-routing" = {
+          "99-routing" = {
             "node.rules" = [
               {
-                matches = [ { "node.name" = "~SDL Application*"; } ];
+                matches = [
+                  { "node.name" = "~.*SDL Application.*"; }
+                  { "client.name" = "~.*SDL Application.*"; }
+                  { "application.process.binary" = "cs2"; }
+                ];
                 actions = {
                   "update-props" = {
                     "node.target" = "cs2_router";
-                    "node.autoconnect" = true;
+                    "target.object" = "cs2_router"; # WirePlumber relies on target.object
                   };
                 };
               }
@@ -387,76 +405,91 @@
           };
           "99-cs2-ducking-system" = {
             "context.modules" = [
+              # ---------------------------------------------------------
+              # 1. First Loopback: The Game Sink & Sidechain Trigger
+              # ---------------------------------------------------------
               {
                 name = "libpipewire-module-loopback";
                 args = {
-                  "node.name" = "cs2_router";
-                  "node.description" = "CS2 Audio Router";
-                  "media.class" = "Audio/Sink";
-                  "audio.position" = [
-                    "FL"
-                    "FR"
-                  ];
+                  "node.description" = "CS2 Sidechain Trigger";
                   "capture.props" = {
-                    "node.name" = "cs2_router_input";
+                    "node.name" = "cs2_router"; # Creates the sink your game connects to
                     "media.class" = "Audio/Sink";
-                    "node.passive" = false;
-                    "priority.session" = 2000;
-                    "priority.driver" = 2000;
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
                   };
                   "playback.props" = {
-                    "node.name" = "cs2_router_output";
-                    "media.class" = "Stream/Output/Audio";
-                    "node.passive" = false;
-                    "node.autoconnect" = true;
-                    "target.object" = "ducking_sink";
+                    "node.name" = "cs2_trigger_out";
+                    "target.object" = "ducking_sink"; # Sends to compressor sidechain
                     "audio.position" = [
-                      "RL"
-                      "RR"
+                      "AUX0"
+                      "AUX1"
                     ];
                   };
                 };
               }
+              # ---------------------------------------------------------
+              # 2. Second Loopback: Sends Game Audio to your Headphones
+              # ---------------------------------------------------------
+              {
+                name = "libpipewire-module-loopback";
+                args = {
+                  "node.description" = "CS2 Audio Passthrough";
+                  "capture.props" = {
+                    "node.name" = "cs2_monitor_in";
+                    "node.target" = "cs2_router"; # Listens to the sink we created above
+                    "stream.capture.sink" = true; # Specifically captures its output
+                  };
+                  "playback.props" = {
+                    "node.name" = "cs2_dac_out";
+                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+                  };
+                };
+              }
+              # ---------------------------------------------------------
+              # 3. The Ducking Sink: ONLY runs the compressor on Music
+              # ---------------------------------------------------------
               {
                 name = "libpipewire-module-filter-chain";
                 args = {
-                  "node.description" = "Music Ducking Sink";
+                  "node.description" = "True Ducking Sink";
                   "filter.graph" = {
                     nodes = [
                       {
-                        type = "ladspa";
-                        name = "comp_L";
-                        plugin = "${pkgs.ladspaPlugins}/lib/ladspa/sc4_1882.so";
-                        label = "sc4";
+                        type = "lv2";
+                        name = "ducker";
+                        plugin = "http://lsp-plug.in/plugins/lv2/sc_compressor_stereo";
                         control = {
-                          "Threshold level (dB)" = -30;
-                          "Ratio (1:n)" = 8;
-                          "Attack time (ms)" = 2;
-                          "Release time (ms)" = 500;
-                        };
-                      }
-                      {
-                        type = "ladspa";
-                        name = "comp_R";
-                        plugin = "${pkgs.ladspaPlugins}/lib/ladspa/sc4_1882.so";
-                        label = "sc4";
-                        control = {
-                          "Threshold level (dB)" = -30;
-                          "Ratio (1:n)" = 8;
-                          "Attack time (ms)" = 2;
-                          "Release time (ms)" = 500;
+                          "enabled" = 1.0; # Force plugin on
+                          "scs" = 1.0; # Sidechain source (1 = External / AUX ports)
+
+                          # -- Ducking Parameters --
+                          "cr" = 6.0; # Ratio (6 = 6:1 ratio. How intensely the music ducks)
+                          "at" = 3.0; # Attack (ms. How fast the music drops)
+                          "rt" = 300.0; # Release (ms. How fast the music fades back in)
+
+                          # Attack Threshold ("al"): How loud CS2 needs to be to trigger ducking.
+                          # Since this is Linear Math, here is a cheat sheet:
+                          # 1.0   =   0 dB (Highest threshold, game has to be max volume)
+                          # 0.25  = -12 dB
+                          # 0.125 = -18 dB
+                          # 0.063 = -24 dB (A good starting point)
+                          # 0.031 = -30 dB (Highly sensitive, quiet gunshots will trigger it)
+                          "al" = 0.063;
                         };
                       }
                     ];
-                    inputs = [
-                      "comp_L:Input"
-                      "comp_R:Input"
-                      "comp_L:Sidechain"
-                      "comp_R:Sidechain"
+                    "inputs" = [
+                      "ducker:in_l" # Channel 0 (FL): Music
+                      "ducker:in_r" # Channel 1 (FR): Music
+                      "ducker:sc_l" # Channel 2 (AUX0): CS2 Trigger
+                      "ducker:sc_r" # Channel 3 (AUX1): CS2 Trigger
                     ];
-                    outputs = [
-                      "comp_L:Output"
-                      "comp_R:Output"
+                    "outputs" = [
+                      "ducker:out_l" # Compressed Music Out L
+                      "ducker:out_r" # Compressed Music Out R
                     ];
                   };
                   "capture.props" = {
@@ -466,14 +499,15 @@
                     "audio.position" = [
                       "FL"
                       "FR"
-                      "RL"
-                      "RR"
+                      "AUX0"
+                      "AUX1"
                     ];
+                    "channelmix.upmix" = false;
                   };
                   "playback.props" = {
                     "node.name" = "ducking_output";
-                    "node.passive" = false;
-                    "node.autoconnect" = true;
+                    "node.passive" = false; # Prevents the graph from going to sleep
+                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                   };
                 };
               }
