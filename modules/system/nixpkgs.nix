@@ -105,8 +105,8 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "1cbb8a440f157047292709c171e59f0feeb26475";
-            hash = "sha256-K0h1ubMY0H+bB5Y3mdjvADG8wIfaHHrPrupiJD2sEd4=";
+            rev = "c857ca3a978896f4f9bdd481ec5cf395662a2dc5";
+            hash = "sha256-6x4pLV25W6kmCxRMIVh9ZNdQJ2m52IkzHzPzRapuSSs=";
           };
         });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
