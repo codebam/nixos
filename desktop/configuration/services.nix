@@ -290,6 +290,22 @@
       #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
       #   };
       # };
+      "99-qudelix-32bit" = {
+        "monitor.alsa.rules" = [
+          {
+            matches = [
+              {
+                "node.name" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+              }
+            ];
+            actions = {
+              update-props = {
+                "audio.format" = "S32LE";
+              };
+            };
+          }
+        ];
+      };
       "99-chromium-stereo" = {
         "node.rules" = [
           {
@@ -400,17 +416,32 @@
           "99-routing" = {
             "node.rules" = [
               {
-                matches = [ { "node.name" = "SDL Application"; "media.role" = "Game"; } ];
-                actions = { "update-props" = { "node.target" = "cs2_listen"; "target.object" = "cs2_listen"; }; };
+                matches = [
+                  {
+                    "node.name" = "SDL Application";
+                    "media.role" = "Game";
+                  }
+                ];
+                actions = {
+                  "update-props" = {
+                    "node.target" = "cs2_listen";
+                    "target.object" = "cs2_listen";
+                  };
+                };
               }
               {
-                matches = [ 
-                  { "application.name" = "~Chromium.*"; } 
-                  { "application.name" = "~chromium.*"; } 
+                matches = [
+                  { "application.name" = "~Chromium.*"; }
+                  { "application.name" = "~chromium.*"; }
                   { "binary.name" = "~chromium.*"; }
                   { "node.name" = "~chromium.*"; }
                 ];
-                actions = { "update-props" = { "node.target" = "music_ducker"; "target.object" = "music_ducker"; }; };
+                actions = {
+                  "update-props" = {
+                    "node.target" = "music_ducker";
+                    "target.object" = "music_ducker";
+                  };
+                };
               }
             ];
           };
@@ -421,9 +452,16 @@
                 name = "libpipewire-module-loopback";
                 args = {
                   "node.description" = "CS2 Listen";
-                  "capture.props" = { "node.name" = "cs2_listen"; "media.class" = "Audio/Sink"; "audio.position" = [ "FL" "FR" ]; };
-                  "playback.props" = { 
-                    "node.name" = "cs2_listen_out"; 
+                  "capture.props" = {
+                    "node.name" = "cs2_listen";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                    ];
+                  };
+                  "playback.props" = {
+                    "node.name" = "cs2_listen_out";
                     "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                     "stream.dont-remix" = true;
                     "channelmix.upmix" = false;
@@ -435,13 +473,37 @@
                 name = "libpipewire-module-loopback";
                 args = {
                   "node.description" = "CS2 Sidechain Tap";
-                  "capture.props" = { "node.target" = "cs2_listen"; "stream.capture.sink" = true; "stream.dont-remix" = true; };
-                  "playback.props" = { 
-                    "node.target" = "music_ducker"; 
-                    "node.passive" = true; 
+                  "capture.props" = {
+                    "node.target" = "cs2_listen";
+                    "stream.capture.sink" = true;
                     "stream.dont-remix" = true;
-                    "audio.position" = [ "RL" "RR" ]; # Force to Sidechain channels only
-                    "channelmix.matrix" = [ [0 0] [0 0] [1 0] [0 1] ];
+                  };
+                  "playback.props" = {
+                    "node.target" = "music_ducker";
+                    "node.passive" = true;
+                    "stream.dont-remix" = true;
+                    "audio.position" = [
+                      "RL"
+                      "RR"
+                    ]; # Force to Sidechain channels only
+                    "channelmix.matrix" = [
+                      [
+                        0
+                        0
+                      ]
+                      [
+                        0
+                        0
+                      ]
+                      [
+                        1
+                        0
+                      ]
+                      [
+                        0
+                        1
+                      ]
+                    ];
                   };
                 };
               }
@@ -457,26 +519,62 @@
                         name = "ducker";
                         plugin = "http://lsp-plug.in/plugins/lv2/sc_compressor_stereo";
                         control = {
-                          "sct" = 2.0; "scm" = 0.0; "scs" = 0.0; "scp" = 1.0; "scr" = 10.0; "sla" = 5.0;
-                          "al" = 0.0316; "at" = 20.0; "rt" = 100.0; "cr" = 4.0; "kn" = 0.501; "mk" = 1.0;
+                          "sct" = 2.0;
+                          "scm" = 0.0;
+                          "scs" = 0.0;
+                          "scp" = 1.0;
+                          "scr" = 10.0;
+                          "sla" = 5.0;
+                          "al" = 0.0316;
+                          "at" = 20.0;
+                          "rt" = 100.0;
+                          "cr" = 4.0;
+                          "kn" = 0.501;
+                          "mk" = 1.0;
                         };
                       }
                     ];
-                    inputs = [ "ducker:in_l" "ducker:in_r" "ducker:sc_l" "ducker:sc_r" ];
-                    outputs = [ "ducker:out_l" "ducker:out_r" ];
+                    inputs = [
+                      "ducker:in_l"
+                      "ducker:in_r"
+                      "ducker:sc_l"
+                      "ducker:sc_r"
+                    ];
+                    outputs = [
+                      "ducker:out_l"
+                      "ducker:out_r"
+                    ];
                   };
-                  "capture.props" = { 
-                    "node.name" = "music_ducker"; 
-                    "media.class" = "Audio/Sink"; 
-                    "audio.channels" = 4; 
-                    "audio.position" = [ "FL" "FR" "RL" "RR" ];
+                  "capture.props" = {
+                    "node.name" = "music_ducker";
+                    "media.class" = "Audio/Sink";
+                    "audio.channels" = 4;
+                    "audio.position" = [
+                      "FL"
+                      "FR"
+                      "RL"
+                      "RR"
+                    ];
                     "channelmix.upmix" = false; # Prevent music from bleeding into sidechain
                   };
-                  "playback.props" = { 
-                    "node.name" = "music_ducker_out"; 
+                  "playback.props" = {
+                    "node.name" = "music_ducker_out";
                     "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                     "stream.dont-remix" = true;
-                    "channelmix.matrix" = [ [1 0 0 0] [0 1 0 0] ];
+                    "channelmix.matrix" = [
+                      [
+                        1
+                        0
+                        0
+                        0
+                      ]
+                      [
+                        0
+                        1
+                        0
+                        0
+                      ]
+                    ];
                   };
                 };
               }
