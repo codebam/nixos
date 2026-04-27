@@ -23,6 +23,7 @@
 
             class State:
                 is_alive = None # Use None so first packet always triggers
+                mode = None
 
             state = State()
 
@@ -35,8 +36,21 @@
                 current_id = player.get("steamid")
                 health = player.get("state", {}).get("health")
                 
+                # Update mode if present in packet
+                map_data = data.get("map")
+                if map_data and "mode" in map_data:
+                    state.mode = map_data.get("mode")
+                
                 # Log raw data for debugging
-                print(f"DEBUG: Received Packet - ID: {current_id}, Health: {health}", file=sys.stderr)
+                print(f"DEBUG: Received Packet - ID: {current_id}, Health: {health}, Mode: {state.mode}", file=sys.stderr)
+
+                # Only active in casual mode
+                if state.mode != "casual":
+                    if state.is_alive is True:
+                        print(f"ACTION: Mode is {state.mode}, not casual. Resuming music.", file=sys.stderr)
+                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
+                    state.is_alive = None
+                    return "", 204
 
                 # Ignore packets that don't have the data we need
                 if current_id is None or health is None:
