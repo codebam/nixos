@@ -290,22 +290,22 @@
       #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
       #   };
       # };
-      "99-qudelix-32bit" = {
-        "monitor.alsa.rules" = [
-          {
-            matches = [
-              {
-                "node.name" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
-              }
-            ];
-            actions = {
-              update-props = {
-                "audio.format" = "S32LE";
-              };
-            };
-          }
-        ];
-      };
+      # "99-qudelix-32bit" = {
+      #   "monitor.alsa.rules" = [
+      #     {
+      #       matches = [
+      #         {
+      #           "node.name" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
+      #         }
+      #       ];
+      #       actions = {
+      #         update-props = {
+      #           "audio.format" = "S32LE";
+      #         };
+      #       };
+      #     }
+      #   ];
+      # };
       "99-chromium-stereo" = {
         "node.rules" = [
           {
