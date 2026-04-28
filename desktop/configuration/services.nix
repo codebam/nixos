@@ -310,13 +310,27 @@
         "node.rules" = [
           {
             matches = [
-              { "application.name" = "~!SDL Application.*"; }
-              { "application.name" = "~!cs2.*"; }
+              { "application.name" = "~.*"; }
             ];
             actions = {
               "update-props" = {
                 "audio.channels" = 2;
                 "audio.position" = "[ FL, FR ]";
+              };
+            };
+          }
+        ];
+      };
+      "99-game-stereo" = {
+        "node.rules" = [
+          {
+            matches = [
+              { "application.name" = "~(SDL Application.*|cs2.*)"; }
+            ];
+            actions = {
+              "update-props" = {
+                "audio.channels" = 6; # Assuming games want 5.1, or let them decide
+                "audio.position" = null; # Reset to default
               };
             };
           }
@@ -393,23 +407,23 @@
             "pulse.rules" = [
               {
                 matches = [
-                  { "application.name" = "~!SDL Application.*"; }
-                  { "application.name" = "~!cs2.*"; }
+                  { "application.name" = "~.*"; }
                 ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "media_input";
+                    "node.target" = "media_ducker";
+                    "target.object" = "media_ducker";
                   };
                 };
               }
               {
                 matches = [
-                  { "application.name" = "~SDL Application*"; }
-                  { "application.name" = "~cs2*"; }
+                  { "application.name" = "~(SDL Application.*|cs2.*)"; }
                 ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "cs2_router";
+                    "node.target" = "game_listen";
+                    "target.object" = "game_listen";
                   };
                 };
               }
@@ -421,22 +435,7 @@
             "node.rules" = [
               {
                 matches = [
-                  {
-                    "node.name" = "SDL Application";
-                    "media.role" = "Game";
-                  }
-                ];
-                actions = {
-                  "update-props" = {
-                    "node.target" = "game_listen";
-                    "target.object" = "game_listen";
-                  };
-                };
-              }
-              {
-                matches = [
-                  { "application.name" = "~!SDL Application.*"; }
-                  { "application.name" = "~!cs2.*"; }
+                  { "application.name" = "~.*"; }
                 ];
                 actions = {
                   "update-props" = {
@@ -445,15 +444,27 @@
                   };
                 };
               }
+              {
+                matches = [
+                  { "application.name" = "~(SDL Application.*|cs2.*)"; }
+                  { "node.name" = "~(SDL Application.*|cs2.*)"; }
+                ];
+                actions = {
+                  "update-props" = {
+                    "node.target" = "game_listen";
+                    "target.object" = "game_listen";
+                  };
+                };
+              }
             ];
           };
-          "99-cs2-ducking-system" = {
+          "99-game-ducking-system" = {
             "context.modules" = [
-              # 1. CS2 Listen Sink: Direct to DAC
+              # 1. Game Listen Sink: Direct to DAC
               {
                 name = "libpipewire-module-loopback";
                 args = {
-                  "node.description" = "CS2 Listen";
+                  "node.description" = "Game Listen";
                   "capture.props" = {
                     "node.name" = "game_listen";
                     "media.class" = "Audio/Sink";
@@ -469,11 +480,11 @@
                   };
                 };
               }
-              # 2. Sidechain Tap: Copies CS2 into Ducker channels 3-4 (Passive)
+              # 2. Sidechain Tap: Copies Game into Ducker channels 3-4 (Passive)
               {
                 name = "libpipewire-module-loopback";
                 args = {
-                  "node.description" = "CS2 Sidechain Tap";
+                  "node.description" = "Game Sidechain Tap";
                   "capture.props" = {
                     "node.target" = "game_listen";
                     "stream.capture.sink" = true;
@@ -486,24 +497,6 @@
                     "audio.position" = [
                       "RL"
                       "RR"
-                    ]; # Force to Sidechain channels only
-                    "channelmix.matrix" = [
-                      [
-                        0
-                        0
-                      ]
-                      [
-                        0
-                        0
-                      ]
-                      [
-                        1
-                        0
-                      ]
-                      [
-                        0
-                        1
-                      ]
                     ];
                   };
                 };
@@ -512,7 +505,7 @@
               {
                 name = "libpipewire-module-filter-chain";
                 args = {
-                  "node.description" = "media Ducker";
+                  "node.description" = "Media Ducker";
                   "filter.graph" = {
                     nodes = [
                       {
