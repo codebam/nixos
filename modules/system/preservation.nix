@@ -152,6 +152,21 @@ _: {
     };
   };
   systemd.tmpfiles.settings.preservation = {
+    "/home/codebam".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
+    "/home/codebam/Videos".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
+    "/home/codebam/Videos/Anime".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
     "/home/codebam/.config".d = {
       user = "codebam";
       group = "users";
