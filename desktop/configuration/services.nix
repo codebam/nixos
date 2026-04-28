@@ -180,6 +180,17 @@
           '';
         };
       };
+      virtualHosts."music.codebam.ca" = {
+        addSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:4533";
+          proxyWebsockets = true;
+          extraConfig = ''
+            proxy_set_header X-Forwarded-Protocol $scheme;
+          '';
+        };
+      };
     };
     xray = {
       enable = false;
