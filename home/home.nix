@@ -107,7 +107,7 @@ in
         until "$@"; do sleep 1; done
       '')
       (writeShellScriptBin "spaste" ''
-        ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
+        ${curl}/bin/curl -X POST --data-binary @- https://pastebin.codebam.ca
       '')
       (pass.withExtensions (
         subpkgs: with subpkgs; [
