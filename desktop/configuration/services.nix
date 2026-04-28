@@ -306,11 +306,12 @@
       #     }
       #   ];
       # };
-      "99-chromium-stereo" = {
+      "99-media-stereo" = {
         "node.rules" = [
           {
             matches = [
-              { "application.name" = "~[Cc]hromium*"; }
+              { "application.name" = "~!SDL Application.*"; }
+              { "application.name" = "~!cs2.*"; }
             ];
             actions = {
               "update-props" = {
@@ -321,13 +322,13 @@
           }
         ];
       };
-      "10-disable-communication-role" = {
-        "wireplumber.settings" = {
-          "policy.role-priorities" = {
-            "Communication" = 0; # Stops it from hijacking "headsets"
-          };
-        };
-      };
+      # "10-disable-communication-role" = {
+      #   "wireplumber.settings" = {
+      #     "policy.role-priorities" = {
+      #       "Communication" = 0; # Stops it from hijacking "headsets"
+      #     };
+      #   };
+      # };
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
           {
@@ -391,10 +392,13 @@
           "99-routing" = {
             "pulse.rules" = [
               {
-                matches = [ { "application.name" = "~[Cc]hromium*"; } ];
+                matches = [
+                  { "application.name" = "~!SDL Application.*"; }
+                  { "application.name" = "~!cs2.*"; }
+                ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "chromium_input";
+                    "node.target" = "media_input";
                   };
                 };
               }
@@ -424,22 +428,20 @@
                 ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "cs2_listen";
-                    "target.object" = "cs2_listen";
+                    "node.target" = "game_listen";
+                    "target.object" = "game_listen";
                   };
                 };
               }
               {
                 matches = [
-                  { "application.name" = "~Chromium.*"; }
-                  { "application.name" = "~chromium.*"; }
-                  { "binary.name" = "~chromium.*"; }
-                  { "node.name" = "~chromium.*"; }
+                  { "application.name" = "~!SDL Application.*"; }
+                  { "application.name" = "~!cs2.*"; }
                 ];
                 actions = {
                   "update-props" = {
-                    "node.target" = "music_ducker";
-                    "target.object" = "music_ducker";
+                    "node.target" = "media_ducker";
+                    "target.object" = "media_ducker";
                   };
                 };
               }
@@ -453,7 +455,7 @@
                 args = {
                   "node.description" = "CS2 Listen";
                   "capture.props" = {
-                    "node.name" = "cs2_listen";
+                    "node.name" = "game_listen";
                     "media.class" = "Audio/Sink";
                     "audio.position" = [
                       "FL"
@@ -461,7 +463,7 @@
                     ];
                   };
                   "playback.props" = {
-                    "node.name" = "cs2_listen_out";
+                    "node.name" = "game_listen_out";
                     "stream.dont-remix" = true;
                     "channelmix.upmix" = false;
                   };
@@ -473,12 +475,12 @@
                 args = {
                   "node.description" = "CS2 Sidechain Tap";
                   "capture.props" = {
-                    "node.target" = "cs2_listen";
+                    "node.target" = "game_listen";
                     "stream.capture.sink" = true;
                     "stream.dont-remix" = true;
                   };
                   "playback.props" = {
-                    "node.target" = "music_ducker";
+                    "node.target" = "media_ducker";
                     "node.passive" = true;
                     "stream.dont-remix" = true;
                     "audio.position" = [
@@ -510,7 +512,7 @@
               {
                 name = "libpipewire-module-filter-chain";
                 args = {
-                  "node.description" = "Music Ducker";
+                  "node.description" = "media Ducker";
                   "filter.graph" = {
                     nodes = [
                       {
@@ -545,7 +547,7 @@
                     ];
                   };
                   "capture.props" = {
-                    "node.name" = "music_ducker";
+                    "node.name" = "media_ducker";
                     "media.class" = "Audio/Sink";
                     "audio.channels" = 4;
                     "audio.position" = [
@@ -554,10 +556,10 @@
                       "RL"
                       "RR"
                     ];
-                    "channelmix.upmix" = false; # Prevent music from bleeding into sidechain
+                    "channelmix.upmix" = false; # Prevent media from bleeding into sidechain
                   };
                   "playback.props" = {
-                    "node.name" = "music_ducker_out";
+                    "node.name" = "media_ducker_out";
                     "stream.dont-remix" = true;
                     "channelmix.matrix" = [
                       [
