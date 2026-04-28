@@ -462,7 +462,6 @@
                   };
                   "playback.props" = {
                     "node.name" = "cs2_listen_out";
-                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                     "stream.dont-remix" = true;
                     "channelmix.upmix" = false;
                   };
@@ -559,7 +558,6 @@
                   };
                   "playback.props" = {
                     "node.name" = "music_ducker_out";
-                    "target.object" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
                     "stream.dont-remix" = true;
                     "channelmix.matrix" = [
                       [
