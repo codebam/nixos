@@ -162,8 +162,8 @@ in
       high-tide
       # ytmdesktop
       # disabled because electron
-      # feishin
-      # disabled because dart
+      feishin
+      # TODO pin this
       inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
