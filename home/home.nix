@@ -121,11 +121,11 @@ in
       # (discord-ptb.override {
       #   withOpenASAR = true;
       # })
-      # (discord.override {
-      #   withOpenASAR = true;
-      #   withVencord = true;
-      # })
-      # vesktop
+      (discord.override {
+        withOpenASAR = true;
+        withVencord = true;
+      })
+      vesktop
       bat
       gemini-cli
       (pkgs.symlinkJoin {
