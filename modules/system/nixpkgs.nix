@@ -97,8 +97,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "8d0597e3dbc9b6ab9fb9413be1d72bb5cec653cd";
-            hash = "sha256-PyDWibxV06MdPUcN+/X/T9urRMYRxTe9vfhLZ934oQg=";
+            rev = "57441ded02b8895ed1bb2f66c5cff6a6478307f0";
+            hash = "sha256-FNOWsNspf/d1cUdwPB6s8iKxt2mZYUymcjOKVJK+7Lk=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
