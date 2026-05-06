@@ -21,10 +21,12 @@
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
       substituters = [
-        "https://cache.nixos.org/"
+        # "https://cache.nixos.org/"
+        "https://jovian.cachix.org"
       ];
       trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        # "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "jovian.cachix.org-1:8Vq4Txku6VZIRhYrHYki3Ab9XHJRoWmdYqMqj4rB/Uc="
       ];
     };
     gc = {
