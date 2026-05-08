@@ -24,7 +24,8 @@
         mode = "2560x1440@239.760Hz";
         adaptive_sync = "on";
         subpixel = "rgb";
-        render_bit_depth = "8";
+        render_bit_depth = "10";
+        hdr = "on";
         allow_tearing = "yes";
       };
       "DP-1" = {
