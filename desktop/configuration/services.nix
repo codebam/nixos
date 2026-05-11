@@ -733,7 +733,7 @@
       };
     };
     searx = {
-      enable = false;
+      enable = true;
       environmentFile = config.age.secrets.searx-secret.path;
       settings = {
         server = {
