@@ -54,9 +54,9 @@
     };
     chromium = {
       enable = true;
-      # package = pkgs.ungoogled-chromium;
-      package =
-        (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
+      package = pkgs.ungoogled-chromium;
+      # package =
+      #   (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
     };
     ghostty = {
       enable = false;
