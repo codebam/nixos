@@ -97,8 +97,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "57441ded02b8895ed1bb2f66c5cff6a6478307f0";
-            hash = "sha256-FNOWsNspf/d1cUdwPB6s8iKxt2mZYUymcjOKVJK+7Lk=";
+            rev = "e4a1268b2ad84ddd6b748b13ab10f3b6c4379174";
+            hash = "sha256-ISTchLryPIDcVxSm3vu78chr3ohzmtiSaSKsDSUuRlk=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -106,16 +106,16 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "c857ca3a978896f4f9bdd481ec5cf395662a2dc5";
-            hash = "sha256-6x4pLV25W6kmCxRMIVh9ZNdQJ2m52IkzHzPzRapuSSs=";
+            rev = "0bf8731114f8b74d97066cd1d480ed1aad735163";
+            hash = "sha256-l+YOZ3U6RtF6Dzlz7OK8DQhf3NHbmK0KCk+loVZce3E=";
           };
         });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           src = prev.fetchFromGitHub {
             owner = "emersion";
             repo = "xdg-desktop-portal-wlr";
-            rev = "01171a150b705cf07066ebc0fb7e1ff537027bec";
-            hash = "sha256-HITf/hgiASWvn/z49mzS8IS1vuyXwdk1JiAOOHRSQMo=";
+            rev = "5b047df2492d6772df2089835b579f34ab4048b7";
+            hash = "sha256-R0oeuca9HmgeOkZpFpOwl7M3zZ1+DJgsTVcIxhr7L34=";
           };
           nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
           buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
