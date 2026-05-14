@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # staging.url = "github:nixos/nixpkgs/staging";
-    chromium-pinned.url = "github:nixos/nixpkgs/ec299c6a33eee9baf5b4d72881ca2f15c06b4f01";
+    chromium-pinned.url = "github:nixos/nixpkgs/eef00dfd8a712b34af845f9350bac681b1228bd1";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
