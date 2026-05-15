@@ -9,48 +9,48 @@
   programs = {
     google-chrome = {
       enable = true;
-      package =
-        (pkgs.google-chrome.override {
-          commandLineArgs = [
-            "--enable-features=Glic,GlicSidePanel,GlicActor"
-            "--variations-override-country=us"
-          ];
-        }).overrideAttrs
-          (oldAttrs: rec {
-            pname = "google-chrome-unstable";
-            version = "147.0.6890.0";
+      # package =
+      #   (pkgs.google-chrome.override {
+      #     commandLineArgs = [
+      #       "--enable-features=Glic,GlicSidePanel,GlicActor"
+      #       "--variations-override-country=us"
+      #     ];
+      #   }).overrideAttrs
+      #     (oldAttrs: rec {
+      #       pname = "google-chrome-unstable";
+      #       version = "147.0.6890.0";
 
-            src = pkgs.fetchurl {
-              url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
-              hash = "sha256-fb+ldv8LqBEFcBKyX2HFx54161bHyDJdyJ+3RzkIovg=";
-            };
+      #       src = pkgs.fetchurl {
+      #         url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
+      #         hash = "sha256-fb+ldv8LqBEFcBKyX2HFx54161bHyDJdyJ+3RzkIovg=";
+      #       };
 
-            installPhase =
-              builtins.replaceStrings
-                [
-                  "appname=chrome"
-                  "dist=stable"
-                  "opt/google/chrome"
-                  "google-chrome-stable"
-                  "com.google.Chrome.desktop"
-                ]
-                [
-                  "appname=chrome-unstable"
-                  "dist=unstable"
-                  "opt/google/chrome-unstable"
-                  "google-chrome-unstable"
-                  "com.google.Chrome.unstable.desktop"
-                ]
-                oldAttrs.installPhase;
+      #       installPhase =
+      #         builtins.replaceStrings
+      #           [
+      #             "appname=chrome"
+      #             "dist=stable"
+      #             "opt/google/chrome"
+      #             "google-chrome-stable"
+      #             "com.google.Chrome.desktop"
+      #           ]
+      #           [
+      #             "appname=chrome-unstable"
+      #             "dist=unstable"
+      #             "opt/google/chrome-unstable"
+      #             "google-chrome-unstable"
+      #             "com.google.Chrome.unstable.desktop"
+      #           ]
+      #           oldAttrs.installPhase;
 
-            postInstall = ''
-              ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
-            '';
+      #       postInstall = ''
+      #         ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
+      #       '';
 
-            meta = oldAttrs.meta // {
-              mainProgram = "google-chrome-unstable";
-            };
-          });
+      #       meta = oldAttrs.meta // {
+      #         mainProgram = "google-chrome-unstable";
+      #       };
+      #     });
     };
     chromium = {
       enable = true;
