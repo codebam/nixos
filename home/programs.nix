@@ -22,7 +22,7 @@
 
             src = pkgs.fetchurl {
               url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
-              hash = "sha256-uYHpayPpWUI1FaS1gDg2yStEuZ02vbtZG791YkozBTE=";
+              hash = "sha256-fb+ldv8LqBEFcBKyX2HFx54161bHyDJdyJ+3RzkIovg=";
             };
 
             installPhase =
@@ -54,9 +54,9 @@
     };
     chromium = {
       enable = true;
-      # package = pkgs.ungoogled-chromium;
-      package =
-        (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
+      package = pkgs.ungoogled-chromium;
+      # package =
+      #   (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
     };
     ghostty = {
       enable = false;
