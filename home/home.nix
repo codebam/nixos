@@ -116,15 +116,15 @@ in
         ]
       ))
       (discord-canary.override {
-        withOpenASAR = true;
+        # withOpenASAR = true;
         withVencord = true;
       })
       (discord-ptb.override {
-        withOpenASAR = true;
+        # withOpenASAR = true;
         withVencord = true;
       })
       (discord.override {
-        withOpenASAR = true;
+        # withOpenASAR = true;
         withVencord = true;
       })
       vesktop
