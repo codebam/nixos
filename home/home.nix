@@ -130,6 +130,7 @@ in
       vesktop
       bat
       gemini-cli
+      antigravity-cli
       (pkgs.symlinkJoin {
         name = "antigravity";
         paths = [ pkgs.antigravity ];
