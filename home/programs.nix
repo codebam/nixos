@@ -9,7 +9,7 @@
   programs = {
     nixcord = {
       enable = true;
-      vesktop.enable = true;
+      equibop.enable = true;
       config = {
         plugins = {
           fakeNitro.enable = true;

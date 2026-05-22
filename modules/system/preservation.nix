@@ -116,6 +116,7 @@ _: {
             ".config/mprisence"
             ".config/Antigravity"
             ".config/vesktop"
+            ".config/equibop"
             ".config/Element"
             ".config/discord"
             ".config/discordcanary"
