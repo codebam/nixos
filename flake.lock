@@ -23,16 +23,16 @@
     },
     "antigravity-nixpkgs": {
       "locked": {
-        "lastModified": 1779290145,
-        "narHash": "sha256-QPwr7tfih9cD6QV5G3NDNGc1oT88nk4bGjMPv2nWKIs=",
-        "owner": "deftdawg",
+        "lastModified": 1779411216,
+        "narHash": "sha256-TUERQARZ5aKLX5QMG4ukrIj8RsYJzyerVhZtYCNliOk=",
+        "owner": "beeelias",
         "repo": "nixpkgs",
-        "rev": "83a021e960103be4f56333b4b8cbbe4b76f77604",
+        "rev": "9830883af430161e8460e6e56c5c933748cf42b0",
         "type": "github"
       },
       "original": {
-        "owner": "deftdawg",
-        "ref": "add-antigravity-cli-package",
+        "owner": "beeelias",
+        "ref": "antigravity-cli-init",
         "repo": "nixpkgs",
         "type": "github"
       }

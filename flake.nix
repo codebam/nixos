@@ -88,7 +88,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
-    antigravity-nixpkgs.url = "github:deftdawg/nixpkgs/add-antigravity-cli-package";
+    antigravity-nixpkgs.url = "github:beeelias/nixpkgs/antigravity-cli-init";
   };
 
   outputs =

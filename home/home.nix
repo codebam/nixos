@@ -131,15 +131,15 @@ in
       bat
       gemini-cli
       antigravity-cli
-      (pkgs.symlinkJoin {
-        name = "antigravity";
-        paths = [ pkgs.antigravity ];
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-        postBuild = ''
-          wrapProgram $out/bin/antigravity \
-            --add-flags "--remote-debugging-port=9222"
-        '';
-      })
+      # (pkgs.symlinkJoin {
+      #   name = "antigravity";
+      #   paths = [ pkgs.antigravity ];
+      #   nativeBuildInputs = [ pkgs.makeWrapper ];
+      #   postBuild = ''
+      #     wrapProgram $out/bin/antigravity \
+      #       --add-flags "--remote-debugging-port=9222"
+      #   '';
+      # })
       google-cloud-sdk
       arrpc
       grim
