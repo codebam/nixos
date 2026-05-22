@@ -11,7 +11,7 @@
 
   home = {
     packages = with pkgs; [
-      # bolt-launcher
+      bolt-launcher
       # disabled until they use modern openssl
       android-studio
       # vllm
