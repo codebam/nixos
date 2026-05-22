@@ -46,10 +46,11 @@
     };
     overlays = [
       (final: prev: {
-        antigravity-cli = (import inputs.antigravity-nixpkgs {
-          inherit (prev.stdenv.hostPlatform) system;
-          config.allowUnfree = true;
-        }).antigravity-cli;
+        antigravity-cli =
+          (import inputs.antigravity-nixpkgs {
+            inherit (prev.stdenv.hostPlatform) system;
+            config.allowUnfree = true;
+          }).antigravity-cli;
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
         #   system = prev.stdenv.hostPlatform.system;
@@ -102,8 +103,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "e4a1268b2ad84ddd6b748b13ab10f3b6c4379174";
-            hash = "sha256-ISTchLryPIDcVxSm3vu78chr3ohzmtiSaSKsDSUuRlk=";
+            rev = "3bd8f29b138e2832870ad05a9386002fcc79e0fc";
+            hash = "sha256-Ph+Aa6MvWLr6/LL2h7u4gTG3nja3mXIJ0zZUIipC1F0=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -111,8 +112,8 @@
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "0bf8731114f8b74d97066cd1d480ed1aad735163";
-            hash = "sha256-l+YOZ3U6RtF6Dzlz7OK8DQhf3NHbmK0KCk+loVZce3E=";
+            rev = "9c663b1fa1c2ef5c6df0427ba905f347f6594ab6";
+            hash = "sha256-L6DedITsWB5NFp5TyVg9HVwdChmyq0UkSj4nbAMMfJ0=";
           };
         });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
