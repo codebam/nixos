@@ -13,6 +13,15 @@
       config = {
         plugins = {
           fakeNitro.enable = true;
+          callTimer.enable = true;
+          altKrispSwitch.enable = true;
+          betterInvites.enable = true;
+          ircColors.enable = true;
+          moreQuickReactions.enable = true;
+          OnePingPerDM.enable = true;
+          questify.enable = true;
+          replaceGoogleSearch.enable = true;
+          typingTweaks.enable = true;
         };
       };
     };
