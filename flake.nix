@@ -66,10 +66,10 @@
     #   url = "github:kevinJ045/lulu/main";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
-    bsav = {
-      url = "github:codebam/bsav/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # bsav = {
+    #   url = "github:codebam/bsav/main";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     # plasma-manager = {
     #   url = "github:nix-community/plasma-manager";
     #   inputs.nixpkgs.follows = "nixpkgs";
@@ -83,7 +83,11 @@
       url = "github:nix-community/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
+    nixcord = {
+      url = "github:FlameFlag/nixcord";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
     antigravity-nixpkgs.url = "github:deftdawg/nixpkgs/add-antigravity-cli-package";
   };
 
@@ -159,6 +163,7 @@
                 };
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
+                  inputs.nixcord.homeModules.nixcord
                   # inputs.plasma-manager.homeModules.plasma-manager
                 ];
               };

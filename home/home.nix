@@ -115,19 +115,19 @@ in
           pass-genphrase
         ]
       ))
-      (discord-canary.override {
-        # withOpenASAR = true;
-        withVencord = true;
-      })
-      (discord-ptb.override {
-        # withOpenASAR = true;
-        withVencord = true;
-      })
-      (discord.override {
-        # withOpenASAR = true;
-        withVencord = true;
-      })
-      vesktop
+      # (discord-canary.override {
+      #   # withOpenASAR = true;
+      #   withVencord = true;
+      # })
+      # (discord-ptb.override {
+      #   # withOpenASAR = true;
+      #   withVencord = true;
+      # })
+      # (discord.override {
+      #   # withOpenASAR = true;
+      #   withVencord = true;
+      # })
+      # vesktop
       bat
       gemini-cli
       antigravity-cli
@@ -167,7 +167,7 @@ in
       # disabled because electron
       feishin
       # TODO pin this
-      inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv

@@ -7,6 +7,15 @@
 
 {
   programs = {
+    nixcord = {
+      enable = true;
+      vesktop.enable = true;
+      config = {
+        plugins = {
+          fakeNitro.enable = true;
+        };
+      };
+    };
     google-chrome = {
       enable = true;
       # package =
