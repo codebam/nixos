@@ -38,7 +38,17 @@
       };
     };
     ratbagd.enable = true;
-    resolved.enable = true;
+    resolved = {
+      enable = true;
+      settings = {
+        Resolve = {
+          DNS = "1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net";
+          FallbackDNS = "8.8.8.8#dns.google";
+          DNSSEC = "true";
+          DNSOverTLS = "true";
+        };
+      };
+    };
     speechd.enable = true;
     udev = {
       packages = with pkgs; [
