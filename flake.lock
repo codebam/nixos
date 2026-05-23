@@ -392,6 +392,22 @@
         "type": "github"
       }
     },
+    "ivpn": {
+      "locked": {
+        "lastModified": 1779568833,
+        "narHash": "sha256-+HjWeLOOxxs4qxb6KvFl9AqRrPERxfpuw4V545IZy1E=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "0c76692cb4fa66001c8393cbce2063215f72363f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "ivpn-quantum-fix",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "jovian": {
       "inputs": {
         "nix-github-actions": "nix-github-actions",
@@ -770,6 +786,7 @@
         "chromium-pinned": "chromium-pinned",
         "disko": "disko",
         "home-manager": "home-manager_2",
+        "ivpn": "ivpn",
         "jovian": "jovian",
         "lanzaboote": "lanzaboote",
         "lix": "lix",

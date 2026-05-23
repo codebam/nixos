@@ -46,6 +46,8 @@
     };
     overlays = [
       (final: prev: {
+        ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
+
         antigravity-cli =
           (import inputs.antigravity-nixpkgs {
             inherit (prev.stdenv.hostPlatform) system;

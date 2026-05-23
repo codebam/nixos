@@ -89,6 +89,7 @@
     };
     # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
     antigravity-nixpkgs.url = "github:beeelias/nixpkgs/antigravity-cli-init";
+    ivpn.url = "github:codebam/nixpkgs/ivpn-quantum-fix";
   };
 
   outputs =
