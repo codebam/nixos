@@ -758,7 +758,7 @@
       };
     };
     noizdns = {
-      enable = true;
+      enable = false;
       domain = "t.seanbehan.ca";
     };
   };

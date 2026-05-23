@@ -32,9 +32,14 @@ in {
     # Podman & Quadlets
     virtualisation.podman.enable = true;
 
-    # Disable resolved stub listener to free up port 53 on the host
-    services.resolved.settings.Resolve = {
-      DNSStubListener = "no";
+    networking.nftables.tables.noizdns-redirect = {
+      family = "ip";
+      content = ''
+        chain prerouting {
+          type nat hook prerouting priority dstnat; policy accept;
+          iifname { "wlan0", "enp6s0" } udp dport 53 redirect to :5300
+        }
+      '';
     };
 
     environment.etc = {
@@ -49,7 +54,7 @@ in {
         [Pod]
         PodName=noizdns
         Network=noizdns.network
-        PublishPort=53:53/udp
+        PublishPort=5300:53/udp
 
         [Install]
         WantedBy=multi-user.target
@@ -108,6 +113,6 @@ in {
     ];
 
     # Firewall
-    networking.firewall.allowedUDPPorts = [ 53 ];
+    networking.firewall.allowedUDPPorts = [ 53 5300 ];
   };
 }

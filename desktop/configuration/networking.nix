@@ -25,7 +25,6 @@ _:
       27015 # Steam query port
       1900 # UPnP
       8081 # Expo
-      53 # Iodine
       56789 # XRay
     ];
     firewall.allowedUDPPortRanges = [
