@@ -26,16 +26,12 @@ _: {
 
         # --- 1. Find the target device ---
         DEVICE_PATH="/dev/mapper/crypted"
-        FALLBACK_DEVICE="/dev/mapper/crypted"
         ACTUAL_DEVICE=""
 
         log "Waiting for device to become available..."
         for attempt in {1..30}; do
           if [[ -e "$DEVICE_PATH" ]]; then
             ACTUAL_DEVICE="$DEVICE_PATH"
-            break
-          elif [[ -e "$FALLBACK_DEVICE" ]]; then
-            ACTUAL_DEVICE="$FALLBACK_DEVICE"
             break
           else
             log "Attempt $attempt: Device not found, waiting 1s..."

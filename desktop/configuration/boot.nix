@@ -56,16 +56,12 @@
 
               # --- 1. Find the target device ---
               DEVICE_PATH="/dev/mapper/crypted"
-              FALLBACK_DEVICE="/dev/mapper/crypted"
               ACTUAL_DEVICE=""
 
               log "Waiting for device to become available..."
               for attempt in {1..30}; do
                 if [[ -e "$DEVICE_PATH" ]]; then
                   ACTUAL_DEVICE="$DEVICE_PATH"
-                  break
-                elif [[ -e "$FALLBACK_DEVICE" ]]; then
-                  ACTUAL_DEVICE="$FALLBACK_DEVICE"
                   break
                 else
                   log "Attempt $attempt: Device not found, waiting 1s..."
@@ -146,18 +142,11 @@
                   delete_subvolume_recursively() {
                     local subvol_path="$1"
                     log "Deleting subvolume: $subvol_path"
-                    local nested_subvols
-                    nested_subvols=$(btrfs subvolume list -o "$subvol_path" | awk '{print $9}')
-                    for i in $nested_subvols; do
-                      delete_subvolume_recursively "$MOUNT_POINT/$i"
-                    done
-                    
                     if [[ -d "$subvol_path/var/empty" ]]; then
                         log "Removing immutable flag from $subvol_path/var/empty"
                         chattr -i "$subvol_path/var/empty" || log "Warning: could not chattr -i on $subvol_path/var/empty"
                     fi
-                    
-                    btrfs subvolume delete "$subvol_path"
+                    btrfs subvolume delete --recursive "$subvol_path"
                   }
 
                   now_seconds=$(date +%s)
