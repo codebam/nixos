@@ -1,8 +1,7 @@
-{
-  pkgs,
-  lib,
-  inputs,
-  ...
+{ pkgs
+, lib
+, inputs
+, ...
 }:
 
 {
@@ -163,19 +162,20 @@
           settings = {
             theme = {
               overrides = {
-                idle_fg = "#95e6cb";
-                idle_bg = "#131721";
-                good_fg = "#b8cc52";
-                good_bg = "#131721";
-                warning_fg = "#ffb454";
-                warning_bg = "#272d38";
-                critical_fg = "#f07178";
-                critical_bg = "#272d38";
-                info_fg = "#59c2ff";
-                info_bg = "#131721";
-                separator_fg = "#e6e1cf";
-                separator_bg = "#131721";
+                idle_bg = "#000000";
+                idle_fg = "#cdd6f4";
+                good_bg = "#000000";
+                good_fg = "#a6e3a1";
+                warning_bg = "#000000";
+                warning_fg = "#f9e2af";
+                critical_bg = "#000000";
+                critical_fg = "#f38ba8";
+                info_bg = "#000000";
+                info_fg = "#89b4fa";
+                separator_bg = "#000000";
+                separator_fg = "#45475a";
                 separator = "";
+                alternating_tint_bg = "#000000";
               };
             };
           };

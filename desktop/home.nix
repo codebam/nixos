@@ -156,68 +156,73 @@
       bars = {
         default = {
           blocks = [
-            { block = "focused_window"; }
-            { block = "sound"; }
+            {
+              block = "focused_window";
+              format = " $title.str(max_w:40) |";
+            }
+            {
+              block = "sound";
+              format = " $icon $volume ";
+            }
             {
               block = "sound";
               device_kind = "source";
+              format = " $icon $volume ";
             }
             {
               block = "music";
-              format = " $icon {$combo.str(max_w:30,rot_interval:0.5) $prev $play $next |} ";
+              format = " $icon {$combo.str(max_w:25,rot_interval:0.5) $prev $play $next |} ";
               seek_step_secs = 10;
               click = [
-                {
-                  button = "forward";
-                  action = "seek_forward";
-                }
-                {
-                  button = "back";
-                  action = "seek_backward";
-                }
+                { button = "forward"; action = "seek_forward"; }
+                { button = "back"; action = "seek_backward"; }
               ];
             }
             {
               block = "net";
-              format = " $icon {$signal_strength $ssid|Wired connection} ";
+              format = " $icon {$ssid $signal_strength|Wired} ";
             }
             {
-              alert = 10.0;
               block = "disk_space";
-              info_type = "available";
-              interval = 60;
               path = "/";
-              warning = 20.0;
-            }
-            {
-              alert = 10.0;
-              block = "disk_space";
+              format = " $icon /: $available ";
               info_type = "available";
               interval = 60;
-              path = "/games";
               warning = 20.0;
+              alert = 10.0;
             }
-            # {
-            #   alert = 10.0;
-            #   block = "disk_space";
-            #   info_type = "available";
-            #   interval = 60;
-            #   path = "/backup";
-            #   warning = 20.0;
-            # }
+            {
+              block = "disk_space";
+              path = "/games";
+              format = " $icon /games: $available ";
+              info_type = "available";
+              interval = 60;
+              warning = 20.0;
+              alert = 10.0;
+            }
             {
               block = "memory";
-              format = "$icon $mem_used_percents ";
+              format = " $icon $mem_used_percents% ($mem_used) ";
             }
             {
               block = "amd_gpu";
-              format = " $icon $utilization $vram_used_percents ";
+              format = " $icon $utilization% ($vram_used_percents%) ";
             }
-            { block = "temperature"; }
-            { block = "cpu"; }
-            { block = "load"; }
+            {
+              block = "temperature";
+              format = " $icon $max°C ";
+            }
+            {
+              block = "cpu";
+              format = " $icon $utilization% ";
+            }
+            {
+              block = "load";
+              format = " $icon $1m ";
+            }
             {
               block = "time";
+              format = " $icon $timestamp.datetime(f:'%a %b %d, %R') ";
               interval = 60;
             }
           ];
