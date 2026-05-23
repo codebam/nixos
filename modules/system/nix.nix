@@ -36,7 +36,7 @@
     };
     # Enable automatic optimization of the store
     optimise = {
-      automatic = true;
+      automatic = false;
       dates = [ "03:45" ];
     };
   };
