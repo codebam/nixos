@@ -1,8 +1,7 @@
-{
-  pkgs,
-  lib,
-  config,
-  ...
+{ pkgs
+, lib
+, config
+, ...
 }:
 
 {
@@ -18,14 +17,44 @@
       config = rec {
         inherit modifier;
         terminal = "${pkgs.kitty}/bin/kitty";
-        menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 131721 -n 59c2ff -M 131721 -m 59c2ff -S 59c2ff -s e6e1cf";
+        menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 000000 -n cdd6f4 -M 000000 -m 89b4fa -S 89b4fa -s 000000";
+        colors = {
+          background = "#000000";
+          focused = {
+            border = "#89b4fa";
+            background = "#000000";
+            text = "#cdd6f4";
+            indicator = "#f5e0dc";
+            childBorder = "#89b4fa";
+          };
+          focusedInactive = {
+            border = "#11111b";
+            background = "#000000";
+            text = "#a6adc8";
+            indicator = "#11111b";
+            childBorder = "#11111b";
+          };
+          unfocused = {
+            border = "#000000";
+            background = "#000000";
+            text = "#585b70";
+            indicator = "#000000";
+            childBorder = "#000000";
+          };
+          urgent = {
+            border = "#f38ba8";
+            background = "#000000";
+            text = "#f38ba8";
+            indicator = "#f38ba8";
+            childBorder = "#f38ba8";
+          };
+        };
         seat = {
           "*" = {
             hide_cursor = "1000";
           };
         };
-        output = {
-        };
+        output = { };
         input = {
           "*" = {
             events = "enabled";

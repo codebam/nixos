@@ -14,7 +14,7 @@
       gtk.enable = false;
       mako.enable = true;
       qt.enable = false;
-      sway.enable = true;
+      sway.enable = false;
       swaylock.enable = true;
       tmux.enable = true;
       fish.enable = false;
