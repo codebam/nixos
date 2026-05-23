@@ -148,7 +148,7 @@ in
       nixd
       nodejs_latest
       opentofu
-      pavucontrol
+      pwvucontrol
       playerctl
       rcm
       ripgrep
