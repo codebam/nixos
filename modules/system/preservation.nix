@@ -26,6 +26,7 @@ _: {
         "/etc/NetworkManager/system-connections"
         "/etc/ssh"
         "/etc/mullvad-vpn"
+        "/etc/opt/ivpn"
         "/var/lib/OpenRGB"
         "/var/lib/transmission"
         {

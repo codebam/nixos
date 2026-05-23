@@ -2,8 +2,11 @@
 {
   services = {
     mullvad-vpn = {
-      enable = true;
+      enable = false;
       package = pkgs.mullvad-vpn;
+    };
+    ivpn = {
+      enable = true;
     };
     displayManager = {
       ly = {
