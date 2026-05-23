@@ -105,6 +105,22 @@
         "type": "github"
       }
     },
+    "bun": {
+      "locked": {
+        "lastModified": 1778688106,
+        "narHash": "sha256-5AflZ/P4D9ZC19WSdUTcs/xVowJETiNTtGvWhPeHCME=",
+        "owner": "delafthi",
+        "repo": "nixpkgs",
+        "rev": "943e4c3c705a1b3025348d82d6aada3c442327ec",
+        "type": "github"
+      },
+      "original": {
+        "owner": "delafthi",
+        "ref": "delafthi/xrxorlrrwrro",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "chromium-pinned": {
       "locked": {
         "lastModified": 1778672786,
@@ -783,6 +799,7 @@
       "inputs": {
         "agenix": "agenix",
         "antigravity-nixpkgs": "antigravity-nixpkgs",
+        "bun": "bun",
         "chromium-pinned": "chromium-pinned",
         "disko": "disko",
         "home-manager": "home-manager_2",

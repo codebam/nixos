@@ -166,6 +166,7 @@ in
       # ytmdesktop
       # disabled because electron
       feishin
+      inputs.bun.legacyPackages.${pkgs.stdenv.hostPlatform.system}.bun
       # TODO pin this
       # inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (
