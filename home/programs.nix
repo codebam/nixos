@@ -101,10 +101,16 @@
             formatter = {
               command = "${pkgs.nixfmt}/bin/nixfmt";
             };
-            language-servers = [ "nil" ];
+            language-servers = [ "nixd" ];
           }
         ];
-        language-server.nil.config.nix.formatting.command = [ "nixfmt" ];
+        language-server.nixd = {
+          command = "${pkgs.nixd}/bin/nixd";
+          config.nixd = {
+            nixpkgs.expr = "import (builtins.getFlake \"/etc/nixos\").inputs.nixpkgs { }";
+            options.nixos.expr = "(builtins.getFlake \"/etc/nixos\").nixosConfigurations.nixos-desktop.options";
+          };
+        };
       };
       settings = {
         theme = lib.mkForce "rose_pine";
