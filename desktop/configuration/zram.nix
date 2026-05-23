@@ -1,7 +1,9 @@
 _:
 {
   zramSwap = {
-    memoryPercent = 25;
-    # 64GB system memory
+    enable = true;
+    memoryPercent = 100;
+    priority = 100;
+    algorithm = "zstd";
   };
 }
