@@ -174,8 +174,14 @@
               format = " $icon {$combo.str(max_w:25,rot_interval:0.5) $prev $play $next |} ";
               seek_step_secs = 10;
               click = [
-                { button = "forward"; action = "seek_forward"; }
-                { button = "back"; action = "seek_backward"; }
+                {
+                  button = "forward";
+                  action = "seek_forward";
+                }
+                {
+                  button = "back";
+                  action = "seek_backward";
+                }
               ];
             }
             {

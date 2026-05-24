@@ -1,20 +1,10 @@
 {
   pkgs,
-  config,
-  inputs,
   lib,
   ...
 }:
 
 {
-  stylix = {
-    enable = true;
-    targets = {
-      qt.enable = false;
-      librewolf.profileNames = [ "default" ];
-    };
-  };
-
   home = {
     username = "makano";
     homeDirectory = "/home/makano";
@@ -32,29 +22,20 @@
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://p.seanbehan.ca
       '')
-      (pass.withExtensions (
-        subpkgs: with subpkgs; [
-          pass-otp
-          pass-genphrase
-        ]
-      ))
       ripgrep
+      bun
     ];
 
     stateVersion = "26.05";
   };
 
   programs = {
-    librewolf = {
-      # enable = true;
-    };
     carapace = {
       enable = true;
       enableNushellIntegration = true;
     };
     helix = {
       enable = true;
-      # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultEditor = true;
       settings = {
         theme = lib.mkForce "catppuccin_mocha";
@@ -104,9 +85,6 @@
       settings = {
         git_protocol = "ssh";
       };
-    };
-    gh-dash = {
-      enable = true;
     };
     zoxide = {
       enable = true;

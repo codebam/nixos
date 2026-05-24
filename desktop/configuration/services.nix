@@ -751,7 +751,7 @@
       };
     };
     ollama = {
-      enable = false;
+      enable = true;
       host = "0.0.0.0";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
