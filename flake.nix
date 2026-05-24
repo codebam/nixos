@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    master.url = "github:nixos/nixpkgs/master";
     # staging.url = "github:nixos/nixpkgs/staging";
     chromium-pinned.url = "github:nixos/nixpkgs/eef00dfd8a712b34af845f9350bac681b1228bd1";
     home-manager = {
@@ -88,7 +89,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
-    antigravity-nixpkgs.url = "github:beeelias/nixpkgs/antigravity-cli-init";
     ivpn.url = "github:codebam/nixpkgs/ivpn-quantum-fix";
     bun.url = "github:delafthi/nixpkgs/delafthi/xrxorlrrwrro";
   };

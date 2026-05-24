@@ -46,13 +46,13 @@
     };
     overlays = [
       (final: prev: {
+        antigravity-cli = (import inputs.master {
+          system = prev.stdenv.hostPlatform.system;
+          config.allowUnfree = true;
+        }).antigravity-cli;
+
         ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 
-        antigravity-cli =
-          (import inputs.antigravity-nixpkgs {
-            inherit (prev.stdenv.hostPlatform) system;
-            config.allowUnfree = true;
-          }).antigravity-cli;
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
         #   system = prev.stdenv.hostPlatform.system;

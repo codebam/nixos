@@ -21,22 +21,6 @@
         "type": "github"
       }
     },
-    "antigravity-nixpkgs": {
-      "locked": {
-        "lastModified": 1779483424,
-        "narHash": "sha256-B876dceUqlXsi13PpPNeSooBxHTtU6cGt+MKV/TVkps=",
-        "owner": "beeelias",
-        "repo": "nixpkgs",
-        "rev": "b05e76213925df7c6b46fdfac5f61c8967fe246b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "beeelias",
-        "ref": "antigravity-cli-init",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -531,6 +515,22 @@
         "type": "github"
       }
     },
+    "master": {
+      "locked": {
+        "lastModified": 1779644789,
+        "narHash": "sha256-QfBRDKVb1x3Rmw6QWlpvg3694MjX6CVmlyVbvkKh1d0=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "04960e51b0053b99aad88bcf7d475fd0da9ef961",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nix-github-actions": {
       "inputs": {
         "nixpkgs": [
@@ -798,7 +798,6 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
-        "antigravity-nixpkgs": "antigravity-nixpkgs",
         "bun": "bun",
         "chromium-pinned": "chromium-pinned",
         "disko": "disko",
@@ -809,6 +808,7 @@
         "lix": "lix",
         "lix-module": "lix-module",
         "lsfg-vk-flake": "lsfg-vk-flake",
+        "master": "master",
         "nix-index-database": "nix-index-database",
         "nixcord": "nixcord",
         "nixos-avf": "nixos-avf",
