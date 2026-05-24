@@ -216,7 +216,7 @@
             }
             {
               block = "temperature";
-              format = " $icon $max°C ";
+              format = " $icon $max C ";
             }
             {
               block = "cpu";
