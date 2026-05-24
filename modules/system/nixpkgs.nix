@@ -53,6 +53,11 @@
 
         ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 
+        rocmPackages = (import inputs.pinned {
+          system = prev.stdenv.hostPlatform.system;
+          config = prev.config // { allowUnfree = true; };
+        }).rocmPackages;
+
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
         #   system = prev.stdenv.hostPlatform.system;
