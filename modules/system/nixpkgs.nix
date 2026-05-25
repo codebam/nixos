@@ -68,6 +68,8 @@
             };
           }).rocmPackages;
 
+        nushell = (inputs.pinned.legacyPackages.${prev.stdenv.hostPlatform.system}).nushell;
+
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
         #   system = prev.stdenv.hostPlatform.system;
