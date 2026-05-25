@@ -46,17 +46,27 @@
     };
     overlays = [
       (final: prev: {
-        antigravity-cli = (import inputs.master {
-          system = prev.stdenv.hostPlatform.system;
-          config.allowUnfree = true;
-        }).antigravity-cli;
+        antigravity-ide =
+          (import inputs.antigravity-ide {
+            system = prev.stdenv.hostPlatform.system;
+            config.allowUnfree = true;
+          }).antigravity-ide;
+
+        antigravity-cli =
+          (import inputs.master {
+            system = prev.stdenv.hostPlatform.system;
+            config.allowUnfree = true;
+          }).antigravity-cli;
 
         ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 
-        rocmPackages = (import inputs.pinned {
-          system = prev.stdenv.hostPlatform.system;
-          config = prev.config // { allowUnfree = true; };
-        }).rocmPackages;
+        rocmPackages =
+          (import inputs.pinned {
+            system = prev.stdenv.hostPlatform.system;
+            config = prev.config // {
+              allowUnfree = true;
+            };
+          }).rocmPackages;
 
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {

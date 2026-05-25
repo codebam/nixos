@@ -21,6 +21,22 @@
         "type": "github"
       }
     },
+    "antigravity-ide": {
+      "locked": {
+        "lastModified": 1779486593,
+        "narHash": "sha256-+06Hjs64b3ViaAkyXTXF4ijqlBdjiQKa7A0X2qbX5Wg=",
+        "owner": "schembriaiden",
+        "repo": "nixpkgs",
+        "rev": "f6252713f19a41ef848984c3de9324b8b1574b29",
+        "type": "github"
+      },
+      "original": {
+        "owner": "schembriaiden",
+        "ref": "antigravity--rename-to-antigravity-ide",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -798,6 +814,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "antigravity-ide": "antigravity-ide",
         "bun": "bun",
         "disko": "disko",
         "home-manager": "home-manager_2",
