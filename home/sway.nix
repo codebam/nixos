@@ -231,6 +231,7 @@
           }
           mouse_warping none
           exec '${pkgs.mako}/bin/mako'
+          exec '${pkgs.wljoywake}/bin/wljoywake'
         '';
     };
 }
