@@ -1,7 +1,8 @@
-{ pkgs
-, lib
-, config
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  ...
 }:
 
 {
@@ -51,7 +52,7 @@
         };
         seat = {
           "*" = {
-            hide_cursor = "1000";
+            # hide_cursor = "1000";
           };
         };
         output = { };
