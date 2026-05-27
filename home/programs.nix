@@ -1,7 +1,8 @@
-{ pkgs
-, lib
-, inputs
-, ...
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
 }:
 
 {
@@ -26,6 +27,10 @@
     };
     google-chrome = {
       enable = true;
+      commandLineArgs = [
+        "--enable-features=AllowLegacyMV2Extensions"
+        "--disable-features=ExtensionManifestV2Unsupported,ExtensionManifestV2Disabled"
+      ];
       # package =
       #   (pkgs.google-chrome.override {
       #     commandLineArgs = [
