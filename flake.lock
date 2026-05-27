@@ -23,11 +23,11 @@
     },
     "antigravity-hub": {
       "locked": {
-        "lastModified": 1779846518,
-        "narHash": "sha256-tQyMvftUZrZLqNkzWnbUK3p2STXwYzopeKIWX3NWWx0=",
+        "lastModified": 1779846750,
+        "narHash": "sha256-S4N/ImJizCLoGm0Lid+XBcWrnXgrWHNQLcwGYhuum5w=",
         "owner": "codebam",
         "repo": "nixpkgs",
-        "rev": "2e201162f024cb7310db7d248bf40874ba7bd758",
+        "rev": "b3fe3cc7d039f72476d8e61b8099353a5b2683f5",
         "type": "github"
       },
       "original": {
