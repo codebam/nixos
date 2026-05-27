@@ -46,6 +46,12 @@
     };
     overlays = [
       (final: prev: {
+        antigravity-hub =
+          (import inputs.antigravity-hub {
+            system = prev.stdenv.hostPlatform.system;
+            config.allowUnfree = true;
+          }).antigravity-hub;
+
         antigravity-ide =
           (import inputs.antigravity-ide {
             system = prev.stdenv.hostPlatform.system;

@@ -21,6 +21,22 @@
         "type": "github"
       }
     },
+    "antigravity-hub": {
+      "locked": {
+        "lastModified": 1779845891,
+        "narHash": "sha256-O1OWQ/Jrkw91D5oic7h6e/pNP/qQCfKDMIiXXPe5sAg=",
+        "owner": "codebam",
+        "repo": "nixpkgs",
+        "rev": "625fb7984876ecc5aef367a2d85041494be2e1f9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "antigravity",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "antigravity-ide": {
       "locked": {
         "lastModified": 1779486593,
@@ -814,6 +830,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "antigravity-hub": "antigravity-hub",
         "antigravity-ide": "antigravity-ide",
         "bun": "bun",
         "disko": "disko",
