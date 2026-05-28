@@ -450,6 +450,7 @@
       settings = {
         add_newline = false;
         git_metrics.disabled = false;
+        gcloud.disabled = true;
         scan_timeout = 10;
         character = {
           success_symbol = "\\$";
