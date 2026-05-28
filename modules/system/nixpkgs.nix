@@ -128,18 +128,21 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "3bd8f29b138e2832870ad05a9386002fcc79e0fc";
-            hash = "sha256-Ph+Aa6MvWLr6/LL2h7u4gTG3nja3mXIJ0zZUIipC1F0=";
+            rev = "7265a79e46ebf85f4402bb672e82b2747cfd4ad7";
+            hash = "sha256-Pt8Lfp+pf148fEQ/t3HixJThGbH3RW9+zODVcH9Ew1c=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
-        sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+        sway-unwrapped = (prev.sway-unwrapped.override {
+          wlroots_0_20 = final.wlroots_0_19;
+        }).overrideAttrs (old: {
           src = prev.fetchFromGitHub {
             owner = "swaywm";
             repo = "sway";
-            rev = "9c663b1fa1c2ef5c6df0427ba905f347f6594ab6";
-            hash = "sha256-L6DedITsWB5NFp5TyVg9HVwdChmyq0UkSj4nbAMMfJ0=";
+            rev = "f1b40bc288f3be3bcc6a3c71f28ca9bb2529e70b";
+            hash = "sha256-fWAZ+aW05zo663wj6yJiVf3cFRL0brsLSNxrEDRgO6w=";
           };
+          buildInputs = old.buildInputs ++ [ prev.libffi ];
         });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           src = prev.fetchFromGitHub {
