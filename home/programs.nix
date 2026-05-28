@@ -129,6 +129,12 @@
           normal = {
             X = "select_line_above";
             x = "select_line_below";
+            "C-space" = ":helix-copilot-complete";
+          };
+          insert = {
+            "C-space" = ":helix-copilot-complete";
+            "tab" = ":helix-copilot-accept";
+            "esc" = [ ":helix-copilot-clear" "normal_mode" ];
           };
         };
       };
