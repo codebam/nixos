@@ -181,6 +181,7 @@ in
       (define-language "scheme"
                        (language-servers '("steel-language-server")))
       (require "helix-copilot/copilot.scm")
+      (set-copilot-model! "gemma4:31b")
     '';
 
     file.".config/helix/helix.scm".text = ''
