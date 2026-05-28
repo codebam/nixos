@@ -181,7 +181,7 @@ in
       (define-language "scheme"
                        (language-servers '("steel-language-server")))
       (require "helix-copilot/copilot.scm")
-      (set-copilot-model! "glm-4.7-flash:latest")
+      (set-copilot-model! "qwen2.5-coder:14b")
     '';
 
     file.".config/helix/helix.scm".text = ''
