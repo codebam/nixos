@@ -55,10 +55,10 @@
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # helix = {
-    #   url = "github:codebam/helix-steel-flake/main";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    helix = {
+      url = "github:codebam/helix-steel-flake/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # steel = {
     #   url = "github:mattwparas/steel/master";
     #   inputs.nixpkgs.follows = "nixpkgs";
