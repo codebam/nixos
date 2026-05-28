@@ -452,9 +452,13 @@
         git_metrics.disabled = false;
         gcloud.disabled = true;
         scan_timeout = 10;
+        status = {
+          disabled = false;
+          format = "exited with code [$status](bold red) ";
+        };
         character = {
-          success_symbol = "\\$";
-          error_symbol = "🔴";
+          success_symbol = "\\$(bold green)";
+          error_symbol = "[\\$](bold red)";
         };
       };
     };
