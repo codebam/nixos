@@ -16,7 +16,7 @@
       };
     };
     gamescope = {
-      enable = false;
+      enable = true;
     };
     gamemode = {
       enable = true;
