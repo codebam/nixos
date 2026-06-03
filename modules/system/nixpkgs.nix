@@ -66,15 +66,15 @@
 
         ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 
-        rocmPackages =
-          (import inputs.pinned {
-            system = prev.stdenv.hostPlatform.system;
-            config = prev.config // {
-              allowUnfree = true;
-            };
-          }).rocmPackages;
+        # rocmPackages =
+        #   (import inputs.pinned {
+        #     system = prev.stdenv.hostPlatform.system;
+        #     config = prev.config // {
+        #       allowUnfree = true;
+        #     };
+        #   }).rocmPackages;
 
-        nushell = (inputs.pinned.legacyPackages.${prev.stdenv.hostPlatform.system}).nushell;
+        # nushell = (inputs.pinned.legacyPackages.${prev.stdenv.hostPlatform.system}).nushell;
 
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
@@ -133,17 +133,19 @@
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
-        sway-unwrapped = (prev.sway-unwrapped.override {
-          wlroots_0_20 = final.wlroots_0_19;
-        }).overrideAttrs (old: {
-          src = prev.fetchFromGitHub {
-            owner = "swaywm";
-            repo = "sway";
-            rev = "f1b40bc288f3be3bcc6a3c71f28ca9bb2529e70b";
-            hash = "sha256-fWAZ+aW05zo663wj6yJiVf3cFRL0brsLSNxrEDRgO6w=";
-          };
-          buildInputs = old.buildInputs ++ [ prev.libffi ];
-        });
+        sway-unwrapped =
+          (prev.sway-unwrapped.override {
+            wlroots_0_20 = final.wlroots_0_19;
+          }).overrideAttrs
+            (old: {
+              src = prev.fetchFromGitHub {
+                owner = "swaywm";
+                repo = "sway";
+                rev = "f1b40bc288f3be3bcc6a3c71f28ca9bb2529e70b";
+                hash = "sha256-fWAZ+aW05zo663wj6yJiVf3cFRL0brsLSNxrEDRgO6w=";
+              };
+              buildInputs = old.buildInputs ++ [ prev.libffi ];
+            });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           src = prev.fetchFromGitHub {
             owner = "emersion";
