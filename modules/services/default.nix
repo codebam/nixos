@@ -64,7 +64,7 @@
         SUBSYSTEM=="usb_device", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"
       '';
     };
-    desktopManager.plasma6.enable = false;
+    desktopManager.plasma6.enable = true;
     openssh = {
       enable = true;
       settings = {

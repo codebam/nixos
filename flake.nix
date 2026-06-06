@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
-    # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     master.url = "github:nixos/nixpkgs/master";
     # staging.url = "github:nixos/nixpkgs/staging";
     pinned.url = "github:nixos/nixpkgs/df10b3c6075b57fcf591c4e60e4c8d5ca8474128";
