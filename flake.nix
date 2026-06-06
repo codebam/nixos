@@ -71,11 +71,11 @@
     #   url = "github:codebam/bsav/main";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
-    # plasma-manager = {
-    #   url = "github:nix-community/plasma-manager";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.home-manager.follows = "home-manager";
-    # };
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     #helix = {
     # url = "github:helix-editor/helix";
     #inputs.nixpkgs.follows = "nixpkgs";
@@ -168,7 +168,7 @@
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
                   inputs.nixcord.homeModules.nixcord
-                  # inputs.plasma-manager.homeModules.plasma-manager
+                  inputs.plasma-manager.homeModules.plasma-manager
                 ];
               };
             }
