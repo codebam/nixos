@@ -148,6 +148,7 @@ _: {
             ".config/google-chrome"
             ".config/google-chrome-unstable"
             ".local/share/vkBasalt/shaders"
+            ".local/share/kwalletd"
           ];
         };
       };
