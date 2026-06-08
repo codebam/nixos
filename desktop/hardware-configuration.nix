@@ -40,8 +40,8 @@
     kernel.sysctl."net.ipv4.ip_forward" = 1;
     kernel.sysctl."net.ipv4.conf.all.rp_filter" = 0;
     kernel.sysctl."net.ipv4.conf.default.rp_filter" = 0;
-    # kernel.sysctl."fs.inotify.max_user_watches" = 524288;
-    # kernel.sysctl."fs.inotify.max_user_instances" = 512;
+    kernel.sysctl."fs.inotify.max_user_watches" = 524288;
+    kernel.sysctl."fs.inotify.max_user_instances" = 512;
   };
 
   fileSystems."/games" = {
