@@ -80,6 +80,8 @@ _: {
           ];
           files = [
             ".config/kwinoutputconfig.json"
+            ".config/kwalletrc"
+            ".config/kwalletmanagerrc"
           ];
           directories = [
             {
