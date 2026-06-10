@@ -80,6 +80,17 @@
       alsa.support32Bit = true;
       pulse.enable = true;
       jack.enable = true;
+      extraConfig.pipewire-pulse = {
+        "pulse.properties" = {
+          "module.passthrough" = true;
+        };
+        "context.modules" = [
+          {
+            name = "libpipewire-module-protocol-pulse";
+            args = { };
+          }
+        ];
+      };
     };
     udisks2.enable = true;
     gnome.gnome-keyring.enable = true;

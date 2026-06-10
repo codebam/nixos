@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   programs = {
+    noisetorch = {
+      enable = true;
+    };
     ccache = {
       enable = true;
     };

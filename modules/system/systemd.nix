@@ -6,6 +6,9 @@
         DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
       '';
       services = {
+        pipewire-pulse.environment = {
+          LADSPA_PATH = "/tmp:/run/current-system/sw/lib/ladspa";
+        };
         agenix = {
           serviceConfig = {
             Environment = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
