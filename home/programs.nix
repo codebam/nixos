@@ -411,6 +411,7 @@
         mouse_hide_wait = 0;
         disable_ligatures = "cursor";
         cursor_trail = 1;
+        watch_config_file = "no";
       };
     };
     foot = {
