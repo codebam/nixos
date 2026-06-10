@@ -123,10 +123,10 @@ in
       #   # withOpenASAR = true;
       #   withVencord = true;
       # })
-      # (discord.override {
-      #   # withOpenASAR = true;
-      #   withVencord = true;
-      # })
+      (discord.override {
+        withOpenASAR = true;
+        withVencord = true;
+      })
       # vesktop
       bat
       gemini-cli

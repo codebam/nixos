@@ -7,24 +7,24 @@
 
 {
   programs = {
-    nixcord = {
-      enable = true;
-      equibop.enable = true;
-      config = {
-        plugins = {
-          fakeNitro.enable = true;
-          callTimer.enable = true;
-          altKrispSwitch.enable = true;
-          betterInvites.enable = true;
-          ircColors.enable = true;
-          moreQuickReactions.enable = true;
-          OnePingPerDM.enable = true;
-          questify.enable = true;
-          replaceGoogleSearch.enable = true;
-          typingTweaks.enable = true;
-        };
-      };
-    };
+    # nixcord = {
+    #   enable = false;
+    #   equibop.enable = true;
+    #   config = {
+    #     plugins = {
+    #       fakeNitro.enable = true;
+    #       callTimer.enable = true;
+    #       altKrispSwitch.enable = true;
+    #       betterInvites.enable = true;
+    #       ircColors.enable = true;
+    #       moreQuickReactions.enable = true;
+    #       OnePingPerDM.enable = true;
+    #       questify.enable = true;
+    #       replaceGoogleSearch.enable = true;
+    #       typingTweaks.enable = true;
+    #     };
+    #   };
+    # };
     google-chrome = {
       enable = true;
       commandLineArgs = [
@@ -134,7 +134,10 @@
           insert = {
             "C-space" = ":helix-copilot-complete";
             "tab" = ":helix-copilot-accept";
-            "esc" = [ ":helix-copilot-clear" "normal_mode" ];
+            "esc" = [
+              ":helix-copilot-clear"
+              "normal_mode"
+            ];
           };
         };
       };

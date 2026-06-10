@@ -84,10 +84,10 @@
       url = "github:nix-community/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixcord = {
-      url = "github:FlameFlag/nixcord";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # nixcord = {
+    #   url = "github:FlameFlag/nixcord";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
     ivpn.url = "github:codebam/nixpkgs/ivpn-quantum-fix";
     antigravity-ide.url = "github:schembriaiden/nixpkgs/antigravity--rename-to-antigravity-ide";
@@ -167,7 +167,7 @@
                 };
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
-                  inputs.nixcord.homeModules.nixcord
+                  # inputs.nixcord.homeModules.nixcord
                   inputs.plasma-manager.homeModules.plasma-manager
                 ];
               };
