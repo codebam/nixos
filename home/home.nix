@@ -130,8 +130,8 @@ in
       vesktop
       bat
       gemini-cli
-      antigravity-hub
-      antigravity-ide
+      # antigravity-hub
+      # antigravity-ide
       antigravity-cli
       google-cloud-sdk
       arrpc

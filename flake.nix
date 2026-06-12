@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     master.url = "github:nixos/nixpkgs/master";
     # staging.url = "github:nixos/nixpkgs/staging";
-    pinned.url = "github:nixos/nixpkgs/df10b3c6075b57fcf591c4e60e4c8d5ca8474128";
+    pinned.url = "github:nixos/nixpkgs/efe81e52fe2e9dcc81e938d6627077d8482ebf25";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

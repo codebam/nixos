@@ -46,23 +46,23 @@
     };
     overlays = [
       (final: prev: {
-        antigravity-hub =
-          (import inputs.antigravity-hub {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-          }).antigravity-hub;
+        # antigravity-hub =
+        #   (import inputs.antigravity-hub {
+        #     system = prev.stdenv.hostPlatform.system;
+        #     config.allowUnfree = true;
+        #   }).antigravity-hub;
 
-        antigravity-ide =
-          (import inputs.antigravity-ide {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-          }).antigravity-ide;
+        # antigravity-ide =
+        #   (import inputs.antigravity-ide {
+        #     system = prev.stdenv.hostPlatform.system;
+        #     config.allowUnfree = true;
+        #   }).antigravity-ide;
 
-        antigravity-cli =
-          (import inputs.master {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-          }).antigravity-cli;
+        # antigravity-cli =
+        #   (import inputs.master {
+        #     system = prev.stdenv.hostPlatform.system;
+        #     config.allowUnfree = true;
+        #   }).antigravity-cli;
 
         kdePackages =
           (inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}).kdePackages;
@@ -78,6 +78,11 @@
         #   }).rocmPackages;
 
         # nushell = (inputs.pinned.legacyPackages.${prev.stdenv.hostPlatform.system}).nushell;
+
+        electron = prev.electron-bin;
+        electron-unwrapped = prev.electron-bin;
+        electron_41 = prev.electron_41-bin;
+        electron_40 = prev.electron_40-bin;
 
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {

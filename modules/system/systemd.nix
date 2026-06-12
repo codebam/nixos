@@ -2,10 +2,22 @@
 {
   systemd = {
     user = {
-      extraConfig = ''
-        DefaultEnvironment="PATH=/run/wrappers/bin:/etc/profiles/per-user/%u/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
-      '';
       services = {
+        noisetorch = {
+          description = "NoiseTorch Noise Cancelling Daemon";
+          wantedBy = [ "graphical-session.target" ];
+          after = [
+            "pipewire.service"
+            "pulseaudio.service"
+          ]; # Ensure audio is running first
+
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.noisetorch}/bin/noisetorch -i";
+            Restart = "on-failure";
+            RestartSec = 3;
+          };
+        };
         pipewire-pulse.environment = {
           LADSPA_PATH = "/tmp:/run/current-system/sw/lib/ladspa";
         };

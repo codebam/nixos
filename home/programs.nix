@@ -81,7 +81,7 @@
       #   (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
     };
     ghostty = {
-      enable = false;
+      enable = true;
       enableFishIntegration = true;
       clearDefaultKeybinds = true;
       settings = {
@@ -411,7 +411,7 @@
         mouse_hide_wait = 0;
         disable_ligatures = "cursor";
         cursor_trail = 1;
-        watch_config_file = "no";
+        auto_reload_config = "-1";
       };
     };
     foot = {
