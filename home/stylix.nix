@@ -11,6 +11,7 @@
       };
       foot.enable = true;
       kitty.enable = true;
+      ghostty.enable = true;
       gtk.enable = false;
       mako.enable = true;
       qt.enable = false;
