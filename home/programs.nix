@@ -83,7 +83,6 @@
     ghostty = {
       enable = true;
       enableFishIntegration = true;
-      clearDefaultKeybinds = true;
       settings = {
         cursor-style = "block";
         shell-integration-features = "no-cursor";
@@ -203,8 +202,26 @@
         };
       };
     };
-    librewolf = {
-      enable = false;
+    firefox = {
+      enable = true;
+      policies = {
+        DisableTelemetry = true;
+        DisableFirefoxStudies = true;
+        DontCheckDefaultBrowser = true;
+        DisablePocket = true;
+        SearchBar = "unified";
+        Preferences = {
+          # Block WebRTC from leaking local IP addresses
+          # "media.peerconnection.enabled" = false;
+          # Enable strict tracking protection
+          "privacy.trackingprotection.enabled" = true;
+          "privacy.trackingprotection.socialtracking.enabled" = true;
+          # Resist fingerprinting (Tor/LibreWolf style)
+          "privacy.resistFingerprinting" = true;
+          # Clear data on shutdown
+          # "privacy.sanitize.sanitizeOnShutdown" = true;
+        };
+      };
     };
     yt-dlp = {
       enable = false;

@@ -22,6 +22,8 @@
           "discord"
           "discord-canary"
           "discord-ptb"
+          "firefox-bin"
+          "firefox-bin-unwrapped"
           "google-chrome"
           "google-chrome-unstable"
           "google-cloud-sdk"
@@ -84,6 +86,8 @@
         electron_41 = prev.electron_41-bin;
         electron_40 = prev.electron_40-bin;
 
+        firefox = prev.firefox-bin;
+
         # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
         # vllm = (import inputs.vllm-update {
         #   system = prev.stdenv.hostPlatform.system;
@@ -136,8 +140,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "7265a79e46ebf85f4402bb672e82b2747cfd4ad7";
-            hash = "sha256-Pt8Lfp+pf148fEQ/t3HixJThGbH3RW9+zODVcH9Ew1c=";
+            rev = "f141edcd0233d86d9e9aab605b2b6f0803be5e98";
+            hash = "sha256-sDKLKhYKUFxL6TlaWIVo3GVCNy3zJewFjkxbCBCqUgc=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -149,19 +153,19 @@
               src = prev.fetchFromGitHub {
                 owner = "swaywm";
                 repo = "sway";
-                rev = "f1b40bc288f3be3bcc6a3c71f28ca9bb2529e70b";
-                hash = "sha256-fWAZ+aW05zo663wj6yJiVf3cFRL0brsLSNxrEDRgO6w=";
+                rev = "47ec005a58d5f7e63a97c564a4bb877754f68e6f";
+                hash = "sha256-oAkKstil0j7xMRsof+Idwsy0iF95iMg4wc1wEi+e15E=";
               };
               buildInputs = old.buildInputs ++ [ prev.libffi ];
             });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
-          src = prev.fetchFromGitHub {
-            owner = "emersion";
-            repo = "xdg-desktop-portal-wlr";
-            rev = "5b047df2492d6772df2089835b579f34ab4048b7";
-            hash = "sha256-R0oeuca9HmgeOkZpFpOwl7M3zZ1+DJgsTVcIxhr7L34=";
-          };
-          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
+          # src = prev.fetchFromGitHub {
+          #   owner = "emersion";
+          #   repo = "xdg-desktop-portal-wlr";
+          #   rev = "5b047df2492d6772df2089835b579f34ab4048b7";
+          #   hash = "sha256-R0oeuca9HmgeOkZpFpOwl7M3zZ1+DJgsTVcIxhr7L34=";
+          # };
+          # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
           buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
           postInstall = ''
             ${oldAttrs.postInstall or ""}
