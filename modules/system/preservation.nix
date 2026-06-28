@@ -147,6 +147,7 @@ _: {
             ".local/share/calcurse"
             ".config/retroarch"
             ".config/chromium"
+            ".config/mozilla"
             ".config/google-chrome"
             ".config/google-chrome-unstable"
             ".local/share/vkBasalt/shaders"

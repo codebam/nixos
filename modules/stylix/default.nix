@@ -9,7 +9,7 @@
       fish.enable = false;
       gnome.enable = true;
       gtk.enable = false;
-      qt.enable = true;
+      qt.enable = false;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
     cursor = {
