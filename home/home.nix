@@ -127,7 +127,7 @@ in
         withOpenASAR = true;
         withVencord = true;
       })
-      vesktop
+      # vesktop
       bat
       gemini-cli
       # antigravity-hub
