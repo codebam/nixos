@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 {
   powerManagement.enable = true;
@@ -99,14 +104,23 @@
           RemainAfterExit = true;
         };
         script = ''
-          echo "s 0 500" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "s 1 3150" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "m 0 97" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "m 1 1300" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "vo -110" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "c" | tee /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "402000000" | tee /sys/class/drm/card1/device/hwmon/hwmon7/power1_cap
-          echo "high" | tee /sys/class/drm/card1/device/power_dpm_force_performance_level
+          # Apply clock and voltage settings
+          echo "s 0 500" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "s 1 3150" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "m 0 97" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "m 1 1300" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "vo -110" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "c" > /sys/class/drm/card1/device/pp_od_clk_voltage
+
+          # Dynamically find the hwmon directory and apply a safe power limit
+          # Replace 350000000 (350W) with your verified safe max value
+          for cap_file in /sys/class/drm/card1/device/hwmon/hwmon*/power1_cap; do
+            if [ -f "$cap_file" ]; then
+              echo "334000000" > "$cap_file"
+            fi
+          done
+
+          echo "high" > /sys/class/drm/card1/device/power_dpm_force_performance_level
         '';
       };
       nixos-upgrade = {
