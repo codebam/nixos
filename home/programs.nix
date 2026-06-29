@@ -95,7 +95,7 @@
     };
     helix = {
       enable = true;
-      package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultEditor = true;
       languages = {
         language = [
@@ -128,15 +128,15 @@
           normal = {
             X = "select_line_above";
             x = "select_line_below";
-            "C-space" = ":helix-copilot-complete";
+            # "C-space" = ":helix-copilot-complete";
           };
           insert = {
-            "C-space" = ":helix-copilot-complete";
-            "tab" = ":helix-copilot-accept";
-            "esc" = [
-              ":helix-copilot-clear"
-              "normal_mode"
-            ];
+            # "C-space" = ":helix-copilot-complete";
+            # "tab" = ":helix-copilot-accept";
+            # "esc" = [
+            #   ":helix-copilot-clear"
+            #   "normal_mode"
+            # ];
           };
         };
       };
