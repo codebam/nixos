@@ -19,7 +19,7 @@
 
   systemd.user.services.pipewire.environment = {
     SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
-    LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa";
+    LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa:${pkgs.deepfilternet}/lib/ladspa";
     LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2";
   };
 
@@ -554,6 +554,50 @@
           };
         };
         pipewire = {
+          "99-input-denoising" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.description" = "DeepFilterNet AI Noise Canceling";
+                  "media.name" = "DeepFilterNet AI Noise Canceling";
+                  "filter.smart" = true;
+                  "filter.smart.name" = "deep_filter_chain";
+
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "ladspa";
+                        name = "deep_filter";
+                        plugin = "${pkgs.deepfilternet}/lib/ladspa/libdeep_filter_ladspa.so";
+                        label = "deep_filter_mono";
+                        control = {
+                          "Attenuation Limit (dB)" = 50.0;
+                        };
+                      }
+                    ];
+                    inputs = [ "deep_filter:Input" ];
+                    outputs = [ "deep_filter:Output" ];
+                  };
+
+                  "capture.props" = {
+                    "node.name" = "deep_filter_input";
+                    "media.class" = "Audio/Sink";
+                    "audio.position" = [ "MONO" ];
+                    "node.dont-fallback" = true;
+                    "node.linger" = true;
+                  };
+
+                  "playback.props" = {
+                    "node.name" = "deep_filter_output";
+                    "media.class" = "Audio/Source";
+                    "audio.position" = [ "MONO" ];
+                    "node.passive" = true;
+                  };
+                };
+              }
+            ];
+          };
           "99-routing" = {
             "node.rules" = [
               {
