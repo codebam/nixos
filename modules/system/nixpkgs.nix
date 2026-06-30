@@ -10,6 +10,9 @@
     config = {
       # checkMeta = true;
       # showDerivationWarnings = [ "maintainerless" ];
+      permittedInsecurePackages = [
+        "pnpm-9.15.9"
+      ];
       allowUnfreePredicate =
         pkg:
         builtins.elem (lib.getName pkg) [
