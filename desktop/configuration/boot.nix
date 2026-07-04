@@ -2,7 +2,7 @@
 
 {
   boot = {
-    supportedFilesystems = [ "bcachefs" ];
+    supportedFilesystems = [ "btrfs" ];
     kernelPackages = pkgs.linuxPackages_xanmod_latest;
     kernelParams = [
       "usbcore.autosuspend=-1"
@@ -20,7 +20,6 @@
         services = {
           create-needed-for-boot-dirs = {
             after = [
-              "unlock-bcachefs--.service"
               "cleanup-root.service"
             ];
             serviceConfig.KeyringMode = "inherit";
