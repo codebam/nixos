@@ -12,6 +12,7 @@
     in
     {
       enable = true;
+      package = pkgs.sway_git;
       systemd.enable = true;
       wrapperFeatures.gtk = true;
       xwayland = true;

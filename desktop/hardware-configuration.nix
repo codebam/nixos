@@ -31,7 +31,7 @@
     ];
     extraModulePackages = [ ];
     kernelParams = [
-      "drm.panic_screen=qr_code"
+      # "drm.panic_screen=qr_code"
     ];
     kernel.sysctl."kernel.sysrq" = 1;
     kernel.sysctl."net.core.default_qdisc" = "cake";

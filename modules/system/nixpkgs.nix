@@ -136,31 +136,31 @@
         #     })
         #   ];
         # }).python3Packages.vllm;
-        wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
-          pname = "wlroots";
-          version = "0.21.0-dev";
-          src = prev.fetchFromGitLab {
-            domain = "gitlab.freedesktop.org";
-            owner = "wlroots";
-            repo = "wlroots";
-            rev = "29fc556f4cd70896e464b3402b510d9759707cf8";
-            hash = "sha256-hn2gbw+QMHQ1lpJp9xxleHEmD+w8FRHnQAwlCu+U8Go=";
-          };
-          mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
-        });
-        sway-unwrapped =
-          (prev.sway-unwrapped.override {
-            wlroots_0_20 = final.wlroots_0_19;
-          }).overrideAttrs
-            (old: {
-              src = prev.fetchFromGitHub {
-                owner = "swaywm";
-                repo = "sway";
-                rev = "f3b64311045c3241ac6be3fd293dff8bfd55b6d4";
-                hash = "sha256-cCVhLvVKX3GqQ+5H9j2wQy2zSqzheM0Fw8uReUJzb2I=";
-              };
-              buildInputs = old.buildInputs ++ [ prev.libffi ];
-            });
+        # wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
+        #   pname = "wlroots";
+        #   version = "0.21.0-dev";
+        #   src = prev.fetchFromGitLab {
+        #     domain = "gitlab.freedesktop.org";
+        #     owner = "wlroots";
+        #     repo = "wlroots";
+        #     rev = "29fc556f4cd70896e464b3402b510d9759707cf8";
+        #     hash = "sha256-hn2gbw+QMHQ1lpJp9xxleHEmD+w8FRHnQAwlCu+U8Go=";
+        #   };
+        #   mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
+        # });
+        # sway-unwrapped =
+        #   (prev.sway-unwrapped.override {
+        #     wlroots_0_20 = final.wlroots_0_19;
+        #   }).overrideAttrs
+        #     (old: {
+        #       src = prev.fetchFromGitHub {
+        #         owner = "swaywm";
+        #         repo = "sway";
+        #         rev = "f3b64311045c3241ac6be3fd293dff8bfd55b6d4";
+        #         hash = "sha256-cCVhLvVKX3GqQ+5H9j2wQy2zSqzheM0Fw8uReUJzb2I=";
+        #       };
+        #       buildInputs = old.buildInputs ++ [ prev.libffi ];
+        #     });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           # src = prev.fetchFromGitHub {
           #   owner = "emersion";

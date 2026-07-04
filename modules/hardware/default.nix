@@ -1,4 +1,4 @@
-_:
+{ pkgs, ... }:
 {
   hardware = {
     bluetooth = {
@@ -9,6 +9,9 @@ _:
     graphics = {
       enable = true;
       enable32Bit = true;
+      extraPackages = with pkgs; [
+        low-latency-layer
+      ];
     };
     keyboard.qmk.enable = true;
     enableRedistributableFirmware = true;

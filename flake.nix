@@ -7,6 +7,7 @@
     master.url = "github:nixos/nixpkgs/master";
     # staging.url = "github:nixos/nixpkgs/staging";
     pinned.url = "github:nixos/nixpkgs/efe81e52fe2e9dcc81e938d6627077d8482ebf25";
+    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -42,7 +43,7 @@
     agenix.url = "github:ryantm/agenix";
     stylix.url = "github:danth/stylix";
     preservation.url = "github:nix-community/preservation";
-    jovian.url = "github:jovian-experiments/jovian-nixos/development";
+    # jovian.url = "github:jovian-experiments/jovian-nixos/development";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -98,6 +99,7 @@
   outputs =
     inputs@{ nixpkgs, ... }:
     let
+      inherit (inputs.chaotic.vendored) jovian;
       forAllSystems =
         functionProvidedToForAllSystems:
         nixpkgs.lib.genAttrs
@@ -152,6 +154,7 @@
             inputs.agenix.nixosModules.default
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
+            inputs.chaotic.nixosModules.default
             inputs.run0-sudo-shim.nixosModules.default
             inputs.lsfg-vk-flake.nixosModules.default
             ./modules
@@ -195,7 +198,7 @@
         nixos-desktop = mkNixosSystem {
           system = "x86_64-linux";
           extraModules = [
-            # inputs.jovian.nixosModules.default
+            # jovian.nixosModules.default
             ./desktop/configuration
             ./desktop-laptop/configuration
             {
@@ -223,7 +226,7 @@
         nixos-steamdeck = mkNixosSystem {
           system = "x86_64-linux";
           extraModules = [
-            inputs.jovian.nixosModules.default
+            jovian.nixosModules.default
             ./steamdeck/configuration
             { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
           ];

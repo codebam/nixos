@@ -22,5 +22,6 @@
     ./security/default.nix
     ./users/default.nix
     ./stylix/default.nix
+    ./chaotic.nix
   ];
 }
