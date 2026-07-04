@@ -143,8 +143,8 @@
             domain = "gitlab.freedesktop.org";
             owner = "wlroots";
             repo = "wlroots";
-            rev = "f141edcd0233d86d9e9aab605b2b6f0803be5e98";
-            hash = "sha256-sDKLKhYKUFxL6TlaWIVo3GVCNy3zJewFjkxbCBCqUgc=";
+            rev = "29fc556f4cd70896e464b3402b510d9759707cf8";
+            hash = "sha256-hn2gbw+QMHQ1lpJp9xxleHEmD+w8FRHnQAwlCu+U8Go=";
           };
           mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
         });
@@ -156,8 +156,8 @@
               src = prev.fetchFromGitHub {
                 owner = "swaywm";
                 repo = "sway";
-                rev = "47ec005a58d5f7e63a97c564a4bb877754f68e6f";
-                hash = "sha256-oAkKstil0j7xMRsof+Idwsy0iF95iMg4wc1wEi+e15E=";
+                rev = "f3b64311045c3241ac6be3fd293dff8bfd55b6d4";
+                hash = "sha256-cCVhLvVKX3GqQ+5H9j2wQy2zSqzheM0Fw8uReUJzb2I=";
               };
               buildInputs = old.buildInputs ++ [ prev.libffi ];
             });
