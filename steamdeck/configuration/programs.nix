@@ -7,7 +7,10 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
-      extraCompatPackages = [ pkgs.proton-ge-bin ];
+      extraCompatPackages = with pkgs; [
+        proton-ge-bin
+        proton-cachyos_x86_64_v3
+      ];
       extest = {
         enable = false;
       };

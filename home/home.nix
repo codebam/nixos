@@ -123,7 +123,11 @@ in
       #   # withOpenASAR = true;
       #   withVencord = true;
       # })
-      (discord.override {
+      # (discord.override {
+      #   withOpenASAR = true;
+      #   withVencord = true;
+      # })
+      (discord-krisp.override {
         withOpenASAR = true;
         withVencord = true;
       })

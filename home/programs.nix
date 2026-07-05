@@ -82,6 +82,7 @@
     };
     ghostty = {
       enable = true;
+      package = pkgs.ghostty_git;
       enableFishIntegration = true;
       settings = {
         cursor-style = "block";
@@ -204,6 +205,7 @@
     };
     firefox = {
       enable = true;
+      # package = pkgs.firefox_nightly;
       policies = {
         DisableTelemetry = true;
         DisableFirefoxStudies = true;
@@ -238,6 +240,7 @@
     };
     mangohud = {
       enable = true;
+      package = pkgs.mangohud_git;
       settings = {
         legacy_layout = false;
         horizontal = true;
