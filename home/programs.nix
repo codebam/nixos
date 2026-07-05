@@ -97,6 +97,7 @@
     helix = {
       enable = true;
       # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      package = pkgs.helix_git;
       defaultEditor = true;
       languages = {
         language = [
