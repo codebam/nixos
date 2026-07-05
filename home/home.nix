@@ -123,14 +123,14 @@ in
       #   # withOpenASAR = true;
       #   withVencord = true;
       # })
-      # (discord.override {
-      #   withOpenASAR = true;
-      #   withVencord = true;
-      # })
-      (discord-krisp.override {
+      (discord.override {
         withOpenASAR = true;
         withVencord = true;
       })
+      # (discord-krisp.override {
+      #   withOpenASAR = true;
+      #   withVencord = true;
+      # })
       # vesktop
       bat
       gemini-cli
