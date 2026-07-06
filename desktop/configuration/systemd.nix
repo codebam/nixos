@@ -106,7 +106,7 @@
         script = ''
           # Apply clock and voltage settings
           echo "s 0 500" > /sys/class/drm/card1/device/pp_od_clk_voltage
-          echo "s 1 3250" > /sys/class/drm/card1/device/pp_od_clk_voltage
+          echo "s 1 3300" > /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "m 0 97" > /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "m 1 1300" > /sys/class/drm/card1/device/pp_od_clk_voltage
           echo "vo -150" > /sys/class/drm/card1/device/pp_od_clk_voltage
