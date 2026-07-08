@@ -154,7 +154,7 @@
 
   services = {
     mopidy = {
-      enable = true;
+      enable = false;
       extensionPackages = with pkgs; [
         mopidy-subidy
         mopidy-mpd
