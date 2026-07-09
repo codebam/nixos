@@ -91,8 +91,8 @@
     # };
     # vllm-update.url = "github:certainlach/nixpkgs/push-lklxouywkrnv";
     ivpn.url = "github:codebam/nixpkgs/ivpn-quantum-fix";
-    antigravity-ide.url = "github:schembriaiden/nixpkgs/antigravity--rename-to-antigravity-ide";
-    antigravity-hub.url = "github:codebam/nixpkgs/antigravity";
+    # antigravity-ide.url = "github:schembriaiden/nixpkgs/antigravity--rename-to-antigravity-ide";
+    # antigravity-hub.url = "github:codebam/nixpkgs/antigravity";
     bun.url = "github:delafthi/nixpkgs/delafthi/xrxorlrrwrro";
   };
 

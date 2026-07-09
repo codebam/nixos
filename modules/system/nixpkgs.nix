@@ -69,8 +69,8 @@
         #     config.allowUnfree = true;
         #   }).antigravity-cli;
 
-        kdePackages =
-          (inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}).kdePackages;
+        # kdePackages =
+        #   (inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}).kdePackages;
 
         ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 

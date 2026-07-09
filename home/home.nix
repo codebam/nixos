@@ -36,6 +36,8 @@ in
       enableShellIntegration = true;
     };
 
+    pointerCursor.enable = true;
+
     # pointerCursor = {
     #   package = pkgs.bibata-cursors;
     #   name = "Bibata Modern Classic";

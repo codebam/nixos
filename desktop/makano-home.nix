@@ -26,6 +26,8 @@
       bun
     ];
 
+    pointerCursor.enable = true;
+
     stateVersion = "26.05";
   };
 
