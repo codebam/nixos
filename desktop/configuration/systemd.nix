@@ -50,6 +50,16 @@
       };
     };
     services = {
+      wifi-performance = {
+        description = "Disable Wi-Fi Power Save";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.iw}/bin/iw dev wlan0 set power_save off";
+          RemainAfterExit = true;
+        };
+      };
       navidrome = {
         serviceConfig.ProtectHome = lib.mkForce "read-only";
       };
