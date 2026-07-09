@@ -34,6 +34,7 @@
       prismlauncher
       ryubing
       moonlight-qt
+      wvkbd
       (writeShellScriptBin "lsfg" ''
         export LSFG_PROCESS=decky-lsfg-vk
         exec "$@"
@@ -92,15 +93,36 @@
 
   wayland.windowManager.sway =
     let
-      modifier = lib.mkForce "Mod1";
+      modKey = "Mod1";
     in
     {
       config = rec {
-        inherit modifier;
+        modifier = lib.mkForce modKey;
         output = {
+          "eDP-1" = {
+            transform = "90";
+          };
           "X11-1" = {
             resolution = "1280x800";
           };
+        };
+        input = {
+          "type:touch" = {
+            map_to_output = "eDP-1";
+          };
+        };
+        keybindings = lib.mkOptionDefault {
+          "${modKey}+k" = "exec pkill --signal SIGRTMIN wvkbd-mobintl || wvkbd-mobintl -L 250";
+        };
+        window = {
+          commands = [
+            {
+              command = "floating enable, sticky enable, focus_on_window_activation none";
+              criteria = {
+                app_id = "wvkbd";
+              };
+            }
+          ];
         };
       };
     };
