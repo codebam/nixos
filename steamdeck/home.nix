@@ -124,6 +124,9 @@
             }
           ];
         };
+        startup = [
+          { command = "steam -silent"; }
+        ];
       };
     };
 
