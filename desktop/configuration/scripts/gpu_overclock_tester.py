@@ -216,8 +216,8 @@ class BenchmarkMonitor(threading.Thread):
                 "thermal_throttle": self.thermal_throttle
             }
 
-def run_benchmark(timeout=120):
-    cmd = ["nix", "shell", "nixpkgs#vkmark", "-c", "vkmark", "-b", "vertex", "-b", "texture", "-b", "shading", "-b", "effect2d"]
+def run_benchmark(timeout=30):
+    cmd = ["nix", "shell", "nixpkgs#vkmark", "-c", "vkmark", "--fullscreen", "-b", "shading:shading=phong:duration=4.0", "-b", "effect2d:kernel=blur:background-resolution=1920x1080:duration=4.0", "-b", "desktop:windows=12:background-resolution=1920x1080:duration=4.0"]
     sudo_user = os.environ.get("SUDO_USER")
     if sudo_user:
         sudo_cmd = ["sudo", "-u", sudo_user, f"PATH={os.environ.get('PATH', '')}"]

@@ -10,7 +10,6 @@
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        low-latency-layer
       ];
     };
     keyboard.qmk.enable = true;

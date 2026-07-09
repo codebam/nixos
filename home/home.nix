@@ -213,8 +213,6 @@ in
   # };
 
   xdg = {
-    dataFile."vulkan/implicit_layer.d/low_latency_layer.json".source =
-      "${pkgs.low-latency-layer}/share/vulkan/implicit_layer.d/low_latency_layer.json";
     configFile = {
       # "gtk-3.0/gtk.css".force = true;
       # "gtk-4.0/gtk.css".force = true;
