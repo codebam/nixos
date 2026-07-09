@@ -12,7 +12,7 @@
         proton-cachyos_x86_64_v3
       ];
       extest = {
-        enable = false;
+        enable = true;
       };
       protontricks = {
         enable = true;

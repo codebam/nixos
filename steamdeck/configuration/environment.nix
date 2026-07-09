@@ -3,6 +3,7 @@
 {
   environment.systemPackages = with pkgs; [
     steamdeck-firmware
+    xauth
     # (pkgs.kodi-wayland.withPackages (
     #   kodiPkgs: with kodiPkgs; [
     #     inputstream-adaptive

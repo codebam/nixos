@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, config, ... }:
 
 {
   stylix = {
@@ -113,6 +113,13 @@
         };
         keybindings = lib.mkOptionDefault {
           "${modKey}+k" = "exec pkill --signal SIGRTMIN wvkbd-mobintl || wvkbd-mobintl -L 250";
+          "F11" = "exec pkill --signal SIGRTMIN wvkbd-mobintl || wvkbd-mobintl -L 250";
+          "F12" = "exec ${config.wayland.windowManager.sway.config.menu}";
+          "F9" = "workspace prev";
+          "F10" = "workspace next";
+          "F8" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY; swaymsg exit'";
+          "Ctrl+Alt+BackSpace" = "exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY; swaymsg exit'";
+          "XF86PowerOff" = "exec systemctl suspend";
         };
         window = {
           commands = [
@@ -125,7 +132,7 @@
           ];
         };
         startup = [
-          { command = "steam -silent"; }
+          { command = "steam -silent -desktop"; }
         ];
       };
     };
