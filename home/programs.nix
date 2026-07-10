@@ -213,14 +213,37 @@
         DontCheckDefaultBrowser = true;
         DisablePocket = true;
         SearchBar = "unified";
-        Preferences = {
+      };
+      profiles.default = {
+        id = 0;
+        name = "default";
+        isDefault = true;
+        path = "ry5m9sd1.default";
+        settings = {
           # Block WebRTC from leaking local IP addresses
-          # "media.peerconnection.enabled" = false;
+          "media.peerconnection.enabled" = false;
           # Enable strict tracking protection
           "privacy.trackingprotection.enabled" = true;
           "privacy.trackingprotection.socialtracking.enabled" = true;
+          "privacy.trackingprotection.fingerprinting.enabled" = true;
+          "privacy.trackingprotection.cryptomining.enabled" = true;
           # Resist fingerprinting (Tor/LibreWolf style)
           "privacy.resistFingerprinting" = true;
+          "privacy.resistFingerprinting.letterboxing" = true;
+          # First-party isolation to prevent cross-site correlation
+          "privacy.firstparty.isolate" = true;
+          # Disable APIs commonly used for fingerprinting
+          "webgl.disabled" = true;
+          "dom.webaudio.enabled" = false;
+          "media.navigator.enabled" = false;
+          "dom.netinfo.enabled" = false;
+          "media.video_stats.enabled" = false;
+          "dom.gamepad.enabled" = false;
+          "device.sensors.enabled" = false;
+          "geo.enabled" = false;
+          # General tracking prevention
+          "privacy.query_stripping.enabled" = true;
+          "browser.send_pings" = false;
           # Clear data on shutdown
           # "privacy.sanitize.sanitizeOnShutdown" = true;
         };
