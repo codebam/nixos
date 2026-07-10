@@ -16,5 +16,10 @@
         after-resume = "${pkgs.sway}/bin/swaymsg 'output * power on'";
       };
     };
+    gpg-agent = {
+      enable = true;
+      enableSshSupport = true;
+      pinentry.package = pkgs.pinentry-gnome3;
+    };
   };
 }

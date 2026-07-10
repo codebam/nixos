@@ -516,5 +516,52 @@
         };
       };
     };
+    fd = {
+      enable = true;
+      hidden = true;
+      ignores = [
+        ".git/"
+        "*.bak"
+      ];
+    };
+    fastfetch = {
+      enable = true;
+      settings = {
+        logo = {
+          source = "nixos";
+          padding = {
+            right = 1;
+          };
+        };
+        modules = [
+          "title"
+          "separator"
+          "os"
+          "host"
+          "kernel"
+          "uptime"
+          "packages"
+          "shell"
+          "display"
+          "de"
+          "wm"
+          "terminal"
+          "cpu"
+          "gpu"
+          "memory"
+          "disk"
+          "colors"
+        ];
+      };
+    };
+    gpg = {
+      enable = true;
+      settings = {
+        personal-digest-preferences = "SHA512";
+        personal-cipher-preferences = "AES256";
+        default-preference-list = "SHA512 SHA384 SHA256 AES256 AES192 AES CAMELLIA256 CAMELLIA192 CAMELLIA128 ZLIB BZIP2 ZIP Uncompressed";
+        use-agent = true;
+      };
+    };
   };
 }
