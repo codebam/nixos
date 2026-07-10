@@ -230,11 +230,12 @@
           # Resist fingerprinting (Tor/LibreWolf style)
           "privacy.resistFingerprinting" = true;
           "privacy.resistFingerprinting.letterboxing" = true;
+          "privacy.resistFingerprinting.exemptedDomains" = "app.element.io,element.io";
           # First-party isolation to prevent cross-site correlation
-          "privacy.firstparty.isolate" = true;
+          "privacy.firstparty.isolate" = false;
           # Disable APIs commonly used for fingerprinting
           "webgl.disabled" = true;
-          "dom.webaudio.enabled" = false;
+          "dom.webaudio.enabled" = true;
           "media.navigator.enabled" = false;
           "dom.netinfo.enabled" = false;
           "media.video_stats.enabled" = false;
