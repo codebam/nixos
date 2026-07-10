@@ -378,22 +378,6 @@
         "type": "github"
       }
     },
-    "ivpn": {
-      "locked": {
-        "lastModified": 1779905706,
-        "narHash": "sha256-HxwQCV77rWnsokZfSeoJgMiYTOQvzK84w44vr4uQrpg=",
-        "owner": "codebam",
-        "repo": "nixpkgs",
-        "rev": "8b738b500c510abe1bb8c058982b87d940701b23",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "ref": "ivpn-quantum-fix",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -746,7 +730,6 @@
         "chaotic": "chaotic",
         "disko": "disko",
         "home-manager": "home-manager_3",
-        "ivpn": "ivpn",
         "lanzaboote": "lanzaboote",
         "lix": "lix",
         "lix-module": "lix-module",

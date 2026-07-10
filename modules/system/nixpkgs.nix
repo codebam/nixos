@@ -72,7 +72,7 @@
         # kdePackages =
         #   (inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}).kdePackages;
 
-        ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
+        # ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
 
         # rocmPackages =
         #   (import inputs.pinned {
