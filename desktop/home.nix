@@ -162,12 +162,12 @@
             }
             {
               block = "sound";
-              format = " $icon $volume ";
+              format = " $icon {$volume|} ";
             }
             {
               block = "sound";
               device_kind = "source";
-              format = " $icon $volume ";
+              format = " $icon {$volume|} ";
             }
             {
               block = "music";
