@@ -17,6 +17,10 @@
       protontricks = {
         enable = true;
       };
+      extraPackages = with pkgs; [
+        gamescope_git
+        mangohud_git
+      ];
     };
     gamescope = {
       enable = true;
