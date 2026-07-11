@@ -5,20 +5,11 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     master.url = "github:nixos/nixpkgs/master";
-    # staging.url = "github:nixos/nixpkgs/staging";
-    pinned.url = "github:nixos/nixpkgs/efe81e52fe2e9dcc81e938d6627077d8482ebf25";
-    chaotic = {
-      url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # home-manager-unstable = {
-    #   url = "github:nix-community/home-manager";
-    #   inputs.nixpkgs.follows = "nixpkgs-unstable";
-    # };
     lix = {
       url = "git+https://git.lix.systems/lix-project/lix.git";
       flake = false;
@@ -52,53 +43,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     preservation.url = "github:nix-community/preservation";
-    # jovian.url = "github:jovian-experiments/jovian-nixos/development";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    run0-sudo-shim = {
-      url = "github:lordgrimmauld/run0-sudo-shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     lsfg-vk-flake = {
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # helix = {
-    #   url = "github:codebam/helix-steel-flake/main";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    # steel = {
-    #   url = "github:mattwparas/steel/master";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    # lulu = {
-    #   url = "github:kevinJ045/lulu/main";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    # bsav = {
-    #   url = "github:codebam/bsav/main";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    plasma-manager = {
-      url = "github:nix-community/plasma-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
-    #helix = {
-    # url = "github:helix-editor/helix";
-    #inputs.nixpkgs.follows = "nixpkgs";
-    #};
     nixos-avf = {
       url = "github:nix-community/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # nixcord = {
-    #   url = "github:FlameFlag/nixcord";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    bun.url = "github:delafthi/nixpkgs/delafthi/xrxorlrrwrro";
   };
 
   outputs =
@@ -139,7 +95,6 @@
           # Pass all flake inputs to NixOS modules
           specialArgs = { inherit inputs; };
           modules = [
-            # inputs.lix-module.nixosModules.default
             inputs.disko.nixosModules.disko
             inputs.lanzaboote.nixosModules.lanzaboote
             (
@@ -160,7 +115,6 @@
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
             inputs.chaotic.nixosModules.default
-            inputs.run0-sudo-shim.nixosModules.default
             inputs.lsfg-vk-flake.nixosModules.default
             ./modules
             {
@@ -175,8 +129,6 @@
                 };
                 sharedModules = [
                   inputs.agenix.homeManagerModules.default
-                  # inputs.nixcord.homeModules.nixcord
-                  inputs.plasma-manager.homeModules.plasma-manager
                 ];
               };
             }
@@ -193,17 +145,14 @@
             nixd
             nixpkgs-fmt
             nixfmt
-            # inputs.helix.packages.${stdenv.hostPlatform.system}.default
           ];
         };
       });
 
-      # NixOS configurations
       nixosConfigurations = {
         nixos-desktop = mkNixosSystem {
           system = "x86_64-linux";
           extraModules = [
-            # jovian.nixosModules.default
             ./desktop/configuration
             ./desktop-laptop/configuration
             {

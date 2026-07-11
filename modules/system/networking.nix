@@ -20,12 +20,6 @@
           EnableNetworkConfiguration = true;
         };
       };
-      # settings = {
-      #   Rank = {
-      #     BandModifier2_4GHz = 0.0;
-      #     BandModifier5Ghz = 1.0;
-      #   };
-      # };
     };
     nftables = {
       enable = true;

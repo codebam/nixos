@@ -6,9 +6,7 @@ _: {
         email = "codebam@riseup.net";
       };
     };
-    run0-sudo-shim = {
-      enable = true;
-    };
+
     polkit = {
       enable = true;
       extraConfig = ''

@@ -10,33 +10,6 @@
   powerManagement.cpuFreqGovernor = "performance";
 
   systemd = {
-    # targets = {
-    #   sleep = {
-    #     enable = false;
-    #     unitConfig.DefaultDependencies = "no";
-    #   };
-    #   suspend = {
-    #     enable = false;
-    #     unitConfig.DefaultDependencies = "no";
-    #   };
-    #   hibernate = {
-    #     enable = false;
-    #     unitConfig.DefaultDependencies = "no";
-    #   };
-    #   "hybrid-sleep" = {
-    #     enable = false;
-    #     unitConfig.DefaultDependencies = "no";
-    #   };
-    # };
-    # user = {
-    #   services = {
-    #     xdg-desktop-portal-wlr = {
-    #       serviceConfig = {
-    #         ExecStart = [ "" "${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr -l DEBUG" ];
-    #       };
-    #     };
-    #   };
-    # };
     timers = {
       nix-build-steamdeck = {
         enable = false;

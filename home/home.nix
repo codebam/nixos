@@ -38,32 +38,13 @@ in
 
     pointerCursor.enable = true;
 
-    # pointerCursor = {
-    #   package = pkgs.bibata-cursors;
-    #   name = "Bibata Modern Classic";
-    #   size = 24;
-    #   x11 = {
-    #     enable = true;
-    #     defaultCursor = "Bibata Modern Classic";
-    #   };
-    #   gtk.enable = true;
-    # };
-
     shellAliases = { };
 
     sessionVariables = {
       EDITOR = "hx";
       NIXOS_OZONE_WL = "1";
-      # OBS_VKCAPTURE = "1";
       WLR_RENDERER = "vulkan";
-      # AMD_USERQ = "1";
-      # RADV_PERFTEST = "userq";
       GTK_USE_PORTAL = "1";
-      # WLR_DRM_NO_ATOMIC = "1"; # screen tearing support
-      # MANGOHUD_CONFIGFILE = "/home/codebam/.config/MangoHud/MangoHud.conf";
-      # PROTON_ENABLE_WAYLAND = "1";
-      # PROTON_ENABLE_HDR = "1";
-      # PROTON_USE_NTSYNC = "1";
       SEARXNG_API_URL = "http://localhost:8081";
       _JAVA_AWT_WM_NONREPARENTING = "1";
     };
@@ -117,27 +98,12 @@ in
           pass-genphrase
         ]
       ))
-      # (discord-canary.override {
-      #   # withOpenASAR = true;
-      #   withVencord = true;
-      # })
-      # (discord-ptb.override {
-      #   # withOpenASAR = true;
-      #   withVencord = true;
-      # })
       (discord.override {
         withOpenASAR = true;
         withVencord = true;
       })
-      # (discord-krisp.override {
-      #   withOpenASAR = true;
-      #   withVencord = true;
-      # })
-      # vesktop
       bat
       gemini-cli
-      # antigravity-hub
-      # antigravity-ide
       antigravity-cli
       google-cloud-sdk
       arrpc
@@ -153,21 +119,11 @@ in
       ripgrep
       slurp
       jq
-      # telegram-desktop
-      # aonsoku
-      # disabled because electron
       supersonic-wayland
-      # tor-browser
       weechat
-      # kdePackages.kdenlive
       calcurse
       high-tide
-      # ytmdesktop
-      # disabled because electron
       feishin
-      inputs.bun.legacyPackages.${pkgs.stdenv.hostPlatform.system}.bun
-      # TODO pin this
-      # inputs.bsav.packages.${pkgs.stdenv.hostPlatform.system}.default
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv
@@ -209,15 +165,9 @@ in
 
     stateVersion = "26.05";
   };
-  # gtk = {
-  #   # gtk2.force = true;
-  #   gtk4.theme = null;
-  # };
 
   xdg = {
     configFile = {
-      # "gtk-3.0/gtk.css".force = true;
-      # "gtk-4.0/gtk.css".force = true;
       "vkBasalt/vkBasalt.conf".text = ''
         reshadeIncludePath = ${reshade-shaders}
         reshadeTexturePath = ${sweetfx-src}/Textures
