@@ -221,6 +221,11 @@
             ${modifier}+button4 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%+"
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
+          # Push to talk
+          bindsym --whole-window button9 exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0"
+          bindsym --whole-window --release button9 exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1"
+          exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1"
+
           mouse_warping none
           exec '${pkgs.mako}/bin/mako'
           exec '${pkgs.wljoywake}/bin/wljoywake'
