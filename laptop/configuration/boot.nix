@@ -33,12 +33,51 @@
               mkdir -p /bcachefs_tmp
               mount -t bcachefs /dev/disk/by-id/nvme-SAMSUNG_MZVLB1T0HALR-000L7_S3TPNX0K805497-part3 /bcachefs_tmp
 
-              # If a @root subvolume exists, archive it
+              # If a @root subvolume exists, prepare to replace it
               if [[ -e /bcachefs_tmp/@root ]]; then
-                echo "Archiving existing @root subvolume..."
-                mkdir -p /bcachefs_tmp/old_roots
-                timestamp=$(date --date="@$(stat -c %Y /bcachefs_tmp/@root)" "+%Y-%m-%d_%H:%M:%S")
-                mv /bcachefs_tmp/@root "/bcachefs_tmp/old_roots/$timestamp"
+                echo "Found existing @root subvolume. Preparing to replace it."
+                
+                BOOT_BACKUP_NAME="@root.bak-$(date +%s)"
+                
+                echo "Moving @root to $BOOT_BACKUP_NAME as a temporary backup."
+                if ! mv /bcachefs_tmp/@root "/bcachefs_tmp/$BOOT_BACKUP_NAME"; then
+                    umount /bcachefs_tmp
+                    echo "FATAL: Could not move existing @root. Aborting."
+                    exit 1
+                fi
+
+                echo "Creating new @root subvolume..."
+                bcachefs subvolume create /bcachefs_tmp/@root
+
+                if [[ ! -d /bcachefs_tmp/@root ]]; then
+                  echo "ERROR: FAILED TO CREATE NEW @root subvolume!"
+                  echo "Attempting to restore from backup: $BOOT_BACKUP_NAME"
+                  
+                  if mv "/bcachefs_tmp/$BOOT_BACKUP_NAME" /bcachefs_tmp/@root; then
+                    echo "SUCCESS: Restored previous @root. System will boot with the old root."
+                    umount /bcachefs_tmp
+                    exit 0
+                  else
+                    umount /bcachefs_tmp
+                    echo "FATAL: Could not restore backup. Filesystem is in an inconsistent state. NO @root EXISTS."
+                    exit 1
+                  fi
+                else
+                  echo "New @root subvolume created successfully."
+                  echo "Moving temporary backup to long-term storage."
+                  mkdir -p /bcachefs_tmp/old_roots
+                  timestamp=$(date --date="@$(stat -c %Y "/bcachefs_tmp/$BOOT_BACKUP_NAME")" "+%Y-%m-%d_%H:%M:%S")
+                  mv "/bcachefs_tmp/$BOOT_BACKUP_NAME" "/bcachefs_tmp/old_roots/$timestamp" || echo "Warning: Could not move backup to old_roots."
+                fi
+              else
+                echo "No existing @root found. Creating a new one."
+                bcachefs subvolume create /bcachefs_tmp/@root
+                if [[ ! -d /bcachefs_tmp/@root ]]; then
+                    umount /bcachefs_tmp
+                    echo "FATAL: Failed to create initial @root subvolume."
+                    exit 1
+                fi
+                echo "New @root subvolume created successfully."
               fi
 
               # Clean up archived roots older than 30 days
@@ -72,10 +111,6 @@
                   done
                 )
               fi
-
-              # Create the new, clean @root subvolume for the new generation
-              echo "Creating new @root subvolume..."
-              bcachefs subvolume create /bcachefs_tmp/@root
 
               # Clean up the temporary mount
               umount /bcachefs_tmp

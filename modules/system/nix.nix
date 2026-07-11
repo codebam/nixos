@@ -6,7 +6,7 @@
         "nix-command"
         "flakes"
       ];
-      auto-optimise-store = true;
+      auto-optimise-store = false;
       trusted-users = [
         "root"
         "codebam"
@@ -30,14 +30,20 @@
       ];
     };
     gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 30d";
+      automatic = false;
     };
     # Enable automatic optimization of the store
     optimise = {
-      automatic = false;
-      dates = [ "03:45" ];
+      automatic = true;
+      dates = [ "weekly" ];
+    };
+  };
+
+  programs.nh = {
+    enable = true;
+    clean = {
+      enable = true;
+      extraArgs = "--keep-since 7d --keep 5";
     };
   };
 }

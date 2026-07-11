@@ -7,7 +7,10 @@
     master.url = "github:nixos/nixpkgs/master";
     # staging.url = "github:nixos/nixpkgs/staging";
     pinned.url = "github:nixos/nixpkgs/efe81e52fe2e9dcc81e938d6627077d8482ebf25";
-    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+    chaotic = {
+      url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -40,8 +43,14 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agenix.url = "github:ryantm/agenix";
-    stylix.url = "github:danth/stylix";
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     preservation.url = "github:nix-community/preservation";
     # jovian.url = "github:jovian-experiments/jovian-nixos/development";
     nix-index-database = {
