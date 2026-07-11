@@ -206,7 +206,7 @@
             "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
             "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
             "${modifier}+i" = "inhibit_idle toggle";
-            "${modifier}+Shift+q" = "exec ${(pkgs.writeShellScript "power-menu" ''
+            "${modifier}+Shift+e" = "exec ${(pkgs.writeShellScript "power-menu" ''
               CHOICE=$(echo -e "Lock\nLogout\nReboot\nShutdown" | ${pkgs.wmenu}/bin/wmenu -f "Fira Code NerdFont 11" -i -N 000000 -n cdd6f4 -M 000000 -m 89b4fa -S 89b4fa -s 000000)
               case "$CHOICE" in
                 Lock) exec ${pkgs.swaylock}/bin/swaylock ;;
