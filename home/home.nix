@@ -104,6 +104,7 @@ in
       })
       bat
       dust
+      nvtopPackages.amd
       gemini-cli
       antigravity-cli
       google-cloud-sdk

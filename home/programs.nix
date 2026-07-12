@@ -567,5 +567,90 @@
         use-agent = true;
       };
     };
+    wlogout = {
+      enable = true;
+      layout = [
+        {
+          label = "lock";
+          action = "${pkgs.swaylock}/bin/swaylock";
+          text = "Lock";
+          keybind = "l";
+        }
+        {
+          label = "hibernate";
+          action = "systemctl hibernate";
+          text = "Hibernate";
+          keybind = "h";
+        }
+        {
+          label = "logout";
+          action = "${pkgs.sway}/bin/swaymsg exit";
+          text = "Exit";
+          keybind = "e";
+        }
+        {
+          label = "shutdown";
+          action = "systemctl poweroff";
+          text = "Shutdown";
+          keybind = "s";
+        }
+        {
+          label = "suspend";
+          action = "systemctl suspend";
+          text = "Suspend";
+          keybind = "u";
+        }
+        {
+          label = "reboot";
+          action = "systemctl reboot";
+          text = "Reboot";
+          keybind = "r";
+        }
+      ];
+      style = ''
+        * {
+          background-image: none;
+          transition: 200ms;
+        }
+        window {
+          background-color: rgba(12, 12, 12, 0.85);
+        }
+        button {
+          color: #cdd6f4;
+          background-color: rgba(30, 30, 46, 0.5);
+          border-style: solid;
+          border-width: 2px;
+          border-color: #313244;
+          border-radius: 20px;
+          margin: 10px;
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 25%;
+        }
+        button:focus, button:active, button:hover {
+          background-color: rgba(137, 180, 250, 0.2);
+          border-color: #89b4fa;
+          color: #89b4fa;
+        }
+        #lock {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/lock.png");
+        }
+        #logout {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/logout.png");
+        }
+        #suspend {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/suspend.png");
+        }
+        #hibernate {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/hibernate.png");
+        }
+        #shutdown {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/shutdown.png");
+        }
+        #reboot {
+          background-image: url("${pkgs.wlogout}/share/wlogout/icons/reboot.png");
+        }
+      '';
+    };
   };
 }
