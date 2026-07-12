@@ -16,6 +16,10 @@
         after-resume = "${pkgs.sway}/bin/swaymsg 'output * power on'";
       };
     };
+    wl-clip-persist = {
+      enable = true;
+      clipboardType = "both";
+    };
     gpg-agent = {
       enable = true;
       enableSshSupport = true;

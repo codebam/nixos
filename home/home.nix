@@ -103,6 +103,7 @@ in
         withVencord = true;
       })
       bat
+      dust
       gemini-cli
       antigravity-cli
       google-cloud-sdk
