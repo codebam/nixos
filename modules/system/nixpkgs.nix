@@ -45,6 +45,7 @@
           "steam-run"
           "steam-unwrapped"
           "steamdeck-hw-theme"
+          "steamcmd"
           "via"
           "vscode"
         ];
