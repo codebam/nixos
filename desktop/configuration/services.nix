@@ -6,16 +6,7 @@
 }:
 
 {
-  age.secrets.navidrome-lastfm = {
-    file = ../../secrets/navidrome-lastfm.age;
-    owner = "navidrome";
-    group = "navidrome";
-  };
-  age.secrets.mopidy-subidy = {
-    file = ../../secrets/mopidy-subidy.age;
-    owner = "codebam";
-    group = "users";
-  };
+
 
   systemd.user.services.pipewire.environment = {
     SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
@@ -176,7 +167,7 @@
         };
       };
       extraConfigFiles = [
-        config.age.secrets.mopidy-subidy.path
+        config.sops.secrets.mopidy-subidy.path
       ];
     };
     lidarr = {
@@ -203,7 +194,7 @@
     };
     navidrome = {
       enable = true;
-      environmentFile = config.age.secrets.navidrome-lastfm.path;
+      environmentFile = config.sops.secrets.navidrome-lastfm.path;
       settings = {
         MusicFolder = "/home/codebam/Downloads/Lidarr";
         BaseUrl = "https://codebam.tplinkdns.com";
@@ -521,7 +512,7 @@
       enable = false;
       protocol = "duckdns";
       domains = [ "codebam" ];
-      passwordFile = config.age.secrets.duckdns-token.path;
+      passwordFile = config.sops.secrets.duckdns-token.path;
     };
     pipewire = {
       extraConfig = {
@@ -778,7 +769,7 @@
     };
     searx = {
       enable = false;
-      environmentFile = config.age.secrets.searx-secret.path;
+      environmentFile = config.sops.secrets.searx-secret.path;
       settings = {
         server = {
           secret_key = "$SECRET_KEY";

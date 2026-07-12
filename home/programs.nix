@@ -557,6 +557,9 @@
     };
     gpg = {
       enable = true;
+      scdaemonSettings = {
+        disable-ccid = true;
+      };
       settings = {
         personal-digest-preferences = "SHA512";
         personal-cipher-preferences = "AES256";

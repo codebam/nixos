@@ -3,7 +3,7 @@ _:
 {
   imports = [
     ../hardware-configuration.nix
-    ./age.nix
+    ./sops.nix
     ./boot.nix
     ./environment.nix
     ./hardware.nix

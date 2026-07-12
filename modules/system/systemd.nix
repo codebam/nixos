@@ -21,11 +21,6 @@
         pipewire-pulse.environment = {
           LADSPA_PATH = "/tmp:/run/current-system/sw/lib/ladspa";
         };
-        agenix = {
-          serviceConfig = {
-            Environment = "PATH=$PATH:${lib.makeBinPath [ pkgs.age-plugin-yubikey ]} ${pkgs.rage}/bin/rage";
-          };
-        };
         polkit-gnome-authentication-agent-1 = {
           description = "polkit-gnome-authentication-agent-1";
           wantedBy = [ "sway-session.target" ];

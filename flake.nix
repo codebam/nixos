@@ -34,8 +34,8 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agenix = {
-      url = "github:ryantm/agenix";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     stylix = {
@@ -111,7 +111,7 @@
             inputs.lix-module.nixosModules.default
             inputs.preservation.nixosModules.default
             inputs.stylix.nixosModules.stylix
-            inputs.agenix.nixosModules.default
+            inputs.sops-nix.nixosModules.sops
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
             inputs.chaotic.nixosModules.default
@@ -128,7 +128,7 @@
                   ];
                 };
                 sharedModules = [
-                  inputs.agenix.homeManagerModules.default
+                  inputs.sops-nix.homeManagerModules.sops
                 ];
               };
             }

@@ -1,13 +1,7 @@
 { pkgs, ... }:
 
 {
-  age = {
-    # identityPaths = [
-    #   ./secrets/identities/yubikey-5c.txt
-    #   ./secrets/identities/yubikey-5c-nfc.txt
-    # ];
-    # secrets.duckdns-token.file = ../secrets/duckdns-token.age;
-  };
+
 
   home = {
     packages = with pkgs; [
