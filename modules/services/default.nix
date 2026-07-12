@@ -14,8 +14,8 @@
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     lsfg-vk = {
-      enable = false;
-      ui.enable = false;
+      enable = pkgs.lib.mkDefault false;
+      ui.enable = pkgs.lib.mkDefault false;
     };
     tailscale = {
       enable = true;
