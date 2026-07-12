@@ -229,7 +229,7 @@
           "privacy.trackingprotection.cryptomining.enabled" = true;
           # Resist fingerprinting (Tor/LibreWolf style)
           "privacy.resistFingerprinting" = true;
-          "privacy.resistFingerprinting.letterboxing" = true;
+          "privacy.resistFingerprinting.letterboxing" = false;
           "privacy.resistFingerprinting.exemptedDomains" = "app.element.io,element.io";
           # First-party isolation to prevent cross-site correlation
           "privacy.firstparty.isolate" = false;
