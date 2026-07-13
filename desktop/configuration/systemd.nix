@@ -79,6 +79,7 @@
         enable = false;
       };
       applyGpuSettings = {
+        enable = false;
         description = "Apply GPU Overclocking and Power Limit Settings";
         after = [ "multi-user.target" ];
         wantedBy = [ "graphical.target" ];
