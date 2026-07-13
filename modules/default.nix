@@ -23,5 +23,6 @@
     ./users/default.nix
     ./stylix/default.nix
     ./chaotic.nix
+    ./lix.nix
   ];
 }
