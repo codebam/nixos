@@ -2,6 +2,7 @@
 {
   environment = {
     systemPackages = with pkgs; [
+      bubblewrap
       ladspaPlugins
       lsp-plugins
       # claude-code
