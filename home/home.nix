@@ -134,6 +134,25 @@ in
           requests
         ]
       ))
+      (pkgs.writeShellScriptBin "agy-sandbox" ''
+        mkdir -p "$HOME/.config/agy-sandbox"
+
+        # 2. Execute the sandbox wrapper
+        exec ${pkgs.bubblewrap}/bin/bwrap \
+          --ro-bind /nix/store /nix/store \
+          --proc /proc \
+          --dev /dev \
+          --ro-bind /sys /sys \
+          --ro-bind /etc /etc \
+          --ro-bind /etc/ssl/certs /etc/ssl/certs \
+          --ro-bind /run/systemd/resolve /run/systemd/resolve \
+          --share-net \
+          --bind "$HOME/.config/agy-sandbox" "$HOME" \
+          --bind "$(pwd)" "$(pwd)" \
+          --uid "$(id -u)" \
+          --gid "$(id -g)" \
+          $(readlink -f $(which agy)) "$@"
+      '')
     ];
 
     file.".config/helix/init.scm".text = ''
