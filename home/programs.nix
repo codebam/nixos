@@ -1,8 +1,7 @@
-{
-  pkgs,
-  lib,
-  inputs,
-  ...
+{ pkgs
+, lib
+, inputs
+, ...
 }:
 
 {
@@ -213,6 +212,12 @@
         DontCheckDefaultBrowser = true;
         DisablePocket = true;
         SearchBar = "unified";
+        ExtensionSettings = {
+          "uBlock0@raymondhill.net" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
+            installation_mode = "force_installed";
+          };
+        };
       };
       profiles.default = {
         id = 0;
@@ -247,6 +252,13 @@
           # General tracking prevention
           "privacy.query_stripping.enabled" = true;
           "browser.send_pings" = false;
+          # Security & network connections
+          "dom.security.https_only_mode" = true;
+          "browser.search.suggest.enabled" = false;
+          "network.dns.disablePrefetch" = true;
+          "network.prefetch-next" = false;
+          "network.http.speculative-parallel-limit" = 0;
+          "network.predictor.enabled" = false;
           # Clear data on shutdown
           # "privacy.sanitize.sanitizeOnShutdown" = true;
         };
