@@ -220,8 +220,8 @@
         isDefault = true;
         path = "ry5m9sd1.default";
         settings = {
-          # Block WebRTC from leaking local IP addresses
-          "media.peerconnection.enabled" = false;
+          # Need this for discord
+          "media.peerconnection.enabled" = true;
           # Enable strict tracking protection
           "privacy.trackingprotection.enabled" = true;
           "privacy.trackingprotection.socialtracking.enabled" = true;
@@ -229,6 +229,7 @@
           "privacy.trackingprotection.cryptomining.enabled" = true;
           # Resist fingerprinting (Tor/LibreWolf style)
           "privacy.resistFingerprinting" = true;
+          # This is too annoying to use
           "privacy.resistFingerprinting.letterboxing" = false;
           "privacy.resistFingerprinting.exemptedDomains" = "app.element.io,element.io";
           # First-party isolation to prevent cross-site correlation
