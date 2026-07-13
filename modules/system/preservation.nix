@@ -150,6 +150,7 @@ _: {
             ".config/mozilla"
             ".config/google-chrome"
             ".config/google-chrome-unstable"
+            ".config/agy-sandbox"
             ".local/share/vkBasalt/shaders"
             ".local/share/kwalletd"
           ];
