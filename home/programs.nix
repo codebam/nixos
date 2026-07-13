@@ -231,15 +231,16 @@
           "privacy.resistFingerprinting" = true;
           # This is too annoying to use
           "privacy.resistFingerprinting.letterboxing" = false;
-          "privacy.resistFingerprinting.exemptedDomains" = "app.element.io,element.io";
+          "privacy.resistFingerprinting.exemptedDomains" =
+            "app.element.io,element.io,discord.com,canary.discord.com";
           # First-party isolation to prevent cross-site correlation
           "privacy.firstparty.isolate" = false;
           # Disable APIs commonly used for fingerprinting
           "webgl.disabled" = true;
           "dom.webaudio.enabled" = true;
-          "media.navigator.enabled" = false;
+          "media.navigator.enabled" = true;
           "dom.netinfo.enabled" = false;
-          "media.video_stats.enabled" = false;
+          "media.video_stats.enabled" = true;
           "dom.gamepad.enabled" = false;
           "device.sensors.enabled" = false;
           "geo.enabled" = false;
