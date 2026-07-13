@@ -1,6 +1,7 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   nix = {
+    package = pkgs.nix_git;
     settings = {
       experimental-features = [
         "nix-command"

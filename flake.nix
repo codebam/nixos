@@ -2,22 +2,15 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable-small";
+    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+    nixpkgs = {
+      follows = "chaotic/nixpkgs";
+    };
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     master.url = "github:nixos/nixpkgs/master";
-    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    lix = {
-      url = "git+https://git.lix.systems/lix-project/lix.git";
-      flake = false;
-    };
-    lix-module = {
-      url = "git+https://git.lix.systems/lix-project/nixos-module.git";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.lix.follows = "lix";
     };
     disko = {
       url = "github:nix-community/disko";
@@ -108,7 +101,6 @@
                 };
               }
             )
-            inputs.lix-module.nixosModules.default
             inputs.preservation.nixosModules.default
             inputs.stylix.nixosModules.stylix
             inputs.sops-nix.nixosModules.sops
