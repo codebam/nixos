@@ -7,7 +7,6 @@
 
 {
 
-
   systemd.user.services.pipewire.environment = {
     SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
     LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa:${pkgs.deepfilternet}/lib/ladspa";
@@ -46,6 +45,7 @@
   };
 
   systemd.user.services.cs2-playerctl-bridge = {
+    enable = false;
     unitConfig = {
       Description = "CS2 GSI Playerctl Bridge";
       After = [ "graphical-session.target" ];
