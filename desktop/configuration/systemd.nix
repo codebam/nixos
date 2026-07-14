@@ -79,7 +79,7 @@
         enable = false;
       };
       applyGpuSettings = {
-        enable = false;
+        enable = true;
         description = "Apply GPU Overclocking and Power Limit Settings";
         after = [ "multi-user.target" ];
         wantedBy = [ "graphical.target" ];
@@ -108,7 +108,7 @@
           echo "s 1 3300" > "$GPU_CARD/device/pp_od_clk_voltage"
           echo "m 0 97" > "$GPU_CARD/device/pp_od_clk_voltage"
           echo "m 1 1300" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "vo -150" > "$GPU_CARD/device/pp_od_clk_voltage"
+          echo "vo -120" > "$GPU_CARD/device/pp_od_clk_voltage"
           echo "c" > "$GPU_CARD/device/pp_od_clk_voltage"
 
           # Dynamically find the hwmon directory and apply a safe power limit
