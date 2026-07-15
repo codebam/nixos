@@ -197,7 +197,7 @@
       environmentFile = config.sops.secrets.navidrome-lastfm.path;
       settings = {
         MusicFolder = "/home/codebam/Downloads/Lidarr";
-        BaseUrl = "https://codebam.tplinkdns.com";
+        BaseUrl = "/navidrome";
         Address = "0.0.0.0";
         Port = 4533;
         ScanSchedule = "@every 1h";
@@ -276,6 +276,9 @@
         addSSL = true;
         enableACME = true;
         locations."/" = {
+          return = "301 https://$host/navidrome$request_uri";
+        };
+        locations."/navidrome" = {
           proxyPass = "http://127.0.0.1:4533";
           proxyWebsockets = true;
           extraConfig = ''
@@ -287,6 +290,9 @@
         addSSL = true;
         enableACME = true;
         locations."/" = {
+          return = "301 https://$host/navidrome$request_uri";
+        };
+        locations."/navidrome" = {
           proxyPass = "http://127.0.0.1:4533";
           proxyWebsockets = true;
           extraConfig = ''
