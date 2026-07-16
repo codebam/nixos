@@ -1,6 +1,16 @@
 { pkgs, lib, ... }:
 {
   systemd = {
+    services = {
+      systemd-networkd-wait-online.serviceConfig = {
+        ExecStart = [
+          "" # This clears the default command arguments
+          "${pkgs.systemd}/lib/systemd/systemd-networkd-wait-online --any"
+        ];
+        TimeoutStartSec = "15s";
+      };
+    };
+    network.networks."50-tailscale".linkConfig.RequiredForOnline = "no";
     user = {
       services = {
         # noisetorch = {

@@ -6,6 +6,7 @@
 }:
 {
   networking = {
+    useNetworkd = true;
     networkmanager = {
       enable = true;
       wifi.backend = "iwd";
@@ -17,7 +18,7 @@
           DisableScanningWhileConnected = true;
         };
         General = {
-          EnableNetworkConfiguration = true;
+          EnableNetworkConfiguration = false;
         };
       };
     };
