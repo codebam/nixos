@@ -2,6 +2,7 @@ _:
 
 {
   imports = [
+    ./sops.nix
     ./home.nix
     ./programs.nix
     ./services.nix

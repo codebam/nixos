@@ -153,6 +153,8 @@ _: {
             ".config/agy-sandbox"
             ".local/share/vkBasalt/shaders"
             ".local/share/kwalletd"
+            ".local/share/iamb"
+            ".cache/iamb"
           ];
         };
       };

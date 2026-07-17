@@ -1,11 +1,24 @@
-{ pkgs
-, lib
-, inputs
-, ...
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
 }:
 
 {
   programs = {
+    iamb = {
+      enable = true;
+      settings = {
+        default_profile = "unredacted.org";
+        profiles = {
+          "unredacted.org" = {
+            user_id = "@codebam:unredacted.org";
+            url = "https://matrix.unredacted.org";
+          };
+        };
+      };
+    };
     # nixcord = {
     #   enable = false;
     #   equibop.enable = true;
