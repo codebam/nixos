@@ -530,11 +530,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784305550,
-        "narHash": "sha256-kpqP6RklGH42xzCVtRRKJXA609q4aG4Svw+2W6CD4dc=",
+        "lastModified": 1784313499,
+        "narHash": "sha256-+guKlUhsExwMjd0xnPE92dLQDfnsld78WB51c25vVaI=",
         "ref": "refs/heads/main",
-        "rev": "5df8bb3a119c730ce996448a4c470c2201de8240",
-        "revCount": 2,
+        "rev": "b1ba131196c696b1509e00ed54c6de471d1496c5",
+        "revCount": 3,
         "type": "git",
         "url": "https://codeberg.org/codebam/sops-pass.git"
       },
