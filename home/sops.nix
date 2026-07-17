@@ -1,29 +1,19 @@
 { config, pkgs, ... }:
 
 {
-  sops = {
-    age = {
-      keyFile = "/etc/nixos/secrets/identities/yubikey-5c.txt";
-    };
-    secrets = {
-      "unredacted.org" = {
-        sopsFile = ../secrets/passwords.enc.yaml;
-      };
-    };
-  };
-
   systemd.user.services.iamb-login = {
     Unit = {
       Description = "Auto-login for iamb Matrix client";
-      After = [ "sops-nix.service" ];
-      Requires = [ "sops-nix.service" ];
-      ConditionPathExists = "!%h/.local/share/iamb/profiles/unredacted.org/session.json";
+      ConditionPathExists = [
+        "/run/secrets/unredacted.org"
+        "!%h/.local/share/iamb/profiles/unredacted.org/session.json"
+      ];
     };
     Service = {
       Type = "oneshot";
       ExecStart = "${pkgs.writeShellScript "iamb-login-service" ''
         set -euo pipefail
-        SECRET_PATH="${config.sops.secrets."unredacted.org".path}"
+        SECRET_PATH="/run/secrets/unredacted.org"
         if [ -f "$SECRET_PATH" ]; then
           PASSWORD=$(head -n 1 "$SECRET_PATH")
           RESPONSE=$(${pkgs.curl}/bin/curl -s -X POST -H "Content-Type: application/json" \

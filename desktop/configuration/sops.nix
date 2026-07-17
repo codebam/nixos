@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
 {
   sops = {
@@ -23,6 +28,11 @@
         group = "users";
       };
       searx-secret = { };
+      "unredacted.org" = {
+        sopsFile = ../../secrets/passwords.enc.yaml;
+        owner = "codebam";
+        group = "users";
+      };
     };
   };
 }
