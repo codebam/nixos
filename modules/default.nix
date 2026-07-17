@@ -18,6 +18,7 @@
     ./system/qt.nix
 
     ./programs/default.nix
+    ./programs/pass-sops.nix
     ./services/default.nix
     ./security/default.nix
     ./users/default.nix

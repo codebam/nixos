@@ -92,12 +92,7 @@ in
       (writeShellScriptBin "spaste" ''
         ${curl}/bin/curl -X POST --data-binary @- https://pastebin.codebam.ca
       '')
-      (pass.withExtensions (
-        subpkgs: with subpkgs; [
-          pass-otp
-          pass-genphrase
-        ]
-      ))
+
       (discord.override {
         withOpenASAR = true;
         withVencord = true;
