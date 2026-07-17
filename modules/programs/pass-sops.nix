@@ -1,10 +1,6 @@
-{ pkgs, ... }:
-let
-  pass-sops = pkgs.writeScriptBin "pass" ''
-    #!${pkgs.python3.withPackages (ps: [ ps.pyyaml ps.pyotp ])}/bin/python3
-    ${builtins.readFile ./pass-sops.py}
-  '';
-in
+{ pkgs, inputs, ... }:
 {
-  environment.systemPackages = [ pass-sops ];
+  environment.systemPackages = [
+    inputs.sops-pass.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
 }

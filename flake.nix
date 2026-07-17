@@ -48,6 +48,10 @@
       url = "github:nix-community/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-pass = {
+      url = "git+https://codeberg.org/codebam/sops-pass.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

@@ -479,6 +479,7 @@
         "preservation": "preservation",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
+        "sops-pass": "sops-pass",
         "stylix": "stylix"
       }
     },
@@ -520,6 +521,26 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "type": "github"
+      }
+    },
+    "sops-pass": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784305550,
+        "narHash": "sha256-kpqP6RklGH42xzCVtRRKJXA609q4aG4Svw+2W6CD4dc=",
+        "ref": "refs/heads/main",
+        "rev": "5df8bb3a119c730ce996448a4c470c2201de8240",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://codeberg.org/codebam/sops-pass.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/codebam/sops-pass.git"
       }
     },
     "stylix": {
