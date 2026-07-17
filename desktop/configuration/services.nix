@@ -752,7 +752,7 @@
                 88200
                 96000
               ];
-              "default.clock.rate" = 44100;
+              "default.clock.rate" = 48000;
             };
           };
         };
