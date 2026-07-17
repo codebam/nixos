@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   programs = {
-    noisetorch = {
+    nix-index = {
       enable = true;
     };
     ccache = {
