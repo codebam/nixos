@@ -238,7 +238,7 @@
         isDefault = true;
         path = "ry5m9sd1.default";
         settings = {
-          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+          # "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "sidebar.verticalTabs" = true;
           "sidebar.revamp" = true;
           # Need this for discord
@@ -278,31 +278,31 @@
           # Clear data on shutdown
           # "privacy.sanitize.sanitizeOnShutdown" = true;
         };
-        userChrome = ''
-          #sidebar-splitter, #sidebar-launcher-splitter {
-              display: none !important;
-          }
-          #sidebar-main {
-              position: fixed !important;
-              left: 0 !important;
-              top: 0 !important;
-              bottom: 0 !important;
-              z-index: 1000 !important;
-              width: 10px !important;
-              min-width: 10px !important;
-              max-width: 10px !important;
-              opacity: 0 !important;
-              overflow-x: hidden !important;
-              transition: width 0.2s ease-in-out, min-width 0.2s ease-in-out, max-width 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
-          }
-          #sidebar-main:hover {
-              width: 240px !important;
-              min-width: 240px !important;
-              max-width: 240px !important;
-              opacity: 1 !important;
-              box-shadow: 4px 0 16px rgba(0,0,0,0.3) !important;
-          }
-        '';
+        # userChrome = ''
+        #   #sidebar-splitter, #sidebar-launcher-splitter {
+        #       display: none !important;
+        #   }
+        #   #sidebar-main {
+        #       position: fixed !important;
+        #       left: 0 !important;
+        #       top: 0 !important;
+        #       bottom: 0 !important;
+        #       z-index: 1000 !important;
+        #       width: 10px !important;
+        #       min-width: 10px !important;
+        #       max-width: 10px !important;
+        #       opacity: 0 !important;
+        #       overflow-x: hidden !important;
+        #       transition: width 0.2s ease-in-out, min-width 0.2s ease-in-out, max-width 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
+        #   }
+        #   #sidebar-main:hover {
+        #       width: 240px !important;
+        #       min-width: 240px !important;
+        #       max-width: 240px !important;
+        #       opacity: 1 !important;
+        #       box-shadow: 4px 0 16px rgba(0,0,0,0.3) !important;
+        #   }
+        # '';
       };
     };
     yt-dlp = {
