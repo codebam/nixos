@@ -121,7 +121,7 @@ in
       calcurse
       high-tide
       feishin
-      cinny
+      cinny-desktop
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv
