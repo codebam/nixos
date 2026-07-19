@@ -124,6 +124,7 @@ _: {
             ".config/discord"
             ".config/discordcanary"
             ".config/discordptb"
+            ".config/in.cinny.app"
             ".local/share/TelegramDesktop"
             ".local/share/bolt-launcher"
             ".local/share/zoxide"
