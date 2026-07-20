@@ -44,88 +44,6 @@
     wantedBy = [ "default.target" ];
   };
 
-  systemd.user.services.cs2-playerctl-bridge = {
-    enable = false;
-    unitConfig = {
-      Description = "CS2 GSI Playerctl Bridge";
-      After = [ "graphical-session.target" ];
-    };
-    serviceConfig = {
-      ExecStart =
-        let
-          pythonEnv = pkgs.python3.withPackages (ps: [ ps.flask ]);
-          script = pkgs.writeText "bridge.py" ''
-            from flask import Flask, request
-            import subprocess
-            import sys
-
-            app = Flask(__name__)
-
-            MY_STEAM_ID = "76561198064631737"
-
-            class State:
-                is_alive = None # Use None so first packet always triggers
-                mode = None
-
-            state = State()
-
-            @app.route("/", methods=['POST'])
-            def gsi_listener():
-                data = request.json
-                
-                # Extract info
-                player = data.get("player", {})
-                current_id = player.get("steamid")
-                health = player.get("state", {}).get("health")
-                
-                # Update mode if present in packet
-                map_data = data.get("map")
-                if map_data and "mode" in map_data:
-                    state.mode = map_data.get("mode")
-                
-                # Log raw data for debugging
-                print(f"DEBUG: Received Packet - ID: {current_id}, Health: {health}, Mode: {state.mode}", file=sys.stderr)
-
-                # Only active in casual mode
-                if state.mode != "casual":
-                    if state.is_alive is True:
-                        print(f"ACTION: Mode is {state.mode}, not casual. Resuming music.", file=sys.stderr)
-                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
-                    state.is_alive = None
-                    return "", 204
-
-                # Ignore packets that don't have the data we need
-                if current_id is None or health is None:
-                    print("DEBUG: Skipping partial packet (missing ID or Health)", file=sys.stderr)
-                    return "", 204
-
-                # Decision Logic
-                currently_alive = (current_id == MY_STEAM_ID and health > 0)
-
-                if currently_alive != state.is_alive:
-                    state.is_alive = currently_alive
-                    if currently_alive:
-                        print("ACTION: You are ALIVE. Pausing music.", file=sys.stderr)
-                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "pause"], stderr=subprocess.DEVNULL)
-                    else:
-                        print(f"ACTION: You are DEAD/SPECTATING (ID: {current_id}, Health: {health}). Playing music.", file=sys.stderr)
-                        subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play"], stderr=subprocess.DEVNULL)
-                
-                return "", 204
-
-            if __name__ == "__main__":
-                # Run with threaded=True to handle rapid GSI updates better
-                app.run(port=3000, host="127.0.0.1", threaded=True)
-          '';
-        in
-        "${pythonEnv}/bin/python ${script}";
-
-      Restart = "on-failure";
-      RestartSec = "5s";
-    };
-    wantedBy = [ "default.target" ];
-  };
-
   systemd.services.mopidy = {
     environment = {
       GST_PLUGIN_SYSTEM_PATH_1_0 = lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [
@@ -144,32 +62,6 @@
   };
 
   services = {
-    mopidy = {
-      enable = false;
-      extensionPackages = with pkgs; [
-        mopidy-subidy
-        mopidy-mpd
-        gst_all_1.gst-plugins-base
-        gst_all_1.gst-plugins-good
-        pipewire
-      ];
-      settings = {
-        core = {
-          restore_state = true;
-        };
-        audio = {
-          output = "pipewiresink";
-        };
-        mpd = {
-          enabled = true;
-          hostname = "0.0.0.0";
-          port = 6600;
-        };
-      };
-      extraConfigFiles = [
-        config.sops.secrets.mopidy-subidy.path
-      ];
-    };
     lidarr = {
       enable = true;
       openFirewall = true;
@@ -208,66 +100,6 @@
       };
       openFirewall = true;
     };
-    meilisearch = {
-      enable = false;
-      masterKeyFile = "/var/lib/meilisearch-master-key";
-    };
-    librechat = {
-      enable = false;
-      enableLocalDB = true;
-      meilisearch.enable = false;
-      env = {
-        PORT = 3080;
-        CREDS_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-        CREDS_IV = "0123456789abcdef0123456789abcdef";
-        JWT_SECRET = "secure-jwt-secret-here";
-        JWT_REFRESH_SECRET = "secure-refresh-token-secret-here";
-        MEILI_MASTER_KEY = "your-secret-string-here";
-        OPENAI_API_KEY = "user_provided";
-        ALLOW_REGISTRATION = "true";
-        ALLOW_SOCIAL_REGISTRATION = "false";
-      };
-      settings = {
-        version = "1.3.5";
-        cache = true;
-        endpoints = {
-          custom = [
-            {
-              name = "vLLM Gemma";
-              apiKey = "vllm";
-              baseURL = "http://127.0.0.1:8000/v1";
-              models = {
-                default = [ "google/gemma-4-E4B-it" ];
-                fetch = true;
-              };
-            }
-          ];
-        };
-      };
-    };
-    v2ray = {
-      enable = false;
-      config = {
-        inbounds = [
-          {
-            port = 10086;
-            protocol = "vmess";
-            settings = {
-              clients = [
-                {
-                  id = "b831381d-6324-4d53-ad4f-8cda48b30811";
-                }
-              ];
-            };
-          }
-        ];
-        outbounds = [
-          {
-            protocol = "freedom";
-          }
-        ];
-      };
-    };
     nginx = {
       enable = true;
       recommendedProxySettings = true;
@@ -301,131 +133,18 @@
         };
       };
     };
-    xray = {
-      enable = false;
-      settings = {
-        domainStrategy = "UseIPv4";
-        inbounds = [
-          {
-            listen = "0.0.0.0";
-            port = 443;
-            protocol = "vless";
-            settings = {
-              clients = [
-                {
-                  id = "19872fad-62ec-47b2-bc7a-4923ec9e18b4";
-                  flow = "xtls-rprx-vision";
-                }
-              ];
-              decryption = "none";
-              fallbacks = [
-                {
-                  dest = "127.0.0.1:8080";
-                  xver = 1;
-                }
-              ];
-            };
-            streamSettings = {
-              network = "tcp";
-              security = "reality";
-              realitySettings = {
-                show = false;
-                dest = "www.bing.com:443";
-                serverNames = [
-                  "www.bing.com"
-                  "www.microsoft.com"
-                  "login.microsoftonline.com"
-                  "www.office.com"
-                  "www.apple.com"
-                  "updates.cdn-apple.com"
-                ];
-                privateKey = "8JXPmRKIPSONGTeEHJ6DxFZHmdRdJdCI211puUKqoUw";
-                shortIds = [ "6ba85179e30d4fc2" ];
-              };
-              tcpSettings = {
-                header = {
-                  type = "none";
-                };
-              };
-            };
-          }
-        ];
-        outbounds = [
-          {
-            protocol = "freedom";
-            tag = "direct";
-          }
-        ];
-        routing = {
-          domainStrategy = "AsIs";
-          rules = [
-            {
-              type = "field";
-              outboundTag = "direct";
-              ip = [
-                "0.0.0.0/0"
-                "::/0"
-              ];
-            }
-          ];
-        };
-        dns = {
-          servers = [
-            "1.1.1.1"
-            "8.8.8.8"
-          ];
-        };
-      };
-    };
-    iodine = {
-      server = {
-        enable = false;
-        passwordFile = "/etc/nixos/iodine-password.txt";
-        domain = "codebam.tplinkdns.com";
-        ip = "10.0.0.1";
-        extraConfig = "-c";
-      };
-    };
-
-    irqbalance = {
-      enable = false;
-    };
-
-    timesyncd.enable = false;
-    chrony = {
-      enable = true;
+    timesyncd = {
       servers = [
         "time.cloudflare.com"
         "time.google.com"
       ];
-      extraConfig = ''
-        makestep 1.0 3
-      '';
+      settings = {
+        Time = {
+          PollIntervalMaxSec = 64;
+        };
+      };
     };
-
     pipewire.wireplumber.extraConfig = {
-      # "51-bluez-codecs" = {
-      #   "monitor.bluez.properties" = {
-      #     "bluez5.roles" = [ "a2dp_sink" "a2dp_source" "hsp_hs" "hsp_ag" "hfp_hf" "hfp_ag" ];
-      #     "bluez5.codecs" = [ "ldac" "aac" "sbc_xq" "sbc" ];
-      #   };
-      # };
-      # "99-qudelix-32bit" = {
-      #   "monitor.alsa.rules" = [
-      #     {
-      #       matches = [
-      #         {
-      #           "node.name" = "alsa_output.usb-QTIL_Qudelix-5K_USB_DAC_ABCDEF0123456789-00.analog-stereo";
-      #         }
-      #       ];
-      #       actions = {
-      #         update-props = {
-      #           "audio.format" = "S32LE";
-      #         };
-      #       };
-      #     }
-      #   ];
-      # };
       "99-media-stereo" = {
         "node.rules" = [
           {
@@ -456,13 +175,6 @@
           }
         ];
       };
-      # "10-disable-communication-role" = {
-      #   "wireplumber.settings" = {
-      #     "policy.role-priorities" = {
-      #       "Communication" = 0; # Stops it from hijacking "headsets"
-      #     };
-      #   };
-      # };
       "10-disable-suspend" = {
         "monitor.alsa.rules" = [
           {
@@ -478,47 +190,6 @@
           }
         ];
       };
-    };
-    iperf3 = {
-      enable = true;
-      openFirewall = true;
-    };
-    sunshine = {
-      enable = false;
-      openFirewall = true;
-      autoStart = true;
-      settings = {
-        output_name = "1";
-        capture = "wlr";
-        encoder = "vaapi";
-        hevc_mode = "1";
-      };
-      applications = {
-        apps = [
-          {
-            name = "Steam Big Picture";
-            # cmd = "${pkgs.steam}/bin/steam -gamepadui";
-            cmd = "${
-              pkgs.writeShellApplication {
-                name = "steam-on-ws10";
-                runtimeInputs = [
-                  pkgs.steam
-                  pkgs.sway
-                  pkgs.jq
-                ];
-                text = builtins.readFile ./scripts/sunshine-steam.sh;
-              }
-            }/bin/steam-on-ws10";
-            auto-detach = "true";
-          }
-        ];
-      };
-    };
-    ddclient = {
-      enable = false;
-      protocol = "duckdns";
-      domains = [ "codebam" ];
-      passwordFile = config.sops.secrets.duckdns-token.path;
     };
     pipewire = {
       extraConfig = {
@@ -761,46 +432,12 @@
     hardware.openrgb = {
       enable = true;
     };
-    open-webui = {
-      enable = false;
-      port = 8080;
-      environment = {
-        ANONYMIZED_TELEMETRY = "False";
-        DO_NOT_TRACK = "True";
-        SCARF_NO_ANALYTICS = "True";
-        ENABLE_WEB_SEARCH = "True";
-        WEB_SEARCH_ENGINE = "searxng";
-        SEARXNG_QUERY_URL = "http://localhost:8081/search?q=<query>";
-      };
-    };
-    searx = {
-      enable = false;
-      environmentFile = config.sops.secrets.searx-secret.path;
-      settings = {
-        server = {
-          secret_key = "$SECRET_KEY";
-          bind_address = "0.0.0.0";
-          port = 8081;
-        };
-        search = {
-          autocomplete = "google";
-          formats = [
-            "html"
-            "json"
-          ];
-        };
-      };
-    };
     ollama = {
       enable = true;
       host = "0.0.0.0";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
       };
-    };
-    noizdns = {
-      enable = false;
-      domain = "t.seanbehan.ca";
     };
   };
 }

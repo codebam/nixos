@@ -1,8 +1,5 @@
 {
   lib,
-  inputs,
-  config,
-  pkgs,
   ...
 }:
 {
@@ -52,137 +49,18 @@
     };
     overlays = [
       (final: prev: {
-        # antigravity-hub =
-        #   (import inputs.antigravity-hub {
-        #     system = prev.stdenv.hostPlatform.system;
-        #     config.allowUnfree = true;
-        #   }).antigravity-hub;
-
-        # antigravity-ide =
-        #   (import inputs.antigravity-ide {
-        #     system = prev.stdenv.hostPlatform.system;
-        #     config.allowUnfree = true;
-        #   }).antigravity-ide;
-
-        # antigravity-cli =
-        #   (import inputs.master {
-        #     system = prev.stdenv.hostPlatform.system;
-        #     config.allowUnfree = true;
-        #   }).antigravity-cli;
-
-        # kdePackages =
-        #   (inputs.nixpkgs-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}).kdePackages;
-
-        # ivpn-service = (inputs.ivpn.legacyPackages.${prev.stdenv.hostPlatform.system}).ivpn-service;
-
-        # rocmPackages =
-        #   (import inputs.pinned {
-        #     system = prev.stdenv.hostPlatform.system;
-        #     config = prev.config // {
-        #       allowUnfree = true;
-        #     };
-        #   }).rocmPackages;
-
-        # nushell = (inputs.pinned.legacyPackages.${prev.stdenv.hostPlatform.system}).nushell;
-
         electron = prev.electron-bin;
         electron-unwrapped = prev.electron-bin;
         electron_41 = prev.electron_41-bin;
         electron_40 = prev.electron_40-bin;
-
         firefox = prev.firefox-bin;
-
-        # pipewire = (inputs.staging.legacyPackages.${prev.stdenv.hostPlatform.system}).pipewire;
-        # vllm = (import inputs.vllm-update {
-        #   system = prev.stdenv.hostPlatform.system;
-        #   config.allowUnfree = true;
-        #   config.rocmSupport = true;
-        #   overlays = [
-        #     (pythonFinal: pythonPrev: {
-        #       python313 = pythonPrev.python313.override {
-        #         packageOverrides = self: super: {
-        #           mistral-common = super.mistral-common.overridePythonAttrs (old: rec {
-        #             version = "1.10.0";
-        #             src = prev.fetchFromGitHub {
-        #               owner = "mistralai";
-        #               repo = "mistral-common";
-        #               rev = "v${version}";
-        #               hash = "sha256-If0nukwe/9W4i42S+lE52lT/AU77VK0S9LKG1AyWzjA=";
-        #             };
-        #             doCheck = false;
-        #           });
-        #           compressed-tensors = super.compressed-tensors.overridePythonAttrs (old: {
-        #             version = "0.14.0.1";
-        #             doCheck = false;
-        #           });
-        #           outlines = super.outlines.overridePythonAttrs (old: {
-        #             version = "1.2.12";
-        #             doCheck = false;
-        #           });
-        #           accelerate = super.accelerate.overridePythonAttrs (old: {
-        #             doCheck = false;
-        #           });
-        #           transformers = super.transformers.overrideAttrs (old: {
-        #             version = "5.5.0-dev";
-        #             doCheck = false;
-        #             src = prev.fetchFromGitHub {
-        #               owner = "huggingface";
-        #               repo = "transformers";
-        #               rev = "main";
-        #               hash = "sha256-M5FMLe6CnC5cIFoSSP4t9F8ZJtSlPagzHyYtOO71vbs=";
-        #             };
-        #           });
-        #         };
-        #       };
-        #     })
-        #   ];
-        # }).python3Packages.vllm;
-        # wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
-        #   pname = "wlroots";
-        #   version = "0.21.0-dev";
-        #   src = prev.fetchFromGitLab {
-        #     domain = "gitlab.freedesktop.org";
-        #     owner = "wlroots";
-        #     repo = "wlroots";
-        #     rev = "29fc556f4cd70896e464b3402b510d9759707cf8";
-        #     hash = "sha256-hn2gbw+QMHQ1lpJp9xxleHEmD+w8FRHnQAwlCu+U8Go=";
-        #   };
-        #   mesonFlags = builtins.filter (opt: !prev.lib.hasInfix "xwayland" opt) old.mesonFlags;
-        # });
-        # sway-unwrapped =
-        #   (prev.sway-unwrapped.override {
-        #     wlroots_0_20 = final.wlroots_0_19;
-        #   }).overrideAttrs
-        #     (old: {
-        #       src = prev.fetchFromGitHub {
-        #         owner = "swaywm";
-        #         repo = "sway";
-        #         rev = "f3b64311045c3241ac6be3fd293dff8bfd55b6d4";
-        #         hash = "sha256-cCVhLvVKX3GqQ+5H9j2wQy2zSqzheM0Fw8uReUJzb2I=";
-        #       };
-        #       buildInputs = old.buildInputs ++ [ prev.libffi ];
-        #     });
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
-          # src = prev.fetchFromGitHub {
-          #   owner = "emersion";
-          #   repo = "xdg-desktop-portal-wlr";
-          #   rev = "5b047df2492d6772df2089835b579f34ab4048b7";
-          #   hash = "sha256-R0oeuca9HmgeOkZpFpOwl7M3zZ1+DJgsTVcIxhr7L34=";
-          # };
-          # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.makeWrapper ];
           buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
           postInstall = ''
             ${oldAttrs.postInstall or ""}
             wrapProgram $out/libexec/xdg-desktop-portal-wlr \
               --prefix PATH : ${lib.makeBinPath [ prev.wmenu ]}
           '';
-        });
-        android-tools = prev.androidenv.androidPkgs.platform-tools.overrideAttrs (oldAttrs: rec {
-          version = "36.0.0";
-          src = prev.fetchurl {
-            url = "https://dl.google.com/android/repository/platform-tools_r${version}-linux.zip";
-            sha256 = "sha256-Dq1kLJQ//nlwH8zKj18cacTOT0PfLu/uVT9syyfL++g=";
-          };
         });
       })
     ];

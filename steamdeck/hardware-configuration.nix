@@ -27,9 +27,7 @@
     ];
     kernelModules = [ "kvm-amd" ];
     extraModulePackages = [ config.boot.kernelPackages.zenergy ];
-    kernelParams = [
-      # "drm.panic_screen=qr_code"
-    ];
+    kernelParams = [ ];
     kernel.sysctl."kernel.sysrq" = 1;
   };
 

@@ -23,9 +23,7 @@
     ];
     initrd.kernelModules = [ ];
     kernelModules = [ "kvm-intel" ];
-    kernelParams = [
-      # "drm.panic_screen=qr_code"
-    ];
+    kernelParams = [ ];
     extraModulePackages = [ ];
   };
 

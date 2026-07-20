@@ -4,14 +4,7 @@
   environment.systemPackages = with pkgs; [
     steamdeck-firmware
     xauth
-    # (pkgs.kodi-wayland.withPackages (
-    #   kodiPkgs: with kodiPkgs; [
-    #     inputstream-adaptive
-    #   ]
-    # ))
     protonup-qt
-    maliit-keyboard
-    maliit-framework
     (wrapRetroArch {
       cores = with libretro; [
         genesis-plus-gx # Sega
