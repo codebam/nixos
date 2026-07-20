@@ -6,8 +6,6 @@
     nixpkgs = {
       follows = "chaotic/nixpkgs";
     };
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    master.url = "github:nixos/nixpkgs/master";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
