@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  inputs,
   ...
 }:
 
@@ -19,78 +18,12 @@
         };
       };
     };
-    # nixcord = {
-    #   enable = false;
-    #   equibop.enable = true;
-    #   config = {
-    #     plugins = {
-    #       fakeNitro.enable = true;
-    #       callTimer.enable = true;
-    #       altKrispSwitch.enable = true;
-    #       betterInvites.enable = true;
-    #       ircColors.enable = true;
-    #       moreQuickReactions.enable = true;
-    #       OnePingPerDM.enable = true;
-    #       questify.enable = true;
-    #       replaceGoogleSearch.enable = true;
-    #       typingTweaks.enable = true;
-    #     };
-    #   };
-    # };
     google-chrome = {
       enable = true;
-      commandLineArgs = [
-        "--enable-features=AllowLegacyMV2Extensions"
-        "--disable-features=ExtensionManifestV2Unsupported,ExtensionManifestV2Disabled"
-      ];
-      # package =
-      #   (pkgs.google-chrome.override {
-      #     commandLineArgs = [
-      #       "--enable-features=Glic,GlicSidePanel,GlicActor"
-      #       "--variations-override-country=us"
-      #     ];
-      #   }).overrideAttrs
-      #     (oldAttrs: rec {
-      #       pname = "google-chrome-unstable";
-      #       version = "147.0.6890.0";
-
-      #       src = pkgs.fetchurl {
-      #         url = "https://dl.google.com/linux/direct/google-chrome-unstable_current_amd64.deb";
-      #         hash = "sha256-fb+ldv8LqBEFcBKyX2HFx54161bHyDJdyJ+3RzkIovg=";
-      #       };
-
-      #       installPhase =
-      #         builtins.replaceStrings
-      #           [
-      #             "appname=chrome"
-      #             "dist=stable"
-      #             "opt/google/chrome"
-      #             "google-chrome-stable"
-      #             "com.google.Chrome.desktop"
-      #           ]
-      #           [
-      #             "appname=chrome-unstable"
-      #             "dist=unstable"
-      #             "opt/google/chrome-unstable"
-      #             "google-chrome-unstable"
-      #             "com.google.Chrome.unstable.desktop"
-      #           ]
-      #           oldAttrs.installPhase;
-
-      #       postInstall = ''
-      #         ln -sf $out/bin/google-chrome-unstable $out/bin/google-chrome
-      #       '';
-
-      #       meta = oldAttrs.meta // {
-      #         mainProgram = "google-chrome-unstable";
-      #       };
-      #     });
     };
     chromium = {
-      enable = false;
+      enable = true;
       package = pkgs.ungoogled-chromium;
-      # package =
-      #   (inputs.chromium-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}).ungoogled-chromium;
     };
     ghostty = {
       enable = true;
@@ -99,7 +32,6 @@
       settings = {
         cursor-style = "block";
         shell-integration-features = "no-cursor";
-        background-opacity = 0.8;
         cursor-style-blink = false;
         window-padding-x = 0;
         window-padding-y = 0;
@@ -108,7 +40,6 @@
     };
     helix = {
       enable = true;
-      # package = inputs.helix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       package = pkgs.helix_git;
       defaultEditor = true;
       languages = {
@@ -142,15 +73,6 @@
           normal = {
             X = "select_line_above";
             x = "select_line_below";
-            # "C-space" = ":helix-copilot-complete";
-          };
-          insert = {
-            # "C-space" = ":helix-copilot-complete";
-            # "tab" = ":helix-copilot-accept";
-            # "esc" = [
-            #   ":helix-copilot-clear"
-            #   "normal_mode"
-            # ];
           };
         };
       };
@@ -218,7 +140,6 @@
     };
     firefox = {
       enable = true;
-      # package = pkgs.firefox_nightly;
       policies = {
         DisableTelemetry = true;
         DisableFirefoxStudies = true;
@@ -238,7 +159,6 @@
         isDefault = true;
         path = "ry5m9sd1.default";
         settings = {
-          # "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "sidebar.verticalTabs" = true;
           "sidebar.revamp" = true;
           # Need this for discord
@@ -275,41 +195,11 @@
           "network.prefetch-next" = false;
           "network.http.speculative-parallel-limit" = 0;
           "network.predictor.enabled" = false;
-          # Clear data on shutdown
-          # "privacy.sanitize.sanitizeOnShutdown" = true;
         };
-        # userChrome = ''
-        #   #sidebar-splitter, #sidebar-launcher-splitter {
-        #       display: none !important;
-        #   }
-        #   #sidebar-main {
-        #       position: fixed !important;
-        #       left: 0 !important;
-        #       top: 0 !important;
-        #       bottom: 0 !important;
-        #       z-index: 1000 !important;
-        #       width: 10px !important;
-        #       min-width: 10px !important;
-        #       max-width: 10px !important;
-        #       opacity: 0 !important;
-        #       overflow-x: hidden !important;
-        #       transition: width 0.2s ease-in-out, min-width 0.2s ease-in-out, max-width 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
-        #   }
-        #   #sidebar-main:hover {
-        #       width: 240px !important;
-        #       min-width: 240px !important;
-        #       max-width: 240px !important;
-        #       opacity: 1 !important;
-        #       box-shadow: 4px 0 16px rgba(0,0,0,0.3) !important;
-        #   }
-        # '';
       };
     };
-    yt-dlp = {
-      enable = false;
-    };
     mpv = {
-      enable = false;
+      enable = true;
       config = {
         save-position-on-quit = true;
         resume-playback = true;
@@ -349,30 +239,6 @@
         display_server = true;
       };
     };
-    wezterm = {
-      enable = true;
-      extraConfig = ''
-        return {
-          window_background_opacity = 0.9,
-          hide_tab_bar_if_only_one_tab = true,
-          window_padding = {
-            left = 0,
-            right = 0,
-            top = 0,
-            bottom = 0,
-          }
-        }
-      '';
-    };
-    gh = {
-      enable = true;
-      settings = {
-        git_protocol = "ssh";
-      };
-    };
-    gh-dash = {
-      enable = true;
-    };
     zoxide = {
       enable = true;
       enableBashIntegration = true;
@@ -406,26 +272,6 @@
           end
         end
       '';
-      plugins = [
-        # {
-        #   name = "autopair.fish";
-        #   src = pkgs.fetchFromGitHub {
-        #     owner = "jorgebucaran";
-        #     repo = "autopair.fish";
-        #     rev = "4d1752ff5b39819ab58d7337c69220342e9de0e2";
-        #     sha256 = "sha256-qt3t1iKRRNuiLWiVoiAYOu+9E7jsyECyIqZJ/oRIT1A=";
-        #   };
-        # }
-        # {
-        #   name = "puffer-fish";
-        #   src = pkgs.fetchFromGitHub {
-        #     owner = "nickeb96";
-        #     repo = "puffer-fish";
-        #     rev = "12d062eae0ad24f4ec20593be845ac30cd4b5923";
-        #     sha256 = "sha256-2niYj0NLfmVIQguuGTA7RrPIcorJEPkxhH6Dhcy+6Bk=";
-        #   };
-        # }
-      ];
     };
     bash = {
       enable = true;
@@ -495,43 +341,6 @@
           '';
         }
       ];
-    };
-    kitty = {
-      enable = true;
-      enableGitIntegration = true;
-      shellIntegration = {
-        mode = "no-cursor";
-        enableBashIntegration = true;
-        enableFishIntegration = true;
-      };
-      settings = {
-        term = "xterm-256color";
-        cursor_shape = "block";
-        cursor_blink_interval = 0;
-        mouse_hide_wait = 0;
-        disable_ligatures = "cursor";
-        cursor_trail = 1;
-        auto_reload_config = "-1";
-      };
-    };
-    foot = {
-      server = {
-        enable = false;
-      };
-      enable = true;
-      settings = {
-        main = {
-          term = "xterm-256color";
-        };
-        mouse = {
-          hide-when-typing = "yes";
-        };
-        bell = {
-          urgent = "yes";
-          command = "${pkgs.pipewire}/bin/pw-play ${../bell.wav}";
-          command-focused = "yes";
-        };
-      };
     };
     direnv = {
       enable = true;
