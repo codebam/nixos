@@ -224,6 +224,30 @@
         "type": "github"
       }
     },
+    "helix-undofile": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784584098,
+        "narHash": "sha256-3pDEctlR6tVUX3eEDQyTvx5cC3vrBjluRNrdQP1zWqQ=",
+        "owner": "codebam",
+        "repo": "helix",
+        "rev": "82216635007d582d996ad7cf91b6e12bb4c5c3a3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "ref": "undofile",
+        "repo": "helix",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -433,6 +457,7 @@
       "inputs": {
         "chaotic": "chaotic",
         "disko": "disko",
+        "helix-undofile": "helix-undofile",
         "home-manager": "home-manager_2",
         "lanzaboote": "lanzaboote",
         "lsfg-vk-flake": "lsfg-vk-flake",

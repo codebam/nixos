@@ -50,6 +50,13 @@
       url = "git+https://codeberg.org/codebam/sops-pass.git";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    helix-undofile = {
+      url = "github:codebam/helix/undofile";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        rust-overlay.follows = "rust-overlay";
+      };
+    };
   };
 
   outputs =

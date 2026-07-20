@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  inputs,
   ...
 }:
 
@@ -40,7 +41,7 @@
     };
     helix = {
       enable = true;
-      package = pkgs.helix_git;
+      package = inputs.helix-undofile.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultEditor = true;
       languages = {
         language = [
@@ -68,6 +69,7 @@
           end-of-line-diagnostics = "hint";
           inline-diagnostics.cursor-line = "warning";
           bufferline = "multiple";
+          undofile = true;
         };
         keys = {
           normal = {
