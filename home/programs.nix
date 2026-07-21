@@ -202,9 +202,31 @@
     };
     mpv = {
       enable = true;
+      scripts = with pkgs.mpvScripts; [
+        uosc
+        thumbfast
+        autoload
+      ];
       config = {
         save-position-on-quit = true;
         resume-playback = true;
+      };
+      profiles = {
+        anime = {
+          profile = "gpu-hq";
+          deband = true;
+          deband-iterations = 4;
+          deband-threshold = 48;
+          deband-range = 16;
+          deband-grain = 48;
+          dither-depth = "auto";
+          alang = "jpn,jap,eng,en";
+          slang = "jpn,jap,eng,en";
+          sub-auto = "fuzzy";
+          sub-file-paths = "ass:srt:sub:subs:subtitles";
+          demuxer-mkv-subtitle-preroll = true;
+          glsl-shaders = "${pkgs.anime4k}/Anime4K_Clamp_Highlights.glsl:${pkgs.anime4k}/Anime4K_Restore_CNN_VL.glsl:${pkgs.anime4k}/Anime4K_Upscale_CNN_x2_VL.glsl:${pkgs.anime4k}/Anime4K_AutoDownscalePre_x2.glsl:${pkgs.anime4k}/Anime4K_AutoDownscalePre_x4.glsl:${pkgs.anime4k}/Anime4K_Upscale_CNN_x2_M.glsl";
+        };
       };
     };
     swaylock = {
