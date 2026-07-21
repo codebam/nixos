@@ -63,6 +63,17 @@
     desktopManager.plasma6.enable = false;
     openssh = {
       enable = true;
+      hostKeys = [
+        {
+          path = "/persistent/etc/ssh/ssh_host_rsa_key";
+          type = "rsa";
+          bits = 4096;
+        }
+        {
+          path = "/persistent/etc/ssh/ssh_host_ed25519_key";
+          type = "ed25519";
+        }
+      ];
       settings = {
         PasswordAuthentication = false;
       };

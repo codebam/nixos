@@ -5,6 +5,8 @@
   ...
 }:
 {
+  systemd.services.systemd-networkd-wait-online.enable = lib.mkForce false;
+
   networking = {
     useNetworkd = true;
     networkmanager = {
