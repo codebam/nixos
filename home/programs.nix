@@ -41,7 +41,7 @@
     };
     helix = {
       enable = true;
-      package = inputs.helix-undofile.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      package = pkgs.helix_git;
       defaultEditor = true;
       languages = {
         language = [
@@ -63,13 +63,12 @@
         };
       };
       settings = {
-        theme = lib.mkForce "rose_pine";
+        theme = lib.mkForce "default";
         editor = {
           lsp.display-inlay-hints = true;
           end-of-line-diagnostics = "hint";
           inline-diagnostics.cursor-line = "warning";
           bufferline = "multiple";
-          undofile = true;
         };
         keys = {
           normal = {
@@ -142,6 +141,7 @@
     };
     firefox = {
       enable = true;
+      package = pkgs.firedragon-bin;
       policies = {
         DisableTelemetry = true;
         DisableFirefoxStudies = true;

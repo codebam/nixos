@@ -114,6 +114,7 @@ _: {
             ".claude"
             ".gemini"
             ".librewolf"
+            ".firedragon"
             ".password-store"
             ".local/state/wireplumber"
             ".config/mprisence"
