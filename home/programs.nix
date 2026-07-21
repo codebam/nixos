@@ -163,40 +163,26 @@
         settings = {
           "sidebar.verticalTabs" = true;
           "sidebar.revamp" = true;
-          # Need this for discord
           "media.peerconnection.enabled" = true;
-          # Enable strict tracking protection
           "privacy.trackingprotection.enabled" = true;
           "privacy.trackingprotection.socialtracking.enabled" = true;
           "privacy.trackingprotection.fingerprinting.enabled" = true;
           "privacy.trackingprotection.cryptomining.enabled" = true;
-          # Resist fingerprinting (Tor/LibreWolf style)
-          "privacy.resistFingerprinting" = true;
-          # This is too annoying to use
-          "privacy.resistFingerprinting.letterboxing" = false;
-          "privacy.resistFingerprinting.exemptedDomains" =
-            "app.element.io,element.io,discord.com,canary.discord.com";
-          # First-party isolation to prevent cross-site correlation
-          "privacy.firstparty.isolate" = false;
-          # Disable APIs commonly used for fingerprinting
-          "webgl.disabled" = true;
-          "dom.webaudio.enabled" = true;
-          "media.navigator.enabled" = true;
           "dom.netinfo.enabled" = false;
           "media.video_stats.enabled" = true;
           "dom.gamepad.enabled" = false;
           "device.sensors.enabled" = false;
           "geo.enabled" = false;
-          # General tracking prevention
           "privacy.query_stripping.enabled" = true;
           "browser.send_pings" = false;
-          # Security & network connections
           "dom.security.https_only_mode" = true;
           "browser.search.suggest.enabled" = false;
           "network.dns.disablePrefetch" = true;
           "network.prefetch-next" = false;
           "network.http.speculative-parallel-limit" = 0;
           "network.predictor.enabled" = false;
+          "gfx.webrender.all" = true;
+          "layers.acceleration.force-enabled" = true;
         };
       };
     };
