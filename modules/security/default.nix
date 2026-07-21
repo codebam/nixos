@@ -17,11 +17,12 @@
             }
         });
 
-        // Allow codebam to manage systemd user services without password
+        // Safe unit check for systemd user services
         polkit.addRule(function(action, subject) {
-            if (action.id.match("org.freedesktop.systemd1.manage-units") &&
+            var unit = action.lookup("unit");
+            if (action.id && action.id.match("org.freedesktop.systemd1.manage-units") &&
                 subject.user == "codebam" &&
-                action.lookup("unit").match(/^user@\d+\.service$/)) {
+                unit && unit.match(/^user@\d+\.service$/)) {
                 return polkit.Result.YES;
             }
         });

@@ -36,6 +36,6 @@
       enable = true;
       extraArgs = "--keep-since 7d --keep 5";
     };
-    flake = "/etc/nixos";
+    flake = "/persistent/etc/nixos";
   };
 }

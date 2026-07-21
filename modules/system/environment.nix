@@ -1,6 +1,8 @@
 { pkgs, inputs, ... }:
 {
   environment = {
+    etc."nixos".source = "/persistent/etc/nixos";
+
     systemPackages = with pkgs; [
       bubblewrap
       ladspaPlugins
