@@ -27,8 +27,10 @@
       rules."50-tailscale" = {
         onState = [ "routable" ];
         script = ''
-          NETDEV=$(ip -o route get 8.8.8.8 | cut -d ' ' -f 5)
-          ${pkgs.ethtool}/bin/ethtool -K "$NETDEV" rx-udp-gro-forwarding on rx-gro-list off
+          NETDEV=$(${pkgs.iproute2}/bin/ip -o route get 8.8.8.8 2>/dev/null | cut -d ' ' -f 5)
+          if [ -n "$NETDEV" ]; then
+            ${pkgs.ethtool}/bin/ethtool -K "$NETDEV" rx-udp-gro-forwarding on rx-gro-list off 2>/dev/null || true
+          fi
         '';
       };
     };
@@ -40,7 +42,7 @@
           DNS = "1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net";
           FallbackDNS = "8.8.8.8#dns.google";
           DNSSEC = "allow-downgrade";
-          DNSOverTLS = "opportunistic";
+          DNSOverTLS = "true";
         };
       };
     };

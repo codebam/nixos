@@ -50,6 +50,21 @@
             }
           '';
         };
+        firedragon = {
+          state = "enforce";
+          profile = ''
+            abi <abi/5.0>,
+            include <tunables/global>
+
+            profile firedragon /nix/store/*-firedragon*/{bin/{firedragon,.firedragon-wrapped},lib/firedragon/firedragon} flags=(unconfined) {
+              userns,
+
+              # Site-specific additions and overrides.
+              include if exists <local/firedragon>
+              include if exists <local/firefox>
+            }
+          '';
+        };
         google-chrome = {
           state = "enforce";
           profile = ''

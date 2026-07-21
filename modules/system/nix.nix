@@ -6,7 +6,7 @@
         "nix-command"
         "flakes"
       ];
-      auto-optimise-store = false;
+      auto-optimise-store = true;
       trusted-users = [
         "root"
         "codebam"

@@ -63,19 +63,7 @@
             "x86_64-linux"
             "aarch64-linux"
           ]
-          (
-            system:
-            functionProvidedToForAllSystems (
-              import nixpkgs {
-                inherit system;
-                overlays = [
-                ];
-                config = {
-                  cudaSupport = false;
-                };
-              }
-            )
-          );
+          (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
 
       # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
       mkNixosSystem =
