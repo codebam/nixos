@@ -7,6 +7,7 @@
     kernelParams = [
       "usbcore.autosuspend=-1"
       "amd_pstate=active"
+      "amd_prefcore=enable"
       "transparent_hugepage=always"
       "split_lock_detect=off"
       "preempt=full"
@@ -36,6 +37,10 @@
               "cryptsetup.target"
               "local-fs-pre.target"
               "systemd-udev-settle.service"
+              "dev-mapper-crypted.device"
+            ];
+            wants = [
+              "dev-mapper-crypted.device"
             ];
             before = [
               "sysroot.mount"
@@ -54,26 +59,10 @@
               log "--- Starting cleanup-root service ---"
 
               # --- 1. Find the target device ---
-              DEVICE_PATH="/dev/mapper/crypted"
-              ACTUAL_DEVICE=""
+              ACTUAL_DEVICE="/dev/mapper/crypted"
 
-              log "Waiting for device to become available..."
-              for attempt in {1..30}; do
-                if [[ -e "$DEVICE_PATH" ]]; then
-                  ACTUAL_DEVICE="$DEVICE_PATH"
-                  break
-                else
-                  log "Attempt $attempt: Device not found, waiting 1s..."
-                  sleep 1
-                fi
-              done
-
-              if [[ -z "$ACTUAL_DEVICE" ]]; then
-                log "ERROR: Could not find NVMe device after 30 attempts."
-                log "Available devices in /dev/disk/by-id/:"
-                ls -la /dev/disk/by-id/ || true
-                log "Available devices in /dev/:"
-                ls -la /dev/nvme* || true
+              if [[ ! -e "$ACTUAL_DEVICE" ]]; then
+                log "ERROR: Could not find target device $ACTUAL_DEVICE"
                 fail "Device discovery failed."
               fi
 
@@ -150,15 +139,13 @@
 
                   now_seconds=$(date +%s)
                   thirty_days_ago_seconds=$((now_seconds - 30 * 24 * 60 * 60))
-                  cutoff_date_str=$(date --date="@$thirty_days_ago_seconds" "+%Y-%m-%d_%H-%M-%S")
                   
-                  log "Will delete backups older than: $cutoff_date_str"
+                  log "Will delete backups older than 30 days."
 
                   find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while read -r old_subvol; do
-                      subvol_basename=$(basename "$old_subvol")
+                      subvol_mtime=$(stat -c %Y "$old_subvol" 2>/dev/null || echo 0)
 
-                      # Use string comparison. This works because of the YYYY-MM-DD_HH-MM-SS format.
-                      if [[ "$subvol_basename" < "$cutoff_date_str" ]]; then
+                      if (( subvol_mtime > 0 && subvol_mtime < thirty_days_ago_seconds )); then
                         log "Found old backup to delete: $old_subvol"
                         if btrfs subvolume show "$old_subvol" &>/dev/null; then
                             delete_subvolume_recursively "$old_subvol"

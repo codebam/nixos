@@ -51,13 +51,13 @@ _: {
         }
         {
           directory = "/var/lib/private/ollama";
-          user = "nobody";
-          group = "nogroup";
+          user = "ollama";
+          group = "ollama";
         }
         {
           directory = "/var/lib/private/open-webui";
-          user = "nobody";
-          group = "nogroup";
+          user = "open-webui";
+          group = "open-webui";
         }
         {
           directory = "/var/lib/acme";
@@ -162,43 +162,9 @@ _: {
       };
     };
   };
+
   systemd.tmpfiles.settings.preservation = {
-    "/home/codebam".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/Videos".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
     "/home/codebam/Videos/Anime".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/.config".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/.local".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/.local/share".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/.local/state".d = {
-      user = "codebam";
-      group = "users";
-      mode = "0755";
-    };
-    "/home/codebam/.cache".d = {
       user = "codebam";
       group = "users";
       mode = "0755";
