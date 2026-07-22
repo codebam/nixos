@@ -18,9 +18,18 @@ _: {
           user = "root";
           group = "nixbld";
         }
-        "/etc/NetworkManager/system-connections"
-        "/etc/mullvad-vpn"
-        "/etc/opt/ivpn"
+        {
+          directory = "/etc/NetworkManager/system-connections";
+          how = "symlink";
+        }
+        {
+          directory = "/etc/mullvad-vpn";
+          how = "symlink";
+        }
+        {
+          directory = "/etc/opt/ivpn";
+          how = "symlink";
+        }
         "/var/lib/OpenRGB"
         "/var/lib/transmission"
         {
