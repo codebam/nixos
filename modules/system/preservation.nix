@@ -19,15 +19,12 @@ _: {
         }
         {
           directory = "/etc/NetworkManager/system-connections";
-          how = "symlink";
         }
         {
           directory = "/etc/mullvad-vpn";
-          how = "symlink";
         }
         {
           directory = "/etc/opt/ivpn";
-          how = "symlink";
         }
         "/var/lib/OpenRGB"
         "/var/lib/transmission"

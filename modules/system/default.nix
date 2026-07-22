@@ -1,7 +1,7 @@
 _: {
   system = {
     etc.overlay.enable = true;
-    etc.overlay.mutable = false;
+    etc.overlay.mutable = true;
   };
   services.userborn.enable = true;
 }
