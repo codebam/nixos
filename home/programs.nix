@@ -258,7 +258,7 @@
       enable = true;
       interactiveShellInit = ''
         set fish_greeting ""
-        set -gx PATH $PATH /home/codebam/.cargo/bin
+        set -gx PATH $PATH /home/codebam/.cargo/bin /home/codebam/.npm-global/bin
         set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
         set -gx SEARXNG_API_URL http://localhost:8081
         set -gx EDITOR hx

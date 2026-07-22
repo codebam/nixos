@@ -32,6 +32,10 @@ in
     username = "codebam";
     homeDirectory = "/home/codebam";
 
+    sessionPath = [
+      "${config.home.homeDirectory}/.npm-global/bin"
+    ];
+
     shell = {
       enableShellIntegration = true;
     };
