@@ -121,87 +121,133 @@
       };
     };
 
-    i3status-rust = {
-      bars = {
-        default = {
-          blocks = [
-            {
-              block = "focused_window";
-              format = " $title.str(max_w:40) |";
-            }
-            {
-              block = "sound";
-              format = " $icon {$volume|} ";
-            }
-            {
-              block = "sound";
-              device_kind = "source";
-              format = " $icon {$volume|} ";
-            }
-            {
-              block = "music";
-              format = " $icon {$combo.str(max_w:25,rot_interval:0.5) $prev $play $next |} ";
-              seek_step_secs = 10;
-              click = [
-                {
-                  button = "forward";
-                  action = "seek_forward";
-                }
-                {
-                  button = "back";
-                  action = "seek_backward";
-                }
-              ];
-            }
-            {
-              block = "net";
-              format = " $icon {$ssid $signal_strength|Wired} ";
-            }
-            {
-              block = "disk_space";
-              path = "/";
-              format = " $icon /: $available ";
-              info_type = "available";
-              interval = 60;
-              warning = 20.0;
-              alert = 10.0;
-            }
-            {
-              block = "disk_space";
-              path = "/games";
-              format = " $icon /games: $available ";
-              info_type = "available";
-              interval = 60;
-              warning = 20.0;
-              alert = 10.0;
-            }
-            {
-              block = "memory";
-              format = " $icon $mem_used_percents% ($mem_used) ";
-            }
-            {
-              block = "amd_gpu";
-              format = " $icon $utilization% ($vram_used_percents%) ";
-            }
-            {
-              block = "temperature";
-              format = " $icon $max C ";
-            }
-            {
-              block = "cpu";
-              format = " $icon $utilization% ";
-            }
-            {
-              block = "load";
-              format = " $icon $1m ";
-            }
-            {
-              block = "time";
-              format = " $icon $timestamp.datetime(f:'%a %b %d, %R') ";
-              interval = 60;
-            }
-          ];
+    waybar.settings.mainBar = {
+      ipc = true;
+      layer = "top";
+      position = "top";
+      height = 30;
+      modules-left = [
+        "sway/workspaces"
+        "sway/window"
+      ];
+      modules-center = [
+        "mpris"
+      ];
+      modules-right = [
+        "pulseaudio"
+        "pulseaudio#source"
+        "network"
+        "disk"
+        "disk#games"
+        "memory"
+        "custom/amd_gpu"
+        "temperature"
+        "cpu"
+        "custom/load"
+        "clock"
+      ];
+
+      "sway/workspaces" = {
+        disable-scroll = true;
+        all-outputs = true;
+        format = "{name}";
+      };
+
+      "sway/window" = {
+        format = " {title}";
+        max-length = 40;
+      };
+
+      "pulseaudio" = {
+        format = " {icon} {volume}% ";
+        format-muted = " 󰝟 muted ";
+        format-icons = {
+          default = [ "" "" "" ];
         };
+        on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+      };
+
+      "pulseaudio#source" = {
+        format = " {format_source} ";
+        format-source = " 󰍬 {volume}% ";
+        format-source-muted = " 󰍭 muted ";
+        on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+      };
+
+      "mpris" = {
+        format = " {player_icon} {dynamic} ";
+        format-paused = " {status_icon} <i>{dynamic}</i> ";
+        player-icons = {
+          default = "▶";
+        };
+        status-icons = {
+          paused = "⏸";
+        };
+        dynamic-order = [ "title" "artist" ];
+        dynamic-len = 25;
+        on-click = "${pkgs.playerctl}/bin/playerctl play-pause";
+        on-click-middle = "${pkgs.playerctl}/bin/playerctl previous";
+        on-click-right = "${pkgs.playerctl}/bin/playerctl next";
+        on-scroll-up = "${pkgs.playerctl}/bin/playerctl position 10+";
+        on-scroll-down = "${pkgs.playerctl}/bin/playerctl position 10-";
+      };
+
+      "network" = {
+        format-wifi = " 󰤨 {ssid} {signalStrength}% ";
+        format-ethernet = " 󰈀 Wired ";
+        format-disconnected = " 󰤭 Disconnected ";
+      };
+
+      "disk" = {
+        path = "/";
+        interval = 60;
+        format = " 󰋊 /: {free} ";
+      };
+
+      "disk#games" = {
+        path = "/games";
+        interval = 60;
+        format = " 󰋊 /games: {free} ";
+      };
+
+      "memory" = {
+        interval = 5;
+        format = " 󰍛 {percentage}% ({used:0.1f}GiB) ";
+      };
+
+      "custom/amd_gpu" = {
+        exec = "${pkgs.writeShellScript "amd-gpu-status" ''
+          gpu=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
+          vram_used=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/mem_info_vram_used 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
+          vram_total=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/mem_info_vram_total 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
+          if [ -n "$gpu" ] && [ -n "$vram_used" ] && [ -n "$vram_total" ] && [ "$vram_total" -gt 0 ]; then
+            vram_pct=$(( vram_used * 100 / vram_total ))
+            echo "󰢮 ''${gpu}% (''${vram_pct}%)"
+          fi
+        ''}";
+        interval = 2;
+        format = " {} ";
+      };
+
+      "temperature" = {
+        critical-threshold = 80;
+        format = " 󰔏 {temperatureC}°C ";
+      };
+
+      "cpu" = {
+        interval = 5;
+        format = "  {usage}% ";
+      };
+
+      "custom/load" = {
+        exec = "${pkgs.coreutils}/bin/cat /proc/loadavg | ${pkgs.gawk}/bin/awk '{print $1}'";
+        interval = 5;
+        format = " 󰓅 {} ";
+      };
+
+      "clock" = {
+        interval = 60;
+        format = " 󰥔 {:%a %b %d, %H:%M} ";
       };
     };
   };

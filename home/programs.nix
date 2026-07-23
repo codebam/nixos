@@ -111,33 +111,65 @@
         $env.GPG_TTY = (tty)
       '';
     };
-    i3status-rust = {
+    waybar = {
       enable = true;
-      bars = {
-        default = {
-          settings = {
-            theme = {
-              overrides = {
-                idle_bg = "#000000";
-                idle_fg = "#cdd6f4";
-                good_bg = "#000000";
-                good_fg = "#a6e3a1";
-                warning_bg = "#000000";
-                warning_fg = "#f9e2af";
-                critical_bg = "#000000";
-                critical_fg = "#f38ba8";
-                info_bg = "#000000";
-                info_fg = "#89b4fa";
-                separator_bg = "#000000";
-                separator_fg = "#45475a";
-                separator = "";
-                alternating_tint_bg = "#000000";
-              };
-            };
-          };
-          icons = "awesome6";
-        };
-      };
+      style = ''
+        * {
+          border: none;
+          border-radius: 0;
+          font-family: "Fira Code NerdFont", monospace;
+          font-size: 12px;
+          min-height: 0;
+        }
+
+        window#waybar {
+          background-color: #000000;
+          color: #cdd6f4;
+        }
+
+        #workspaces button {
+          padding: 2px 8px;
+          background-color: #000000;
+          color: #585b70;
+          border-bottom: 2px solid #000000;
+        }
+
+        #workspaces button.focused {
+          color: #89b4fa;
+          border-bottom: 2px solid #89b4fa;
+        }
+
+        #workspaces button.active {
+          color: #a6adc8;
+          border-bottom: 2px solid #313244;
+        }
+
+        #workspaces button.urgent {
+          color: #f38ba8;
+          border-bottom: 2px solid #f38ba8;
+        }
+
+        #window, #pulseaudio, #mpris, #network, #disk, #memory, #custom-amd_gpu, #temperature, #cpu, #custom-load, #clock, #battery {
+          padding: 4px 8px;
+          color: #cdd6f4;
+        }
+
+        #pulseaudio.muted {
+          color: #585b70;
+        }
+
+        #temperature.critical {
+          color: #f38ba8;
+        }
+
+        #battery.warning {
+          color: #f9e2af;
+        }
+
+        #battery.critical {
+          color: #f38ba8;
+        }
+      '';
     };
     firefox = {
       enable = true;

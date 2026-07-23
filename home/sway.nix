@@ -79,40 +79,11 @@
         };
         bars = [
           {
-            statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ~/.config/i3status-rust/config-default.toml";
+            command = "${pkgs.waybar}/bin/waybar";
             mode = "hide";
-            fonts = lib.mkForce {
-              names = [ "Fira Code NerdFont" ];
-              size = 11.0;
-            };
-            position = "top";
             hiddenState = "hide";
-            trayOutput = "none";
-            colors = {
-              background = lib.mkForce "#000000";
-              statusline = lib.mkForce "#cdd6f4";
-              separator = lib.mkForce "#45475a";
-              focusedWorkspace = {
-                border = "#89b4fa";
-                background = "#000000";
-                text = "#89b4fa";
-              };
-              activeWorkspace = {
-                border = "#313244";
-                background = "#000000";
-                text = "#a6adc8";
-              };
-              inactiveWorkspace = {
-                border = "#000000";
-                background = "#000000";
-                text = "#585b70";
-              };
-              urgentWorkspace = {
-                border = "#f38ba8";
-                background = "#000000";
-                text = "#f38ba8";
-              };
-            };
+            position = "top";
+            extraConfig = "modifier Mod4";
           }
         ];
         window = {
