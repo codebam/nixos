@@ -147,7 +147,8 @@
       ];
 
       "sway/workspaces" = {
-        disable-scroll = true;
+        disable-scroll = false;
+        enable-bar-scroll = true;
         all-outputs = true;
         format = "{name}";
       };
