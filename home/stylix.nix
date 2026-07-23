@@ -13,7 +13,7 @@
       kitty.enable = true;
       ghostty.enable = true;
       gtk.enable = false;
-      mako.enable = true;
+      swaync.enable = true;
       qt.enable = false;
       sway.enable = false;
       swaylock.enable = true;

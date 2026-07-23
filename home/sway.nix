@@ -139,9 +139,9 @@
               fi
             '')}";
 
-            "${modifier}+space" = "exec ${pkgs.mako}/bin/makoctl dismiss";
-            "${modifier}+c" = "exec ${pkgs.mako}/bin/makoctl invoke default";
-            "${modifier}+z" = "exec ${pkgs.mako}/bin/makoctl restore";
+            "${modifier}+space" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+            "${modifier}+c" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -C";
+            "${modifier}+z" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -d -sw";
             "${modifier}+shift+t" = "exec ${(pkgs.writeShellScript "trim-yt-url" ''
               url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
               if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://((www|music)\.)?youtube\.com/|youtu\.be/)'; then
@@ -195,7 +195,6 @@
             ${modifier}+button5 exec "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_SINK@ 1%-"
           }
           mouse_warping none
-          exec '${pkgs.mako}/bin/mako'
           exec '${pkgs.wljoywake}/bin/wljoywake'
         '';
     };

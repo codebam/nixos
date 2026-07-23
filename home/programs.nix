@@ -113,6 +113,7 @@
     };
     waybar = {
       enable = true;
+      systemd.enable = true;
       style = ''
         * {
           border: none;
@@ -149,9 +150,20 @@
           border-bottom: 2px solid #f38ba8;
         }
 
-        #window, #pulseaudio, #mpris, #network, #disk, #memory, #custom-amd_gpu, #temperature, #cpu, #custom-load, #clock, #battery {
+        #window, #taskbar, #pulseaudio, #mpris, #network, #disk, #memory, #custom-amd_gpu, #temperature, #cpu, #custom-load, #clock, #battery {
           padding: 4px 8px;
           color: #cdd6f4;
+        }
+
+        #taskbar button {
+          padding: 0 4px;
+          background-color: transparent;
+          border: none;
+        }
+
+        #taskbar button.active {
+          background-color: rgba(137, 180, 250, 0.2);
+          border-bottom: 2px solid #89b4fa;
         }
 
         #pulseaudio.muted {

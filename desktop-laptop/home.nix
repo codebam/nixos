@@ -10,12 +10,8 @@
     };
   };
   services = {
-    mako = {
-      enable = false;
-      settings = {
-        layer = "overlay";
-        default-timeout = 10000;
-      };
+    swaync = {
+      enable = true;
     };
   };
 }

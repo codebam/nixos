@@ -77,10 +77,8 @@
   };
 
   services = {
-    mako = {
-      settings = {
-        output = "DP-3";
-      };
+    swaync = {
+      enable = true;
     };
     podman = {
       enable = true;
@@ -129,6 +127,7 @@
       modules-left = [
         "sway/workspaces"
         "sway/window"
+        "wlr/taskbar"
       ];
       modules-center = [
         "mpris"
@@ -154,8 +153,18 @@
       };
 
       "sway/window" = {
-        format = " {title}";
+        format = " {icon} {title}";
         max-length = 40;
+        icon = true;
+        icon-size = 16;
+      };
+
+      "wlr/taskbar" = {
+        format = "{icon}";
+        icon-size = 16;
+        tooltip-format = "{title}";
+        on-click = "activate";
+        on-click-middle = "close";
       };
 
       "pulseaudio" = {
