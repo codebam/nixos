@@ -75,11 +75,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1784801993,
-        "narHash": "sha256-8FLFBQ6V1h3enUieXWLWviNryn+eHlpBq3ZdzGQmtK8=",
+        "lastModified": 1784815957,
+        "narHash": "sha256-U5QvwtrF5ja/xT8CR5lUjma6TcWUdhFfVakE6MgCZog=",
         "owner": "chaotic-cx",
         "repo": "nyx",
-        "rev": "1fb5f537a96567fcdfbac8222fc4e881f8eafaaf",
+        "rev": "2da62e679146cca0090a2321a6106402c05388a9",
         "type": "github"
       },
       "original": {
@@ -498,11 +498,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784389912,
-        "narHash": "sha256-L0LVCvjAIrR3m9cnX957fS1/l6qmtPVvupJVksvZEUc=",
+        "lastModified": 1784829133,
+        "narHash": "sha256-uSMY8PZfJs6gLanioutmQUbmEErmv/re+gEiN20wD5o=",
         "ref": "refs/heads/main",
-        "rev": "bc22b50ac3d27d1d0e542e2d26cb88ce463afef8",
-        "revCount": 5,
+        "rev": "5b01f162cba16b4b6ab63e5631d9a0550b07d640",
+        "revCount": 6,
         "type": "git",
         "url": "https://codeberg.org/codebam/sops-pass.git"
       },
