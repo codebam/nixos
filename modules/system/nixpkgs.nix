@@ -53,7 +53,6 @@
         electron-unwrapped = prev.electron-bin;
         electron_41 = prev.electron_41-bin;
         electron_40 = prev.electron_40-bin;
-        firefox = prev.firefox-bin;
         xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (oldAttrs: {
           buildInputs = oldAttrs.buildInputs ++ [ prev.wmenu ];
           postInstall = ''

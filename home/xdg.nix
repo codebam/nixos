@@ -6,10 +6,10 @@ _:
     mimeApps = {
       enable = true;
       defaultApplications = {
-        "text/html" = "firedragon.desktop";
-        "x-scheme-handler/http" = "firedragon.desktop";
-        "x-scheme-handler/https" = "firedragon.desktop";
-        "x-scheme-handler/about" = "firedragon.desktop";
+        "text/html" = "firefox-nightly.desktop";
+        "x-scheme-handler/http" = "firefox-nightly.desktop";
+        "x-scheme-handler/https" = "firefox-nightly.desktop";
+        "x-scheme-handler/about" = "firefox-nightly.desktop";
       };
     };
   };
