@@ -104,7 +104,7 @@ in
       bat
       dust
       nvtopPackages.amd
-      gemini-cli
+      antigravity-ide
       antigravity-cli
       google-cloud-sdk
       arrpc
