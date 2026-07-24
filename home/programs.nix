@@ -125,9 +125,8 @@
         }
 
         window#waybar {
-          background-color: rgba(30, 30, 46, 0.85);
+          background-color: transparent;
           color: #cdd6f4;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         #workspaces {

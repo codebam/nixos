@@ -126,7 +126,6 @@
       height = 30;
       modules-left = [
         "sway/workspaces"
-        "sway/window"
         "wlr/taskbar"
       ];
       modules-center = [
