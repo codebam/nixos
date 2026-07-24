@@ -154,7 +154,7 @@
       };
 
       "sway/window" = {
-        format = " {icon} {title}";
+        format = "{icon} {title}";
         max-length = 40;
         icon = true;
         icon-size = 16;
@@ -203,9 +203,13 @@
       };
 
       "network" = {
-        format-wifi = " 󰤨 {ssid} {signalStrength}% ";
-        format-ethernet = " 󰈀 Wired ";
-        format-disconnected = " 󰤭 Disconnected ";
+        format = "󰈀 {ifname}";
+        format-wifi = "󰤨 {essid} {signalStrength}%";
+        format-ethernet = "󰈀 Wired";
+        format-linked = "󰈀 {ifname} (No IP)";
+        format-disconnected = "󰤭 Disconnected";
+        format-disabled = "󰤭 Disabled";
+        tooltip-format = "{ifname} via {gwaddr} 󰈀";
       };
 
       "disk" = {

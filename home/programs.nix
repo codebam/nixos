@@ -118,68 +118,262 @@
         * {
           border: none;
           border-radius: 0;
-          font-family: "Fira Code NerdFont", monospace;
-          font-size: 12px;
+          font-family: "FiraCode Nerd Font", "Fira Code", monospace;
+          font-size: 13px;
+          font-weight: bold;
           min-height: 0;
         }
 
         window#waybar {
-          background-color: #000000;
+          background-color: rgba(30, 30, 46, 0.85);
           color: #cdd6f4;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #workspaces {
+          background-color: rgba(17, 17, 27, 0.6);
+          margin: 3px 6px;
+          padding: 0 4px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         #workspaces button {
-          padding: 2px 8px;
-          background-color: #000000;
-          color: #585b70;
-          border-bottom: 2px solid #000000;
-        }
-
-        #workspaces button.focused {
-          color: #89b4fa;
-          border-bottom: 2px solid #89b4fa;
-        }
-
-        #workspaces button.active {
+          padding: 2px 10px;
+          margin: 2px 2px;
+          background-color: transparent;
           color: #a6adc8;
-          border-bottom: 2px solid #313244;
+          border-radius: 8px;
+          transition: all 0.2s ease-in-out;
         }
 
-        #workspaces button.urgent {
-          color: #f38ba8;
-          border-bottom: 2px solid #f38ba8;
-        }
-
-        #window, #taskbar, #pulseaudio, #mpris, #network, #disk, #memory, #custom-amd_gpu, #temperature, #cpu, #custom-load, #clock, #battery {
-          padding: 4px 8px;
+        #workspaces button:hover {
+          background-color: rgba(137, 180, 250, 0.2);
           color: #cdd6f4;
         }
 
-        #taskbar button {
-          padding: 0 4px;
+        #workspaces button.focused {
+          background-color: #89b4fa;
+          color: #11111b;
+        }
+
+        #workspaces button.active {
+          background-color: #b4befe;
+          color: #11111b;
+        }
+
+        #workspaces button.urgent {
+          background-color: #f38ba8;
+          color: #11111b;
+        }
+
+        #window {
+          background-color: rgba(17, 17, 27, 0.6);
+          padding: 3px 12px;
+          margin: 3px 6px;
+          border-radius: 10px;
+          color: #cdd6f4;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        window#waybar.empty #window {
           background-color: transparent;
           border: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        #taskbar {
+          background-color: rgba(17, 17, 27, 0.6);
+          padding: 2px 6px;
+          margin: 3px 6px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #taskbar button {
+          padding: 2px 6px;
+          margin: 0 2px;
+          background-color: transparent;
+          border-radius: 6px;
+          border-bottom: 2px solid transparent;
+          transition: all 0.2s ease-in-out;
+        }
+
+        #taskbar button:hover {
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         #taskbar button.active {
-          background-color: rgba(137, 180, 250, 0.2);
+          background-color: rgba(137, 180, 250, 0.25);
           border-bottom: 2px solid #89b4fa;
         }
 
+        #mpris {
+          background-color: rgba(180, 190, 254, 0.15);
+          color: #cba6f7;
+          padding: 3px 12px;
+          margin: 3px 4px;
+          border-radius: 10px;
+          border: 1px solid rgba(203, 166, 247, 0.3);
+        }
+
+        #pulseaudio {
+          background-color: rgba(148, 226, 213, 0.15);
+          color: #94e2d5;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(148, 226, 213, 0.3);
+        }
+
         #pulseaudio.muted {
-          color: #585b70;
+          background-color: rgba(88, 91, 112, 0.2);
+          color: #a6adc8;
+          border-color: rgba(166, 173, 200, 0.2);
+        }
+
+        #pulseaudio.source {
+          background-color: rgba(245, 194, 231, 0.15);
+          color: #f5c2e7;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(245, 194, 231, 0.3);
+        }
+
+        #pulseaudio.source-muted {
+          background-color: rgba(88, 91, 112, 0.2);
+          color: #a6adc8;
+          border-color: rgba(166, 173, 200, 0.2);
+        }
+
+        #network {
+          background-color: rgba(166, 227, 161, 0.15);
+          color: #a6e3a1;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(166, 227, 161, 0.3);
+        }
+
+        #network.disconnected, #network.disabled {
+          background-color: rgba(243, 139, 168, 0.15);
+          color: #f38ba8;
+          border-color: rgba(243, 139, 168, 0.3);
+        }
+
+        #network.linked {
+          background-color: rgba(249, 226, 175, 0.15);
+          color: #f9e2af;
+          border-color: rgba(249, 226, 175, 0.3);
+        }
+
+        #disk {
+          background-color: rgba(137, 220, 235, 0.15);
+          color: #89dceb;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(137, 220, 235, 0.3);
+        }
+
+        #memory {
+          background-color: rgba(250, 179, 135, 0.15);
+          color: #fab387;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(250, 179, 135, 0.3);
+        }
+
+        #custom-amd_gpu {
+          background-color: rgba(235, 160, 172, 0.15);
+          color: #eba0ac;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(235, 160, 172, 0.3);
+        }
+
+        #temperature {
+          background-color: rgba(249, 226, 175, 0.15);
+          color: #f9e2af;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(249, 226, 175, 0.3);
         }
 
         #temperature.critical {
+          background-color: rgba(243, 139, 168, 0.25);
           color: #f38ba8;
+          border-color: rgba(243, 139, 168, 0.5);
         }
 
-        #battery.warning {
-          color: #f9e2af;
+        #cpu {
+          background-color: rgba(114, 135, 253, 0.15);
+          color: #7287fd;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(114, 135, 253, 0.3);
+        }
+
+        #custom-load {
+          background-color: rgba(180, 190, 254, 0.15);
+          color: #b4befe;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(180, 190, 254, 0.3);
+        }
+
+        #clock {
+          background-color: rgba(203, 166, 247, 0.2);
+          color: #cba6f7;
+          padding: 3px 12px;
+          margin: 3px 6px;
+          border-radius: 10px;
+          border: 1px solid rgba(203, 166, 247, 0.4);
+        }
+
+        #battery {
+          background-color: rgba(166, 227, 161, 0.15);
+          color: #a6e3a1;
+          padding: 3px 10px;
+          margin: 3px 3px;
+          border-radius: 10px;
+          border: 1px solid rgba(166, 227, 161, 0.3);
         }
 
         #battery.critical {
+          background-color: rgba(243, 139, 168, 0.25);
           color: #f38ba8;
+          border-color: rgba(243, 139, 168, 0.5);
+        }
+
+        #battery.charging {
+          background-color: rgba(166, 227, 161, 0.15);
+          color: #a6e3a1;
+          border-color: rgba(166, 227, 161, 0.3);
+        }
+
+        #tray {
+          background-color: rgba(17, 17, 27, 0.6);
+          padding: 3px 10px;
+          margin: 3px 6px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #mode {
+          background-color: #f38ba8;
+          color: #11111b;
+          padding: 3px 10px;
+          margin: 3px 6px;
+          border-radius: 10px;
+          font-weight: bold;
         }
       '';
     };

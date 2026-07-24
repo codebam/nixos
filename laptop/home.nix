@@ -42,7 +42,7 @@
       };
 
       "sway/window" = {
-        format = " {icon} {title}";
+        format = "{icon} {title}";
         max-length = 40;
         icon = true;
         icon-size = 16;
