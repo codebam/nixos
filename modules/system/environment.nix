@@ -7,7 +7,6 @@
       bubblewrap
       ladspaPlugins
       lsp-plugins
-      # claude-code
       dig
       git
       gparted

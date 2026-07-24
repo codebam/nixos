@@ -102,6 +102,7 @@ in
         withVencord = true;
       })
       bat
+      claude-code
       dust
       nvtopPackages.amd
       antigravity-cli
