@@ -6,7 +6,6 @@
     nixpkgs = {
       follows = "chaotic/nixpkgs";
     };
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -59,12 +58,10 @@
       inherit (inputs.chaotic.vendored) jovian;
       forAllSystems =
         functionProvidedToForAllSystems:
-        nixpkgs.lib.genAttrs
-          [
-            "x86_64-linux"
-            "aarch64-linux"
-          ]
-          (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
+        nixpkgs.lib.genAttrs [
+          "x86_64-linux"
+          "aarch64-linux"
+        ] (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
 
       # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
       mkNixosSystem =

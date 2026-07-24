@@ -51,10 +51,6 @@
     };
     overlays = [
       (final: prev: {
-        antigravity-ide = (import inputs.nixpkgs-unstable {
-          system = prev.stdenv.hostPlatform.system;
-          config.allowUnfree = true;
-        }).antigravity-ide;
         electron = prev.electron-bin;
         electron-unwrapped = prev.electron-bin;
         electron_41 = prev.electron_41-bin;

@@ -104,7 +104,6 @@ in
       bat
       dust
       nvtopPackages.amd
-      antigravity-ide
       antigravity-cli
       google-cloud-sdk
       arrpc
