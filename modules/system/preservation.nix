@@ -116,6 +116,7 @@ _: {
             ".firedragon"
             ".password-store"
             ".local/state/wireplumber"
+            ".local/state/mpv"
             ".config/mprisence"
             ".config/Antigravity"
             ".config/vesktop"
