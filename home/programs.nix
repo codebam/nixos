@@ -113,7 +113,10 @@
     };
     waybar = {
       enable = true;
-      systemd.enable = true;
+      # sway spawns waybar itself via the `bars` block in sway.nix, which is
+      # what makes `mode = "hide"` and the Mod4 reveal work. A systemd unit on
+      # top of that just gets us a second, bar-id-less instance on every switch.
+      systemd.enable = false;
       style = ''
         * {
           border: none;
