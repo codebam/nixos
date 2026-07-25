@@ -9,6 +9,7 @@ _:
     ./stylix.nix
     ./sway.nix
     ./systemd.nix
+    ./waybar.nix
     ./xdg.nix
   ];
 }

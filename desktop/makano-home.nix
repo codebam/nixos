@@ -72,7 +72,7 @@
         } 
         $env.PATH = ($env.PATH | 
         split row (char esep) |
-        prepend /home/myuser/.apps |
+        prepend /home/makano/.local/bin |
         append /usr/bin/env
         )
         $env.SSH_AUTH_SOCK = (gpgconf --list-dirs agent-ssh-socket)
