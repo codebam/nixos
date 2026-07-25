@@ -136,8 +136,10 @@
         pkgs:
         let
           inherit (pkgs.stdenv.hostPlatform) system;
+          # Not nixpkgs.hostPlatform: the avf host sets `system` directly and
+          # leaves that option undefined.
           hostsFor = nixpkgs.lib.filterAttrs (
-            _: cfg: cfg.config.nixpkgs.hostPlatform.system == system
+            _: cfg: cfg.pkgs.stdenv.hostPlatform.system == system
           ) inputs.self.nixosConfigurations;
         in
         nixpkgs.lib.mapAttrs (_: cfg: cfg.config.system.build.toplevel) hostsFor
