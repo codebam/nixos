@@ -6,6 +6,7 @@
     ./system/default.nix
     ./system/environment.nix
     ./system/fonts.nix
+    ./system/journald.nix
     ./system/networking.nix
     ./system/nix.nix
     ./system/nixpkgs.nix
@@ -18,6 +19,7 @@
     ./programs/default.nix
     ./programs/pass-sops.nix
     ./services/default.nix
+    ./services/smartd.nix
     ./security/default.nix
     ./users/default.nix
     ./stylix/default.nix

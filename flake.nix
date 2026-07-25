@@ -121,11 +121,43 @@
           buildInputs = with pkgs; [
             nil
             nixd
-            nixpkgs-fmt
             nixfmt
+            statix
+            deadnix
           ];
         };
       });
+
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
+
+      # `nix flake check` builds every host, so eval breakage is caught before
+      # a rebuild rather than during one.
+      checks = forAllSystems (
+        pkgs:
+        let
+          inherit (pkgs.stdenv.hostPlatform) system;
+          hostsFor = nixpkgs.lib.filterAttrs (
+            _: cfg: cfg.config.nixpkgs.hostPlatform.system == system
+          ) inputs.self.nixosConfigurations;
+        in
+        nixpkgs.lib.mapAttrs (_: cfg: cfg.config.system.build.toplevel) hostsFor
+        // {
+          lint =
+            pkgs.runCommand "lint"
+              {
+                nativeBuildInputs = [
+                  pkgs.statix
+                  pkgs.deadnix
+                ];
+              }
+              ''
+                cp -r ${./.} src && cd src
+                deadnix --fail .
+                statix check .
+                touch $out
+              '';
+        }
+      );
 
       nixosConfigurations = {
         nixos-desktop = mkNixosSystem {
