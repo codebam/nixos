@@ -108,7 +108,7 @@
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
       virtualHosts."codebam.tplinkdns.com" = {
-        addSSL = true;
+        forceSSL = true;
         enableACME = true;
         locations."/" = {
           return = "301 https://$host/navidrome$request_uri";
@@ -122,7 +122,7 @@
         };
       };
       virtualHosts."music.codebam.ca" = {
-        addSSL = true;
+        forceSSL = true;
         enableACME = true;
         locations."/" = {
           return = "301 https://$host/navidrome$request_uri";

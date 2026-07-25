@@ -67,6 +67,8 @@ _: {
 
           # --- 3. Safely replace @root subvolume ---
           if [[ -e "$MOUNT_POINT/@root" ]]; then
+            log "Existing @root found. No action needed."
+            umount "$MOUNT_POINT"
             exit 0
           else
             log "No existing @root found. Creating a new one."

@@ -6,6 +6,9 @@
       systemd = {
         extraBin = {
           chattr = "${pkgs.busybox}/bin/chattr";
+          # cleanup-root parses `btrfs subvolume list` with awk; stage 1 has no
+          # gawk, so without this the old-root GC silently never reclaims anything.
+          awk = "${pkgs.gawk}/bin/awk";
         };
         services = {
           create-needed-for-boot-dirs = {

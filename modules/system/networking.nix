@@ -64,23 +64,17 @@
         };
       };
     };
-    firewall = rec {
+    firewall = {
       enable = true;
+      # Kept deliberately narrow. 80/443 are opened on the desktop only, in
+      # desktop/configuration/networking.nix -- nothing on the laptop or Steam
+      # Deck serves HTTP. Steam's own ports come from programs.steam.*.openFirewall.
       allowedTCPPorts = [
-        80
-        443
-        3389
-        5353
-        27037
+        27037 # Steam Remote Play
       ];
-      allowedUDPPorts = allowedTCPPorts;
-      allowedTCPPortRanges = [
-        {
-          from = 1714;
-          to = 1764;
-        }
+      allowedUDPPorts = [
+        5353 # mDNS (systemd-resolved)
       ];
-      allowedUDPPortRanges = allowedTCPPortRanges;
       trustedInterfaces = [
         "virbr0"
         "tailscale0"

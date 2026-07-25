@@ -1,5 +1,4 @@
-_:
-{
+_: {
   virtualisation = {
     # libvirtd = {
     #   enable = true;

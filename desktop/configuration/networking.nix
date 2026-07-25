@@ -4,10 +4,7 @@ _:
   networking = {
     nat = {
       enable = true;
-      internalInterfaces = [
-        "dns0"
-        "lo"
-      ];
+      internalInterfaces = [ "dns0" ];
       externalInterface = "wlan0";
     };
     timeServers = [
@@ -18,6 +15,8 @@ _:
     hostName = "nixos-desktop";
     firewall = {
       allowedTCPPorts = [
+        80 # nginx
+        443 # nginx
         25575 # RCON port
         8212 # PalWorld
         8081 # Expo
@@ -31,12 +30,10 @@ _:
         8081 # Expo
         56789 # XRay
       ];
-      allowedUDPPortRanges = [
-        {
-          from = 32768;
-          to = 61000;
-        } # UPnP
-      ];
+      # No ephemeral-range accept here: 32768-61000/udp is the *source* port
+      # range for outbound traffic, whose replies conntrack already accepts as
+      # established/related. Opening it inbound only ever admitted unsolicited
+      # traffic. UPnP itself needs 1900/udp, which is listed above.
     };
   };
 }

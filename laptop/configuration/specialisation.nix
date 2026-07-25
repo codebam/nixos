@@ -21,6 +21,7 @@ _: {
 
           # If a @root subvolume exists, exit early
           if [[ -e /bcachefs_tmp/@root ]]; then
+            umount /bcachefs_tmp
             exit 0
           fi
 

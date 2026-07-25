@@ -73,6 +73,7 @@
       ];
       settings = {
         PasswordAuthentication = false;
+        PermitRootLogin = "no";
       };
       openFirewall = true;
     };
