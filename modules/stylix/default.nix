@@ -12,6 +12,7 @@
       qt.enable = false;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
+    image = ../../wallpaper.png;
     cursor = {
       package = pkgs.bibata-cursors;
       name = "Bibata Modern Classic";

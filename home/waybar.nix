@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # Module definitions shared by every host. Hosts add their own
@@ -73,6 +73,37 @@
     "clock" = {
       interval = 60;
       format = " 󰥔 {:%a %b %d, %H:%M} ";
+    };
+
+    "memory" = {
+      interval = 5;
+      # mkDefault so the desktop can swap in its "% (used GiB)" variant.
+      format = lib.mkDefault " 󰍛 {percentage}% ";
+    };
+
+    # Defined for every host but only listed in modules-right on the machines
+    # that have a battery; waybar never instantiates an unlisted module.
+    "battery" = {
+      states = {
+        warning = 20;
+        critical = 10;
+      };
+      format = " {icon} {capacity}% ";
+      format-charging = " 󰂄 {capacity}% ";
+      format-plugged = " 󰂄 {capacity}% ";
+      format-icons = [
+        "󰂎"
+        "󰁺"
+        "󰁻"
+        "󰁼"
+        "󰁽"
+        "󰁾"
+        "󰁿"
+        "󰂀"
+        "󰂁"
+        "󰂂"
+        "󰁹"
+      ];
     };
   };
 }

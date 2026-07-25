@@ -7,6 +7,14 @@
 
 {
   programs = {
+    # Rest of fzf comes from home/shell-common.nix.
+    fzf.defaultOptions = [
+      "--height 40%"
+      "--layout=reverse"
+      "--border"
+      "--inline-info"
+    ];
+
     iamb = {
       enable = true;
       settings = {
@@ -77,39 +85,6 @@
           };
         };
       };
-    };
-    carapace = {
-      enable = true;
-      enableNushellIntegration = true;
-    };
-    nushell = {
-      enable = true;
-      extraConfig = ''
-        let carapace_completer = {|spans|
-        carapace $spans.0 nushell ...$spans | from json
-        }
-        $env.config = {
-         show_banner: false,
-         completions: {
-         case_sensitive: false
-         quick: true
-         partial: true
-         algorithm: "fuzzy"
-         external: {
-             enable: true 
-             max_results: 100 
-             completer: $carapace_completer # check 'carapace_completer' 
-           }
-         }
-        } 
-        $env.PATH = ($env.PATH | 
-        split row (char esep) |
-        prepend /home/codebam/.local/bin |
-        append /usr/bin/env
-        )
-        $env.SSH_AUTH_SOCK = (gpgconf --list-dirs agent-ssh-socket)
-        $env.GPG_TTY = (tty)
-      '';
     };
     waybar = {
       enable = true;
@@ -489,11 +464,6 @@
         display_server = true;
       };
     };
-    zoxide = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
-    };
     fish = {
       enable = true;
       interactiveShellInit = ''
@@ -522,9 +492,6 @@
           end
         end
       '';
-    };
-    bash = {
-      enable = true;
     };
     git = {
       enable = true;
@@ -557,24 +524,9 @@
         };
       };
     };
+    # Base options and key bindings come from home/shell-common.nix.
     tmux = {
-      enable = true;
-      terminal = "tmux-256color";
-      prefix = "C-a";
-      mouse = true;
-      keyMode = "vi";
-      clock24 = true;
       extraConfig = ''
-        set -ga terminal-overrides ",*256col*:Tc"
-        bind-key C-a last-window
-        bind-key a send-prefix
-        bind-key b set status
-        bind s split-window -v
-        bind v split-window -h
-        bind h select-pane -L
-        bind j select-pane -D
-        bind k select-pane -U
-        bind l select-pane -R
         set -sg escape-time 100
         set-option -g status-interval 5
         set-option -g automatic-rename on
@@ -591,25 +543,6 @@
           '';
         }
       ];
-    };
-    direnv = {
-      enable = true;
-      enableBashIntegration = true;
-      nix-direnv.enable = true;
-    };
-    fzf = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
-      defaultOptions = [
-        "--height 40%"
-        "--layout=reverse"
-        "--border"
-        "--inline-info"
-      ];
-      tmux = {
-        enableShellIntegration = true;
-      };
     };
     starship = {
       enable = true;
@@ -690,12 +623,9 @@
           text = "Lock";
           keybind = "l";
         }
-        {
-          label = "hibernate";
-          action = "systemctl hibernate";
-          text = "Hibernate";
-          keybind = "h";
-        }
+        # No hibernate entry: swap is 2G+2G and boot.resumeDevice is unset, so
+        # `systemctl hibernate` cannot save an image on these machines. Re-add
+        # once swap is at least RAM-sized and resumeDevice points at it.
         {
           label = "logout";
           action = "${pkgs.sway}/bin/swaymsg exit";

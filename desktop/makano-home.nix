@@ -5,6 +5,8 @@
 }:
 
 {
+  imports = [ ../home/shell-common.nix ];
+
   home = {
     username = "makano";
     homeDirectory = "/home/makano";
@@ -32,10 +34,19 @@
   };
 
   programs = {
-    carapace = {
-      enable = true;
-      enableNushellIntegration = true;
+    # Rest of fzf comes from home/shell-common.nix.
+    fzf.defaultOptions = [
+      "--no-height"
+      "--no-reverse"
+    ];
+
+    # Base options and key bindings come from home/shell-common.nix.
+    tmux = {
+      extraConfig = ''
+        set -sg escape-time 300
+      '';
     };
+
     helix = {
       enable = true;
       defaultEditor = true;
@@ -50,48 +61,11 @@
         };
       };
     };
-    nushell = {
-      enable = true;
-      extraConfig = ''
-        let carapace_completer = {|spans|
-        carapace $spans.0 nushell ...$spans | from json
-        }
-        $env.config = {
-         show_banner: false,
-         completions: {
-         case_sensitive: false
-         quick: true
-         partial: true
-         algorithm: "fuzzy"
-         external: {
-             enable: true 
-             max_results: 100 
-             completer: $carapace_completer # check 'carapace_completer' 
-           }
-         }
-        } 
-        $env.PATH = ($env.PATH | 
-        split row (char esep) |
-        prepend /home/makano/.local/bin |
-        append /usr/bin/env
-        )
-        $env.SSH_AUTH_SOCK = (gpgconf --list-dirs agent-ssh-socket)
-        $env.GPG_TTY = (tty)
-      '';
-    };
-    yt-dlp = {
-      enable = false;
-    };
     gh = {
       enable = true;
       settings = {
         git_protocol = "ssh";
       };
-    };
-    zoxide = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
     };
     fish = {
       enable = true;
@@ -119,9 +93,6 @@
         }
       ];
     };
-    bash = {
-      enable = true;
-    };
     git = {
       enable = true;
       settings = {
@@ -129,44 +100,6 @@
           email = "makanobush@gmail.com";
           name = "Kevin";
         };
-      };
-    };
-    tmux = {
-      enable = true;
-      terminal = "tmux-256color";
-      prefix = "C-a";
-      mouse = true;
-      keyMode = "vi";
-      clock24 = true;
-      extraConfig = ''
-        set -ga terminal-overrides ",*256col*:Tc"
-        bind-key C-a last-window
-        bind-key a send-prefix
-        bind-key b set status
-        bind s split-window -v
-        bind v split-window -h
-        bind h select-pane -L
-        bind j select-pane -D
-        bind k select-pane -U
-        bind l select-pane -R
-        set -sg escape-time 300
-      '';
-    };
-    direnv = {
-      enable = true;
-      enableBashIntegration = true;
-      nix-direnv.enable = true;
-    };
-    fzf = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
-      defaultOptions = [
-        "--no-height"
-        "--no-reverse"
-      ];
-      tmux = {
-        enableShellIntegration = true;
       };
     };
 

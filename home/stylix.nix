@@ -1,6 +1,11 @@
-{ pkgs, ... }:
+_:
 
 {
+  # Scheme, wallpaper, cursor, icons and font *families* all come from the
+  # system module (modules/stylix/default.nix) -- stylix's NixOS module feeds
+  # them to every home-manager user, so repeating them here only created two
+  # places to edit. What stays is what genuinely differs per user: which
+  # targets are themed, and the desktop/terminal font sizes.
   stylix = {
     enable = true;
     autoEnable = false;
@@ -22,44 +27,9 @@
       mangohud.enable = false;
     };
 
-    polarity = "dark";
-    image = ../wallpaper.png;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
-    cursor = {
-      package = pkgs.bibata-cursors;
-      name = "Bibata Modern Classic";
-      size = 24;
-    };
-    icons = {
-      package = pkgs.papirus-icon-theme;
-      light = "Papirus Light";
-      dark = "Papirus Dark";
-    };
-    fonts = {
-      sizes = {
-        desktop = 14;
-        terminal = 14;
-      };
-
-      serif = {
-        package = pkgs.noto-fonts;
-        name = "Noto Serif";
-      };
-
-      sansSerif = {
-        package = pkgs.noto-fonts;
-        name = "Noto Sans";
-      };
-
-      monospace = {
-        package = pkgs.nerd-fonts.fira-code;
-        name = "Fira Code NerdFont";
-      };
-
-      emoji = {
-        package = pkgs.noto-fonts-color-emoji;
-        name = "Noto Color Emoji";
-      };
+    fonts.sizes = {
+      desktop = 14;
+      terminal = 14;
     };
   };
 }

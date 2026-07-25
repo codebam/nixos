@@ -28,7 +28,7 @@
     kernelModules = [ "kvm-amd" ];
     extraModulePackages = [ config.boot.kernelPackages.zenergy ];
     kernelParams = [ ];
-    kernel.sysctl."kernel.sysrq" = 1;
+    # kernel.sysrq now comes from modules/system/sysctl.nix.
   };
 
   preservation = {

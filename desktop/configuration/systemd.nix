@@ -1,6 +1,5 @@
 {
   pkgs,
-  config,
   lib,
   ...
 }:
@@ -10,18 +9,6 @@
   powerManagement.cpuFreqGovernor = "performance";
 
   systemd = {
-    timers = {
-      nix-build-steamdeck = {
-        enable = false;
-        description = "Daily NixOS Build Timer for Steam Deck Configuration";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "daily";
-          Persistent = true;
-          RandomizedDelaySec = 3600;
-        };
-      };
-    };
     services = {
       wifi-performance = {
         description = "Disable Wi-Fi Power Save";
@@ -36,19 +23,8 @@
       navidrome = {
         serviceConfig.ProtectHome = lib.mkForce "read-only";
       };
-      nix-build-steamdeck = {
-        description = "NixOS Build Service for Steam Deck Configuration";
-        after = [ "network.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          WorkingDirectory = "/etc/nixos/cache/steamdeck";
-          ExecStart = "/run/current-system/sw/bin/nix build /etc/nixos#nixosConfigurations.nixos-steamdeck.config.system.build.toplevel --print-build-logs";
-        };
-        path = [ pkgs.git ];
-      };
-      systemd-remount-fs = {
-        enable = false;
-      };
+      # systemd-remount-fs is disabled in desktop-laptop/configuration/systemd.nix,
+      # which both hosts that wipe / on a LUKS/bcachefs root share.
       applyGpuSettings = {
         enable = true;
         description = "Apply GPU Overclocking and Power Limit Settings";
@@ -93,12 +69,8 @@
           echo "high" > "$GPU_CARD/device/power_dpm_force_performance_level"
         '';
       };
-      nixos-upgrade = {
-        preStart = ''
-          cd ${config.system.autoUpgrade.flake}
-          /run/current-system/sw/bin/nix --experimental-features 'nix-command flakes' flake update
-        '';
-      };
+      # No nixos-upgrade override: system.autoUpgrade.enable is false, so the
+      # preStart `nix flake update` that used to sit here never ran.
     };
   };
 }

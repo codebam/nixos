@@ -6,6 +6,7 @@ _:
     ./home.nix
     ./programs.nix
     ./services.nix
+    ./shell-common.nix
     ./stylix.nix
     ./sway.nix
     ./systemd.nix

@@ -12,11 +12,9 @@
         "root"
         "codebam"
       ];
-      system-features = [
-        "i686-linux"
-        "big-parallel"
-        "kvm"
-      ];
+      # No system-features override: "i686-linux" is a platform, not a feature
+      # (extra-platforms already resolves to [aarch64-linux i686-linux] via
+      # boot.binfmt), and big-parallel/kvm are NixOS defaults.
       max-jobs = "auto";
       cores = 0;
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];

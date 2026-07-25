@@ -65,24 +65,32 @@
   };
 
   services = {
+    # openFirewall is deliberately off for the admin UIs below. They still
+    # listen on 0.0.0.0, and tailscale0 is a trusted interface, so they stay
+    # reachable over the tailnet -- but they are no longer accepted from the
+    # LAN or from whatever the router forwards to this host, which also serves
+    # public HTTPS. nginx reaches navidrome over loopback either way.
     lidarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
       user = "codebam";
       group = "users";
     };
     prowlarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     transmission = {
       enable = true;
+      # Aliases to openPeerPorts -- the RPC port is never opened by this.
       openFirewall = true;
       user = "codebam";
       settings = {
         download-dir = "/home/codebam/Downloads/Music/.downloads";
         incomplete-dir = "/home/codebam/Downloads/Music/.incomplete";
-        rpc-bind-address = "0.0.0.0";
+        # rpc-whitelist already rejected everything but loopback; binding there
+        # too means the RPC socket is not exposed at all.
+        rpc-bind-address = "127.0.0.1";
         rpc-whitelist = "127.0.0.1";
         umask = 2;
       };
@@ -101,7 +109,7 @@
         LastFM.Enabled = false;
         EnableSharing = true;
       };
-      openFirewall = true;
+      openFirewall = false;
     };
     nginx = {
       enable = true;

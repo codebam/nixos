@@ -3,9 +3,6 @@ _:
 {
   preservation = {
     preserveAt."/persistent" = {
-      directories = [
-        "/var/lib/meilisearch-master-key"
-      ];
       users = {
         codebam = {
           directories = [

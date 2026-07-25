@@ -1,9 +1,16 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 
+let
+  # Every helper below has to talk to the same sway that is actually running
+  # (sway_git here), not whatever pkgs.sway happens to be -- two closures means
+  # two swaymsg binaries and possible IPC version skew.
+  swaymsg = "${config.wayland.windowManager.sway.package}/bin/swaymsg";
+in
 {
   wayland.windowManager.sway =
     let
@@ -148,27 +155,51 @@
               fi
             '')}";
             "${modifier}+shift+x" = "exec ${(pkgs.writeShellScript "screenshot" ''
-              focused=$(${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name')
-              temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
-              ${pkgs.grim}/bin/grim -o "$focused" - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
-              ${pkgs.grim}/bin/grim -o "$focused" $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
+              set -euo pipefail
+              shots="$HOME/Pictures/Screenshots"
+              mkdir -p "$shots"
+              focused=$(${swaymsg} -t get_outputs | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name')
+              out="$shots/screenshot-$(date +%Y%m%d%H%M%S).png"
+              # One capture, written to disk and then copied. The old version
+              # grabbed twice and fed grim an empty temp file on stdin, which
+              # grim ignores -- so the clipboard copy was a second live grab.
+              ${pkgs.grim}/bin/grim -o "$focused" "$out"
+              ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
             '')}";
             "${modifier}+x" = "exec ${(pkgs.writeShellScript "screenshot-select" ''
-              focused=$(${pkgs.sway}/bin/swaymsg -t get_outputs | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name')
-              temp_file=$(mktemp /tmp/screenshot-XXXXXX.png)
+              set -euo pipefail
+              shots="$HOME/Pictures/Screenshots"
+              mkdir -p "$shots"
+              read -r focused ox oy < <(
+                ${swaymsg} -t get_outputs \
+                  | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | "\(.name) \(.rect.x) \(.rect.y)"'
+              )
+              temp_file=$(mktemp -t screenshot-XXXXXX.png)
+              imv_pid=""
+              cleanup() {
+                [ -n "$imv_pid" ] && kill "$imv_pid" 2>/dev/null || true
+                rm -f "$temp_file"
+              }
+              trap cleanup EXIT
               ${pkgs.grim}/bin/grim -o "$focused" "$temp_file"
               ${pkgs.imv}/bin/imv -f "$temp_file" &
               imv_pid=$!
-              sleep 0.1
-              region=$(${pkgs.slurp}/bin/slurp -o "$focused")
+              sleep 0.2
+              region=$(${pkgs.slurp}/bin/slurp -o "$focused" || true)
               if [ -n "$region" ]; then
-                  ${pkgs.grim}/bin/grim -g "$region" - < "$temp_file" | ${pkgs.wl-clipboard}/bin/wl-copy
-                  ${pkgs.grim}/bin/grim -g "$region" $HOME/Pictures/Screenshots/screenshot-$(date +%Y%m%d%H%M%S).png
+                  # slurp reports compositor-global coordinates ("X,Y WxH"); the
+                  # frozen capture is output-local, so shift by the output origin
+                  # and crop the file rather than re-grabbing the live screen.
+                  pos=''${region%% *}
+                  size=''${region##* }
+                  x=$(( ''${pos%%,*} - ox ))
+                  y=$(( ''${pos##*,} - oy ))
+                  out="$shots/screenshot-$(date +%Y%m%d%H%M%S).png"
+                  ${pkgs.imagemagick}/bin/magick "$temp_file" -crop "''${size}+''${x}+''${y}" +repage "$out"
+                  ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
               fi
-              kill $imv_pid
-              rm "$temp_file"
             '')}";
-            "${modifier}+n" = "exec '${pkgs.sway}/bin/swaymsg \"bar mode toggle\"'";
+            "${modifier}+n" = "exec '${swaymsg} \"bar mode toggle\"'";
             "XF86AudioRaiseVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+";
             "XF86AudioLowerVolume" = "exec ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-";
             "XF86AudioMute" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";

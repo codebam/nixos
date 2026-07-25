@@ -3,6 +3,7 @@
 {
   users.users.makano = {
     isNormalUser = true;
+    uid = 1001;
     home = "/home/makano";
     description = "Makano";
     packages = [ ];

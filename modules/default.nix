@@ -3,6 +3,7 @@
     ./hardware/default.nix
 
     ./system/boot.nix
+    ./system/cleanup-root.nix
     ./system/default.nix
     ./system/environment.nix
     ./system/fonts.nix
@@ -11,6 +12,7 @@
     ./system/nix.nix
     ./system/nixpkgs.nix
     ./system/preservation.nix
+    ./system/sysctl.nix
     ./system/systemd.nix
     ./system/time.nix
     ./system/xdg.nix

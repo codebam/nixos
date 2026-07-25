@@ -10,9 +10,13 @@ _: {
     polkit = {
       enable = true;
       extraConfig = ''
-        // Allow members of the wheel group to execute any actions
+        // Allow members of the wheel group to execute any action without a
+        // prompt, but only from a local, currently-active session. Without the
+        // local/active guard this also covered SSH sessions, so anyone who got
+        // a shell as a wheel user had passwordless root for every polkit
+        // action. Remote sessions still work -- they just have to authenticate.
         polkit.addRule(function(action, subject) {
-            if (subject.isInGroup("wheel")) {
+            if (subject.isInGroup("wheel") && subject.local && subject.active) {
                 return polkit.Result.YES;
             }
         });
@@ -36,107 +40,15 @@ _: {
     };
     apparmor = {
       enable = true;
-      policies = {
-        firefox = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile firefox /nix/store/*-firefox*/bin/{firefox,.firefox-wrapped} flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides. See local/README for details.
-              include if exists <local/firefox>
-            }
-          '';
-        };
-        firedragon = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile firedragon /nix/store/*-firedragon*/{bin/{firedragon,.firedragon-wrapped},lib/firedragon/firedragon} flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/firedragon>
-              include if exists <local/firefox>
-            }
-          '';
-        };
-        google-chrome = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile google-chrome /nix/store/*-google-chrome*/{bin/google-chrome-stable,share/google/chrome/google-chrome} flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/google-chrome>
-            }
-          '';
-        };
-        steam = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile steam /nix/store/*-steam* flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/steam>
-            }
-          '';
-        };
-        feishin = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile feishin /nix/store/*-feishin*/bin/feishin flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/feishin>
-            }
-          '';
-        };
-        electron = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile electron /nix/store/*-electron*/bin/electron flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/electron>
-            }
-          '';
-        };
-        discord = {
-          state = "enforce";
-          profile = ''
-            abi <abi/5.0>,
-            include <tunables/global>
-
-            profile discord /nix/store/*-discord*/opt/Discord/Discord flags=(unconfined) {
-              userns,
-
-              # Site-specific additions and overrides.
-              include if exists <local/discord>
-            }
-          '';
-        };
-      };
+      # No policies here. The six profiles this used to carry were all
+      # `flags=(unconfined)` wrapping a bare `userns,` rule -- the Ubuntu idiom
+      # for re-permitting unprivileged user namespaces to a named binary when
+      # kernel.apparmor_restrict_unprivileged_userns=1. That sysctl does not
+      # exist on this kernel (it is an Ubuntu patch; CachyOS ships
+      # kernel.unprivileged_userns_clone=1 instead), so every one of them was a
+      # no-op. Restricting userns here would also break rootless podman,
+      # distrobox and the bwrap-based agy-sandbox. Recover from git history if
+      # the config ever moves to a kernel that has the knob.
     };
     rtkit.enable = true;
     sudo.enable = false;

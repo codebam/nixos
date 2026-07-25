@@ -1,9 +1,9 @@
-{ lib, ... }:
+_:
 
 {
+  # systemd-networkd-wait-online is already disabled for every host in
+  # modules/system/networking.nix.
   networking = {
     hostName = "nixos-steamdeck";
   };
-
-  systemd.services.systemd-networkd-wait-online.enable = lib.mkForce false;
 }

@@ -1,15 +1,9 @@
 { pkgs, ... }:
 {
   systemd = {
-    services = {
-      systemd-networkd-wait-online.serviceConfig = {
-        ExecStart = [
-          "" # This clears the default command arguments
-          "${pkgs.systemd}/lib/systemd/systemd-networkd-wait-online --any"
-        ];
-        TimeoutStartSec = "15s";
-      };
-    };
+    # systemd-networkd-wait-online is disabled outright in
+    # modules/system/networking.nix, so the ExecStart/TimeoutStartSec override
+    # that used to live here never applied to anything.
     network.networks."50-tailscale".linkConfig.RequiredForOnline = "no";
     user = {
       services = {

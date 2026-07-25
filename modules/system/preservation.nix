@@ -168,6 +168,13 @@ _: {
       group = "users";
       mode = "0755";
     };
+    # Only Pictures itself is preserved; grim writes into this subdirectory and
+    # fails silently if it is missing after a root wipe.
+    "/home/codebam/Pictures/Screenshots".d = {
+      user = "codebam";
+      group = "users";
+      mode = "0755";
+    };
   };
 
   systemd.services.systemd-machine-id-commit = {

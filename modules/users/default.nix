@@ -8,6 +8,10 @@
       };
       codebam = {
         isNormalUser = true;
+        # Pinned because config hardcodes /run/user/1000 (mopidy's pipewire
+        # bind). Without this the uid is only stable via preserved
+        # /var/lib/nixos, so a lost state file would silently break those paths.
+        uid = 1000;
         home = "/home/codebam";
         description = "Sean Behan";
         extraGroups = [

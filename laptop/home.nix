@@ -25,33 +25,6 @@ _:
         "battery"
       ];
 
-      "memory" = {
-        interval = 5;
-        format = " 󰍛 {percentage}% ";
-      };
-
-      "battery" = {
-        states = {
-          warning = 20;
-          critical = 10;
-        };
-        format = " {icon} {capacity}% ";
-        format-charging = " 󰂄 {capacity}% ";
-        format-plugged = " 󰂄 {capacity}% ";
-        format-icons = [
-          "󰂎"
-          "󰁺"
-          "󰁻"
-          "󰁼"
-          "󰁽"
-          "󰁾"
-          "󰁿"
-          "󰂀"
-          "󰂁"
-          "󰂂"
-          "󰁹"
-        ];
-      };
     };
   };
 }
