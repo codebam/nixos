@@ -30,10 +30,14 @@ _:
         8081 # Expo
         56789 # XRay
       ];
-      # No ephemeral-range accept here: 32768-61000/udp is the *source* port
-      # range for outbound traffic, whose replies conntrack already accepts as
-      # established/related. Opening it inbound only ever admitted unsolicited
-      # traffic. UPnP itself needs 1900/udp, which is listed above.
+      # SSDP discovery replies. upnpc M-SEARCHes 239.255.255.250:1900 from an
+      # ephemeral port; the IGD answers unicast from its own address, so the
+      # reply does not match the conntrack entry (different source address) and
+      # arrives as a new packet. This replaces a blanket 32768-61000/udp accept:
+      # same discovery, but only from a LAN address with source port 1900.
+      extraInputRules = ''
+        iifname { "wlan0", "enp6s0" } ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } udp sport 1900 udp dport 32768-60999 accept comment "UPnP/SSDP discovery replies"
+      '';
     };
   };
 }
