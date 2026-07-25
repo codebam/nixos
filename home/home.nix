@@ -124,6 +124,7 @@ in
       high-tide
       feishin
       cinny-desktop
+      warp-terminal
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv

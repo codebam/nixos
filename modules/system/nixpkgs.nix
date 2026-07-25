@@ -46,6 +46,7 @@
           "steamcmd"
           "via"
           "vscode"
+          "warp-terminal"
         ];
     };
     overlays = [
