@@ -1,5 +1,4 @@
-_:
-{
+_: {
   zramSwap = {
     enable = true;
     algorithm = "zstd";
@@ -7,4 +6,3 @@ _:
     priority = 100;
   };
 }
-

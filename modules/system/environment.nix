@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   environment = {
     etc."nixos".source = "/persistent/etc/nixos";

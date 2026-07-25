@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+_: {
   security = {
     acme = {
       acceptTerms = true;

@@ -36,35 +36,6 @@
       navidrome = {
         serviceConfig.ProtectHome = lib.mkForce "read-only";
       };
-      wifi-reconnect = {
-        enable = false;
-        description = "Reconnect Wi-Fi if disconnected";
-        after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          User = "root";
-          Restart = "always";
-          RestartSec = "10s";
-        };
-        path = [
-          pkgs.networkmanager
-          pkgs.coreutils
-          pkgs.gnugrep
-        ];
-        script = ''
-              while true
-              do
-                if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
-          				for i in {1..3}; do nmcli connection up "BeeNetwork-5GHz" && break || sleep 1; done
-          				sleep 60
-                  if [[ "$(nmcli -t -f STATE general)" != "connected" ]]; then
-                    systemctl restart NetworkManager
-                  fi
-                fi
-                sleep 10
-              done
-        '';
-      };
       nix-build-steamdeck = {
         description = "NixOS Build Service for Steam Deck Configuration";
         after = [ "network.target" ];

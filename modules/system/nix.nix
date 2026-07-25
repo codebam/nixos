@@ -6,7 +6,8 @@
         "nix-command"
         "flakes"
       ];
-      auto-optimise-store = true;
+      # Store deduplication is handled by the weekly nix.optimise timer below;
+      # auto-optimise-store would additionally hash every path on every build.
       trusted-users = [
         "root"
         "codebam"

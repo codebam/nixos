@@ -11,7 +11,7 @@ _: {
       requiredBy = [ "initrd.target" ];
       after = [ "local-fs-pre.target" ];
       before = [ "sysroot.mount" ];
-      
+
       script = ''
         log() {
           echo "[cleanup-root] $*" >&2

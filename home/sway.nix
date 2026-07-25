@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  config,
   ...
 }:
 
@@ -144,7 +143,7 @@
             "${modifier}+z" = "exec ${pkgs.swaynotificationcenter}/bin/swaync-client -d -sw";
             "${modifier}+shift+t" = "exec ${(pkgs.writeShellScript "trim-yt-url" ''
               url=$(${pkgs.wl-clipboard}/bin/wl-paste --no-newline)
-              if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://((www|music)\.)?youtube\.com/|youtu\.be/)'; then
+              if echo "$url" | ${pkgs.gnugrep}/bin/grep -qE 'https?://((www|music)\.)?(youtube\.com/|youtu\.be/)'; then
                 echo "$url" | ${pkgs.gnused}/bin/sed 's/&.*//' | ${pkgs.wl-clipboard}/bin/wl-copy
               fi
             '')}";

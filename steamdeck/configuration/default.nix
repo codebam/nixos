@@ -10,7 +10,6 @@ _:
     ./networking.nix
     ./jovian.nix
     ./programs.nix
-    ./nixpkgs.nix
     ./system.nix
     ./preservation.nix
     ./specialisation.nix

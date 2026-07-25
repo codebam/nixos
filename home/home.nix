@@ -1,7 +1,5 @@
 {
   pkgs,
-  inputs,
-  lib,
   config,
   ...
 }:
@@ -155,34 +153,36 @@ in
       '')
     ];
 
-    file.".config/helix/init.scm".text = ''
-      (require-builtin steel/random as rand::)
-      (require (prefix-in helix. "helix/commands.scm"))
-      (require (prefix-in helix.static. "helix/static.scm"))
-      (require "helix/configuration.scm")
-      (define-lsp "steel-language-server" (command "steel-language-server") (args '()))
-      (define-language "scheme"
-                       (language-servers '("steel-language-server")))
-      (require "helix-copilot/copilot.scm")
-      (set-copilot-model! "qwen3-coder")
-    '';
+    file = {
+      ".config/helix/init.scm".text = ''
+        (require-builtin steel/random as rand::)
+        (require (prefix-in helix. "helix/commands.scm"))
+        (require (prefix-in helix.static. "helix/static.scm"))
+        (require "helix/configuration.scm")
+        (define-lsp "steel-language-server" (command "steel-language-server") (args '()))
+        (define-language "scheme"
+                         (language-servers '("steel-language-server")))
+        (require "helix-copilot/copilot.scm")
+        (set-copilot-model! "qwen3-coder")
+      '';
 
-    file.".config/helix/helix.scm".text = ''
-      (require "helix/editor.scm")
-      (require (prefix-in helix. "helix/commands.scm"))
-      (require "helix-file-watcher/file-watcher.scm")
+      ".config/helix/helix.scm".text = ''
+        (require "helix/editor.scm")
+        (require (prefix-in helix. "helix/commands.scm"))
+        (require "helix-file-watcher/file-watcher.scm")
 
-      (provide file-watcher)
-      ;;@doc
-      ;; File watcher plugin
-      (define (file-watcher)
-        (spawn-watcher))
-    '';
+        (provide file-watcher)
+        ;;@doc
+        ;; File watcher plugin
+        (define (file-watcher)
+          (spawn-watcher))
+      '';
 
-    file.".gitignore".text = ''
-      Session.vim
-      .claude/
-    '';
+      ".gitignore".text = ''
+        Session.vim
+        .claude/
+      '';
+    };
 
     stateVersion = "26.05";
   };

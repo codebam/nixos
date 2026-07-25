@@ -171,7 +171,11 @@
         format = " {icon} {volume}% ";
         format-muted = " 󰝟 muted ";
         format-icons = {
-          default = [ "" "" "" ];
+          default = [
+            ""
+            ""
+            ""
+          ];
         };
         on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
       };
@@ -192,7 +196,10 @@
         status-icons = {
           paused = "⏸";
         };
-        dynamic-order = [ "title" "artist" ];
+        dynamic-order = [
+          "title"
+          "artist"
+        ];
         dynamic-len = 25;
         on-click = "${pkgs.playerctl}/bin/playerctl play-pause";
         on-click-middle = "${pkgs.playerctl}/bin/playerctl previous";

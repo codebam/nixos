@@ -7,41 +7,44 @@
 
 {
 
-  systemd.user.services.pipewire.environment = {
-    SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
-    LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa:${pkgs.deepfilternet}/lib/ladspa";
-    LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2";
-  };
+  systemd.user.services = {
+    pipewire.environment = {
+      SPA_PLUGIN_DIR = lib.mkForce "${pkgs.pipewire}/lib/spa-0.2";
+      LADSPA_PATH = lib.mkForce "${pkgs.lsp-plugins}/lib/ladspa:${pkgs.ladspaPlugins}/lib/ladspa:${pkgs.deepfilternet}/lib/ladspa";
+      LV2_PATH = lib.mkForce "/run/current-system/sw/lib/lv2";
+    };
 
-  systemd.user.services.arrpc = {
-    description = "arRPC - Discord RPC Bridge";
-    unitConfig = {
-      Requires = [ "dbus.socket" ];
-      After = [
-        "dbus.socket"
-        "graphical-session.target"
-      ];
+    arrpc = {
+      description = "arRPC - Discord RPC Bridge";
+      unitConfig = {
+        Requires = [ "dbus.socket" ];
+        After = [
+          "dbus.socket"
+          "graphical-session.target"
+        ];
+      };
+      serviceConfig = {
+        ExecStart = "${pkgs.arrpc}/bin/arrpc";
+        Restart = "always";
+      };
+      wantedBy = [ "default.target" ];
     };
-    serviceConfig = {
-      ExecStart = "${pkgs.arrpc}/bin/arrpc";
-      Restart = "always";
+
+    mprisence = {
+      description = "Discord Rich Presence for MPRIS";
+      unitConfig = {
+        Requires = [ "dbus.socket" ];
+        After = [
+          "dbus.socket"
+          "graphical-session.target"
+        ];
+      };
+      serviceConfig = {
+        ExecStart = "${pkgs.mprisence}/bin/mprisence";
+        Restart = "always";
+      };
+      wantedBy = [ "default.target" ];
     };
-    wantedBy = [ "default.target" ];
-  };
-  systemd.user.services.mprisence = {
-    description = "Discord Rich Presence for MPRIS";
-    unitConfig = {
-      Requires = [ "dbus.socket" ];
-      After = [
-        "dbus.socket"
-        "graphical-session.target"
-      ];
-    };
-    serviceConfig = {
-      ExecStart = "${pkgs.mprisence}/bin/mprisence";
-      Restart = "always";
-    };
-    wantedBy = [ "default.target" ];
   };
 
   systemd.services.mopidy = {

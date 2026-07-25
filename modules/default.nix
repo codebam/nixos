@@ -12,10 +12,8 @@
     ./system/preservation.nix
     ./system/systemd.nix
     ./system/time.nix
-    ./system/virtualisation.nix
     ./system/xdg.nix
     ./system/zram.nix
-    ./system/qt.nix
 
     ./programs/default.nix
     ./programs/pass-sops.nix

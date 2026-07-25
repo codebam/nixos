@@ -59,7 +59,11 @@
         format = " {icon} {volume}% ";
         format-muted = " 󰝟 muted ";
         format-icons = {
-          default = [ "" "" "" ];
+          default = [
+            ""
+            ""
+            ""
+          ];
         };
         on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
       };
@@ -99,7 +103,19 @@
         format = " {icon} {capacity}% ";
         format-charging = " 󰂄 {capacity}% ";
         format-plugged = " 󰂄 {capacity}% ";
-        format-icons = [ "󰂎" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹" ];
+        format-icons = [
+          "󰂎"
+          "󰁺"
+          "󰁻"
+          "󰁼"
+          "󰁽"
+          "󰁾"
+          "󰁿"
+          "󰂀"
+          "󰂁"
+          "󰂂"
+          "󰁹"
+        ];
       };
     };
   };

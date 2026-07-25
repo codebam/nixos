@@ -10,6 +10,5 @@ _:
     ./sway.nix
     ./systemd.nix
     ./xdg.nix
-    ./plasma.nix
   ];
 }

@@ -1,6 +1,5 @@
 {
   lib,
-  inputs,
   ...
 }:
 {
@@ -50,7 +49,7 @@
         ];
     };
     overlays = [
-      (final: prev: {
+      (_: prev: {
         electron = prev.electron-bin;
         electron-unwrapped = prev.electron-bin;
         electron_41 = prev.electron_41-bin;
