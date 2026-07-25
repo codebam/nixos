@@ -1,3 +1,5 @@
 cache/
 .direnv/
 .antigravitycli/
+result
+result-*
