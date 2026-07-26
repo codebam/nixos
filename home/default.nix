@@ -10,6 +10,7 @@ _:
     ./stylix.nix
     ./sway.nix
     ./systemd.nix
+    ./viewport.nix
     ./waybar.nix
     ./xdg.nix
   ];
