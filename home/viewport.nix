@@ -37,6 +37,14 @@
     # something needs watching.
     bar = "auto";
 
+    # The empty desktop drew a mark and a note naming the keys that open
+    # something. The note is a tutorial, and this is not the first day; the
+    # mark is the only thing left sitting in fixed pixels once the bar hides
+    # itself. Off leaves a workspace with no windows genuinely black, which is
+    # a screen drawing no current at all. Either can come back on its own.
+    logo = false;
+    tutorial = false;
+
     # True black, not a dark grey: an OLED pixel showing #000000 is off, and
     # draws no current at all. The two washes of colour in the default
     # background are the other steady light source, so they go too — on this
