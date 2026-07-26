@@ -13,6 +13,16 @@
   xdg.configFile."viewport/config.json".text = builtins.toJSON {
     layout = "scrolling";
 
+    # Modes are left to the display by default, and this panel nominates a
+    # timing that is not its fastest. max_refresh takes the highest refresh
+    # rate available at the preferred resolution — only the refresh rate, so
+    # the resolution cannot quietly drop in exchange.
+    outputs = {
+      "*" = {
+        max_refresh = true;
+      };
+    };
+
     # Variable refresh rate. Tested against each monitor at startup and left
     # off for any that refuses it, so this is safe to ask for unconditionally.
     adaptive_sync = true;
