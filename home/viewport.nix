@@ -27,6 +27,28 @@
     # off for any that refuses it, so this is safe to ask for unconditionally.
     adaptive_sync = true;
 
+    # OLED. Everything below is about one property of the panel: a pixel that
+    # shows the same thing for hours ages faster than its neighbours.
+    #
+    # The bar is the worst offender by a distance — same height, same position,
+    # same clock in the same corner, every waking hour. "auto" hides it and
+    # reveals it while Mod4 is held, which is already held for every binding
+    # that would make you want to look at it. Mod4+n still pins it when
+    # something needs watching.
+    bar = "auto";
+
+    # True black, not a dark grey: an OLED pixel showing #000000 is off, and
+    # draws no current at all. The two washes of colour in the default
+    # background are the other steady light source, so they go too — on this
+    # panel they are a gradient that never moves rather than depth.
+    theme = {
+      bg = "#000000";
+      glow-1 = "transparent";
+      glow-2 = "transparent";
+      bar-bg = "#000000";
+      bar-border = "#1a1a1a";
+    };
+
     # Seconds. The compositor runs the locker rather than drawing the lock
     # screen itself, so swaylock can crash without unlocking anything.
     idle = {
