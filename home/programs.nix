@@ -56,6 +56,9 @@
         };
         padding-x = 0;
         padding-y = 0;
+        fonts = {
+          additional-dirs = [ "/run/current-system/sw/share/X11/fonts" ];
+        };
       };
     };
     helix = {
