@@ -117,6 +117,10 @@
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           buildInputs = with pkgs; [
+            # `nix develop` execs whatever `bash` PATH resolves to, and the
+            # stdenv default is built --disable-readline --disable-progcomp.
+            # Without this, ~/.bashrc breaks and starship's PS1 escapes leak.
+            bashInteractive
             nil
             nixd
             nixfmt
