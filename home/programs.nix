@@ -47,6 +47,17 @@
         app-notifications = "no-clipboard-copy";
       };
     };
+    rio = {
+      enable = true;
+      settings = {
+        cursor = {
+          shape = "block";
+          blinking = false;
+        };
+        padding-x = 0;
+        padding-y = 0;
+      };
+    };
     helix = {
       enable = true;
       package = pkgs.helix_git;

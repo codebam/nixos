@@ -17,6 +17,7 @@ _:
       foot.enable = true;
       kitty.enable = true;
       ghostty.enable = true;
+      rio.enable = true;
       gtk.enable = false;
       swaync.enable = true;
       qt.enable = false;
