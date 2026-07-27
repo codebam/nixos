@@ -8,6 +8,7 @@ _:
   streamingMode.enable = true;
 
   imports = [
+    ./gcp-nix-builder.nix
     ./virtualisation.nix
     ./environment.nix
     ./services.nix
