@@ -5,7 +5,7 @@ with lib;
 let
   cfg = config.services.gcp-builder;
 
-  startupScript = pkgs.writeText "builder-startup.sh" ''
+  startupScript = pkgs.writeShellScript "builder-startup.sh" ''
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -22,10 +22,11 @@ EOF
     fi
   '';
 
-  gcpCacheFillScript = pkgs.writeText "gcp-cache-fill-startup.sh" ''
+  gcpCacheFillScript = pkgs.writeShellScript "gcp-cache-fill-startup.sh" ''
     #!/usr/bin/env bash
     set -uo pipefail
 
+    echo "==> [gcp-builder-async] Starting Nix daemon setup..."
     if ! command -v nix &>/dev/null; then
       mkdir -p /etc/nix
       echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -41,10 +42,10 @@ EOF
     git clone "$REPO_URL" "$WORK_DIR" || exit 1
     cd "$WORK_DIR"
 
-    echo "==> Building NixOS configuration on GCP..."
+    echo "==> [gcp-builder-async] Building NixOS configuration on GCP Spot VM..."
     nix build .#nixosConfigurations.nixos-desktop.config.system.build.toplevel --extra-experimental-features "nix-command flakes" || true
 
-    echo "==> Self-destructing GCP VM..."
+    echo "==> [gcp-builder-async] Cache fill completed. Self-destructing GCP VM..."
     gcloud compute instances delete nix-builder-async --zone="${cfg.zone}" --project="${cfg.project}" --quiet
   '';
 
@@ -56,24 +57,35 @@ EOF
     INSTANCE="nix-builder-async"
     MACHINE_TYPE="${cfg.machineType}"
     DISK_SIZE="${cfg.diskSize}"
+    LOG_FILE="/tmp/gcp-cache-fill.log"
+
+    if [ "''${1:-}" = "-f" ] || [ "''${1:-}" = "--follow" ] || [ "''${1:-}" = "logs" ]; then
+      echo "==> [gcp-builder] Tailing GCP VM serial port logs ($INSTANCE)..."
+      exec ${pkgs.google-cloud-sdk}/bin/gcloud compute instances tail-serial-port-output "$INSTANCE" \
+        --zone="$ZONE" \
+        --project="$PROJECT"
+    fi
 
     echo "==> [gcp-builder] Launching fire-and-forget GCP cache fill VM ($INSTANCE)..."
-    ${pkgs.google-cloud-sdk}/bin/gcloud compute instances create "$INSTANCE" \
-      --project="$PROJECT" \
-      --zone="$ZONE" \
-      --machine-type="$MACHINE_TYPE" \
-      --provisioning-model=SPOT \
-      --instance-termination-action=DELETE \
-      --auto-delete-boot-disk \
-      --scopes=cloud-platform \
-      --boot-disk-size="$DISK_SIZE" \
-      --boot-disk-type=pd-balanced \
-      --image-family=debian-12 \
-      --image-project=debian-cloud \
-      --metadata-from-file=startup-script=${gcpCacheFillScript} \
-      --quiet >/dev/null 2>&1 &
+    {
+      echo "==> [gcp-builder] Creating Spot instance $INSTANCE in $ZONE ($MACHINE_TYPE)..."
+      ${pkgs.google-cloud-sdk}/bin/gcloud compute instances create "$INSTANCE" \
+        --project="$PROJECT" \
+        --zone="$ZONE" \
+        --machine-type="$MACHINE_TYPE" \
+        --provisioning-model=SPOT \
+        --instance-termination-action=DELETE \
+        --scopes=cloud-platform \
+        --boot-disk-size="$DISK_SIZE" \
+        --boot-disk-type=pd-balanced \
+        --image-family=debian-12 \
+        --image-project=debian-cloud \
+        --metadata-from-file=startup-script=${gcpCacheFillScript} \
+        --quiet
+    } > "$LOG_FILE" 2>&1 &
 
-    echo "==> [gcp-builder] Oneshot cache fill launched on GCP background. Terminal freed immediately!"
+    echo "==> [gcp-builder] Oneshot cache fill launched in background!"
+    echo "==> [gcp-builder] Follow progress using: gcp-cache-fill -f"
   '';
 
   rebuildSwitch = pkgs.writeShellScriptBin "rebuild-switch" ''
@@ -138,7 +150,6 @@ EOF
       --machine-type="$MACHINE_TYPE" \
       --provisioning-model=SPOT \
       --instance-termination-action=DELETE \
-      --auto-delete-boot-disk \
       --scopes=cloud-platform \
       --boot-disk-size="$DISK_SIZE" \
       --boot-disk-type=pd-balanced \
@@ -194,7 +205,7 @@ in
     };
     machineType = mkOption {
       type = types.str;
-      default = "c2d-standard-32";
+      default = "n2-standard-32";
       description = "GCP Machine Type for the builder.";
     };
     diskSize = mkOption {
