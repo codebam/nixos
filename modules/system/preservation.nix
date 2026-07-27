@@ -112,6 +112,8 @@ _: {
             ".tmux"
             ".local/share/Steam"
             ".claude"
+            ".config/claude"
+            ".config/claude-code"
             ".gemini"
             ".librewolf"
             ".firedragon"

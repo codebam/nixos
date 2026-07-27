@@ -19,6 +19,14 @@
       cores = 0;
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
+      extra-substituters = [
+        "https://codebam-nix-cache.storage.googleapis.com"
+        "https://storage.googleapis.com/codebam-nix-cache"
+      ];
+      trusted-substituters = [
+        "https://codebam-nix-cache.storage.googleapis.com"
+        "https://storage.googleapis.com/codebam-nix-cache"
+      ];
     };
     gc = {
       automatic = false;
