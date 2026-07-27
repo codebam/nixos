@@ -20,6 +20,11 @@ IDLE_MINUTES="${IDLE_MINUTES:-10}"
 STATE_DIR="${STATE_DIR:-/var/lib/gcp-nix-builder}"
 SA="nix-builder-ctl@${PROJECT}.iam.gserviceaccount.com"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/.." && pwd)"
+# The cache must never mirror unfree paths into the public bucket. Read the
+# same list the config builds from (pkgs/unfree.nix, via unfreePackages) so the
+# instance metadata cannot drift from what nixpkgs considers unfree.
+UNFREE_NAMES="$(nix eval --file "$ROOT/pkgs/unfree.nix" --json | jq -r 'join(" ")')"
 
 # This host has no sudo; polkit's run0 is the escalation path.
 as_root() { run0 --no-ask-password "$@"; }
@@ -70,12 +75,14 @@ if ! g compute instances describe "$INSTANCE" --zone="$ZONE" >/dev/null 2>&1; th
     --image-family=debian-12 --image-project=debian-cloud \
     --boot-disk-size="$DISK_SIZE" --boot-disk-type=pd-balanced \
     --scopes=https://www.googleapis.com/auth/devstorage.read_write,https://www.googleapis.com/auth/logging.write \
-    --metadata="enable-oslogin=FALSE,nix-cache-bucket=$BUCKET,idle-minutes=$IDLE_MINUTES" \
+    --metadata="enable-oslogin=FALSE,nix-cache-bucket=$BUCKET,idle-minutes=$IDLE_MINUTES,unfree-names=$UNFREE_NAMES" \
     --metadata-from-file="ssh-keys=$keyfile,startup-script=$HERE/startup-script.sh"
   rm -f "$keyfile"
 else
-  # Keep an existing instance's startup script in sync with this repo.
+  # Keep an existing instance's startup script and unfree list in sync with
+  # this repo.
   g compute instances add-metadata "$INSTANCE" --zone="$ZONE" \
+    --metadata="unfree-names=$UNFREE_NAMES" \
     --metadata-from-file="startup-script=$HERE/startup-script.sh"
 fi
 
