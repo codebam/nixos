@@ -286,7 +286,9 @@ let
     if [ "$USE_GCP" = "false" ]; then
       echo "==> [gcp-builder] Local build requested (--builders). Skipping GCP VM provisioning."
       if command -v nh >/dev/null 2>&1; then
-        exec nh os switch "${cfg.flakePath}" "$@"
+        # nh takes nix flags only after `--`; without it, `rebuild-switch
+        # --builders ""` dies on an unknown option instead of building locally.
+        exec nh os switch "${cfg.flakePath}" -- "$@"
       else
         exec nixos-rebuild switch --flake "${cfg.flakePath}" "$@"
       fi
@@ -335,7 +337,7 @@ let
 
     echo "==> [gcp-builder] Running NixOS rebuild-switch with build host ($BUILD_HOST)..."
     if command -v nh >/dev/null 2>&1; then
-      nh os switch "${cfg.flakePath}" "$@" -- --build-host "$BUILD_HOST"
+      nh os switch "${cfg.flakePath}" -- "$@" --build-host "$BUILD_HOST"
     else
       nixos-rebuild switch --flake "${cfg.flakePath}" --build-host "$BUILD_HOST" "$@"
     fi
