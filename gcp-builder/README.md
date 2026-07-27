@@ -90,6 +90,14 @@ Classification results are memoised in `/var/lib/nix-cache-push`, so repeat
 runs only probe genuinely new paths. It runs every 15 minutes, and once more
 immediately before the idle shutdown.
 
+Two details worth knowing before editing it. A binary cache refuses any path
+whose references it does not already hold, so the script first writes stub
+narinfos for every path it is *not* pushing — nix parses those, it does not
+merely stat them — and deletes the stubs again before upload. And the upload
+stages into a local `file://` cache which `gcloud storage` then copies, rather
+than writing to `s3://` directly: that way the instance authenticates as its
+own service account and no GCS HMAC key has to live on its disk.
+
 ## Garbage collection
 
 - On the instance: `min-free`/`max-free` (20 GB / 100 GB) makes nix collect
