@@ -72,7 +72,6 @@ BUCKET="${NIX_CACHE_BUCKET:-}"
 # Checked here rather than only in the timer so the pre-shutdown push in
 # nix-builder-idle-stop honours the switch too.
 [ -e /etc/nix/cache-push-disabled ] && { echo "cache uploads disabled"; exit 0; }
-STORE="s3://${BUCKET}?endpoint=storage.googleapis.com&region=us-east1&secret-key=/etc/nix/cache-priv-key.pem"
 
 STATE=/var/lib/nix-cache-push
 mkdir -p "$STATE"
@@ -98,7 +97,7 @@ xargs -a "$STATE/candidates.txt" -P 64 -I{} bash -c '
   fi' >"$STATE/classified.txt"
 
 grep '^UP ' "$STATE/classified.txt" | cut -d' ' -f2- >>"$STATE/upstream.txt"
-grep '^MISS ' "$STATE/classified.txt" | cut -d' ' -f2- >"$STATE/missing.txt"
+grep '^MISS ' "$STATE/classified.txt" | cut -d' ' -f2- | sort -u >"$STATE/missing.txt"
 sort -u -o "$STATE/upstream.txt" "$STATE/upstream.txt"
 
 missing=$(wc -l <"$STATE/missing.txt")
@@ -107,7 +106,54 @@ echo "$missing paths absent upstream; uploading"
 
 # Sign first: --no-recursive skips nix's own closure signing pass.
 xargs -a "$STATE/missing.txt" -r nix store sign --key-file /etc/nix/cache-priv-key.pem
-if xargs -a "$STATE/missing.txt" -r nix copy --no-recursive --to "$STORE"; then
+
+# Staged through a local binary cache, then uploaded with gcloud. Writing
+# straight to s3:// would mean putting GCS HMAC keys on this disk; gcloud
+# authenticates as the instance's own service account instead.
+STAGE="$(mktemp -d /var/tmp/nix-push.XXXXXX)"
+trap 'rm -rf "$STAGE"' EXIT
+
+# A binary cache refuses a path whose references it does not already hold, and
+# ours deliberately reference paths served by cache.nixos.org. So stub every
+# path we are not pushing. The stubs have to parse as real narinfo -- nix reads
+# them, it does not just stat them -- but only StorePath/NarHash/NarSize are
+# load-bearing, and every stub is removed again before anything is uploaded.
+comm -23 "$STATE/all.txt" "$STATE/missing.txt" >"$STATE/stubs.txt"
+xargs -a "$STATE/stubs.txt" -n 256 -r nix-store --query --hash >"$STATE/stub-hashes.txt"
+xargs -a "$STATE/stubs.txt" -n 256 -r nix-store --query --size >"$STATE/stub-sizes.txt"
+paste -d' ' "$STATE/stubs.txt" "$STATE/stub-hashes.txt" "$STATE/stub-sizes.txt" |
+  awk -v stage="$STAGE" '
+    NF == 3 {
+      hash = $1; sub(/^\/nix\/store\//, "", hash); sub(/-.*$/, "", hash)
+      f = stage "/" hash ".narinfo"
+      printf "StorePath: %s\nURL: nar/stub\nCompression: none\nNarHash: %s\nNarSize: %s\n", $1, $2, $3 >f
+      close(f)
+      print hash ".narinfo"
+    }' >"$STAGE/.stub-list"
+
+# Dependencies first, so a missing path that references another missing path
+# still finds it staged. nix-store -qR emits requisites in topological order.
+xargs -a "$STATE/missing.txt" -r nix-store --query --requisites 2>/dev/null |
+  awk '!seen[$0]++' >"$STATE/order.txt"
+grep -Fxf "$STATE/missing.txt" "$STATE/order.txt" >"$STATE/missing-ordered.txt" ||
+  cp "$STATE/missing.txt" "$STATE/missing-ordered.txt"
+
+if ! xargs -a "$STATE/missing-ordered.txt" -r nix copy --no-recursive \
+  --to "file://$STAGE?secret-key=/etc/nix/cache-priv-key.pem"; then
+  echo "staging failed; will retry next run" >&2
+  exit 1
+fi
+
+# Drop the stubs before upload -- they describe paths we are not serving, and a
+# client that fetched one would get a narinfo pointing at a nar that isn't there.
+while read -r f; do rm -f "$STAGE/$f"; done <"$STAGE/.stub-list"
+rm -f "$STAGE/.stub-list"
+
+# nix creates empty log/ and realisations/ directories; gcloud treats a path
+# that matches nothing as an error and fails the whole copy.
+find "$STAGE" -type d -empty -delete
+
+if gcloud storage cp -r "$STAGE"/* "gs://$BUCKET/" >/dev/null; then
   cat "$STATE/missing.txt" >>"$STATE/pushed.txt"
   sort -u -o "$STATE/pushed.txt" "$STATE/pushed.txt"
   echo "uploaded $missing paths"
