@@ -2,18 +2,12 @@
   lib,
   ...
 }:
-{
-  nixpkgs = {
-    config = {
-      # checkMeta = true;
-      # showDerivationWarnings = [ "maintainerless" ];
-      permittedInsecurePackages = [
-        "pnpm-9.15.9"
-      ];
-      allowUnfreePredicate =
-        pkg:
-        builtins.elem (lib.getName pkg) [
-          "android-sdk-platform-tools"
+let
+  # Named rather than inlined so the binary cache can read the same list: it
+  # refuses to mirror unfree paths, and this is the one place that says which
+  # packages those are.
+  allowedUnfree = [
+    "android-sdk-platform-tools"
           "android-studio"
           "antigravity"
           "antigravity-cli"
@@ -47,7 +41,19 @@
           "via"
           "vscode"
           "warp-terminal"
-        ];
+  ];
+in
+{
+  services.gcpNixBuilder.unfreeNames = allowedUnfree;
+
+  nixpkgs = {
+    config = {
+      # checkMeta = true;
+      # showDerivationWarnings = [ "maintainerless" ];
+      permittedInsecurePackages = [
+        "pnpm-9.15.9"
+      ];
+      allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) allowedUnfree;
     };
     overlays = [
       (_: prev: {

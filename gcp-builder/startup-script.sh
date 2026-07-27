@@ -11,6 +11,13 @@ CACHE_BUCKET="$(curl -sf -H 'Metadata-Flavor: Google' \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/nix-cache-bucket || true)"
 IDLE_MINUTES="$(curl -sf -H 'Metadata-Flavor: Google' \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/idle-minutes || echo 10)"
+UPSTREAM_CACHES="$(curl -sf -H 'Metadata-Flavor: Google' \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/upstream-caches ||
+  echo 'https://cache.nixos.org https://nyx-cache.chaotic.cx')"
+MAX_PATH_BYTES="$(curl -sf -H 'Metadata-Flavor: Google' \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/max-path-bytes || echo 0)"
+UNFREE_NAMES="$(curl -sf -H 'Metadata-Flavor: Google' \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/unfree-names || true)"
 
 install_nix() {
   [ -e /nix/var/nix/profiles/default/bin/nix ] && return 0
@@ -69,39 +76,89 @@ export PATH=/nix/var/nix/profiles/default/bin:$PATH
 
 BUCKET="${NIX_CACHE_BUCKET:-}"
 [ -n "$BUCKET" ] || { echo "no bucket configured"; exit 0; }
+UPSTREAM_CACHES="${UPSTREAM_CACHES:-https://cache.nixos.org https://nyx-cache.chaotic.cx}"
+# Names the cache must never mirror, from nixpkgs.config.allowUnfreePredicate.
+UNFREE_NAMES="${UNFREE_NAMES:-}"
+# Paths bigger than this are left to whoever already serves them. Set to 0 to
+# disable the cap.
+MAX_PATH_BYTES="${MAX_PATH_BYTES:-0}"
 # Checked here rather than only in the timer so the pre-shutdown push in
 # nix-builder-idle-stop honours the switch too.
 [ -e /etc/nix/cache-push-disabled ] && { echo "cache uploads disabled"; exit 0; }
 
 STATE=/var/lib/nix-cache-push
 mkdir -p "$STATE"
-touch "$STATE/upstream.txt" "$STATE/pushed.txt"
+touch "$STATE/upstream.txt" "$STATE/pushed.txt" "$STATE/skipped.txt"
 
 # Candidates: everything valid locally, minus anything already classified.
 nix path-info --all 2>/dev/null | sort -u >"$STATE/all.txt"
-sort -u "$STATE/upstream.txt" "$STATE/pushed.txt" >"$STATE/known.txt"
+sort -u "$STATE/upstream.txt" "$STATE/pushed.txt" "$STATE/skipped.txt" >"$STATE/known.txt"
 comm -23 "$STATE/all.txt" "$STATE/known.txt" >"$STATE/candidates.txt"
 
 count=$(wc -l <"$STATE/candidates.txt")
 [ "$count" -gt 0 ] || { echo "nothing new to classify"; exit 0; }
 echo "classifying $count paths against cache.nixos.org"
 
-# One HEAD per path hash, 64 at a time. Hits are remembered forever so this
-# only ever runs against genuinely new paths.
-xargs -a "$STATE/candidates.txt" -P 64 -I{} bash -c '
+# One HEAD per path hash per substituter, 64 at a time. Hits are remembered
+# forever, so this only ever runs against genuinely new paths.
+#
+# Every substituter the clients use has to be checked, not just cache.nixos.org:
+# a third of what this machine builds comes from nyx-cache.chaotic.cx, and
+# mirroring those would be storage we pay for and never read.
+xargs -a "$STATE/candidates.txt" -P 64 -I{} env "SUBS=$UPSTREAM_CACHES" bash -c '
   p="{}"; h="${p#/nix/store/}"; h="${h%%-*}"
-  if curl -sf -o /dev/null --max-time 20 "https://cache.nixos.org/${h}.narinfo"; then
-    echo "UP $p"
-  else
-    echo "MISS $p"
-  fi' >"$STATE/classified.txt"
+  for s in $SUBS; do
+    if curl -sf -o /dev/null --max-time 20 "${s%/}/${h}.narinfo"; then
+      echo "UP $p"; exit 0
+    fi
+  done
+  echo "MISS $p"' >"$STATE/classified.txt"
 
 grep '^UP ' "$STATE/classified.txt" | cut -d' ' -f2- >>"$STATE/upstream.txt"
 grep '^MISS ' "$STATE/classified.txt" | cut -d' ' -f2- | sort -u >"$STATE/missing.txt"
 sort -u -o "$STATE/upstream.txt" "$STATE/upstream.txt"
 
+# Absent from every upstream cache is not the same as worth storing. Drop:
+#
+#   - unfree packages. Upstream cannot cache these because their licences
+#     forbid redistribution, which is exactly why they show up here. The list
+#     comes from the same allowUnfreePredicate the config uses, passed in as
+#     instance metadata, so it cannot drift from what nixpkgs considers unfree.
+#   - -debug outputs, which are gigabytes of symbols nothing substitutes.
+grep -v -- '-debug$' "$STATE/missing.txt" >"$STATE/missing-keep.txt" || true
+
+# Prefix match on the name, not the full store path: the unfree list holds
+# nixpkgs names ("android-studio") while the store holds name-version, and
+# sometimes a variant ("android-studio-unwrapped-2026.1.2.11").
+awk -v names="$UNFREE_NAMES" '
+  BEGIN { n = split(names, a, /[ \t\n]+/) }
+  {
+    base = $0
+    sub(/^\/nix\/store\/[a-z0-9]+-/, "", base)
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "") continue
+      if (base == a[i] || index(base, a[i] "-") == 1) next
+    }
+    print
+  }' "$STATE/missing-keep.txt" | sort -u >"$STATE/missing-filtered.txt"
+
+# Optional size cap. The paths this catches are vendor blobs -- android-studio,
+# chrome, discord -- which are a fast download from the vendor and by far the
+# largest thing we would be paying to store.
+if [ "$MAX_PATH_BYTES" -gt 0 ] && [ -s "$STATE/missing-filtered.txt" ]; then
+  xargs -a "$STATE/missing-filtered.txt" -n 256 -r nix-store --query --size >"$STATE/f-sizes.txt"
+  paste -d' ' "$STATE/f-sizes.txt" "$STATE/missing-filtered.txt" |
+    awk -v cap="$MAX_PATH_BYTES" '$1 <= cap {print $2}' >"$STATE/under-cap.txt"
+  mv "$STATE/under-cap.txt" "$STATE/missing-filtered.txt"
+fi
+
+# Everything filtered out is still recorded, so it is not reclassified forever.
+comm -23 "$STATE/missing.txt" "$STATE/missing-filtered.txt" >>"$STATE/skipped.txt"
+sort -u -o "$STATE/skipped.txt" "$STATE/skipped.txt"
+mv "$STATE/missing-filtered.txt" "$STATE/missing.txt"
+
 missing=$(wc -l <"$STATE/missing.txt")
-echo "$missing paths absent upstream; uploading"
+echo "$missing paths worth uploading (of $(wc -l <"$STATE/candidates.txt") classified)"
 [ "$missing" -gt 0 ] || exit 0
 
 # Sign first: --no-recursive skips nix's own closure signing pass.
@@ -138,8 +195,10 @@ xargs -a "$STATE/missing.txt" -r nix-store --query --requisites 2>/dev/null |
 grep -Fxf "$STATE/missing.txt" "$STATE/order.txt" >"$STATE/missing-ordered.txt" ||
   cp "$STATE/missing.txt" "$STATE/missing-ordered.txt"
 
+# zstd, not the xz default: xz spends minutes single-threaded on a multi-GB
+# path for a few percent of size we would only pay egress on once.
 if ! xargs -a "$STATE/missing-ordered.txt" -r nix copy --no-recursive \
-  --to "file://$STAGE?secret-key=/etc/nix/cache-priv-key.pem"; then
+  --to "file://$STAGE?compression=zstd&secret-key=/etc/nix/cache-priv-key.pem"; then
   echo "staging failed; will retry next run" >&2
   exit 1
 fi
@@ -208,6 +267,11 @@ After=network-online.target nix-daemon.service
 [Service]
 Type=oneshot
 Environment=NIX_CACHE_BUCKET=${CACHE_BUCKET}
+Environment=MAX_PATH_BYTES=${MAX_PATH_BYTES}
+# Quoted: these are space-separated lists, and systemd splits an unquoted
+# Environment= value on whitespace into separate assignments.
+Environment="UPSTREAM_CACHES=${UPSTREAM_CACHES}"
+Environment="UNFREE_NAMES=${UNFREE_NAMES}"
 ExecStart=/usr/local/bin/nix-cache-push
 TimeoutStartSec=3600
 EOF

@@ -107,6 +107,16 @@ let
           ssh ${cfg.hostAlias} 'sudo systemctl start --wait nix-cache-push.service'
           ssh ${cfg.hostAlias} 'sudo journalctl -u nix-cache-push.service -n 20 --no-pager'
           ;;
+        sync)
+          # Ship the startup script and the unfree list to the instance, then
+          # re-run provisioning so both take effect without a recreate.
+          gcloud compute instances add-metadata ${cfg.instance} --zone=${cfg.zone} \
+            --metadata-from-file=startup-script=${cfg.flake}/gcp-builder/startup-script.sh \
+            --metadata=unfree-names="${lib.concatStringsSep " " cfg.unfreeNames}",upstream-caches="${
+              lib.concatStringsSep " " cfg.cache.upstream
+            }"
+          ssh ${cfg.hostAlias} 'sudo google_metadata_script_runner startup >/dev/null && echo provisioned'
+          ;;
         cache)
           # Storage and class-A operations are what the bucket actually bills
           # for, so stopping uploads is the switch that matters. Reading stays
@@ -226,6 +236,16 @@ in
       description = "Flake `gcp-nix-builder rebuild` operates on.";
     };
 
+    unfreeNames = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        Package names the cache must never mirror. Set from the same list that
+        drives nixpkgs.config.allowUnfreePredicate, so there is one place that
+        decides what counts as unfree.
+      '';
+    };
+
     cache = {
       bucket = lib.mkOption {
         type = lib.types.str;
@@ -236,6 +256,18 @@ in
         type = lib.types.str;
         default = "us-east1";
         description = "Bucket region, needed for S3 request signing.";
+      };
+      upstream = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [
+          "https://cache.nixos.org"
+          "https://nyx-cache.chaotic.cx"
+        ];
+        description = ''
+          Caches to check a path against before mirroring it. Must list every
+          substituter the clients use, or the bucket fills with paths that were
+          already being served for free.
+        '';
       };
       publicKey = lib.mkOption {
         type = lib.types.str;
