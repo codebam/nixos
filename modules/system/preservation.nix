@@ -78,6 +78,7 @@ _: {
             "x-gvfs-hide"
           ];
           files = [
+            ".claude.json"
             ".config/kwinoutputconfig.json"
             ".config/kwalletrc"
             ".config/kwalletmanagerrc"
