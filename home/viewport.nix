@@ -1,54 +1,58 @@
 { pkgs, lib, ... }:
 
+let
+  screenshot = pkgs.writeShellScript "screenshot" ''
+    set -euo pipefail
+    shots="$HOME/Pictures/Screenshots"
+    mkdir -p "$shots"
+    out="$shots/screenshot-$(date +%Y%m%d%H%M%S).png"
+    ${pkgs.grim}/bin/grim "$out"
+    ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
+  '';
+
+  screenshotSelect = pkgs.writeShellScript "screenshot-select" ''
+    set -euo pipefail
+    shots="$HOME/Pictures/Screenshots"
+    mkdir -p "$shots"
+    temp_file=$(mktemp -t screenshot-XXXXXX.png)
+    imv_pid=""
+    cleanup() {
+      [ -n "$imv_pid" ] && kill "$imv_pid" 2>/dev/null || true
+      rm -f "$temp_file"
+    }
+    trap cleanup EXIT
+    ${pkgs.grim}/bin/grim "$temp_file"
+    ${pkgs.imv}/bin/imv -f "$temp_file" &
+    imv_pid=$!
+    sleep 0.2
+    region=$(${pkgs.slurp}/bin/slurp || true)
+    if [ -n "$region" ]; then
+        out="$shots/screenshot-$(date +%Y%m%d%H%M%S).png"
+        ${pkgs.imagemagick}/bin/magick "$temp_file" -crop "$region" +repage "$out"
+        ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
+    fi
+  '';
+in
 {
   # Viewport's bootstrap config: the tier that has to keep working when the web
   # shell does not. The shell is fetched at startup, and if it fails to load
   # anything it owned dies with it — a binding defined here still works in that
   # state, which is the difference between a broken desktop and a machine you
   # cannot quit without switching to a TTY.
-  #
-  # No "binds" block on purpose. Defining one at all suppresses the built-in
-  # defaults, and the scrolling layout picks a different set of movement keys
-  # than tiling does; naming any would mean taking on the whole keymap.
   xdg.configFile."viewport/config.json".text = builtins.toJSON {
     layout = "scrolling";
 
-    # Modes are left to the display by default, and this panel nominates a
-    # timing that is not its fastest. max_refresh takes the highest refresh
-    # rate available at the preferred resolution — only the refresh rate, so
-    # the resolution cannot quietly drop in exchange.
     outputs = {
       "*" = {
         max_refresh = true;
       };
     };
 
-    # Variable refresh rate. Tested against each monitor at startup and left
-    # off for any that refuses it, so this is safe to ask for unconditionally.
     adaptive_sync = true;
-
-    # OLED. Everything below is about one property of the panel: a pixel that
-    # shows the same thing for hours ages faster than its neighbours.
-    #
-    # The bar is the worst offender by a distance — same height, same position,
-    # same clock in the same corner, every waking hour. "auto" hides it and
-    # reveals it while Mod4 is held, which is already held for every binding
-    # that would make you want to look at it. Mod4+n still pins it when
-    # something needs watching.
     bar = "auto";
-
-    # The empty desktop drew a mark and a note naming the keys that open
-    # something. The note is a tutorial, and this is not the first day; the
-    # mark is the only thing left sitting in fixed pixels once the bar hides
-    # itself. Off leaves a workspace with no windows genuinely black, which is
-    # a screen drawing no current at all. Either can come back on its own.
     logo = false;
     tutorial = false;
 
-    # True black, not a dark grey: an OLED pixel showing #000000 is off, and
-    # draws no current at all. The two washes of colour in the default
-    # background are the other steady light source, so they go too — on this
-    # panel they are a gradient that never moves rather than depth.
     theme = {
       bg = "#000000";
       glow-1 = "transparent";
@@ -57,12 +61,18 @@
       bar-border = "#1a1a1a";
     };
 
-    # Seconds. The compositor runs the locker rather than drawing the lock
-    # screen itself, so swaylock can crash without unlocking anything.
     idle = {
       lock_after = 600;
       lock_command = "${lib.getExe pkgs.swaylock} -f";
       blank_after = 900;
+    };
+
+    # binds_override appends/overrides keybindings on top of built-in defaults
+    # without suppressing the default keymap.
+    binds_override = {
+      "Mod4+x" = "exec ${screenshotSelect}";
+      "Mod4+Shift+x" = "exec ${screenshot}";
+      "Print" = "exec ${screenshot}";
     };
   };
 }
