@@ -6,6 +6,7 @@
     ./system/cleanup-root.nix
     ./system/default.nix
     ./system/environment.nix
+    ./system/gcp-nix-builder.nix
     ./system/fonts.nix
     ./system/journald.nix
     ./system/networking.nix
