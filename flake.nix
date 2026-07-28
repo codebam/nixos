@@ -52,6 +52,12 @@
       url = "github:codebam/viewport";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # The Smithay rewrite, in its own repository. Both build a binary called
+    # `viewport`, so a system installs one or the other — this one, for now.
+    viewport-smithay = {
+      url = "github:codebam/viewport-smithay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
