@@ -5,7 +5,11 @@
   # only exists here would have to be rediscovered by anyone else using the
   # flake. Without it screen sharing fails with nothing in any log naming a
   # portal: the ScreenCast interface is never exposed at all.
-  imports = [ inputs.viewport.nixosModules.portal ];
+  # From the rewrite rather than the C build: the two modules differ in one
+  # line, which is who answers ScreenCast. The rewrite implements that
+  # interface itself — the wlroots portal can only offer monitors — so its
+  # module names viewport first and leaves wlr as the fallback.
+  imports = [ inputs.viewport-smithay.nixosModules.portal ];
   programs.viewport.portals.enable = true;
 
   environment.systemPackages = with pkgs; [

@@ -42,6 +42,10 @@ in
   xdg.configFile."viewport/config.json".text = builtins.toJSON {
     layout = "scrolling";
 
+    # What Mod4+Return opens. Without it the compositor falls back to its
+    # built-in default, which is foot.
+    terminal = "rio";
+
     outputs = {
       "*" = {
         max_refresh = true;
