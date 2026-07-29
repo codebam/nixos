@@ -19,14 +19,11 @@
       cores = 0;
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
-      extra-substituters = [
-        "https://codebam-nix-cache.storage.googleapis.com"
-        "https://storage.googleapis.com/codebam-nix-cache"
-      ];
-      trusted-substituters = [
-        "https://codebam-nix-cache.storage.googleapis.com"
-        "https://storage.googleapis.com/codebam-nix-cache"
-      ];
+      # The GCP cache is not listed here. It arrives with the viewport-smithay
+      # module, which carries the bucket *and* the public key that makes its
+      # narinfos acceptable — listed here as well, the URLs appeared twice in
+      # nix.conf and the key still only came from the module.
+
     };
     gc = {
       automatic = false;
