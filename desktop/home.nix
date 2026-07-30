@@ -78,7 +78,7 @@
 
   services = {
     swaync = {
-      enable = true;
+      enable = false;
     };
     podman = {
       enable = true;
