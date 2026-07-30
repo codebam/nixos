@@ -239,7 +239,7 @@ let
       --instance-termination-action=DELETE \
       --scopes=cloud-platform \
       --boot-disk-size="$DISK_SIZE" \
-      --boot-disk-type=pd-balanced \
+      --boot-disk-type=hyperdisk-balanced \
       --image-family=debian-12 \
       --image-project=debian-cloud \
       --metadata=serial-port-enable=TRUE \
@@ -316,7 +316,7 @@ let
       --instance-termination-action=DELETE \
       --scopes=cloud-platform \
       --boot-disk-size="$DISK_SIZE" \
-      --boot-disk-type=pd-balanced \
+      --boot-disk-type=hyperdisk-balanced \
       --image-family=debian-12 \
       --image-project=debian-cloud \
       --metadata-from-file=startup-script=${startupScript} \
@@ -423,7 +423,7 @@ in
     };
     machineType = mkOption {
       type = types.str;
-      default = "n2-standard-32";
+      default = "c4d-standard-32";
       description = "GCP Machine Type for the builder.";
     };
     diskSize = mkOption {
