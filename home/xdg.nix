@@ -6,10 +6,10 @@ _:
     mimeApps = {
       enable = true;
       defaultApplications = {
-        "text/html" = "firefox-nightly.desktop";
-        "x-scheme-handler/http" = "firefox-nightly.desktop";
-        "x-scheme-handler/https" = "firefox-nightly.desktop";
-        "x-scheme-handler/about" = "firefox-nightly.desktop";
+        "text/html" = "google-chrome.desktop";
+        "x-scheme-handler/http" = "google-chrome.desktop";
+        "x-scheme-handler/https" = "google-chrome.desktop";
+        "x-scheme-handler/about" = "google-chrome.desktop";
       };
     };
   };
