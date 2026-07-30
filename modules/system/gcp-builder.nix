@@ -190,8 +190,45 @@ let
       ALL_OUTPUTS+=("''${EXTRA[@]}")
     fi
 
-    echo "==> [gcp-builder-async] Signing and staging ''${#ALL_OUTPUTS[@]} paths into $CACHE_DIR..."
-    printf '%s\n' "''${ALL_OUTPUTS[@]}" | sort -u \
+    # Nothing unfree goes into a public bucket.
+    #
+    # The bucket is world-readable because a substituter is fetched without
+    # credentials, so anything pushed there is published. Redistributing an
+    # unfree binary is the licence holder's call and not ours — Chrome and
+    # Steam and the rest are built here under allowUnfreePredicate, which
+    # permits *building* them, not handing them out.
+    #
+    # The list is the same one the predicate reads, passed in rather than
+    # written twice: a name added to the config and forgotten here would be
+    # published silently.
+    UNFREE=(${lib.concatStringsSep " " (map (n: ''"${n}"'') config.unfreePackages)})
+    is_unfree() {
+      local base="''${1#/nix/store/}"
+      base="''${base#*-}"
+      local name
+      for name in "''${UNFREE[@]}"; do
+        # Store path names carry a version and sometimes an output suffix, so
+        # match the name and a boundary rather than the whole thing.
+        case "$base" in
+          "$name"|"$name"-*) return 0 ;;
+        esac
+      done
+      return 1
+    }
+
+    KEEP=()
+    SKIPPED=0
+    for path in $(printf '%s\n' "''${ALL_OUTPUTS[@]}" | sort -u); do
+      if is_unfree "$path"; then
+        SKIPPED=$((SKIPPED + 1))
+      else
+        KEEP+=("$path")
+      fi
+    done
+    echo "==> [gcp-builder-async] Withholding $SKIPPED unfree path(s) from the public cache."
+
+    echo "==> [gcp-builder-async] Signing and staging ''${#KEEP[@]} paths into $CACHE_DIR..."
+    printf '%s\n' "''${KEEP[@]}" \
       | xargs nix copy --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
 
     # The bucket may not exist: it can be deleted, or this can be a fresh

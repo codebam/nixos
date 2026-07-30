@@ -1,8 +1,53 @@
 {
   lib,
+  config,
   ...
 }:
 {
+  # Named once, read twice: by allowUnfreePredicate below, and by the binary
+  # cache uploader, which must not push any of them to a public bucket.
+  options.unfreePackages = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [
+      "android-sdk-platform-tools"
+      "android-studio"
+      "antigravity"
+      "antigravity-cli"
+      "antigravity-ide"
+      "claude-code"
+      "cuda_nvcc"
+      "discord"
+      "discord-canary"
+      "discord-ptb"
+      "firefox-bin"
+      "firefox-bin-unwrapped"
+      "google-chrome"
+      "google-chrome-unstable"
+      "google-cloud-sdk"
+      "libretro-fbneo"
+      "libretro-genesis-plus-gx"
+      "libretro-mame2000"
+      "libretro-mame2003"
+      "libretro-mame2015"
+      "libretro-snes9x"
+      "mongodb"
+      "open-webui"
+      "rpcs3"
+      "steam"
+      "steam-jupiter-unwrapped"
+      "steam-original"
+      "steam-run"
+      "steam-unwrapped"
+      "steamdeck-hw-theme"
+      "steamcmd"
+      "via"
+      "vscode"
+      "warp-terminal"
+    ];
+    description = "Unfree package names this system is allowed to build.";
+  };
+
+  config = {
   nixpkgs = {
     config = {
       # checkMeta = true;
@@ -12,42 +57,7 @@
       ];
       allowUnfreePredicate =
         pkg:
-        builtins.elem (lib.getName pkg) [
-          "android-sdk-platform-tools"
-          "android-studio"
-          "antigravity"
-          "antigravity-cli"
-          "antigravity-ide"
-          "claude-code"
-          "cuda_nvcc"
-          "discord"
-          "discord-canary"
-          "discord-ptb"
-          "firefox-bin"
-          "firefox-bin-unwrapped"
-          "google-chrome"
-          "google-chrome-unstable"
-          "google-cloud-sdk"
-          "libretro-fbneo"
-          "libretro-genesis-plus-gx"
-          "libretro-mame2000"
-          "libretro-mame2003"
-          "libretro-mame2015"
-          "libretro-snes9x"
-          "mongodb"
-          "open-webui"
-          "rpcs3"
-          "steam"
-          "steam-jupiter-unwrapped"
-          "steam-original"
-          "steam-run"
-          "steam-unwrapped"
-          "steamdeck-hw-theme"
-          "steamcmd"
-          "via"
-          "vscode"
-          "warp-terminal"
-        ];
+        builtins.elem (lib.getName pkg) config.unfreePackages;
     };
     overlays = [
       (_: prev: {
@@ -65,5 +75,6 @@
         });
       })
     ];
+  };
   };
 }
