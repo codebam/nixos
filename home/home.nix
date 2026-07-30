@@ -36,6 +36,7 @@ in
 
     sessionPath = [
       "${config.home.homeDirectory}/.npm-global/bin"
+      "${config.home.homeDirectory}/.kimi-code/bin"
     ];
 
     shell = {

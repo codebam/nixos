@@ -115,6 +115,7 @@ _: {
             ".config/claude"
             ".config/claude-code"
             ".gemini"
+            ".kimi-code"
             ".librewolf"
             ".firedragon"
             ".password-store"
