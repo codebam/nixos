@@ -200,6 +200,33 @@ let
       echo "==> [gcp-builder-async] $MISSING deriver(s) not in this store; skipped."
     fi
     if [ ''${#PRESENT[@]} -gt 0 ]; then
+      # Uploading only what happens to be here is not enough, because what is
+      # here depends on what the bucket already had.
+      #
+      # Substituting `out` is enough to *build the system*, but not to build
+      # *against* it. Nothing at runtime refers to a `dev` output, so a fill
+      # that substitutes its whole closure realises no `dev` at all and the
+      # collection below finds nothing to add. That is self-perpetuating: the
+      # first fill compiled WebKit and published `wpewebkit.out`, so every
+      # later fill substituted it, never needed `wpewebkit.dev`, and never had
+      # one to publish. The bucket could not acquire a `dev` it had made
+      # unnecessary, and every machine compiling against WebKit rebuilt the
+      # whole of it while the cache reported a hit on `out`.
+      #
+      # So ask for them rather than hoping they are lying around. `debug` is
+      # deliberately not asked for: it is large and nothing compiles against it.
+      mapfile -t DEV_SPECS < <(for d in "''${PRESENT[@]}"; do
+        nix-store -q --outputs "$d" 2>/dev/null | grep -q -- '-dev$' && echo "$d!dev"
+      done)
+      if [ ''${#DEV_SPECS[@]} -gt 0 ]; then
+        echo "==> [gcp-builder-async] Realising ''${#DEV_SPECS[@]} dev output(s); WebKit compiles here if it is not already published..."
+        # Chunked: `nix-store -r` fails the whole batch on one unrealisable
+        # output, and xargs carries on to the next chunk instead of losing
+        # everything after the first failure -- the same trap as --outputs.
+        printf '%s\n' "''${DEV_SPECS[@]}" \
+          | xargs -r -n 64 nix-store -r >/dev/null 2>&1 \
+          || echo "==> [gcp-builder-async] some dev outputs could not be realised; continuing."
+      fi
       # An individual output can still be absent — the `debug` of something
       # substituted rather than built here — so those are dropped as well.
       mapfile -t EXTRA < <(nix-store -q --outputs "''${PRESENT[@]}" 2>/dev/null \
