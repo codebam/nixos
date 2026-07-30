@@ -165,9 +165,18 @@ let
       exit 1
     fi
 
+    # --all, not the built paths. Copying a store path copies its *runtime*
+    # closure, and nothing at runtime refers to a `dev` output — so wpewebkit's
+    # headers never reached the bucket while its `out` did. Anything compiling
+    # against WebKit then rebuilt the whole of it on a fresh VM, every time,
+    # while the cache reported a hit for the part nobody needed to build.
+    #
+    # The VM's store holds what this build needed and nothing else, so --all is
+    # that set plus the dependencies it substituted from cache.nixos.org. Those
+    # are redundant uploads; they cost bucket storage and are worth it against
+    # rebuilding WebKit once.
     echo "==> [gcp-builder-async] Signing and staging closures into $CACHE_DIR..."
-    nix copy --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" \
-      "''${OUT_PATHS[@]}" || exit 1
+    nix copy --all --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
 
     echo "==> [gcp-builder-async] Uploading binary cache to gs://$BUCKET..."
     gcloud storage rsync -r "$CACHE_DIR" "gs://$BUCKET" --project="$PROJECT" || exit 1
