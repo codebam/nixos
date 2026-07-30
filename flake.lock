@@ -733,11 +733,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785388065,
-        "narHash": "sha256-YAr98fzGvF/DU5sYk+ot8qotxQEFaRIW1SyfoMn/rWw=",
+        "lastModified": 1785390511,
+        "narHash": "sha256-jkr/BdTUkc1yyGqJ7NeVg6Um0SrmfW0zoUcqZse09Rc=",
         "owner": "codebam",
         "repo": "viewport-smithay",
-        "rev": "ba7422efcf586e52d24c959e2989875a8ac0bb0d",
+        "rev": "c9a036ece285d5d518d5ffaf157696566f7c0ba3",
         "type": "github"
       },
       "original": {
