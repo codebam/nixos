@@ -178,6 +178,28 @@ let
     echo "==> [gcp-builder-async] Signing and staging closures into $CACHE_DIR..."
     nix copy --all --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
 
+    # The bucket may not exist: it can be deleted, or this can be a fresh
+    # project. Without this the whole build runs, finishes, and then dies on
+    # the upload — three quarters of an hour of compilation thrown away on a
+    # bucket that takes a second to make.
+    #
+    # Public read is not an oversight. Nix fetches a substituter over plain
+    # HTTPS with no credentials, so a private bucket answers every request with
+    # 403 and the cache is silently useless. What is in it is signed build
+    # output of public packages, and the signature is what makes it
+    # trustworthy, not the obscurity of the URL.
+    if ! gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" >/dev/null 2>&1; then
+      echo "==> [gcp-builder-async] Bucket gs://$BUCKET is missing; creating it..."
+      gcloud storage buckets create "gs://$BUCKET" \
+        --project="$PROJECT" \
+        --location="''${ZONE%-*}" \
+        --uniform-bucket-level-access || exit 1
+      gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" \
+        --project="$PROJECT" \
+        --member=allUsers \
+        --role=roles/storage.objectViewer >/dev/null || exit 1
+    fi
+
     echo "==> [gcp-builder-async] Uploading binary cache to gs://$BUCKET..."
     gcloud storage rsync -r "$CACHE_DIR" "gs://$BUCKET" --project="$PROJECT" || exit 1
 
