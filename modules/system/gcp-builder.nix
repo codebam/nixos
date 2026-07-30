@@ -165,18 +165,34 @@ let
       exit 1
     fi
 
-    # --all, not the built paths. Copying a store path copies its *runtime*
-    # closure, and nothing at runtime refers to a `dev` output — so wpewebkit's
-    # headers never reached the bucket while its `out` did. Anything compiling
-    # against WebKit then rebuilt the whole of it on a fresh VM, every time,
-    # while the cache reported a hit for the part nobody needed to build.
+    # The runtime closure, plus the other outputs of everything in it.
     #
-    # The VM's store holds what this build needed and nothing else, so --all is
-    # that set plus the dependencies it substituted from cache.nixos.org. Those
-    # are redundant uploads; they cost bucket storage and are worth it against
-    # rebuilding WebKit once.
-    echo "==> [gcp-builder-async] Signing and staging closures into $CACHE_DIR..."
-    nix copy --all --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
+    # Copying a store path copies what it refers to at runtime, and nothing at
+    # runtime refers to a `dev` output — so wpewebkit's headers never reached
+    # the bucket while its `out` did, and anything compiling against WebKit
+    # rebuilt the whole of it while the cache reported a hit.
+    #
+    # `--all` fixes that and goes much too far: it is the VM's entire store,
+    # every compiler and build-only dependency it substituted along the way,
+    # all of it signed and compressed before a byte is uploaded. What is wanted
+    # is narrower — the packages this system is made of, with all their outputs
+    # rather than just the one the system points at.
+    echo "==> [gcp-builder-async] Collecting outputs of the system's closure..."
+    mapfile -t CLOSURE < <(nix-store -qR "''${OUT_PATHS[@]}")
+    mapfile -t DERIVERS < <(nix-store -q --deriver "''${CLOSURE[@]}" 2>/dev/null \
+      | grep -v '^unknown-deriver$' | sort -u)
+    ALL_OUTPUTS=("''${CLOSURE[@]}")
+    if [ ''${#DERIVERS[@]} -gt 0 ]; then
+      # A deriver may have been garbage collected or never existed here; its
+      # outputs are simply skipped rather than failing the run.
+      mapfile -t EXTRA < <(nix-store -q --outputs "''${DERIVERS[@]}" 2>/dev/null \
+        | while read -r o; do [ -e "$o" ] && echo "$o"; done)
+      ALL_OUTPUTS+=("''${EXTRA[@]}")
+    fi
+
+    echo "==> [gcp-builder-async] Signing and staging ''${#ALL_OUTPUTS[@]} paths into $CACHE_DIR..."
+    printf '%s\n' "''${ALL_OUTPUTS[@]}" | sort -u \
+      | xargs nix copy --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
 
     # The bucket may not exist: it can be deleted, or this can be a fresh
     # project. Without this the whole build runs, finishes, and then dies on
