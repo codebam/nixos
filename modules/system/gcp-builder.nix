@@ -182,11 +182,29 @@ let
     mapfile -t DERIVERS < <(nix-store -q --deriver "''${CLOSURE[@]}" 2>/dev/null \
       | grep -v '^unknown-deriver$' | sort -u)
     ALL_OUTPUTS=("''${CLOSURE[@]}")
-    if [ ''${#DERIVERS[@]} -gt 0 ]; then
-      # A deriver may have been garbage collected or never existed here; its
-      # outputs are simply skipped rather than failing the run.
-      mapfile -t EXTRA < <(nix-store -q --outputs "''${DERIVERS[@]}" 2>/dev/null \
+    # A deriver may have been garbage collected or never existed here, and
+    # `nix-store -q --outputs` does not skip those: it fails the entire batch
+    # at the first one it cannot find and prints nothing after it. The list is
+    # sorted, so twelve collected `.drv`s near the front cut it off two
+    # thousand entries early, and `2>/dev/null` inside a process substitution
+    # hid both the error and the exit status from `set -o pipefail`.
+    #
+    # wpewebkit sorts after them. That is why its `dev` output still never
+    # reached the bucket after this loop was written to put it there, and why
+    # every rebuild compiled WebKit again against a cache that reported a hit.
+    # Drop the missing derivers before asking rather than after.
+    mapfile -t PRESENT < <(printf '%s\n' "''${DERIVERS[@]}" \
+      | while read -r d; do [ -e "$d" ] && echo "$d"; done)
+    MISSING=$(( ''${#DERIVERS[@]} - ''${#PRESENT[@]} ))
+    if [ "$MISSING" -gt 0 ]; then
+      echo "==> [gcp-builder-async] $MISSING deriver(s) not in this store; skipped."
+    fi
+    if [ ''${#PRESENT[@]} -gt 0 ]; then
+      # An individual output can still be absent — the `debug` of something
+      # substituted rather than built here — so those are dropped as well.
+      mapfile -t EXTRA < <(nix-store -q --outputs "''${PRESENT[@]}" 2>/dev/null \
         | while read -r o; do [ -e "$o" ] && echo "$o"; done)
+      echo "==> [gcp-builder-async] ''${#EXTRA[@]} extra output(s) from ''${#PRESENT[@]} deriver(s)."
       ALL_OUTPUTS+=("''${EXTRA[@]}")
     fi
 
