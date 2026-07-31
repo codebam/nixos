@@ -538,6 +538,20 @@
         };
       };
     };
+    # gh rewrites config.yml on most invocations, replacing home-manager's
+    # symlink with a plain file; force = true (below, in xdg.configFile) keeps
+    # activation from failing on it. hosts.yml stays unmanaged — that is where
+    # the auth state lives.
+    gh = {
+      enable = true;
+      settings = {
+        git_protocol = "ssh";
+        prompt = "enabled";
+        aliases = {
+          co = "pr checkout";
+        };
+      };
+    };
     # Base options and key bindings come from home/shell-common.nix.
     tmux = {
       extraConfig = ''

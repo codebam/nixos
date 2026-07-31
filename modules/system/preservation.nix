@@ -144,6 +144,10 @@ _: {
             ".config/qmk"
             ".cache/nix-index"
             ".config/github-copilot"
+            {
+              directory = ".config/gh";
+              mode = "0700";
+            }
             ".config/gcloud"
             ".config/supersonic"
             ".config/feishin"
