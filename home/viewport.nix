@@ -164,13 +164,13 @@ in
     logo = false;
     tutorial = false;
 
-    theme = {
-      bg = "#000000";
-      glow-1 = "transparent";
-      glow-2 = "transparent";
-      bar-bg = "#000000";
-      bar-border = "#1a1a1a";
-    };
+    # No theme block, deliberately. Every key here is written straight onto
+    # the document as a CSS custom property (`applyTheme`, data/shell/
+    # windows.js), so overriding them replaces whatever shell.css does with
+    # those tokens. Flattening bg and the glows to black and transparent meant
+    # the wallpaper vignette, the elevation shadows and the workspace-pill glow
+    # all resolved to black-on-black or nothing at all — the styling was
+    # applying and had nothing to show for it.
 
     idle = {
       lock_after = 600;
