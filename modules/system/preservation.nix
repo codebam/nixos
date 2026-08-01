@@ -164,6 +164,8 @@ _: {
             ".local/share/kwalletd"
             ".local/share/iamb"
             ".cache/iamb"
+            ".local/share/uv"
+            ".local/bin"
           ];
         };
       };
