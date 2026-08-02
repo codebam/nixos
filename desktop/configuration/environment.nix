@@ -11,6 +11,12 @@
   # module names viewport first and leaves wlr as the fallback.
   imports = [ inputs.viewport-smithay.nixosModules.portal ];
   programs.viewport.portals.enable = true;
+  # The same package systemPackages installs below, named so the portal backend
+  # is that one rather than whatever the flake defaults to. Without it both end
+  # up in the closure, and the portal is answered by a compositor this system
+  # does not run.
+  programs.viewport.package =
+    inputs.viewport-smithay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   environment.systemPackages = with pkgs; [
     cargo
@@ -22,6 +28,13 @@
     # The rewrite rather than the C build. Both install a binary called
     # `viewport` and would collide; the C one stays a flake input because the
     # portal routing below still comes from it.
-    inputs.viewport-smithay.packages.${pkgs.stdenv.hostPlatform.system}.viewport-smithay
+    #
+    # `.default`, so this follows whichever engine that flake recommends —
+    # `.cef` today. The alternative is naming a backend (`.wpe`, `.webkitgtk`,
+    # `.chromium`, `.cef`) and being held to it, which is what naming the old
+    # `.viewport-smithay` attribute did: it resolved to `.wpe` and quietly kept
+    # this system compiling WebKit after the default had moved away from it
+    # twice.
+    inputs.viewport-smithay.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }
