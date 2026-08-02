@@ -39,6 +39,72 @@ let
     fi
   '';
 
+  # Making and unmaking the cache bucket, which is all that is left of the
+  # binary cache this module used to fill.
+  #
+  # Kept as a command rather than as part of a build because the two are not
+  # the same decision: building on a Spot VM is a thing to do often, and
+  # standing a public cache back up is a thing to do once and then live with.
+  gcpCacheBucket = pkgs.writeShellScriptBin "gcp-cache-bucket" ''
+    set -euo pipefail
+
+    PROJECT="${cfg.project}"
+    ZONE="${cfg.zone}"
+    BUCKET="${cfg.cacheBucket}"
+
+    usage() {
+      echo "usage: gcp-cache-bucket {create|delete|status}" >&2
+      echo "  create   make gs://$BUCKET, world-readable" >&2
+      echo "  delete   remove it and everything in it" >&2
+      echo "  status   say whether it exists and how big it is" >&2
+      exit 2
+    }
+
+    case "''${1:-}" in
+      create)
+        if gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" >/dev/null 2>&1; then
+          echo "==> gs://$BUCKET already exists"
+          exit 0
+        fi
+        echo "==> creating gs://$BUCKET in ''${ZONE%-*}"
+        gcloud storage buckets create "gs://$BUCKET" \
+          --project="$PROJECT" \
+          --location="''${ZONE%-*}" \
+          --uniform-bucket-level-access
+        # Public read is not an oversight. Nix fetches a substituter over plain
+        # HTTPS with no credentials, so a private bucket answers every request
+        # with 403 and the cache is silently useless. What goes in it is signed
+        # build output of public packages, and the signature is what makes it
+        # trustworthy rather than the obscurity of the URL.
+        gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" \
+          --project="$PROJECT" \
+          --member=allUsers \
+          --role=roles/storage.objectViewer >/dev/null
+        echo "==> created. Nothing fills it: this module no longer has that"
+        echo "    part, and nothing reads it until a substituter names it"
+        echo "    *and* its public key."
+        ;;
+      delete)
+        if ! gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" >/dev/null 2>&1; then
+          echo "==> gs://$BUCKET does not exist"
+          exit 0
+        fi
+        gcloud storage du -s "gs://$BUCKET" || true
+        echo "==> deleting gs://$BUCKET and everything in it"
+        gcloud storage rm -r "gs://$BUCKET"
+        ;;
+      status)
+        if gcloud storage buckets describe "gs://$BUCKET" \
+             --project="$PROJECT" --format="value(name,location)" 2>/dev/null; then
+          gcloud storage du -s "gs://$BUCKET" || true
+        else
+          echo "gs://$BUCKET does not exist"
+        fi
+        ;;
+      *) usage ;;
+    esac
+  '';
+
   rebuildSwitch = pkgs.writeShellScriptBin "rebuild-switch" ''
     set -euo pipefail
 
@@ -164,6 +230,19 @@ in
       default = "100GB";
       description = "Boot disk size for the builder.";
     };
+    cacheBucket = mkOption {
+      type = types.str;
+      default = "codebam-nix-cache";
+      description = ''
+        The GCS bucket `gcp-cache-bucket` makes and removes.
+
+        Nothing fills it and nothing reads it: the binary cache this module used
+        to keep was deleted once the compositor stopped building an engine from
+        source. The name is here so that standing one back up is a command
+        rather than an archaeology exercise.
+      '';
+    };
+
     flakePath = mkOption {
       type = types.str;
       default = "/persistent/etc/nixos";
@@ -172,6 +251,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [ rebuildSwitch ];
+    environment.systemPackages = [ rebuildSwitch gcpCacheBucket ];
   };
 }
