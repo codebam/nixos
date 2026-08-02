@@ -39,346 +39,6 @@ let
     fi
   '';
 
-  # Runs as root on the Spot VM via GCE metadata startup-script. Everything it
-  # prints lands on serial port 1, which is what `gcp-cache-fill -f` tails.
-  gcpCacheFillScript = vmScript "gcp-cache-fill-startup.sh" ''
-    #!/usr/bin/env bash
-    # No `set -e`: a failed stage must still fall through to the EXIT trap so the
-    # Spot VM always tears itself down instead of idling on the meter.
-    set -uo pipefail
-
-    # GCE runs startup scripts with no HOME, and the Nix installer aborts with
-    # "$HOME is not set". Nix also writes per-user state under it later.
-    export HOME=/root
-    export USER=root
-
-    INSTANCE="${cfg.asyncInstanceName}"
-    ZONE="${cfg.zone}"
-    PROJECT="${cfg.project}"
-    BUCKET="${cfg.cacheBucket}"
-    KEY_FILE="/root/cache-priv-key.pem"
-    CACHE_DIR="/var/tmp/nix-cache"
-    WORK_DIR="/var/tmp/nixos-build"
-    LOG_FILE="/var/log/gcp-cache-fill.log"
-
-    # GCE sends startup-script output to journald, not to the serial port, so
-    # `gcp-cache-fill -f` would otherwise only ever show the boot log and a
-    # login prompt. Log to a file and have a detached tail relay it to ttyS0
-    # (serial port 1).
-    #
-    # Deliberately NOT `exec > >(tee /dev/ttyS0)`: with process substitution, a
-    # tee that cannot open /dev/ttyS0 dies and the first echo takes SIGPIPE,
-    # killing the script before it prints anything. A plain file redirect has
-    # no such coupling, and it keeps stdout a non-tty so nix emits plain log
-    # lines instead of an ANSI progress bar.
-    # The relay is supervised: an unsupervised `tail -F` that dies (write error
-    # on ttyS0, getty contention, SIGHUP) silently ends serial output while the
-    # build keeps running, which is indistinguishable from a hang. Restart it if
-    # it exits. `-n 0` on each restart avoids replaying the whole log.
-    : > "$LOG_FILE"
-    setsid bash -c "while :; do tail -n 0 -F '$LOG_FILE' > /dev/ttyS0 2>/dev/null; sleep 2; done" \
-      </dev/null >/dev/null 2>&1 &
-    exec >> "$LOG_FILE" 2>&1
-
-    self_destruct() {
-      local rc=$?
-      if [ "$rc" -ne 0 ]; then
-        echo "==> [gcp-builder-async] FAILED (exit $rc)."
-        echo "==> [gcp-builder-async] Holding VM ${toString cfg.failureHoldMinutes}m so the logs survive."
-        echo "==> [gcp-builder-async] Inspect: gcloud compute ssh $INSTANCE --zone=$ZONE --project=$PROJECT --command='sudo cat $LOG_FILE'"
-        sleep $(( ${toString cfg.failureHoldMinutes} * 60 ))
-      fi
-      echo "==> [gcp-builder-async] Self-destructing GCP VM ($INSTANCE)..."
-      sync
-      sleep 5
-      gcloud compute instances delete "$INSTANCE" --zone="$ZONE" --project="$PROJECT" --quiet
-    }
-    trap self_destruct EXIT
-
-    echo "==> [gcp-builder-async] Installing base dependencies..."
-    export DEBIAN_FRONTEND=noninteractive
-    # Debian GCE images fire apt-daily/unattended-upgrades on boot, which holds
-    # the apt lock for minutes. Without an explicit lock timeout these calls
-    # block silently; with it they queue and report. Stopping the timers first
-    # keeps the wait short.
-    systemctl stop apt-daily.service apt-daily-upgrade.service unattended-upgrades.service 2>/dev/null
-    systemctl disable --now apt-daily.timer apt-daily-upgrade.timer 2>/dev/null
-    apt-get -o DPkg::Lock::Timeout=600 update -qq
-    apt-get -o DPkg::Lock::Timeout=600 install -y -qq git curl xz-utils
-    echo "==> [gcp-builder-async] Base dependencies ready."
-
-    echo "==> [gcp-builder-async] Starting Nix daemon setup..."
-    if ! command -v nix &>/dev/null; then
-      curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes || exit 1
-    fi
-
-    export PATH="/nix/var/nix/profiles/default/bin:$PATH"
-
-    # This MUST come after the installer: it writes its own /etc/nix/nix.conf and
-    # silently discards anything already there. Configuring before it is why the
-    # builder ignored its own cache and rebuilt wpewebkit from source.
-    #
-    # build-users-group is the installer's own setting; drop it and every build
-    # fails. extra-* keeps the cache.nixos.org defaults. The bucket is public,
-    # so reading from it needs no credentials.
-    echo "==> [gcp-builder-async] Configuring nix.conf (cache substituter)..."
-    mkdir -p /etc/nix
-    printf '%s\n' \
-      "build-users-group = nixbld" \
-      "experimental-features = nix-command flakes" \
-      "max-jobs = auto" \
-      "cores = 0" \
-      "extra-substituters = https://storage.googleapis.com/${cfg.cacheBucket} ${concatStringsSep " " cfg.extraSubstituters}" \
-      "extra-trusted-public-keys = ${cfg.cachePublicKey} ${concatStringsSep " " cfg.extraTrustedPublicKeys}" \
-      "fallback = true" > /etc/nix/nix.conf
-    systemctl restart nix-daemon 2>/dev/null || true
-
-    echo "==> [gcp-builder-async] Effective substituters:"
-    nix config show 2>/dev/null | grep -E "^(substituters|trusted-public-keys)" || true
-
-    echo "==> [gcp-builder-async] Cloning ${cfg.repoUrl}..."
-    rm -rf "$WORK_DIR"
-    git clone --depth 1 "${cfg.repoUrl}" "$WORK_DIR" || exit 1
-    cd "$WORK_DIR" || exit 1
-
-    echo "==> [gcp-builder-async] Fetching binary cache signing key..."
-    gcloud secrets versions access latest \
-      --secret="${cfg.signingKeySecret}" \
-      --project="$PROJECT" > "$KEY_FILE" || exit 1
-    chmod 600 "$KEY_FILE"
-
-    OUT_PATHS=()
-    for host in ${concatStringsSep " " cfg.cacheHosts}; do
-      echo "==> [gcp-builder-async] Building $host toplevel..."
-      out=$(nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
-        --no-link --print-out-paths \
-        --extra-experimental-features "nix-command flakes")
-      if [ -z "$out" ]; then
-        echo "==> [gcp-builder-async] WARNING: build failed for $host, skipping."
-        continue
-      fi
-      OUT_PATHS+=("$out")
-    done
-
-    if [ ''${#OUT_PATHS[@]} -eq 0 ]; then
-      echo "==> [gcp-builder-async] ERROR: nothing built, no cache to upload."
-      exit 1
-    fi
-
-    # The runtime closure, plus the other outputs of everything in it.
-    #
-    # Copying a store path copies what it refers to at runtime, and nothing at
-    # runtime refers to a `dev` output — so wpewebkit's headers never reached
-    # the bucket while its `out` did, and anything compiling against WebKit
-    # rebuilt the whole of it while the cache reported a hit.
-    #
-    # `--all` fixes that and goes much too far: it is the VM's entire store,
-    # every compiler and build-only dependency it substituted along the way,
-    # all of it signed and compressed before a byte is uploaded. What is wanted
-    # is narrower — the packages this system is made of, with all their outputs
-    # rather than just the one the system points at.
-    echo "==> [gcp-builder-async] Collecting outputs of the system's closure..."
-    mapfile -t CLOSURE < <(nix-store -qR "''${OUT_PATHS[@]}")
-    mapfile -t DERIVERS < <(nix-store -q --deriver "''${CLOSURE[@]}" 2>/dev/null \
-      | grep -v '^unknown-deriver$' | sort -u)
-    ALL_OUTPUTS=("''${CLOSURE[@]}")
-    # A deriver may have been garbage collected or never existed here, and
-    # `nix-store -q --outputs` does not skip those: it fails the entire batch
-    # at the first one it cannot find and prints nothing after it. The list is
-    # sorted, so twelve collected `.drv`s near the front cut it off two
-    # thousand entries early, and `2>/dev/null` inside a process substitution
-    # hid both the error and the exit status from `set -o pipefail`.
-    #
-    # wpewebkit sorts after them. That is why its `dev` output still never
-    # reached the bucket after this loop was written to put it there, and why
-    # every rebuild compiled WebKit again against a cache that reported a hit.
-    # Drop the missing derivers before asking rather than after.
-    mapfile -t PRESENT < <(printf '%s\n' "''${DERIVERS[@]}" \
-      | while read -r d; do [ -e "$d" ] && echo "$d"; done)
-    MISSING=$(( ''${#DERIVERS[@]} - ''${#PRESENT[@]} ))
-    if [ "$MISSING" -gt 0 ]; then
-      echo "==> [gcp-builder-async] $MISSING deriver(s) not in this store; skipped."
-    fi
-    if [ ''${#PRESENT[@]} -gt 0 ]; then
-      # Uploading only what happens to be here is not enough, because what is
-      # here depends on what the bucket already had.
-      #
-      # Substituting `out` is enough to *build the system*, but not to build
-      # *against* it. Nothing at runtime refers to a `dev` output, so a fill
-      # that substitutes its whole closure realises no `dev` at all and the
-      # collection below finds nothing to add. That is self-perpetuating: the
-      # first fill compiled WebKit and published `wpewebkit.out`, so every
-      # later fill substituted it, never needed `wpewebkit.dev`, and never had
-      # one to publish. The bucket could not acquire a `dev` it had made
-      # unnecessary, and every machine compiling against WebKit rebuilt the
-      # whole of it while the cache reported a hit on `out`.
-      #
-      # So ask for them rather than hoping they are lying around. `debug` is
-      # deliberately not asked for: it is large and nothing compiles against it.
-      mapfile -t DEV_SPECS < <(for d in "''${PRESENT[@]}"; do
-        nix-store -q --outputs "$d" 2>/dev/null | grep -q -- '-dev$' && echo "$d!dev"
-      done)
-      if [ ''${#DEV_SPECS[@]} -gt 0 ]; then
-        echo "==> [gcp-builder-async] Realising ''${#DEV_SPECS[@]} dev output(s); WebKit compiles here if it is not already published..."
-        # Chunked: `nix-store -r` fails the whole batch on one unrealisable
-        # output, and xargs carries on to the next chunk instead of losing
-        # everything after the first failure -- the same trap as --outputs.
-        printf '%s\n' "''${DEV_SPECS[@]}" \
-          | xargs -r -n 64 nix-store -r >/dev/null 2>&1 \
-          || echo "==> [gcp-builder-async] some dev outputs could not be realised; continuing."
-      fi
-      # An individual output can still be absent — the `debug` of something
-      # substituted rather than built here — so those are dropped as well.
-      mapfile -t EXTRA < <(nix-store -q --outputs "''${PRESENT[@]}" 2>/dev/null \
-        | while read -r o; do [ -e "$o" ] && echo "$o"; done)
-      echo "==> [gcp-builder-async] ''${#EXTRA[@]} extra output(s) from ''${#PRESENT[@]} deriver(s)."
-      ALL_OUTPUTS+=("''${EXTRA[@]}")
-    fi
-
-    # Nothing unfree goes into a public bucket.
-    #
-    # The bucket is world-readable because a substituter is fetched without
-    # credentials, so anything pushed there is published. Redistributing an
-    # unfree binary is the licence holder's call and not ours — Chrome and
-    # Steam and the rest are built here under allowUnfreePredicate, which
-    # permits *building* them, not handing them out.
-    #
-    # The list is the same one the predicate reads, passed in rather than
-    # written twice: a name added to the config and forgotten here would be
-    # published silently.
-    UNFREE=(${lib.concatStringsSep " " (map (n: ''"${n}"'') config.unfreePackages)})
-    is_unfree() {
-      local base="''${1#/nix/store/}"
-      base="''${base#*-}"
-      local name
-      for name in "''${UNFREE[@]}"; do
-        # Store path names carry a version and sometimes an output suffix, so
-        # match the name and a boundary rather than the whole thing.
-        case "$base" in
-          "$name"|"$name"-*) return 0 ;;
-        esac
-      done
-      return 1
-    }
-
-    KEEP=()
-    SKIPPED=0
-    for path in $(printf '%s\n' "''${ALL_OUTPUTS[@]}" | sort -u); do
-      if is_unfree "$path"; then
-        SKIPPED=$((SKIPPED + 1))
-      else
-        KEEP+=("$path")
-      fi
-    done
-    echo "==> [gcp-builder-async] Withholding $SKIPPED unfree path(s) from the public cache."
-
-    echo "==> [gcp-builder-async] Signing and staging ''${#KEEP[@]} paths into $CACHE_DIR..."
-    printf '%s\n' "''${KEEP[@]}" \
-      | xargs nix copy --to "file://$CACHE_DIR?secret-key=$KEY_FILE&compression=zstd" || exit 1
-
-    # The bucket may not exist: it can be deleted, or this can be a fresh
-    # project. Without this the whole build runs, finishes, and then dies on
-    # the upload — three quarters of an hour of compilation thrown away on a
-    # bucket that takes a second to make.
-    #
-    # Public read is not an oversight. Nix fetches a substituter over plain
-    # HTTPS with no credentials, so a private bucket answers every request with
-    # 403 and the cache is silently useless. What is in it is signed build
-    # output of public packages, and the signature is what makes it
-    # trustworthy, not the obscurity of the URL.
-    if ! gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" >/dev/null 2>&1; then
-      echo "==> [gcp-builder-async] Bucket gs://$BUCKET is missing; creating it..."
-      gcloud storage buckets create "gs://$BUCKET" \
-        --project="$PROJECT" \
-        --location="''${ZONE%-*}" \
-        --uniform-bucket-level-access || exit 1
-      gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" \
-        --project="$PROJECT" \
-        --member=allUsers \
-        --role=roles/storage.objectViewer >/dev/null || exit 1
-    fi
-
-    echo "==> [gcp-builder-async] Uploading binary cache to gs://$BUCKET..."
-    gcloud storage rsync -r "$CACHE_DIR" "gs://$BUCKET" --project="$PROJECT" || exit 1
-
-    # rsync compares by size, and narinfos are fixed-length: a re-signed one
-    # (new NAR URL, new signature) is byte-identical in length to the old and
-    # gets silently skipped, leaving a narinfo that points at a NAR which no
-    # longer exists. Re-upload them unconditionally.
-    #
-    # no-store matters too: publicly readable GCS objects default to
-    # Cache-Control: public, max-age=3600, so without this a client can fetch
-    # an hour-stale narinfo referencing a deleted NAR and fail with a 404.
-    echo "==> [gcp-builder-async] Refreshing narinfos (uncacheable)..."
-    gcloud storage cp "$CACHE_DIR"/*.narinfo "gs://$BUCKET/" \
-      --cache-control="no-store, max-age=0" --project="$PROJECT" || exit 1
-
-    echo "==> [gcp-builder-async] Cache fill completed successfully."
-  '';
-
-  gcpCacheFill = pkgs.writeShellScriptBin "gcp-cache-fill" ''
-    set -euo pipefail
-
-    PROJECT="${cfg.project}"
-    ZONE="${cfg.zone}"
-    INSTANCE="${cfg.asyncInstanceName}"
-    MACHINE_TYPE="${cfg.machineType}"
-    DISK_SIZE="${cfg.diskSize}"
-    GCLOUD=${pkgs.google-cloud-sdk}/bin/gcloud
-
-    instance_exists() {
-      $GCLOUD compute instances describe "$INSTANCE" \
-        --zone="$ZONE" --project="$PROJECT" &>/dev/null
-    }
-
-    follow_logs() {
-      echo "==> [gcp-builder] Waiting for $INSTANCE to come up..."
-      until instance_exists; do sleep 5; done
-      echo "==> [gcp-builder] Tailing GCP VM serial port logs ($INSTANCE)..."
-      # The VM deletes itself when the build finishes, which makes tail exit
-      # non-zero; that is the success path, not an error.
-      $GCLOUD compute instances tail-serial-port-output "$INSTANCE" \
-        --zone="$ZONE" \
-        --project="$PROJECT" || true
-      echo "==> [gcp-builder] Serial log ended (VM gone or preempted)."
-    }
-
-    case "''${1:-}" in
-      -f | --follow | logs)
-        follow_logs
-        exit 0
-        ;;
-    esac
-
-    if instance_exists; then
-      echo "==> [gcp-builder] $INSTANCE is already running."
-      echo "==> [gcp-builder] Follow progress using: gcp-cache-fill -f"
-      exit 0
-    fi
-
-    echo "==> [gcp-builder] Launching GCP cache fill VM ($INSTANCE)..."
-    # Run in the foreground: creation takes ~30s and previously it was
-    # backgrounded with `&`, so closing the terminal SIGHUP'd it and the VM was
-    # never created. Only the build itself is meant to be asynchronous.
-    $GCLOUD compute instances create "$INSTANCE" \
-      --project="$PROJECT" \
-      --zone="$ZONE" \
-      --machine-type="$MACHINE_TYPE" \
-      --provisioning-model=SPOT \
-      --instance-termination-action=DELETE \
-      --scopes=cloud-platform \
-      --boot-disk-size="$DISK_SIZE" \
-      --boot-disk-type=pd-balanced \
-      --image-family=debian-12 \
-      --image-project=debian-cloud \
-      --metadata=serial-port-enable=TRUE \
-      --metadata-from-file=startup-script=${gcpCacheFillScript} \
-      --quiet
-
-    echo "==> [gcp-builder] Cache fill VM launched; it self-deletes when done."
-    echo "==> [gcp-builder] Follow progress using: gcp-cache-fill -f"
-  '';
-
   rebuildSwitch = pkgs.writeShellScriptBin "rebuild-switch" ''
     set -euo pipefail
 
@@ -387,15 +47,11 @@ let
     INSTANCE="${cfg.instanceName}"
     MACHINE_TYPE="${cfg.machineType}"
     DISK_SIZE="${cfg.diskSize}"
-    BUCKET="${cfg.cacheBucket}"
 
-    ASYNC_MODE=false
     USE_GCP=true
     PREV_ARG=""
     for arg in "$@"; do
-      if [ "$arg" = "--async" ] || [ "$arg" = "--bg" ]; then
-        ASYNC_MODE=true
-      elif [ "$PREV_ARG" = "--builders" ] && [ -z "$arg" ]; then
+      if [ "$PREV_ARG" = "--builders" ] && [ -z "$arg" ]; then
         USE_GCP=false
       elif [[ "$arg" =~ ^--builders= ]]; then
         val="''${arg#--builders=}"
@@ -408,9 +64,6 @@ let
       PREV_ARG="$arg"
     done
 
-    if [ "$ASYNC_MODE" = "true" ]; then
-      exec ${gcpCacheFill}/bin/gcp-cache-fill
-    fi
 
     if [ "$USE_GCP" = "false" ]; then
       echo "==> [gcp-builder] Local build requested (--builders). Skipping GCP VM provisioning."
@@ -496,59 +149,10 @@ in
       default = "nix-builder";
       description = "Instance name for the ephemeral builder.";
     };
-    asyncInstanceName = mkOption {
-      type = types.str;
-      default = "nix-builder-async";
-      description = "Instance name for the oneshot gcp-cache-fill builder.";
-    };
     repoUrl = mkOption {
       type = types.str;
       default = "https://github.com/codebam/nixos.git";
       description = "Flake repository the cache fill VM clones and builds.";
-    };
-    cacheHosts = mkOption {
-      type = types.listOf types.str;
-      default = [ "nixos-desktop" ];
-      description = "nixosConfigurations attribute names to build and push to the cache.";
-    };
-    failureHoldMinutes = mkOption {
-      type = types.int;
-      default = 15;
-      description = ''
-        How long a failed cache fill VM stays alive before self-destructing, so
-        its logs can be inspected over SSH. Successful runs delete immediately.
-      '';
-    };
-    extraSubstituters = mkOption {
-      type = types.listOf types.str;
-      default = [ "https://nyx-cache.chaotic.cx" ];
-      description = ''
-        Additional substituters for the builder VM. These cannot come from a
-        flake's own nixConfig: that requires an interactive accept prompt, which
-        a startup script never gets, so the VM silently ignores it and rebuilds
-        from source. chaotic ships firefox-nightly this way, and rebuilding it
-        fails outright once Mozilla overwrites the nightly tarball its
-        fixed-output hash was taken from.
-      '';
-    };
-    extraTrustedPublicKeys = mkOption {
-      type = types.listOf types.str;
-      default = [ "nyx-cache.chaotic.cx:dJxTrgMC3V3cFfyIiBQDQorG6k1LsqurH/srpMSq7qk=" ];
-      description = "Public keys matching extraSubstituters.";
-    };
-    cachePublicKey = mkOption {
-      type = types.str;
-      default = "codebam-nix-cache-1:ZiBhSEjcy3Y53eTmQIdJsa1T1T6fCrh52EK22amzkD0=";
-      description = ''
-        Public half of the binary cache signing key, used by the builder VM to
-        trust its own cache as a substituter. Must match the private key in the
-        Secret Manager secret named by signingKeySecret.
-      '';
-    };
-    signingKeySecret = mkOption {
-      type = types.str;
-      default = "nix-cache-signing-key";
-      description = "GCP Secret Manager secret holding the binary cache private signing key.";
     };
     machineType = mkOption {
       type = types.str;
@@ -560,11 +164,6 @@ in
       default = "100GB";
       description = "Boot disk size for the builder.";
     };
-    cacheBucket = mkOption {
-      type = types.str;
-      default = "codebam-nix-cache";
-      description = "GCS Binary Cache Bucket name.";
-    };
     flakePath = mkOption {
       type = types.str;
       default = "/persistent/etc/nixos";
@@ -573,6 +172,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [ rebuildSwitch gcpCacheFill ];
+    environment.systemPackages = [ rebuildSwitch ];
   };
 }
