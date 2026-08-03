@@ -59,6 +59,9 @@
         fonts = {
           additional-dirs = [ "/run/current-system/sw/share/X11/fonts" ];
         };
+        effects = {
+          trail-cursor = true;
+        };
       };
     };
     helix = {
