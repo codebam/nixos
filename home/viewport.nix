@@ -195,7 +195,7 @@ in
     # window vertically. The host has to have the engine installed for this to
     # be worth binding: the Steam Deck imports this file too and does not.
     // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
-      "Mod4+Shift+v" = "exec ${lib.getExe pkgs.voice-to-text}";
+      "Mod4+Shift+v" = "exec ${lib.getExe osConfig.voiceToText.package}";
     };
   };
 }

@@ -1,8 +1,9 @@
 _:
 
 {
-  # The two hosts with a microphone and a graphical session. Not in
-  # modules/default.nix on purpose -- the Steam Deck would pay 148 MB of model
-  # for a keybinding it has no keyboard to press.
+  # The Steam Deck turns this on for itself, in its own programs.nix. Named
+  # per host rather than defaulted on in modules/default.nix even so: the
+  # model is 148 MB of closure, which is not something a host should acquire
+  # by importing the shared modules.
   voiceToText.enable = true;
 }
