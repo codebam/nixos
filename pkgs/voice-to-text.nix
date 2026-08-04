@@ -67,11 +67,8 @@ writeShellApplication {
       pid=$(cat "$pidfile")
       rm -f "$pidfile"
 
-      # TERM, not INT. A non-interactive shell is required to start background
-      # jobs with SIGINT and SIGQUIT ignored, and pw-record inherits that --
-      # so an interrupt here is discarded, the recorder outlives every press,
-      # and the next one starts a second recorder writing the same file. What
-      # that looks like from the outside is "Nothing heard" every time.
+      # See the `env --default-signal` below for why this can be relied on to
+      # arrive at all.
       kill -TERM "$pid" 2>/dev/null || true
 
       # pw-record writes the RIFF sizes on the way out, so the file is not a
@@ -120,9 +117,25 @@ writeShellApplication {
     rm -f "$wav"
     note "Recording…"
 
+    # `env --default-signal` because a recorder that cannot be signalled never
+    # stops. Two things arrive from the compositor and stack up:
+    #
+    #   - Viewport blocks SIGINT and SIGTERM for its event loop, and a mask
+    #     survives both fork and exec, so everything it spawns inherits it.
+    #   - POSIX requires a non-interactive shell to start background jobs with
+    #     SIGINT and SIGQUIT set to SIG_IGN.
+    #
+    # The recorder ends up with `SigBlk: 4002` and `SigIgn: 6` -- INT and TERM
+    # blocked, INT and QUIT ignored, nothing caught -- so the second press
+    # signals a process that cannot hear it, transcribes a file no one has
+    # finalised, and says "Nothing heard" while a recorder is left running for
+    # every press so far. `--default-signal` restores the default disposition
+    # *and* unblocks, which is the only part of this a keybinding can fix.
+    #
     # 16 kHz mono is what whisper resamples to anyway, so recording anything
     # richer is a bigger file and the same transcript.
-    timeout ${toString maxSeconds} \
+    env --default-signal=INT,TERM \
+      timeout ${toString maxSeconds} \
       pw-record --rate 16000 --channels 1 --format s16 "$wav" &
     echo $! > "$pidfile"
   '';
