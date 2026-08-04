@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 let
   # Which screen the user is on, as "name x y scale", or nothing.
@@ -184,6 +189,13 @@ in
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
+    }
+    # Press to start dictating, press again to stop and have it typed. Not
+    # `Mod4+v`, which the built-in keymap already spends on splitting the next
+    # window vertically. The host has to have the engine installed for this to
+    # be worth binding: the Steam Deck imports this file too and does not.
+    // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
+      "Mod4+Shift+v" = "exec ${lib.getExe pkgs.voice-to-text}";
     };
   };
 }

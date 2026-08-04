@@ -21,6 +21,7 @@
 
     ./programs/default.nix
     ./programs/pass-sops.nix
+    ./programs/voice-to-text.nix
     ./services/default.nix
     ./services/smartd.nix
     ./security/default.nix

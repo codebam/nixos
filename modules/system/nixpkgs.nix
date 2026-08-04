@@ -61,6 +61,10 @@
     };
     overlays = [
       (_: prev: {
+        # Here rather than in the module that installs it, because the
+        # keybinding that runs it lives in home-manager and both sides have to
+        # name the same derivation. `useGlobalPkgs` is what makes that work.
+        voice-to-text = prev.callPackage ../../pkgs/voice-to-text.nix { };
         electron = prev.electron-bin;
         electron-unwrapped = prev.electron-bin;
         electron_41 = prev.electron_41-bin;
