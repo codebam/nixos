@@ -3,6 +3,7 @@ _:
 {
   imports = [
     ../hardware-configuration.nix
+    ./hermes-agent.nix
     ./sops.nix
     ./boot.nix
     ./environment.nix

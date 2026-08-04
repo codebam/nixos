@@ -58,6 +58,7 @@
       url = "github:codebam/viewport-smithay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
   outputs =
@@ -102,6 +103,7 @@
             inputs.nix-index-database.nixosModules.nix-index
             inputs.chaotic.nixosModules.default
             inputs.lsfg-vk-flake.nixosModules.default
+            inputs.hermes-agent.nixosModules.default
             ./modules
             {
               home-manager = {

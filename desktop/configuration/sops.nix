@@ -14,6 +14,10 @@ _:
         owner = "navidrome";
         group = "navidrome";
       };
+      hermes-env = {
+        owner = "hermes";
+        group = "hermes";
+      };
       mopidy-subidy = {
         owner = "codebam";
         group = "users";
