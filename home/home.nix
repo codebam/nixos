@@ -125,7 +125,7 @@ in
       ripgrep
       slurp
       jq
-      supersonic-wayland
+      supersonic
       weechat
       calcurse
       high-tide
