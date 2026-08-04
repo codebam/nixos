@@ -66,7 +66,13 @@ writeShellApplication {
     if [ -s "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
       pid=$(cat "$pidfile")
       rm -f "$pidfile"
-      kill -INT "$pid" 2>/dev/null || true
+
+      # TERM, not INT. A non-interactive shell is required to start background
+      # jobs with SIGINT and SIGQUIT ignored, and pw-record inherits that --
+      # so an interrupt here is discarded, the recorder outlives every press,
+      # and the next one starts a second recorder writing the same file. What
+      # that looks like from the outside is "Nothing heard" every time.
+      kill -TERM "$pid" 2>/dev/null || true
 
       # pw-record writes the RIFF sizes on the way out, so the file is not a
       # readable WAV until the process is actually gone. Polled rather than
@@ -78,6 +84,7 @@ writeShellApplication {
         sleep 0.05
         waited=$((waited + 1))
       done
+      kill -KILL "$pid" 2>/dev/null || true
 
       note "Transcribing…"
 
