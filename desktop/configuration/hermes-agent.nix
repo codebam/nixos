@@ -18,7 +18,7 @@ in
     settings = {
       model = {
         base_url = "https://openrouter.ai/api/v1";
-        default = "deepseek/deepseek-v4-flash-0731";
+        default = "~deepseek/deepseek-v4-flash-latest";
       };
       toolsets = [ "all" ];
       terminal = {
