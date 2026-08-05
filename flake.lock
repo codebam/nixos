@@ -913,11 +913,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1785972391,
-        "narHash": "sha256-xC/GmlSj/WeEkcDJE8pNnqn97uBU651CCX4Lpi7QXRY=",
+        "lastModified": 1785973322,
+        "narHash": "sha256-2n3fsHg1vpfCQRCeNTlJC4r99M8GbpTTXiG4+JbiQmo=",
         "owner": "codebam",
         "repo": "viewport-smithay",
-        "rev": "f001ff8bfbdb5b4b494a506ce25587f63ab27c39",
+        "rev": "8ee583385bcf507a57cf22a24dc24463a3d41b15",
         "type": "github"
       },
       "original": {
