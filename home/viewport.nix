@@ -169,11 +169,14 @@ in
     logo = false;
     tutorial = false;
 
-    # Space between windows, in pixels. Every layout model (the tiling tree's
-    # dividers, the scrolling strip's columns, the matrix's slots) reads the
-    # same value, so one number spaces the whole desktop.
+    # Space around and between windows, in pixels. `inner` is the gap between
+    # adjacent windows; `outer` is extra space around the edge of the output,
+    # added on top of the inner gap. `smart` drops the inner gap on a single
+    # window. Every layout model reads the same values, so a few numbers space
+    # the whole desktop.
     gaps = {
       inner = 15;
+      smart = true;
     };
 
     # No theme block, deliberately. Every key here is written straight onto
