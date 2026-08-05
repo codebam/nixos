@@ -179,6 +179,16 @@ in
       smart = true;
     };
 
+    # The frame around a window. `radius` is the corner in pixels, on the
+    # outside of the border, and `width` is how thick that border is. Both are
+    # read by the compositor as well as the shell: a window's contents are a
+    # surface the compositor draws, so it crops each client to the same corner
+    # the page drew — square here, which costs it nothing.
+    border = {
+      radius = 0;
+      width = 1;
+    };
+
     # No theme block, deliberately. Every key here is written straight onto
     # the document as a CSS custom property (`applyTheme`, data/shell/
     # windows.js), so overriding them replaces whatever shell.css does with
