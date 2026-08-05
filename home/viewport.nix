@@ -169,6 +169,13 @@ in
     logo = false;
     tutorial = false;
 
+    # Space between windows, in pixels. Every layout model (the tiling tree's
+    # dividers, the scrolling strip's columns, the matrix's slots) reads the
+    # same value, so one number spaces the whole desktop.
+    gaps = {
+      inner = 15;
+    };
+
     # No theme block, deliberately. Every key here is written straight onto
     # the document as a CSS custom property (`applyTheme`, data/shell/
     # windows.js), so overriding them replaces whatever shell.css does with
