@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 let
   system = pkgs.stdenv.hostPlatform.system;
@@ -13,7 +18,7 @@ in
     settings = {
       model = {
         base_url = "https://openrouter.ai/api/v1";
-        default = "deepseek/deepseek-v4-flash";
+        default = "deepseek/deepseek-v4-flash-0731";
       };
       toolsets = [ "all" ];
       terminal = {
