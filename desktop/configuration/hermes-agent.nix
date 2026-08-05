@@ -449,11 +449,9 @@ in
   users.users.codebam.extraGroups = [ "hermes" ];
 
   # Add hermes desktop app as a home-manager package for codebam
-  home-manager.users.codebam =
-    { pkgs, ... }:
-    {
-      home.packages = [
-        inputs.hermes-agent.packages.${system}.desktop
-      ];
-    };
+  home-manager.users.codebam = {
+    home.packages = [
+      inputs.hermes-agent.packages.${system}.desktop
+    ];
+  };
 }
