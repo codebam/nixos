@@ -35,6 +35,10 @@ in
     };
   };
 
+  # addToSystemPackages exports HERMES_HOME=/var/lib/hermes/.hermes system-wide.
+  # That tree is 2770/0640 hermes:hermes, so interactive users need the group.
+  users.users.codebam.extraGroups = [ "hermes" ];
+
   # Add hermes desktop app as a home-manager package for codebam
   home-manager.users.codebam = { pkgs, ... }: {
     home.packages = with pkgs; [
