@@ -144,6 +144,10 @@ _: {
             ".config/qmk"
             ".cache/nix-index"
             ".config/github-copilot"
+            # hermes-desktop CEF user-data (window-state, theme, preferences,
+            # desktop-installation.json). HERMES_HOME itself is preserved above
+            # via /var/lib/hermes in desktop/configuration/preservation.nix.
+            ".config/Hermes"
             {
               directory = ".config/gh";
               mode = "0700";
