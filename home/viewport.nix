@@ -197,6 +197,16 @@ in
     # all resolved to black-on-black or nothing at all — the styling was
     # applying and had nothing to show for it.
 
+    # Takes the pointer image off the screen once it has been still that long
+    # — the arrow parked in the middle of a film. Any use of the pointer brings
+    # it back at once; typing does not, deliberately. Only the drawn image
+    # goes: focus and position are unchanged, so no client is told the mouse
+    # left. Milliseconds, not the seconds the idle block uses, because the
+    # useful values here are not whole seconds. Zero or absent is off.
+    cursor = {
+      hide_after_ms = 2000;
+    };
+
     idle = {
       lock_after = 600;
       lock_command = "${lib.getExe pkgs.swaylock} -f";

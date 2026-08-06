@@ -50,6 +50,10 @@
     rio = {
       enable = true;
       settings = {
+        # Mod4+Shift+q asks the window to close, and rio's default answer is a
+        # y/n prompt of its own — unconditionally, whether or not anything is
+        # running in the shell. Closing an idle terminal is not a question.
+        confirm-before-quit = false;
         cursor = {
           shape = "block";
           blinking = false;
