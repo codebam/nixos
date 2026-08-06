@@ -176,10 +176,16 @@ in
     # the /games watcher right after it, and the rest of the modules.
     bar_items = [
       { type = "volume"; }
-      { type = "weather"; location = "Pickering, ON, Canada"; }
+      {
+        type = "weather";
+        location = "Pickering, ON, Canada";
+      }
       "net"
       "disk"
-      { type = "disk"; path = "/games"; }
+      {
+        type = "disk";
+        path = "/games";
+      }
       "cpu"
       "load"
       "memory"
@@ -242,7 +248,7 @@ in
     # window vertically. The host has to have the engine installed for this to
     # be worth binding: the Steam Deck imports this file too and does not.
     // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
-      "Mod4+Shift+v" = "exec ${lib.getExe osConfig.voiceToText.package}";
+      "Mouse4" = "exec ${lib.getExe osConfig.voiceToText.package}";
     };
   };
 }
