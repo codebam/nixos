@@ -176,6 +176,7 @@ in
     # the /games watcher right after it, and the rest of the modules.
     bar_items = [
       { type = "volume"; }
+      { type = "mic"; }
       {
         type = "weather";
         location = "Pickering, ON, Canada";
