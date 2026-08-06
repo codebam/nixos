@@ -35,7 +35,7 @@
       package = pkgs.ungoogled-chromium;
     };
     ghostty = {
-      enable = true;
+      enable = false;
       package = pkgs.ghostty_git;
       enableFishIntegration = true;
       settings = {
