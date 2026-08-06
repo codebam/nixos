@@ -169,6 +169,23 @@ in
     logo = false;
     tutorial = false;
 
+    # Override the whole right side of the bar with an explicit, ordered list.
+    # A bare string is a built-in module (net, disk, cpu, load, memory, clock,
+    # mode); an object is a widget, as bar_widgets used to take. The layout:
+    # volume far left, then the Pickering weather, network, the root disk with
+    # the /games watcher right after it, and the rest of the modules.
+    bar_items = [
+      { type = "volume"; }
+      { type = "weather"; location = "Pickering, ON, Canada"; }
+      "net"
+      "disk"
+      { type = "disk"; path = "/games"; }
+      "cpu"
+      "load"
+      "memory"
+      "clock"
+    ];
+
     # Space around and between windows, in pixels. `inner` is the gap between
     # adjacent windows; `outer` is extra space around the edge of the output,
     # added on top of the inner gap. `smart` drops the inner gap on a single
