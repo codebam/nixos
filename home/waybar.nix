@@ -14,11 +14,11 @@
     height = 30;
 
     modules-left = [
-      "sway/workspaces"
+      "ext/workspaces"
       "wlr/taskbar"
     ];
 
-    "sway/workspaces" = {
+    "ext/workspaces" = {
       disable-scroll = false;
       enable-bar-scroll = true;
       all-outputs = true;
