@@ -67,6 +67,12 @@
           # override of this rather than a second overlay entry.
           voice-to-text = prev.callPackage ../../pkgs/voice-to-text.nix { };
 
+          # The streaming variant, for the same reason and by the same route.
+          # A separate derivation rather than a flag on the one above: the two
+          # share only a model, and a host can bind either without the other
+          # deciding what `voice-to-text` means.
+          voice-to-text-stream = prev.callPackage ../../pkgs/voice-to-text-stream.nix { };
+
           # Two things are wrong with nixpkgs' own `whisper-cpp-vulkan` here.
           #
           # It declares vulkan-headers and vulkan-loader, and 1.8.7's

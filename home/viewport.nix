@@ -244,12 +244,15 @@ in
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
     }
-    # Press to start dictating, press again to stop and have it typed. Not
-    # `Mod4+v`, which the built-in keymap already spends on splitting the next
-    # window vertically. The host has to have the engine installed for this to
-    # be worth binding: the Steam Deck imports this file too and does not.
+    # Press to start dictating, press again to stop. Whether that types at the
+    # end or as each utterance lands is `voiceToText.streaming`, which is what
+    # `binding` resolves -- both commands toggle the same way, so the binding
+    # is the same either way. Not `Mod4+v`, which the built-in keymap already
+    # spends on splitting the next window vertically. The host has to have the
+    # engine installed for this to be worth binding: the Steam Deck imports
+    # this file too and does not.
     // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
-      "Mouse5" = "exec ${lib.getExe osConfig.voiceToText.package}";
+      "Mouse5" = "exec ${lib.getExe osConfig.voiceToText.binding}";
     };
   };
 }
