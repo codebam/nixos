@@ -85,27 +85,27 @@ writeShellApplication {
     # the end is a SIGTERM to this process group, and anything that tried to
     # run there would be racing its own death.
     type_stream() {
-      local acc="" first=1 chunk out
+      local acc="" chunk out
       while IFS= read -r chunk; do
         [ -n "$chunk" ] || continue
 
-        if [ "$first" = 1 ]; then
-          first=0
-          out=$chunk
-        else
-          out=" $chunk"
-        fi
+        # The space between chunks trails this one rather than leading the
+        # next. A wtype invocation whose first character is a space loses it:
+        # every chunk here is a separate process, each uploading its own
+        # keymap before typing, and the first key of the burst goes out while
+        # the focused client is still on the previous map. Letters survive it
+        # and a leading space does not. Trailing means no invocation ever
+        # opens with one, at the cost of a space left after the last chunk.
+        out="$chunk "
         acc="$acc$out"
 
         printf '%s' "$acc" | wl-copy
 
-        # wtype reads a leading '-' as an option and has no '--' terminator.
-        # Only reachable on the first chunk; every later one already opens
-        # with the separating space.
-        case $out in
-          -*) out=" $out" ;;
-        esac
-        wtype "$out"
+        # `--` ends option parsing, so a chunk opening with a dash is typed
+        # rather than read as flags. wtype 0.4 does have the terminator --
+        # the comment in voice-to-text.nix saying otherwise is wrong, though
+        # the leading-space workaround it describes is harmless there.
+        wtype -- "$out"
       done
     }
 
@@ -117,7 +117,15 @@ writeShellApplication {
 
       # -1 on the exit status is expected: the second press kills this group,
       # and pipefail would otherwise make that look like a failure.
-      timeout ${toString maxSeconds} \
+      #
+      # `--foreground` is load-bearing rather than cosmetic. Without it
+      # `timeout` puts itself in a new process group so it can signal its
+      # child's group on expiry -- which takes whisper-stream out of the group
+      # this file just recorded, so the second press kills the sed, the awk and
+      # the typing loop and leaves the recorder holding the microphone until it
+      # next writes into a closed pipe. `--foreground` skips the setpgid and
+      # signals the direct child instead, which is all there is to signal here.
+      timeout --foreground ${toString maxSeconds} \
         whisper-stream -m ${model} -l ${language} \
           --step 0 --length ${toString lengthMs} -vth ${toString vadThreshold} \
           2>/dev/null |
