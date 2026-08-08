@@ -12,6 +12,13 @@ _:
           group = "hermes";
           mode = "2770";
         }
+        # Just the journal cursor and the escalation cooldown stamp. Losing it
+        # is not fatal, but a fresh cursor means the first scan after every
+        # boot classifies nothing.
+        {
+          directory = "/var/lib/security-triage";
+          mode = "0700";
+        }
       ];
       users = {
         codebam = {
@@ -32,6 +39,9 @@ _:
             # Holds their API login, sessions, memories, and skills, none of
             # which are reproducible from the flake.
             ".hermes"
+            # `wrangler login` writes its OAuth token here. Without this the
+            # login is undone by the next boot.
+            ".config/.wrangler"
           ];
         };
       };

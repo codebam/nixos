@@ -73,6 +73,12 @@
       settings = {
         PasswordAuthentication = false;
         PermitRootLogin = "no";
+        # Off, or sshd still offers keyboard-interactive and every scanner
+        # gets to walk the PAM stack. It cannot succeed here — password auth
+        # is off and root login is denied — but it costs a PAM round trip per
+        # attempt and fills the journal with "PAM: Authentication failure for
+        # root" (~1700 lines/day from one netblock before this).
+        KbdInteractiveAuthentication = false;
       };
       openFirewall = true;
     };

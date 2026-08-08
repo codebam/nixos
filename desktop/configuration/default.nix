@@ -13,6 +13,7 @@ _:
     ./nix.nix
     ./nixpkgs.nix
     ./preservation.nix
+    ./security-triage.nix
     ./programs.nix
     ./services.nix
     ./specialisation.nix

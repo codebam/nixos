@@ -35,6 +35,10 @@
       '')
       ripgrep
       bun
+      # `, npx` resolves npx to the npm package, which ships npx but not node,
+      # so anything npx installs dies on its `#!/usr/bin/env node` shebang with
+      # exit 127 (`npx wrangler login`). node has to be on PATH for real.
+      nodejs
     ];
 
     pointerCursor.enable = true;
