@@ -158,7 +158,9 @@ let
         | sort | uniq -c | sort -rn | head -20 > "$work/sources" || true
 
       {
-        printf 'Host: %s\n' "$(hostname)"
+        # uname -n, not hostname: coreutils has the former, and this unit's
+        # PATH is only what runtimeInputs put there.
+        printf 'Host: %s\n' "$(uname -n)"
         printf 'Window: new journal entries since the previous scan\n'
         printf 'Scanned: %s entries, %s matched the security filter\n\n' "$total" "$matched"
 
