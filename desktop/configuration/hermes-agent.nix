@@ -544,9 +544,15 @@ let
       "--lsp"
       (lib.getExe rustAnalyzer)
     ];
-    # First call pays for the devShell realisation and a cold cargo metadata
-    # pass over smithay's dependency graph. Later calls are fast.
-    timeout = 300;
+    # Both matter and they are not the same clock. `timeout` caps a tool call;
+    # `connect_timeout` caps the initial handshake, and defaults to 60s, which
+    # a cold start blows through — the devShell has to be realised before
+    # rust-analyzer even starts, and then it answers `initialize` only after a
+    # first pass over smithay's dependency graph. The warm-up unit below keeps
+    # this from being the common case, but leave the ceiling high: waiting
+    # beats a failed connection.
+    timeout = 600;
+    connect_timeout = 600;
   };
 
   # The module renders services.hermes-agent.mcpServers into settings for the
@@ -560,6 +566,7 @@ let
       enabled = true;
     }
     // lib.optionalAttrs (srv ? env) { inherit (srv) env; }
+    // lib.optionalAttrs (srv ? connect_timeout) { inherit (srv) connect_timeout; }
   );
 
   # Hooks that apply wherever the agent runs. verifyNix is deliberately absent:
@@ -758,7 +765,10 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      path = [ pkgs.git ];
+      path = [
+        pkgs.git
+        config.nix.package
+      ];
       serviceConfig = {
         Type = "oneshot";
         User = "hermes";
@@ -770,6 +780,13 @@ in
         else
           git clone --filter=blob:none ${viewportRepo} ${viewportClone}
         fi
+
+        # Realise the devShell now so rust-lsp's first connection does not have
+        # to. Cold, that work takes minutes; warm, the shell is already in the
+        # store and rust-analyzer starts immediately. Failure here is not fatal
+        # — the server still works, it is just slow to connect.
+        nix develop "${viewportClone}#rust" --command true \
+          || echo "devShell warm-up failed; rust-lsp will be slow on first connect" >&2
       '';
     };
 
