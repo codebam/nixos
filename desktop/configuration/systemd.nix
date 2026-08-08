@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -10,6 +11,17 @@
 
   systemd = {
     services = {
+      # services.hardware.openrgb exposes a port but no host, and OpenRGB's
+      # own default for --server-host is 0.0.0.0. The SDK server is
+      # unauthenticated and tailscale0/virbr0 are trusted interfaces, so that
+      # handed device control to the whole tailnet. Same flags the module
+      # generates, plus the address it does not let us set.
+      openrgb.serviceConfig.ExecStart = lib.mkForce (
+        "${lib.getExe config.services.hardware.openrgb.package} --server "
+        + "--server-host 127.0.0.1 "
+        + "--server-port ${toString config.services.hardware.openrgb.server.port}"
+      );
+
       wifi-performance = {
         description = "Disable Wi-Fi Power Save";
         wantedBy = [ "multi-user.target" ];

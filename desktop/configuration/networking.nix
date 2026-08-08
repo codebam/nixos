@@ -65,21 +65,24 @@ in
     };
 
     firewall = {
+      # Only what is actually served. Six holes were removed here because
+      # nothing had been listening behind them: 25575 (RCON), 8212+8211
+      # (PalWorld), 56789 (XRay), 3080 (LibreChat), 8081 (Expo, and its dev
+      # server binds ::1 anyway), and 27015 (Steam query, which
+      # programs.steam.dedicatedServer.openFirewall opens on its own when a
+      # server is actually running).
+      #
+      # An unused open port is not harmless here: ip_unprivileged_port_start
+      # is 80 so that nginx can bind without the capability, which means any
+      # unprivileged process on this host can claim one of these and be
+      # reachable from the internet. Re-add a line when the service behind it
+      # comes back, not before.
       allowedTCPPorts = [
         80 # nginx
         443 # nginx
-        25575 # RCON port
-        8212 # PalWorld
-        8081 # Expo
-        56789 # XRay
-        3080 # LibreChat
       ];
       allowedUDPPorts = [
-        8211 # PalWorld port
-        27015 # Steam query port
         1900 # UPnP
-        8081 # Expo
-        56789 # XRay
       ];
       # SSDP discovery replies. upnpc M-SEARCHes 239.255.255.250:1900 from an
       # ephemeral port; the IGD answers unicast from its own address, so the

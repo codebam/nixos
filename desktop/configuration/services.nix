@@ -5,6 +5,21 @@
   ...
 }:
 
+let
+  # arRPC's bridge WebSocket takes a port from the environment but no address,
+  # so upstream binds every interface. tailscale0 and virbr0 are both in
+  # firewall.trustedInterfaces, which made your Discord activity readable by
+  # anything on the tailnet or in a libvirt guest. There is no config knob for
+  # this — the host has to be patched in. The IPC transport is a unix socket
+  # and the other WebSocket already pins 127.0.0.1, so this is the only one.
+  arrpc-loopback = pkgs.arrpc.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace src/bridge.js \
+        --replace-fail "new WebSocketServer({ port })" \
+                       "new WebSocketServer({ port, host: '127.0.0.1' })"
+    '';
+  });
+in
 {
 
   systemd.user.services = {
@@ -24,7 +39,7 @@
         ];
       };
       serviceConfig = {
-        ExecStart = "${pkgs.arrpc}/bin/arrpc";
+        ExecStart = "${arrpc-loopback}/bin/arrpc";
         Restart = "always";
       };
       wantedBy = [ "default.target" ];
