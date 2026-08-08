@@ -15,7 +15,16 @@
       enableShellIntegration = true;
     };
 
-    sessionVariables = { };
+    # services.hermes-agent.addToSystemPackages exports
+    # HERMES_HOME=/var/lib/hermes/.hermes system-wide, and that tree is
+    # 2770/0640 hermes:hermes — makano is not in the hermes group, so every
+    # `hermes` invocation died on PermissionError reading its .env. Point this
+    # user at their own HERMES_HOME instead of granting access to codebam's:
+    # separate config, sessions, memories, and API login. Sourced from
+    # hm-session-vars after /etc/set-environment, so it wins.
+    sessionVariables = {
+      HERMES_HOME = "/home/makano/.hermes";
+    };
 
     packages = with pkgs; [
       (writeShellScriptBin "sretry" ''
