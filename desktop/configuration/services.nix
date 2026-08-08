@@ -445,7 +445,12 @@
     };
     ollama = {
       enable = true;
-      host = "0.0.0.0";
+      # Loopback only. The API has no authentication of any kind: it runs and
+      # pulls arbitrary models for whoever reaches the port. On 0.0.0.0 that
+      # was everything on the tailnet and every libvirt guest, because
+      # tailscale0 and virbr0 are both in firewall.trustedInterfaces — the
+      # closed firewall port was doing nothing for those two.
+      host = "127.0.0.1";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
       };

@@ -16,11 +16,16 @@
 #   2. Only when stage 1 says "suspicious" does the expensive, tool-carrying
 #      agent wake up: a desktop notification fires and a detached tmux session
 #      starts under codebam running hermes against the same summary, asked to
-#      second-guess the classifier and act if the finding is real.
+#      second-guess the classifier and propose action if the finding is real.
 #
 # Stage 1 runs as root because reading the whole journal requires it. Stage 2
 # runs as codebam, in that user's session, so its tools are bounded by that
 # user's privileges rather than root's.
+#
+# Neither stage acts on its own. The summary is built from journal text, which
+# anyone able to make this host log a line can influence, so the notification
+# is the handoff: it does not expire, and the agent waits in the pane for the
+# operator to approve each tool call.
 
 let
   ollamaUrl = "http://127.0.0.1:11434";
@@ -358,12 +363,19 @@ let
       EOF
       )
 
-      # First turn is non-interactive so the agent starts working before the
-      # operator attaches. Then the same session is handed to them live.
+      # Deliberately no --yolo. This prompt is built from journal text, and
+      # anyone who can make this host log a line — a failed SSH auth reaches
+      # sshd's logging before authentication — has influence over it. Unattended
+      # tool execution off the back of that is a remote-input-to-code-execution
+      # path, so every tool call stops for the operator sitting in this pane.
+      #
+      # The first turn still runs ahead of them attaching: reading and
+      # reasoning need no approval, so the investigation is usually well under
+      # way by the time the notification is clicked. Then the same session is
+      # handed over live.
       ${hermesExe} chat \
         --model '${escalationModel}' \
         --accept-hooks \
-        --yolo \
         --max-turns 40 \
         --query "$prompt" || true
 
@@ -389,10 +401,17 @@ let
       [ -r ${runDir}/report-"$incident".txt ] || exit 0
 
       reason=$(jq -r '.reason // "Suspicious system activity detected."' "$verdict")
-      body=$(printf '%s\n\nInvestigating in tmux session %s.' "$reason" "$session")
+      body=$(printf '%s\n\nInvestigating in tmux session %s — attach to approve any action.' \
+        "$reason" "$session")
 
-      notify-send --urgency=critical --app-name=security-triage \
-        --icon=security-high "Suspicious system activity" "$body"
+      # --expire-time=0 means no timeout: the notification sits there until it
+      # is clicked away. Critical urgency alone is not enough — swaync honours
+      # it for styling and for showing through do-not-disturb, but a default
+      # timeout still applies. Missing this one is the failure mode that makes
+      # the whole service pointless.
+      notify-send --urgency=critical --expire-time=0 \
+        --app-name=security-triage --icon=security-high \
+        "Suspicious system activity" "$body"
 
       # Same socket as the user's own tmux server (see home/systemd.nix), so
       # this shows up in their existing `tmux ls` instead of a stray server.
