@@ -254,11 +254,10 @@ let
           format: {
             type: "object",
             properties: {
-              verdict:    { type: "string", enum: ["suspicious", "benign"] },
-              confidence: { type: "number" },
-              reason:     { type: "string" }
+              verdict: { type: "string", enum: ["suspicious", "benign"] },
+              reason:  { type: "string" }
             },
-            required: ["verdict", "confidence", "reason"]
+            required: ["verdict", "reason"]
           }
         }')
 
@@ -274,11 +273,16 @@ let
         exit 0
       fi
 
+      # No confidence field on purpose. A 12B model at temperature 0 asked for
+      # a number in a schema emits the same one every time — four runs gave
+      # 1.0, 1.0, 0.95, 1.0 — so it reports token likelihood, not calibration.
+      # Nothing branched on it, but it read as signal and it anchored the
+      # second-opinion agent downstream. `matched` below is the honest measure
+      # of how much a call rests on: it counts real lines.
       verdict=$(printf '%s' "$answer" | jq -r '.verdict // "benign"')
       reason=$(printf '%s' "$answer" | jq -r '.reason // ""')
-      confidence=$(printf '%s' "$answer" | jq -r '.confidence // 0')
 
-      echo "verdict=$verdict confidence=$confidence matched=$matched: $reason"
+      echo "verdict=$verdict matched=$matched: $reason"
 
       # Pairs with last-summary.txt: the verdict on exactly that text.
       printf '%s' "$answer" | jq -c . > "$work/last-verdict.json"
@@ -329,14 +333,13 @@ let
       verdict=${runDir}/verdict-"$id".json
 
       reason=$(jq -r '.reason // "(none given)"' "$verdict")
-      confidence=$(jq -r '.confidence // 0' "$verdict")
 
       prompt=$(cat <<EOF
       You are triaging a possible security event on this NixOS workstation.
 
       A small local classifier (${triageModel}, running offline on this
       machine, no tools) read the system-log summary below and flagged it as
-      SUSPICIOUS with confidence $confidence. Its stated reason:
+      SUSPICIOUS. Its stated reason:
 
         $reason
 
