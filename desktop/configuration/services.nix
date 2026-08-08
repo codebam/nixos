@@ -80,20 +80,34 @@ in
   };
 
   services = {
-    # openFirewall is deliberately off for the admin UIs below. They still
-    # listen on 0.0.0.0, and tailscale0 is a trusted interface, so they stay
-    # reachable over the tailnet -- but they are no longer accepted from the
-    # LAN or from whatever the router forwards to this host, which also serves
-    # public HTTPS. nginx reaches navidrome over loopback either way.
+    # Every admin UI below binds loopback and is reached only through nginx.
+    #
+    # openFirewall = false was never the control it looked like: these used to
+    # listen on 0.0.0.0, and tailscale0 and virbr0 are both in
+    # firewall.trustedInterfaces, which the generated ruleset accepts before
+    # any port rule is consulted. So the tailnet and every libvirt guest had
+    # them regardless. Binding 127.0.0.1 is what actually closes that.
+    #
+    # urlbase is what lets them share nginx's port under a subpath. These are
+    # servarr env-var settings (LIDARR__SERVER__BINDADDRESS and friends), which
+    # override the app's own config.xml, so the subpath cannot drift back.
     lidarr = {
       enable = true;
       openFirewall = false;
       user = "codebam";
       group = "users";
+      settings.server = {
+        bindaddress = "127.0.0.1";
+        urlbase = "/lidarr";
+      };
     };
     prowlarr = {
       enable = true;
       openFirewall = false;
+      settings.server = {
+        bindaddress = "127.0.0.1";
+        urlbase = "/prowlarr";
+      };
     };
     transmission = {
       enable = true;
@@ -116,7 +130,9 @@ in
       settings = {
         MusicFolder = "/home/codebam/Downloads/Lidarr";
         BaseUrl = "/navidrome";
-        Address = "0.0.0.0";
+        # nginx has always reached this over loopback; binding 0.0.0.0 only
+        # ever added a second, unproxied way in over the tailnet.
+        Address = "127.0.0.1";
         Port = 4533;
         ScanSchedule = "@every 1h";
         DefaultLanguage = "en";
@@ -130,34 +146,54 @@ in
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      virtualHosts."codebam.tplinkdns.com" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          return = "301 https://$host/navidrome$request_uri";
+      virtualHosts =
+        let
+          # Both public names serve navidrome and nothing else.
+          publicNavidrome = {
+            forceSSL = true;
+            enableACME = true;
+            locations."/" = {
+              return = "301 https://$host/navidrome$request_uri";
+            };
+            locations."/navidrome" = {
+              proxyPass = "http://127.0.0.1:4533";
+              proxyWebsockets = true;
+              extraConfig = ''
+                proxy_set_header X-Forwarded-Protocol $scheme;
+              '';
+            };
+          };
+        in
+        {
+          "codebam.tplinkdns.com" = publicNavidrome;
+          "music.codebam.ca" = publicNavidrome;
+
+          # Tailnet only. The admin UIs live here, on this host's MagicDNS
+          # name, and never appear on the public vhosts above.
+          #
+          # No ACME: a *.ts.net name cannot answer the public ACME challenge,
+          # and plain HTTP is not a downgrade here because tailscale already
+          # encrypts the transport. The allow/deny is the actual control and
+          # does not depend on which name was used to arrive — nginx listens
+          # on 0.0.0.0:80, so without it a stranger could reach these by
+          # sending this Host header to the public address.
+          "nixos-desktop.tail7d7a2.ts.net" = {
+            extraConfig = ''
+              allow 100.64.0.0/10;
+              allow fd7a:115c:a1e0::/48;
+              allow 127.0.0.1;
+              deny all;
+            '';
+            locations."/lidarr" = {
+              proxyPass = "http://127.0.0.1:8686";
+              proxyWebsockets = true;
+            };
+            locations."/prowlarr" = {
+              proxyPass = "http://127.0.0.1:9696";
+              proxyWebsockets = true;
+            };
+          };
         };
-        locations."/navidrome" = {
-          proxyPass = "http://127.0.0.1:4533";
-          proxyWebsockets = true;
-          extraConfig = ''
-            proxy_set_header X-Forwarded-Protocol $scheme;
-          '';
-        };
-      };
-      virtualHosts."music.codebam.ca" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          return = "301 https://$host/navidrome$request_uri";
-        };
-        locations."/navidrome" = {
-          proxyPass = "http://127.0.0.1:4533";
-          proxyWebsockets = true;
-          extraConfig = ''
-            proxy_set_header X-Forwarded-Protocol $scheme;
-          '';
-        };
-      };
     };
     timesyncd = {
       servers = [
