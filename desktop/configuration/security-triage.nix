@@ -38,6 +38,15 @@ let
   # this unit is what the operator will read when asking "what answered me".
   escalationModel = "~deepseek/deepseek-v4-flash-latest";
 
+  # Pinned, and not optional. HERMES_HOME/config.yaml is mutable state: an
+  # interactive `hermes model` writes model.provider there, and whatever it
+  # last selected wins over the base_url this flake sets. It had selected the
+  # local ollama, so the escalation shipped this model name to
+  # 127.0.0.1:11434/v1 and died on "HTTP 400: invalid model name" before its
+  # first turn. Naming the provider makes this unit independent of whatever
+  # the operator is using hermes for interactively.
+  escalationProvider = "openrouter";
+
   runDir = "/run/security-triage";
   stateDir = "/var/lib/security-triage";
 
@@ -375,6 +384,7 @@ let
       # handed over live.
       ${hermesExe} chat \
         --model '${escalationModel}' \
+        --provider '${escalationProvider}' \
         --accept-hooks \
         --max-turns 40 \
         --query "$prompt" || true
@@ -382,7 +392,13 @@ let
       echo
       echo "--- handing this session over; ^D to leave it ---"
       echo
-      exec ${hermesExe} chat --continue
+      # Same model and provider on the handover: --continue otherwise falls
+      # back to the config default, and the operator would pick up the
+      # investigation on whatever hermes is pointed at this week.
+      exec ${hermesExe} chat \
+        --model '${escalationModel}' \
+        --provider '${escalationProvider}' \
+        --continue
     '';
   };
 

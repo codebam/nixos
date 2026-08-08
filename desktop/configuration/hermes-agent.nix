@@ -598,6 +598,16 @@ let
     model = {
       base_url = "https://openrouter.ai/api/v1";
       default = "~deepseek/deepseek-v4-flash-latest";
+      # Pinned, because base_url alone does not decide where a request goes.
+      # An interactive `hermes model` writes model.provider into
+      # HERMES_HOME/config.yaml, that file is mutable state, and whatever it
+      # last selected wins over the base_url above. It had drifted to a local
+      # ollama provider, which silently repointed everything reading this
+      # config -- including the security-triage escalation, which shipped an
+      # OpenRouter model name to 127.0.0.1:11434 and died on "invalid model
+      # name". The module's merge script is nix-overrides-existing, so naming
+      # it here puts it back on every activation.
+      provider = "openrouter";
     };
     toolsets = [ "all" ];
     terminal = {
