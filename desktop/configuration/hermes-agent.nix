@@ -431,6 +431,207 @@ let
           printf '{}\n'
         fi
       '';
+
+  # ── Viewport profile ───────────────────────────────────────────────────
+  # A hermes profile is a fully independent HERMES_HOME: its own config.yaml,
+  # sessions, memories, and skills. `hermes -p viewport` picks it up.
+  #
+  # It exists so rust-analyzer is only ever live for Viewport work. nix-lsp is
+  # pinned to the flake with --workspace, so on a Rust tree it answers about
+  # the wrong repo — plausibly and wrongly. Separating the profiles is what
+  # keeps each language server pointed at the tree it understands.
+  hermesHome = "${config.services.hermes-agent.stateDir}/.hermes";
+  viewportProfile = "${hermesHome}/profiles/viewport";
+
+  # The agent gets its own clone, over https and read-only credentials.
+  # /home/codebam is 0700, so the hermes user cannot traverse it — pointing a
+  # language server at the real working tree would connect and then fail every
+  # query with EACCES. The tradeoff is drift: this is a sibling checkout, not
+  # the tree being edited.
+  viewportClone = "${config.services.hermes-agent.stateDir}/workspace/Viewport";
+  viewportRepo = "https://github.com/codebam/viewport-smithay.git";
+
+  # rust-analyzer needs rustc, cargo, and the bindgen/pkg-config environment to
+  # resolve the crate graph; a bare binary on PATH resolves nothing. The
+  # project's own devShell already assembles exactly that, so borrow it.
+  #
+  # `.#rust` is named explicitly and must stay that way — a bare `nix develop`
+  # selects devShells.default, which builds WPE WebKit and takes hours.
+  # rust-analyzer itself is passed by store path because devShells.rust does
+  # not carry it (only the workstation shell does).
+  rustAnalyzer = pkgs.writeShellApplication {
+    name = "hermes-rust-analyzer";
+    runtimeInputs = [
+      config.nix.package
+      pkgs.git
+    ];
+    text = ''
+      exec nix develop "${viewportClone}#rust" --command ${lib.getExe pkgs.rust-analyzer} "$@"
+    '';
+  };
+
+  # Servers worth having whatever the agent is working on.
+  mcpCommon = {
+    # Fetches a URL and returns markdown, chunked via start_index. Pairs
+    # with the duckduckgo/searxng skills: they find the URL, this reads it
+    # without spending the context window on tag soup.
+    fetch = {
+      command = lib.getExe pkgs.mcp-server-fetch;
+      args = [
+        "--user-agent"
+        "hermes-agent (+https://github.com/NousResearch/hermes-agent)"
+      ];
+      timeout = 60;
+    };
+
+    # Version-accurate library documentation, pulled on demand. Covers the
+    # ground mcp-nixos does not: everything that is not a NixOS option.
+    #
+    # The key is interpolated by Hermes at connect time from the process
+    # environment, which systemd fills from the sops-decrypted
+    # environmentFiles below. Written as a literal ${...} placeholder on
+    # purpose — putting the key itself here would put it in /nix/store,
+    # world-readable.
+    context7 = {
+      command = lib.getExe pkgs.context7-mcp;
+      env.CONTEXT7_API_KEY = "\${CONTEXT7_API_KEY}";
+      timeout = 60;
+    };
+
+    # Models have no clock. Two tools, negligible schema cost.
+    time = {
+      command = lib.getExe pkgs.mcp-server-time;
+      args = [
+        "--local-timezone"
+        config.time.timeZone
+      ];
+      timeout = 15;
+    };
+  };
+
+  # Default profile only: this host and its flake.
+  mcpNixos = {
+    nixos = {
+      command = lib.getExe pkgs.mcp-nixos;
+      # Queries the NixOS option/package index so the agent looks options up
+      # instead of inventing them.
+      timeout = 60;
+    };
+
+    # LSP over MCP: definitions, references, and diagnostics that resolve
+    # through the module system instead of ripgrep guesses.
+    #
+    # nixd is passed by absolute store path: MCP children get a filtered
+    # environment, so do not assume this service's PATH reaches them.
+    nix-lsp = {
+      command = lib.getExe pkgs.mcp-language-server;
+      args = [
+        "--workspace"
+        nixosRepo
+        "--lsp"
+        (lib.getExe pkgs.nixd)
+      ];
+      timeout = 120;
+    };
+  };
+
+  # Viewport profile only.
+  mcpViewport.rust-lsp = {
+    command = lib.getExe pkgs.mcp-language-server;
+    args = [
+      "--workspace"
+      viewportClone
+      "--lsp"
+      (lib.getExe rustAnalyzer)
+    ];
+    # First call pays for the devShell realisation and a cold cargo metadata
+    # pass over smithay's dependency graph. Later calls are fast.
+    timeout = 300;
+  };
+
+  # The module renders services.hermes-agent.mcpServers into settings for the
+  # default profile. The viewport profile's config.yaml is written here
+  # directly, so the same shape has to be produced by hand.
+  renderMcp = lib.mapAttrs (
+    _name: srv:
+    {
+      inherit (srv) command timeout;
+      args = srv.args or [ ];
+      enabled = true;
+    }
+    // lib.optionalAttrs (srv ? env) { inherit (srv) env; }
+  );
+
+  # Hooks that apply wherever the agent runs. verifyNix is deliberately absent:
+  # it lints *.nix in the flake, which is noise in a Rust tree.
+  commonHooks = {
+    pre_tool_call = [
+      {
+        matcher = "terminal";
+        command = guardTerminal;
+        timeout = 10;
+      }
+    ];
+    post_tool_call = [
+      {
+        matcher = "write_file|patch";
+        command = formatOnWrite;
+        timeout = 30;
+      }
+    ];
+    pre_llm_call = [
+      {
+        command = sessionContext;
+        timeout = 15;
+      }
+    ];
+  };
+
+  baseSettings = {
+    model = {
+      base_url = "https://openrouter.ai/api/v1";
+      default = "~deepseek/deepseek-v4-flash-latest";
+    };
+    toolsets = [ "all" ];
+    terminal = {
+      backend = "local";
+      timeout = 600;
+    };
+    display = {
+      compact = false;
+    };
+    memory = {
+      memory_enabled = true;
+      user_profile_enabled = true;
+    };
+
+    # Read-only skill tree. Local HERMES_HOME/skills still wins on a name
+    # collision and still takes agent-created skills; these cannot be edited
+    # away by the agent or by `hermes update`.
+    skills.external_dirs = [ "${hermesSkills}" ];
+
+    hooks = commonHooks;
+
+    # The gateway and cron run with no TTY, so the first-use consent prompt
+    # can never be answered there. Safe here only because every `command:`
+    # above is an absolute /nix/store path: content-addressed, root-owned,
+    # and unwritable by the agent. Do not point a hook at a mutable path
+    # (HERMES_HOME, /tmp, a home directory) while this is true.
+    hooks_auto_accept = true;
+  };
+
+  # Written whole rather than merged: the module's config-merge script only
+  # covers the default profile, so this file is the single source of truth for
+  # the viewport one. Symlinked from the store, so the agent cannot edit it.
+  viewportConfig = (pkgs.formats.yaml { }).generate "hermes-viewport-config.yaml" (
+    baseSettings
+    // {
+      mcp_servers = renderMcp (mcpCommon // mcpViewport);
+      terminal = baseSettings.terminal // {
+        cwd = viewportClone;
+      };
+    }
+  );
 in
 {
   # `nix run nixpkgs#x` and `,` resolve against the flake registry. Unpinned it
@@ -494,113 +695,13 @@ in
     # ── MCP ────────────────────────────────────────────────────────────────
     # Every tool schema here is in the prompt on every turn, so this list is
     # deliberately short. Anything reachable with one shell command stays a
-    # shell command.
-    mcpServers = {
-      nixos = {
-        command = lib.getExe pkgs.mcp-nixos;
-        # Queries the NixOS option/package index so the agent looks options up
-        # instead of inventing them.
-        timeout = 60;
-      };
+    # shell command. rust-lsp is not here on purpose — it lives in the
+    # viewport profile below.
+    mcpServers = mcpCommon // mcpNixos;
 
-      # Fetches a URL and returns markdown, chunked via start_index. Pairs
-      # with the duckduckgo/searxng skills: they find the URL, this reads it
-      # without spending the context window on tag soup.
-      fetch = {
-        command = lib.getExe pkgs.mcp-server-fetch;
-        args = [
-          "--user-agent"
-          "hermes-agent (+https://github.com/NousResearch/hermes-agent)"
-        ];
-        timeout = 60;
-      };
-
-      # Version-accurate library documentation, pulled on demand. Covers the
-      # ground mcp-nixos does not: everything that is not a NixOS option.
-      #
-      # The key is interpolated by Hermes at connect time from the process
-      # environment, which systemd fills from the sops-decrypted
-      # environmentFiles above. Written as a literal ${...} placeholder on
-      # purpose — putting the key itself here would put it in /nix/store,
-      # world-readable.
-      context7 = {
-        command = lib.getExe pkgs.context7-mcp;
-        env.CONTEXT7_API_KEY = "\${CONTEXT7_API_KEY}";
-        timeout = 60;
-      };
-
-      # LSP over MCP: definitions, references, diagnostics, and renames on the
-      # flake instead of ripgrep guesses. One server per workspace + language,
-      # so this is scoped to the nixos repo only.
-      #
-      # nixd is passed by absolute store path: MCP children get a filtered
-      # environment, so do not assume this service's PATH reaches them.
-      nix-lsp = {
-        command = lib.getExe pkgs.mcp-language-server;
-        args = [
-          "--workspace"
-          nixosRepo
-          "--lsp"
-          (lib.getExe pkgs.nixd)
-        ];
-        timeout = 120;
-      };
-
-      # Models have no clock. Two tools, negligible schema cost.
-      time = {
-        command = lib.getExe pkgs.mcp-server-time;
-        args = [
-          "--local-timezone"
-          config.time.timeZone
-        ];
-        timeout = 15;
-      };
-    };
-
-    settings = {
-      model = {
-        base_url = "https://openrouter.ai/api/v1";
-        default = "~deepseek/deepseek-v4-flash-latest";
-      };
-      toolsets = [ "all" ];
-      terminal = {
-        backend = "local";
-        timeout = 600;
-      };
-      display = {
-        compact = false;
-      };
-      memory = {
-        memory_enabled = true;
-        user_profile_enabled = true;
-      };
-
-      # Read-only skill tree. Local HERMES_HOME/skills still wins on a name
-      # collision and still takes agent-created skills; these cannot be edited
-      # away by the agent or by `hermes update`.
-      skills.external_dirs = [ "${hermesSkills}" ];
-
-      hooks = {
-        pre_tool_call = [
-          {
-            matcher = "terminal";
-            command = guardTerminal;
-            timeout = 10;
-          }
-        ];
-        post_tool_call = [
-          {
-            matcher = "write_file|patch";
-            command = formatOnWrite;
-            timeout = 30;
-          }
-        ];
-        pre_llm_call = [
-          {
-            command = sessionContext;
-            timeout = 15;
-          }
-        ];
+    settings = baseSettings // {
+      hooks = commonHooks // {
+        # Default profile only: the flake is the tree this lints.
         pre_verify = [
           {
             command = verifyNix;
@@ -608,13 +709,76 @@ in
           }
         ];
       };
+    };
+  };
 
-      # The gateway and cron run with no TTY, so the first-use consent prompt
-      # can never be answered there. Safe here only because every `command:`
-      # above is an absolute /nix/store path: content-addressed, root-owned,
-      # and unwritable by the agent. Do not point a hook at a mutable path
-      # (HERMES_HOME, /tmp, a home directory) while this is true.
-      hooks_auto_accept = true;
+  # ── Viewport profile plumbing ────────────────────────────────────────────
+  # A profile is just a directory hermes recognises; `hermes profile create`
+  # would bootstrap these, but doing it here keeps the profile declarative and
+  # reproducible instead of depending on a one-time imperative command.
+  systemd = {
+    tmpfiles.rules =
+      let
+        # 2770, matching the rest of HERMES_HOME: the gateway runs as hermes
+        # but interactive users in the hermes group run `hermes -p viewport`
+        # themselves, and hermes creates subdirectories (logs/curator, ...) on
+        # first run. Setgid keeps those group-owned by hermes so both sides
+        # keep seeing each other's state.
+        dir = d: "d ${d} 2770 hermes hermes - -";
+      in
+      [
+        (dir "${hermesHome}/profiles")
+        (dir viewportProfile)
+      ]
+      ++ map (d: dir "${viewportProfile}/${d}") [
+        "memories"
+        "sessions"
+        "skills"
+        "skins"
+        "logs"
+        "plans"
+        "workspace"
+        "cron"
+        "home"
+      ]
+      ++ [
+        # Store symlink, so the agent cannot edit its own config out from under
+        # the module. L+ replaces whatever is there on every activation.
+        "L+ ${viewportProfile}/config.yaml - - - - ${viewportConfig}"
+        # Profiles do not inherit the default profile's secrets, and the
+        # activation script only writes the default .env. Share it rather than
+        # decrypting the same sops secret to two places.
+        "L+ ${viewportProfile}/.env - - - - ${hermesHome}/.env"
+      ];
+
+    # Keeps the agent's clone current. Fetch only — never reset or checkout,
+    # since the agent may have work in progress in that tree.
+    services.hermes-viewport-clone = {
+      description = "Clone or fetch the Viewport tree for the hermes viewport profile";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      path = [ pkgs.git ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "hermes";
+        Group = "hermes";
+      };
+      script = ''
+        if [ -d ${viewportClone}/.git ]; then
+          git -C ${viewportClone} fetch --prune --all
+        else
+          git clone --filter=blob:none ${viewportRepo} ${viewportClone}
+        fi
+      '';
+    };
+
+    timers.hermes-viewport-clone = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
     };
   };
 
