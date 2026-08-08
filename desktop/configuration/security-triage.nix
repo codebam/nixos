@@ -93,53 +93,77 @@ let
     "systemd-coredump"
   ];
 
-  # ── Stage 1: collect, summarize, classify ────────────────────────────────
-  triage = pkgs.writeShellApplication {
-    name = "security-log-triage";
+  # ── The collector ────────────────────────────────────────────────────────
+  # Reads the journal, filters it, and prints the summary the classifier is
+  # given. Shared by the service and by the operator-facing preview command so
+  # "what does gemma see" can never drift from what gemma actually sees.
+  #
+  #   security-log-summarize --cursor       advance the service's cursor
+  #   security-log-summarize --since -1h    a read-only window, cursor untouched
+  #
+  # Needs the whole journal, so run it under run0.
+  summarize = pkgs.writeShellApplication {
+    name = "security-log-summarize";
     runtimeInputs = with pkgs; [
       systemd
       coreutils
       gnugrep
       gnused
       gawk
-      curl
-      jq
     ];
     text = ''
       cursor=${stateDir}/cursor
-      stamp=${stateDir}/last-escalation
       work=$(mktemp -d)
       trap 'rm -rf "$work"' EXIT
 
-      # First run has no cursor. Record the current end of the journal rather
-      # than classifying the machine's entire history.
-      if [ ! -s "$cursor" ]; then
-        journalctl -n 1 --show-cursor --no-pager 2>/dev/null \
-          | sed -n 's/^-- cursor: //p' > "$cursor"
-        echo "seeded journal cursor; nothing to classify on first run"
-        exit 0
-      fi
+      mode=''${1:---since}
+      case "$mode" in
+        --cursor)
+          window="new journal entries since the previous scan"
+          # First run has no cursor. Record the current end of the journal
+          # rather than classifying the machine's entire history.
+          if [ ! -s "$cursor" ]; then
+            journalctl -n 1 --show-cursor --no-pager 2>/dev/null \
+              | sed -n 's/^-- cursor: //p' > "$cursor"
+            printf 'Host: %s\nWindow: %s\nScanned: 0 entries, 0 matched the security filter\n' \
+              "$(uname -n)" "seeded journal cursor; nothing to classify on first run"
+            exit 0
+          fi
+          # --cursor-file both reads the position and writes the new one, so a
+          # run that gets this far never re-reads the same entries.
+          set -- --cursor-file="$cursor"
+          ;;
+        --since)
+          # Preview: a time window, and no write to the cursor, so running this
+          # by hand cannot make the service skip entries.
+          window="last ''${2:-1h} (preview; the service's cursor was not moved)"
+          set -- --since "-''${2:-1h}"
+          ;;
+        *)
+          echo "usage: security-log-summarize [--cursor | --since <duration>]" >&2
+          exit 2
+          ;;
+      esac
 
-      # --cursor-file both reads the position and writes the new one, so a run
-      # that gets this far never re-reads the same entries. Debug is excluded;
-      # everything else is kept and filtered by content below.
-      journalctl --cursor-file="$cursor" --no-pager -o short-iso -p 0..6 \
-        > "$work/raw" || true
+      # Debug is excluded; everything else is kept and filtered by content.
+      journalctl "$@" --no-pager -o short-iso -p 0..6 > "$work/raw" || true
 
       # The second grep breaks a feedback loop: this unit's own run0/PAM
       # sessions and its own "Failed to start" line match the filter above, so
       # a single failure here would otherwise become evidence for the next run.
       grep -Ei '${interestingPattern}' "$work/raw" \
-        | grep -v 'security-log-triage\|hermes-security-triage' \
+        | grep -v 'security-log-triage\|security-log-summarize\|hermes-security-triage' \
         > "$work/hits" || true
 
       total=$(wc -l < "$work/raw")
       matched=$(wc -l < "$work/hits")
 
-      if [ "$matched" -eq 0 ]; then
-        echo "no security-relevant entries in $total new journal lines"
-        exit 0
-      fi
+      printf 'Host: %s\n' "$(uname -n)"
+      printf 'Window: %s\n' "$window"
+      printf 'Scanned: %s entries, %s matched the security filter\n' "$total" "$matched"
+
+      [ "$matched" -eq 0 ] && exit 0
+      printf '\n'
 
       # Group near-identical lines so a thousand repeats of one failed login
       # cost one line of context instead of a thousand. Timestamps, hostname
@@ -157,22 +181,49 @@ let
       awk '$3 ~ /:$/ { print $3 }' "$work/hits" | sed -E 's/\[[0-9]+\]:?$//; s/:$//' \
         | sort | uniq -c | sort -rn | head -20 > "$work/sources" || true
 
-      {
-        # uname -n, not hostname: coreutils has the former, and this unit's
-        # PATH is only what runtimeInputs put there.
-        printf 'Host: %s\n' "$(uname -n)"
-        printf 'Window: new journal entries since the previous scan\n'
-        printf 'Scanned: %s entries, %s matched the security filter\n\n' "$total" "$matched"
+      printf '== Emitting units/programs (count, name) ==\n'
+      cat "$work/sources"
 
-        printf '== Emitting units/programs (count, name) ==\n'
-        cat "$work/sources"
+      printf '\n== Distinct messages, most frequent first (count, message) ==\n'
+      cat "$work/grouped"
 
-        printf '\n== Distinct messages, most frequent first (count, message) ==\n'
-        cat "$work/grouped"
+      printf '\n== 40 most recent matching lines, verbatim ==\n'
+      tail -40 "$work/hits"
+    '';
+  };
 
-        printf '\n== 40 most recent matching lines, verbatim ==\n'
-        tail -40 "$work/hits"
-      } > "$work/summary"
+  # ── Stage 1: collect, summarize, classify ────────────────────────────────
+  triage = pkgs.writeShellApplication {
+    name = "security-log-triage";
+    runtimeInputs = with pkgs; [
+      systemd
+      coreutils
+      gnugrep
+      gnused
+      curl
+      jq
+    ];
+    text = ''
+      stamp=${stateDir}/last-escalation
+      work=$(mktemp -d)
+      trap 'rm -rf "$work"' EXIT
+
+      # Same collector the preview command runs, in cursor mode: it advances
+      # ${stateDir}/cursor, so this run never re-reads what the last one saw.
+      ${lib.getExe summarize} --cursor > "$work/summary"
+
+      matched=$(sed -n 's/^Scanned: [0-9]* entries, \([0-9]*\) matched.*/\1/p' \
+        "$work/summary")
+
+      if [ "''${matched:-0}" -eq 0 ]; then
+        head -3 "$work/summary" | tail -1
+        exit 0
+      fi
+
+      # Keep the exact text the model is about to see. This is the whole
+      # answer to "what did gemma actually read" on a run that decided
+      # benign and escalated nothing.
+      install -m 0640 -g users "$work/summary" ${runDir}/last-summary.txt
 
       # ── Classify ──────────────────────────────────────────────────────────
       # Structured output, temperature 0. The model sees only text and answers
@@ -214,6 +265,10 @@ let
       confidence=$(printf '%s' "$answer" | jq -r '.confidence // 0')
 
       echo "verdict=$verdict confidence=$confidence matched=$matched: $reason"
+
+      # Pairs with last-summary.txt: the verdict on exactly that text.
+      printf '%s' "$answer" | jq -c . > "$work/last-verdict.json"
+      install -m 0640 -g users "$work/last-verdict.json" ${runDir}/last-verdict.json
 
       if [ "$verdict" != "suspicious" ]; then
         exit 0
@@ -354,6 +409,10 @@ let
   };
 in
 {
+  # `run0 security-log-summarize --since 1h` prints exactly what the classifier
+  # would be handed for that window, without touching the service's cursor.
+  environment.systemPackages = [ summarize ];
+
   systemd = {
     # Report drop box. 0750 root:users so codebam can read it and nobody else
     # can; the age field expires reports a day after the incident.
