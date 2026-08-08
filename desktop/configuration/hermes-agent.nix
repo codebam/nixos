@@ -143,6 +143,11 @@ let
     than guessing an option name — they query the real option index.
     `manix "<term>"` is the offline fallback.
 
+    The `nix-lsp` MCP server runs nixd over this repo. Use it for "what is
+    this", "where else is this used", and for reading diagnostics after an
+    edit — it resolves through the module system, which ripgrep cannot. Keep
+    ripgrep for text and filename searches.
+
     ## Activation is operator-only
 
     `nixos-rebuild switch`, `nixos-rebuild boot`, `nix-collect-garbage`, and
@@ -160,11 +165,122 @@ let
       needs an entry in the preservation module — writing it is not enough.
   '';
 
+  # FlareSolverr is a plain HTTP service on loopback, not an MCP server, so
+  # nothing advertises it to the model. This skill is the only thing that
+  # tells the agent it exists and how to call it.
+  flaresolverrSkill = pkgs.writeTextDir "research/flaresolverr/SKILL.md" ''
+    ---
+    name: flaresolverr
+    description: Fetch a page that is behind a Cloudflare or DDoS-Guard challenge, when a normal fetch returns a "Just a moment..." interstitial or HTTP 403/503.
+    version: 1.0.0
+    license: MIT
+    platforms: [linux]
+    metadata:
+      hermes:
+        tags: [web, scraping, cloudflare, http]
+    ---
+
+    # FlareSolverr
+
+    A local proxy that drives a headless Chrome through a bot-check
+    interstitial and returns the real page plus the cookies that got it.
+
+    Endpoint: `http://127.0.0.1:8191/v1`. Loopback only, no auth, no key.
+
+    ## When to reach for it
+
+    Only after a normal fetch has already failed. The `fetch` MCP tool is
+    faster, cheaper, and returns markdown instead of raw HTML. Escalate here
+    when that returns:
+
+    - a body containing `Just a moment...`, `Checking your browser`, or
+      `Enable JavaScript and cookies to continue`
+    - HTTP 403 or 503 from a site that works in a real browser
+    - `cf-mitigated: challenge` in the response headers
+
+    A 404, a paywall, or a login wall is not a challenge. FlareSolverr will
+    not help and you should say so instead of retrying.
+
+    ## Fetching a page
+
+    ```bash
+    curl -sS -X POST http://127.0.0.1:8191/v1 \
+      -H 'Content-Type: application/json' \
+      -d '{"cmd": "request.get", "url": "https://example.com/", "maxTimeout": 60000}' \
+      | jq -r '.solution.response'
+    ```
+
+    The reply is JSON: `.status` is `ok` or `error`, `.message` explains a
+    failure, `.solution.response` is the HTML, `.solution.status` is the
+    upstream HTTP code, `.solution.cookies` and `.solution.userAgent` are what
+    you need to keep fetching that host yourself.
+
+    `.solution.response` is full HTML and is usually large. Pipe it through a
+    converter rather than reading it whole:
+
+    ```bash
+    ... | jq -r '.solution.response' | ${lib.getExe pkgs.html2text} | head -200
+    ```
+
+    ## POST
+
+    ```bash
+    curl -sS -X POST http://127.0.0.1:8191/v1 \
+      -H 'Content-Type: application/json' \
+      -d '{"cmd": "request.post", "url": "https://example.com/search",
+           "postData": "q=nixos&page=1", "maxTimeout": 60000}'
+    ```
+
+    `postData` is a urlencoded string, not an object. The content type is
+    always `application/x-www-form-urlencoded`; JSON bodies are not supported.
+
+    ## Reusing a session
+
+    Each request otherwise starts a fresh browser, which costs several
+    seconds. For more than two or three requests to one host, create a
+    session and pass its name:
+
+    ```bash
+    curl -sS -X POST http://127.0.0.1:8191/v1 \
+      -H 'Content-Type: application/json' \
+      -d '{"cmd": "sessions.create", "session": "work"}'
+    # ... then "session": "work" alongside cmd in each request.get
+    curl -sS -X POST http://127.0.0.1:8191/v1 \
+      -H 'Content-Type: application/json' \
+      -d '{"cmd": "sessions.destroy", "session": "work"}'
+    ```
+
+    Destroy the session when done. A live session holds a Chrome process open;
+    the container is capped at 2GB and will start failing if sessions pile up.
+
+    ## Limits and manners
+
+    - Each solve takes 5-40s. It is not a substitute for a normal fetch.
+    - `maxTimeout` is in milliseconds and caps the solve, not the download.
+    - The container ignores robots.txt because it is a raw browser. You should
+      not: check whether the site permits automated access, and do not use
+      this to defeat a paywall, a login, or an explicit rate limit.
+    - Do not loop it over a URL list to scrape a site in bulk. It is for
+      getting past a check on a page you were already going to read once.
+    - If it fails twice on one URL, stop and report it. Cloudflare's harder
+      tiers are not solvable this way and retrying just burns minutes.
+
+    ## When it is not running
+
+    ```bash
+    run0 systemctl status podman-flaresolverr.service
+    ```
+
+    Starting it is fine; a persistent failure is the operator's problem, not
+    something to work around with another scraper.
+  '';
+
   hermesSkills = pkgs.symlinkJoin {
     name = "hermes-skills";
     paths = [
       optionalSkillTree
       hostSkill
+      flaresolverrSkill
     ];
   };
 
@@ -376,11 +492,69 @@ in
     ]);
 
     # ── MCP ────────────────────────────────────────────────────────────────
-    mcpServers.nixos = {
-      command = lib.getExe pkgs.mcp-nixos;
-      # Queries the NixOS option/package index so the agent looks options up
-      # instead of inventing them.
-      timeout = 60;
+    # Every tool schema here is in the prompt on every turn, so this list is
+    # deliberately short. Anything reachable with one shell command stays a
+    # shell command.
+    mcpServers = {
+      nixos = {
+        command = lib.getExe pkgs.mcp-nixos;
+        # Queries the NixOS option/package index so the agent looks options up
+        # instead of inventing them.
+        timeout = 60;
+      };
+
+      # Fetches a URL and returns markdown, chunked via start_index. Pairs
+      # with the duckduckgo/searxng skills: they find the URL, this reads it
+      # without spending the context window on tag soup.
+      fetch = {
+        command = lib.getExe pkgs.mcp-server-fetch;
+        args = [
+          "--user-agent"
+          "hermes-agent (+https://github.com/NousResearch/hermes-agent)"
+        ];
+        timeout = 60;
+      };
+
+      # Version-accurate library documentation, pulled on demand. Covers the
+      # ground mcp-nixos does not: everything that is not a NixOS option.
+      #
+      # The key is interpolated by Hermes at connect time from the process
+      # environment, which systemd fills from the sops-decrypted
+      # environmentFiles above. Written as a literal ${...} placeholder on
+      # purpose — putting the key itself here would put it in /nix/store,
+      # world-readable.
+      context7 = {
+        command = lib.getExe pkgs.context7-mcp;
+        env.CONTEXT7_API_KEY = "\${CONTEXT7_API_KEY}";
+        timeout = 60;
+      };
+
+      # LSP over MCP: definitions, references, diagnostics, and renames on the
+      # flake instead of ripgrep guesses. One server per workspace + language,
+      # so this is scoped to the nixos repo only.
+      #
+      # nixd is passed by absolute store path: MCP children get a filtered
+      # environment, so do not assume this service's PATH reaches them.
+      nix-lsp = {
+        command = lib.getExe pkgs.mcp-language-server;
+        args = [
+          "--workspace"
+          nixosRepo
+          "--lsp"
+          (lib.getExe pkgs.nixd)
+        ];
+        timeout = 120;
+      };
+
+      # Models have no clock. Two tools, negligible schema cost.
+      time = {
+        command = lib.getExe pkgs.mcp-server-time;
+        args = [
+          "--local-timezone"
+          config.time.timeZone
+        ];
+        timeout = 15;
+      };
     };
 
     settings = {

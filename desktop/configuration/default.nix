@@ -7,6 +7,7 @@ _:
     ./sops.nix
     ./boot.nix
     ./environment.nix
+    ./flaresolverr.nix
     ./hardware.nix
     ./networking.nix
     ./nix.nix
