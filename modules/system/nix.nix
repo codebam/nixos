@@ -8,6 +8,18 @@
       ];
       # Store deduplication is handled by the weekly nix.optimise timer below;
       # auto-optimise-store would additionally hash every path on every build.
+      # Root-equivalent, not a convenience list: the daemon runs as root and
+      # honours settings a trusted client sends it, so a trusted user can point
+      # it at their own substituter and signing key, or weaken build isolation
+      # until a derivation's builder runs unsandboxed as root. It routes around
+      # `security.sudo.enable = false` and the local/active polkit guard alike.
+      #
+      # codebam is already in wheel on their own workstation, so this grants
+      # nothing new. `makano` used to be added on the desktop and is not any
+      # more — that account has three authorized SSH keys on machines we do not
+      # administer, which made every one of them a root key for this host.
+      # Anything that needs a cache belongs in substituters/trusted-public-keys
+      # system-wide instead of here.
       trusted-users = [
         "root"
         "codebam"
