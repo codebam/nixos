@@ -412,60 +412,72 @@ let
     frontier = "meta/muse-spark-1.2";
   };
 
-  escalationText = pkgs.writeText "hermes-escalation-protocol.md" ''
-    ## Escalation protocol
+  # The rule most likely to prevent a pointless escalation is the one naming
+  # the tools that would have answered the question — so it has to name the
+  # tools that profile actually has. A protocol telling the viewport agent to
+  # run `nix flake check` on a Rust tree teaches it to ignore the whole list.
+  mkEscalationText =
+    {
+      profile,
+      artifact,
+      risky,
+      tools,
+    }:
+    pkgs.writeText "hermes-escalation-protocol-${profile}.md" ''
+      ## Escalation protocol
 
-    You are ${defaultModel} — fast and cheap, and deliberately
-    not the strongest model available. You are not expected to solve
-    everything. Stopping and handing up is a correct outcome, not a failure.
+      You are ${defaultModel} — fast and cheap, and deliberately
+      not the strongest model available. You are not expected to solve
+      everything. Stopping and handing up is a correct outcome, not a failure.
 
-    Escalate when any of these is true:
+      Escalate when any of these is true:
 
-    - Two attempts at the same subproblem have already failed.
-    - The answer depends on more than three interdependent files, options, or
-      constraints held at once.
-    - You are about to write code or a nix expression you cannot execute
-      end-to-end in your head.
-    - The task carries a correctness guarantee: secrets, authentication,
-      network exposure, data migration, concurrency, or anything that
-      activates a system generation.
-    - Your answer would contain a placeholder, a guessed option name, or the
-      words "roughly", "something like", or "should work".
+      - Two attempts at the same subproblem have already failed.
+      - The answer depends on more than three interdependent files, options, or
+        constraints held at once.
+      - You are about to write ${artifact} you cannot execute end-to-end in
+        your head.
+      - The task carries a correctness guarantee: ${risky}.
+      - Your answer would contain a placeholder, a guessed name, or the words
+        "roughly", "something like", or "should work".
 
-    Do not escalate:
+      Do not escalate:
 
-    - On the first attempt at a routine task.
-    - To avoid work a command would settle. If ripgrep, the `nixos` MCP
-      server, `nix-lsp`, `manix`, `nix flake check`, a web search skill, or
-      reading the file would answer it, do that instead — a stronger model
-      cannot see this machine and will guess where you could have looked.
+      - On the first attempt at a routine task.
+      - To avoid work a command would settle. If ${tools} would answer it, do
+        that instead — a stronger model cannot see this machine and will guess
+        where you could have looked.
 
-    To escalate, stop. Do not answer the question anyway, and do not append a
-    best guess after the block. Emit exactly:
+      To escalate, stop. Do not answer the question anyway, and do not append a
+      best guess after the block. Emit exactly:
 
-        ESCALATE
-        REASON: <one line>
-        STATE: <established facts, files read, what was already tried and how
-                it failed — written so the next model needs no other context>
-        ASK: <the single question the stronger model must answer>
-        RUN: /model <tier-model> --once
+          ESCALATE
+          REASON: <one line>
+          STATE: <established facts, files read, what was already tried and how
+                  it failed — written so the next model needs no other context>
+          ASK: <the single question the stronger model must answer>
+          RUN: /model <tier-model> --once
 
-    Tiers:
+      Tiers:
 
-    - `${escalationTiers.reasoning}` — long multi-step logic, algorithm
-      design, a bug whose cause has resisted two hypotheses.
-    - `${escalationTiers.frontier}` — architecture and design calls,
-      ambiguous requirements, security review, anything under a correctness
-      guarantee above.
+      - `${escalationTiers.reasoning}` — long multi-step logic, algorithm
+        design, a bug whose cause has resisted two hypotheses.
+      - `${escalationTiers.frontier}` — architecture and design calls,
+        ambiguous requirements, security review, anything under a correctness
+        guarantee above.
 
-    The STATE block is the whole point of the handoff: `--once` carries the
-    session, but the operator is paying for a turn on a large model, so the
-    question should arrive already researched. At most one escalation per
-    operator turn.
-  '';
+      The STATE block is the whole point of the handoff: `--once` carries the
+      session, but the operator is paying for a turn on a large model, so the
+      question should arrive already researched. At most one escalation per
+      operator turn.
+    '';
 
-  escalationProtocol =
-    mkHook "hermes-hook-escalation-protocol"
+  # The marker is namespaced by profile: the two profiles keep their sessions
+  # in separate directories but share this state directory, so an unqualified
+  # name would let one profile's marker suppress the other's injection.
+  mkEscalationHook =
+    profile: text:
+    mkHook "hermes-hook-escalation-protocol-${profile}"
       [
         pkgs.jq
         pkgs.coreutils
@@ -477,15 +489,29 @@ let
         # Once per session, like the context hook: these are standing rules,
         # not per-turn advice, and re-sending them every turn is pure cost.
         mkdir -p ${hookState}
-        marker="${hookState}/escalate-''${session:-unknown}"
+        marker="${hookState}/escalate-${profile}-''${session:-unknown}"
         if [ -e "$marker" ]; then
           printf '{}\n'
           exit 0
         fi
         : > "$marker"
 
-        jq -Rs '{context: .}' < ${escalationText}
+        jq -Rs '{context: .}' < ${text}
       '';
+
+  escalationDefault = mkEscalationHook "default" (mkEscalationText {
+    profile = "default";
+    artifact = "code or a nix expression";
+    risky = "secrets, authentication, network exposure, data migration, concurrency, or anything that activates a system generation";
+    tools = "ripgrep, the `nixos` MCP server, `nix-lsp`, `manix`, `nix flake check`, a web search skill, or reading the file";
+  });
+
+  escalationViewport = mkEscalationHook "viewport" (mkEscalationText {
+    profile = "viewport";
+    artifact = "Rust";
+    risky = "`unsafe`, FFI boundaries, lifetimes or `Send`/`Sync` bounds you are guessing at, concurrency, or Wayland protocol state machines";
+    tools = "ripgrep, the `rust-lsp` MCP server, `cargo check`, `cargo test`, a web search skill, or reading the file";
+  });
 
   verifyNix =
     mkHook "hermes-hook-verify-nix"
@@ -661,9 +687,10 @@ let
     // lib.optionalAttrs (srv ? connect_timeout) { inherit (srv) connect_timeout; }
   );
 
-  # Hooks that apply wherever the agent runs. verifyNix is deliberately absent:
-  # it lints *.nix in the flake, which is noise in a Rust tree.
-  commonHooks = {
+  # Hooks that apply wherever the agent runs, given that profile's escalation
+  # hook. verifyNix is deliberately absent: it lints *.nix in the flake, which
+  # is noise in a Rust tree.
+  mkCommonHooks = escalationHook: {
     pre_tool_call = [
       {
         matcher = "terminal";
@@ -684,7 +711,7 @@ let
         timeout = 15;
       }
       {
-        command = escalationProtocol;
+        command = escalationHook;
         timeout = 15;
       }
     ];
@@ -723,7 +750,9 @@ let
     # away by the agent or by `hermes update`.
     skills.external_dirs = [ "${hermesSkills}" ];
 
-    hooks = commonHooks;
+    # No `hooks` here on purpose: the escalation hook differs per profile, so
+    # each consumer below builds its own set with mkCommonHooks. Inheriting a
+    # default here would silently give a new profile the flake's tool list.
 
     # The gateway and cron run with no TTY, so the first-use consent prompt
     # can never be answered there. Safe here only because every `command:`
@@ -740,6 +769,7 @@ let
     baseSettings
     // {
       mcp_servers = renderMcp (mcpCommon // mcpViewport);
+      hooks = mkCommonHooks escalationViewport;
       terminal = baseSettings.terminal // {
         cwd = viewportClone;
       };
@@ -813,7 +843,7 @@ in
     mcpServers = mcpCommon // mcpNixos;
 
     settings = baseSettings // {
-      hooks = commonHooks // {
+      hooks = (mkCommonHooks escalationDefault) // {
         # Default profile only: the flake is the tree this lints.
         pre_verify = [
           {
