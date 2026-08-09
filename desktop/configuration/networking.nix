@@ -81,6 +81,10 @@ in
           iifname ${wanInterfaces} ip saddr 92.118.39.0/24 drop comment "internet SSH scanner netblock (2026-08-08)"
           iifname ${wanInterfaces} ip saddr 2.57.121.25 drop comment "internet SSH scanner 2.57.121.25 (2026-08-08)"
           iifname ${wanInterfaces} ip saddr 2.57.121.112 drop comment "internet SSH scanner 2.57.121.112 (2026-08-09)"
+          # 2.57.122.0/24: four rotating sources (.238/.53/.209/.168, 639 hits
+          # in 14d, all root-user preauth probes), same pattern as the
+          # 2.57.121.0/24 pins. Pinned 2026-08-09.
+          iifname ${wanInterfaces} ip saddr 2.57.122.0/24 drop comment "internet SSH scanner netblock 2.57.122.0/24 (2026-08-09)"
         }
       '';
     };
