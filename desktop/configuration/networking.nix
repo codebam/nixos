@@ -64,31 +64,6 @@ in
         '';
     };
 
-    # Hard drops for scanner sources that spent 2026-08-08 probing sshd:
-    # 92.118.39.77 and sibling .50 are the same /24 rotation; 2.57.121.25 is
-    # a low-and-slow single source hammering the username 'admin' ~hourly
-    # since 08-01 (fail2ban cannot catch it: 1 probe/hr never reaches maxretry
-    # inside findtime). fail2ban handles fresh sources on its own; this pins
-    # the ones we already saw so a rebuild does not reopen port 22 to them
-    # until fail2ban re-bans them. Remove when the sources stop showing up.
-    # 2.57.121.112, same /24 as .25: rotating-username probes ~18/day since
-    # 07-23, no burst pattern (single preauth attempts); pinned 2026-08-09.
-    nftables.tables.scanner-blocks = {
-      family = "ip";
-      content = ''
-        chain input {
-          type filter hook input priority -1; policy accept;
-          iifname ${wanInterfaces} ip saddr 92.118.39.0/24 drop comment "internet SSH scanner netblock (2026-08-08)"
-          iifname ${wanInterfaces} ip saddr 2.57.121.25 drop comment "internet SSH scanner 2.57.121.25 (2026-08-08)"
-          iifname ${wanInterfaces} ip saddr 2.57.121.112 drop comment "internet SSH scanner 2.57.121.112 (2026-08-09)"
-          # 2.57.122.0/24: four rotating sources (.238/.53/.209/.168, 639 hits
-          # in 14d, all root-user preauth probes), same pattern as the
-          # 2.57.121.0/24 pins. Pinned 2026-08-09.
-          iifname ${wanInterfaces} ip saddr 2.57.122.0/24 drop comment "internet SSH scanner netblock 2.57.122.0/24 (2026-08-09)"
-        }
-      '';
-    };
-
     firewall = {
       # Only what is actually served. Six holes were removed here because
       # nothing had been listening behind them: 25575 (RCON), 8212+8211

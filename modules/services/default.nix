@@ -85,37 +85,9 @@
       # tailscale0, which is in networking.firewall.trustedInterfaces
       # (modules/system/networking.nix). Do not set this back to true --
       # openFirewall opens 22 on every interface including the WAN, which is
-      # what the scanner mitigation below exists to clean up after.
+      # what the router forward and the fail2ban/nftables scanner blocks
+      # removed alongside this used to be cleaning up after.
       openFirewall = false;
-    };
-    # Scanner mitigation for the internet-exposed sshd (port 22 is
-    # port-forwarded from the router). Password auth is off and root login is
-    # denied, so these probes can never succeed -- they only cost journal
-    # space. The default sshd jail catches "Invalid user" lines; the
-    # sshd-scan jail below catches "Connection closed by ... [preauth]",
-    # which is all our scanners emit (with password auth off, sshd never
-    # logs "Failed password" for the default filter to trip on). Bans use
-    # nftables-multiport because networking.nftables is enabled.
-    fail2ban = {
-      enable = true;
-      jails."sshd-scan" = {
-        settings = {
-          # sshd logs every preauth close under this unit.
-          journalmatch = "_SYSTEMD_UNIT=sshd.service";
-          # Longer than the 10m default: nothing legitimate ever ends in
-          # a preauth close, so there is no false-positive risk to pay for.
-          bantime = "1h";
-        };
-        filter = {
-          # Same structure as the shipped sshd.conf: the F-MLFID wrapper in
-          # the prefregex is what satisfies fail2ban 1.1's failure-id check.
-          INCLUDES.before = "common.conf";
-          Definition = {
-            prefregex = "^<F-MLFID>%(__prefix_line)s</F-MLFID><F-CONTENT>.+</F-CONTENT>$";
-            failregex = "^Connection closed by (?:authenticating user \\S+ |invalid user \\S+ )?<HOST> port \\d+ \\[preauth\\]$";
-          };
-        };
-      };
     };
     fwupd.enable = true;
     pipewire = {
