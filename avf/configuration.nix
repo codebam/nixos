@@ -35,9 +35,14 @@
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "no";
       };
-      openFirewall = true;
+      # Tailnet-only, same as the other hosts: port 8022 is never opened on a
+      # real interface, and tailscale0 is trusted below.
+      openFirewall = false;
     };
   };
+  # This host has no networking block of its own, so the tailscale0 trust that
+  # modules/system/networking.nix gives the other hosts has to be stated here.
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
   programs = {
     fish.enable = true;
   };

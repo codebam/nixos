@@ -80,7 +80,13 @@
         # root" (~1700 lines/day from one netblock before this).
         KbdInteractiveAuthentication = false;
       };
-      openFirewall = true;
+      # Deliberately false: sshd is reachable over the tailnet only. No port
+      # 22 hole is punched in the input chain, so the only path to sshd is
+      # tailscale0, which is in networking.firewall.trustedInterfaces
+      # (modules/system/networking.nix). Do not set this back to true --
+      # openFirewall opens 22 on every interface including the WAN, which is
+      # what the scanner mitigation below exists to clean up after.
+      openFirewall = false;
     };
     # Scanner mitigation for the internet-exposed sshd (port 22 is
     # port-forwarded from the router). Password auth is off and root login is
