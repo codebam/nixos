@@ -395,6 +395,98 @@ let
         jq -cn --arg c "$ctx" '{context: $c}'
       '';
 
+  # ── Escalation protocol ──────────────────────────────────────────────────
+  # The default model is a flash model. It is fast and cheap and it will not
+  # notice when a problem has outgrown it — left alone it produces a confident
+  # wrong answer rather than stopping. Hermes has no way for a model to switch
+  # itself (`/model` and `/handoff` are operator commands), so the next best
+  # thing is a fixed, checkable stopping rule and a paste-ready command.
+  #
+  # `--once` rather than a bare `/model`: it spends one turn upstairs and
+  # restores the default afterwards, so an escalation cannot silently become
+  # the new baseline.
+  defaultModel = "~deepseek/deepseek-v4-flash-latest";
+
+  escalationTiers = {
+    reasoning = "deepseek/deepseek-v4-pro";
+    frontier = "meta/muse-spark-1.2";
+  };
+
+  escalationText = pkgs.writeText "hermes-escalation-protocol.md" ''
+    ## Escalation protocol
+
+    You are ${defaultModel} — fast and cheap, and deliberately
+    not the strongest model available. You are not expected to solve
+    everything. Stopping and handing up is a correct outcome, not a failure.
+
+    Escalate when any of these is true:
+
+    - Two attempts at the same subproblem have already failed.
+    - The answer depends on more than three interdependent files, options, or
+      constraints held at once.
+    - You are about to write code or a nix expression you cannot execute
+      end-to-end in your head.
+    - The task carries a correctness guarantee: secrets, authentication,
+      network exposure, data migration, concurrency, or anything that
+      activates a system generation.
+    - Your answer would contain a placeholder, a guessed option name, or the
+      words "roughly", "something like", or "should work".
+
+    Do not escalate:
+
+    - On the first attempt at a routine task.
+    - To avoid work a command would settle. If ripgrep, the `nixos` MCP
+      server, `nix-lsp`, `manix`, `nix flake check`, a web search skill, or
+      reading the file would answer it, do that instead — a stronger model
+      cannot see this machine and will guess where you could have looked.
+
+    To escalate, stop. Do not answer the question anyway, and do not append a
+    best guess after the block. Emit exactly:
+
+        ESCALATE
+        REASON: <one line>
+        STATE: <established facts, files read, what was already tried and how
+                it failed — written so the next model needs no other context>
+        ASK: <the single question the stronger model must answer>
+        RUN: /model <tier-model> --once
+
+    Tiers:
+
+    - `${escalationTiers.reasoning}` — long multi-step logic, algorithm
+      design, a bug whose cause has resisted two hypotheses.
+    - `${escalationTiers.frontier}` — architecture and design calls,
+      ambiguous requirements, security review, anything under a correctness
+      guarantee above.
+
+    The STATE block is the whole point of the handoff: `--once` carries the
+    session, but the operator is paying for a turn on a large model, so the
+    question should arrive already researched. At most one escalation per
+    operator turn.
+  '';
+
+  escalationProtocol =
+    mkHook "hermes-hook-escalation-protocol"
+      [
+        pkgs.jq
+        pkgs.coreutils
+      ]
+      ''
+        payload=$(cat)
+        session=$(printf '%s' "$payload" | jq -r '.session_id // "unknown"' | tr -cd 'A-Za-z0-9._-')
+
+        # Once per session, like the context hook: these are standing rules,
+        # not per-turn advice, and re-sending them every turn is pure cost.
+        mkdir -p ${hookState}
+        marker="${hookState}/escalate-''${session:-unknown}"
+        if [ -e "$marker" ]; then
+          printf '{}\n'
+          exit 0
+        fi
+        : > "$marker"
+
+        jq -Rs '{context: .}' < ${escalationText}
+      '';
+
   verifyNix =
     mkHook "hermes-hook-verify-nix"
       [
@@ -591,13 +683,17 @@ let
         command = sessionContext;
         timeout = 15;
       }
+      {
+        command = escalationProtocol;
+        timeout = 15;
+      }
     ];
   };
 
   baseSettings = {
     model = {
       base_url = "https://openrouter.ai/api/v1";
-      default = "~deepseek/deepseek-v4-flash-latest";
+      default = defaultModel;
       # Pinned, because base_url alone does not decide where a request goes.
       # An interactive `hermes model` writes model.provider into
       # HERMES_HOME/config.yaml, that file is mutable state, and whatever it
