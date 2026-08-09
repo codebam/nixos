@@ -64,6 +64,21 @@ in
         '';
     };
 
+    # Hard drop for the scanner netblock that spent 2026-08-08 probing sshd
+    # (92.118.39.77 and sibling .50 are the same /24 rotation). fail2ban
+    # handles fresh sources on its own; this pins the ones we already saw so
+    # a rebuild does not reopen port 22 to them for the few minutes until
+    # fail2ban re-bans them. Remove when the netblock stops showing up.
+    nftables.tables.scanner-blocks = {
+      family = "ip";
+      content = ''
+        chain input {
+          type filter hook input priority -1; policy accept;
+          iifname ${wanInterfaces} ip saddr 92.118.39.0/24 drop comment "internet SSH scanner netblock (2026-08-08)"
+        }
+      '';
+    };
+
     firewall = {
       # Only what is actually served. Six holes were removed here because
       # nothing had been listening behind them: 25575 (RCON), 8212+8211
