@@ -64,17 +64,20 @@ in
         '';
     };
 
-    # Hard drop for the scanner netblock that spent 2026-08-08 probing sshd
-    # (92.118.39.77 and sibling .50 are the same /24 rotation). fail2ban
-    # handles fresh sources on its own; this pins the ones we already saw so
-    # a rebuild does not reopen port 22 to them for the few minutes until
-    # fail2ban re-bans them. Remove when the netblock stops showing up.
+    # Hard drops for scanner sources that spent 2026-08-08 probing sshd:
+    # 92.118.39.77 and sibling .50 are the same /24 rotation; 2.57.121.25 is
+    # a low-and-slow single source hammering the username 'admin' ~hourly
+    # since 08-01 (fail2ban cannot catch it: 1 probe/hr never reaches maxretry
+    # inside findtime). fail2ban handles fresh sources on its own; this pins
+    # the ones we already saw so a rebuild does not reopen port 22 to them
+    # until fail2ban re-bans them. Remove when the sources stop showing up.
     nftables.tables.scanner-blocks = {
       family = "ip";
       content = ''
         chain input {
           type filter hook input priority -1; policy accept;
           iifname ${wanInterfaces} ip saddr 92.118.39.0/24 drop comment "internet SSH scanner netblock (2026-08-08)"
+          iifname ${wanInterfaces} ip saddr 2.57.121.25 drop comment "internet SSH scanner 2.57.121.25 (2026-08-08)"
         }
       '';
     };
