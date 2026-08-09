@@ -766,7 +766,31 @@ in
         # activation script only writes the default .env. Share it rather than
         # decrypting the same sops secret to two places.
         "L+ ${viewportProfile}/.env - - - - ${hermesHome}/.env"
+        # hermes rewrites this file itself (profiles.py / doctor.py chmod it to
+        # 0600 whenever it persists a key), which locks out the hermes-group
+        # users who run `hermes -p viewport` interactively. Put the mode back at
+        # boot; hermes-env-mode.path does it for the runtime rewrites.
+        "z ${hermesHome}/.env 0640 hermes hermes - -"
       ];
+
+    # Re-apply 0640 every time hermes rewrites $HERMES_HOME/.env, otherwise the
+    # next `hermes -p viewport` from an interactive account dies with
+    # "PermissionError: [Errno 13] Permission denied: .../viewport/.env".
+    paths.hermes-env-mode = {
+      wantedBy = [ "multi-user.target" ];
+      pathConfig = {
+        PathModified = "${hermesHome}/.env";
+        Unit = "hermes-env-mode.service";
+      };
+    };
+
+    services.hermes-env-mode = {
+      description = "Restore group-readable mode on the shared hermes .env";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.coreutils}/bin/chmod 0640 ${hermesHome}/.env";
+      };
+    };
 
     # Keeps the agent's clone current. Fetch only — never reset or checkout,
     # since the agent may have work in progress in that tree.
