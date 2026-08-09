@@ -71,6 +71,8 @@ in
     # inside findtime). fail2ban handles fresh sources on its own; this pins
     # the ones we already saw so a rebuild does not reopen port 22 to them
     # until fail2ban re-bans them. Remove when the sources stop showing up.
+    # 2.57.121.112, same /24 as .25: rotating-username probes ~18/day since
+    # 07-23, no burst pattern (single preauth attempts); pinned 2026-08-09.
     nftables.tables.scanner-blocks = {
       family = "ip";
       content = ''
@@ -78,6 +80,7 @@ in
           type filter hook input priority -1; policy accept;
           iifname ${wanInterfaces} ip saddr 92.118.39.0/24 drop comment "internet SSH scanner netblock (2026-08-08)"
           iifname ${wanInterfaces} ip saddr 2.57.121.25 drop comment "internet SSH scanner 2.57.121.25 (2026-08-08)"
+          iifname ${wanInterfaces} ip saddr 2.57.121.112 drop comment "internet SSH scanner 2.57.121.112 (2026-08-09)"
         }
       '';
     };
