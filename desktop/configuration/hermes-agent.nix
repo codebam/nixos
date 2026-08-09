@@ -506,6 +506,17 @@ let
     tools = "ripgrep, the `nixos` MCP server, `nix-lsp`, `manix`, `nix flake check`, a web search skill, or reading the file";
   });
 
+  # `git push` is the deploy button here: master builds on Cloudflare Pages and
+  # goes to production, and the CI workflow gates nothing that blocks it. That
+  # makes anything reaching master a one-way door, which is exactly the shape
+  # of the correctness guarantee this list is for.
+  escalationSite = mkEscalationHook "site" (mkEscalationText {
+    profile = "site";
+    artifact = "Svelte, TypeScript, or a Wrangler config";
+    risky = "anything that lands on master (Cloudflare Pages builds and deploys it to production), redirects, headers, cache or CSP rules, the Cloudflare adapter's runtime config, or a change to what the site collects about visitors";
+    tools = "ripgrep, `npm run lint`, `npm run check`, `npm run test:run`, `npm run build`, a web search skill, or reading the file";
+  });
+
   escalationViewport = mkEscalationHook "viewport" (mkEscalationText {
     profile = "viewport";
     artifact = "Rust";
@@ -569,6 +580,18 @@ let
   viewportClone = "${config.services.hermes-agent.stateDir}/workspace/Viewport";
   viewportRepo = "https://github.com/codebam/viewport-smithay.git";
 
+  # ── Site profile ─────────────────────────────────────────────────────────
+  # seanbehan.ca. Same clone-not-symlink reasoning as viewport above: the real
+  # tree is under /home/codebam, which the hermes user cannot traverse.
+  #
+  # This profile carries no language server. The tree is SvelteKit, and its own
+  # npm scripts (`lint`, `check`, `test:run`) already answer what an LSP would,
+  # from the same node_modules CI uses — one clone unit rather than a server
+  # whose crate graph has to be warmed.
+  siteProfile = "${hermesHome}/profiles/site";
+  siteClone = "${config.services.hermes-agent.stateDir}/workspace/seanbehan.ca";
+  siteRepo = "https://github.com/codebam/seanbehan.ca.git";
+
   # rust-analyzer needs rustc, cargo, and the bindgen/pkg-config environment to
   # resolve the crate graph; a bare binary on PATH resolves nothing. The
   # project's own devShell already assembles exactly that, so borrow it.
@@ -587,6 +610,42 @@ let
       exec nix develop "${viewportClone}#rust" --command ${lib.getExe pkgs.rust-analyzer} "$@"
     '';
   };
+
+  # Keeps a profile's clone current. Fetch only — never reset or checkout,
+  # since the agent may have work in progress in that tree. `warmup` is whatever
+  # that tree needs before it is useful to work in, and is allowed to fail: a
+  # stale checkout is worth more than no checkout.
+  mkCloneService =
+    {
+      what,
+      repo,
+      clone,
+      warmup,
+    }:
+    {
+      description = "Clone or fetch the ${what} tree for its hermes profile";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      path = [
+        pkgs.git
+        config.nix.package
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "hermes";
+        Group = "hermes";
+      };
+      script = ''
+        if [ -d ${clone}/.git ]; then
+          git -C ${clone} fetch --prune --all
+        else
+          git clone --filter=blob:none ${repo} ${clone}
+        fi
+
+      ''
+      + warmup;
+    };
 
   # Servers worth having whatever the agent is working on.
   mcpCommon = {
@@ -775,6 +834,17 @@ let
       };
     }
   );
+
+  siteConfig = (pkgs.formats.yaml { }).generate "hermes-site-config.yaml" (
+    baseSettings
+    // {
+      mcp_servers = renderMcp mcpCommon;
+      hooks = mkCommonHooks escalationSite;
+      terminal = baseSettings.terminal // {
+        cwd = siteClone;
+      };
+    }
+  );
 in
 {
   # `nix run nixpkgs#x` and `,` resolve against the flake registry. Unpinned it
@@ -855,7 +925,7 @@ in
     };
   };
 
-  # ── Viewport profile plumbing ────────────────────────────────────────────
+  # ── Extra profile plumbing ───────────────────────────────────────────────
   # A profile is just a directory hermes recognises; `hermes profile create`
   # would bootstrap these, but doing it here keeps the profile declarative and
   # reproducible instead of depending on a one-time imperative command.
@@ -868,30 +938,38 @@ in
         # first run. Setgid keeps those group-owned by hermes so both sides
         # keep seeing each other's state.
         dir = d: "d ${d} 2770 hermes hermes - -";
+
+        mkProfile =
+          path: cfg:
+          [
+            (dir path)
+          ]
+          ++ map (d: dir "${path}/${d}") [
+            "memories"
+            "sessions"
+            "skills"
+            "skins"
+            "logs"
+            "plans"
+            "workspace"
+            "cron"
+            "home"
+          ]
+          ++ [
+            # Store symlink, so the agent cannot edit its own config out from
+            # under the module. L+ replaces whatever is there on every
+            # activation.
+            "L+ ${path}/config.yaml - - - - ${cfg}"
+            # Profiles do not inherit the default profile's secrets, and the
+            # activation script only writes the default .env. Share it rather
+            # than decrypting the same sops secret to two places.
+            "L+ ${path}/.env - - - - ${hermesHome}/.env"
+          ];
       in
-      [
-        (dir "${hermesHome}/profiles")
-        (dir viewportProfile)
-      ]
-      ++ map (d: dir "${viewportProfile}/${d}") [
-        "memories"
-        "sessions"
-        "skills"
-        "skins"
-        "logs"
-        "plans"
-        "workspace"
-        "cron"
-        "home"
-      ]
+      [ (dir "${hermesHome}/profiles") ]
+      ++ mkProfile viewportProfile viewportConfig
+      ++ mkProfile siteProfile siteConfig
       ++ [
-        # Store symlink, so the agent cannot edit its own config out from under
-        # the module. L+ replaces whatever is there on every activation.
-        "L+ ${viewportProfile}/config.yaml - - - - ${viewportConfig}"
-        # Profiles do not inherit the default profile's secrets, and the
-        # activation script only writes the default .env. Share it rather than
-        # decrypting the same sops secret to two places.
-        "L+ ${viewportProfile}/.env - - - - ${hermesHome}/.env"
         # hermes rewrites this file itself (profiles.py / doctor.py chmod it to
         # 0600 whenever it persists a key), which locks out the hermes-group
         # users who run `hermes -p viewport` interactively. Put the mode back at
@@ -910,53 +988,58 @@ in
       };
     };
 
-    services.hermes-env-mode = {
-      description = "Restore group-readable mode on the shared hermes .env";
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.coreutils}/bin/chmod 0640 ${hermesHome}/.env";
+    services = {
+      hermes-env-mode = {
+        description = "Restore group-readable mode on the shared hermes .env";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.coreutils}/bin/chmod 0640 ${hermesHome}/.env";
+        };
       };
-    };
 
-    # Keeps the agent's clone current. Fetch only — never reset or checkout,
-    # since the agent may have work in progress in that tree.
-    services.hermes-viewport-clone = {
-      description = "Clone or fetch the Viewport tree for the hermes viewport profile";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      path = [
-        pkgs.git
-        config.nix.package
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        User = "hermes";
-        Group = "hermes";
-      };
-      script = ''
-        if [ -d ${viewportClone}/.git ]; then
-          git -C ${viewportClone} fetch --prune --all
-        else
-          git clone --filter=blob:none ${viewportRepo} ${viewportClone}
-        fi
-
+      hermes-viewport-clone = mkCloneService {
+        what = "Viewport";
+        repo = viewportRepo;
+        clone = viewportClone;
         # Realise the devShell now so rust-lsp's first connection does not have
         # to. Cold, that work takes minutes; warm, the shell is already in the
         # store and rust-analyzer starts immediately. Failure here is not fatal
         # — the server still works, it is just slow to connect.
-        nix develop "${viewportClone}#rust" --command true \
-          || echo "devShell warm-up failed; rust-lsp will be slow on first connect" >&2
-      '';
+        #
+        # `#rust` is named explicitly for the same reason as rustAnalyzer above:
+        # a bare devShell here builds WPE WebKit.
+        warmup = ''
+          nix develop "${viewportClone}#rust" --command true \
+            || echo "devShell warm-up failed; rust-lsp will be slow on first connect" >&2
+        '';
+      };
+
+      hermes-site-clone = mkCloneService {
+        what = "seanbehan.ca";
+        repo = siteRepo;
+        clone = siteClone;
+        # Every check the agent is told to run before escalating — lint, check,
+        # test:run, build — needs node_modules, and none of them are useful
+        # advice in a tree without one. `npm ci` rather than `install`: the
+        # lockfile is what CI installs from, so the agent sees the versions CI
+        # sees.
+        #
+        # Not fatal. A failure here still leaves a readable tree and commands
+        # that error loudly, which beats having no checkout at all.
+        warmup = ''
+          nix develop "${siteClone}" --command npm ci --prefix ${siteClone} \
+            || echo "npm ci failed; npm scripts in the site profile will not run until it succeeds" >&2
+        '';
+      };
     };
 
-    timers.hermes-viewport-clone = {
+    timers = lib.genAttrs [ "hermes-viewport-clone" "hermes-site-clone" ] (_: {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "daily";
         Persistent = true;
       };
-    };
+    });
   };
 
   # addToSystemPackages exports HERMES_HOME=/var/lib/hermes/.hermes system-wide.
