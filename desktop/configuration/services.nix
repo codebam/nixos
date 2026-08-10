@@ -504,6 +504,16 @@ in
       host = "127.0.0.1";
       environmentVariables = {
         HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+        # Halves KV cache memory, which is what buys the context length on a
+        # 24 GiB card: qwen3-coder:30b at 96k context spends 4896 MiB on KV
+        # here and would spend 9792 MiB at f16, which does not fit alongside
+        # the weights. Ollama only exposes this per-server, never per-model,
+        # so it applies to every model here -- including the gemma4
+        # classifier in security-triage.nix.
+        # Quantized KV requires flash attention; without it ollama silently
+        # falls back to f16 and the setting does nothing.
+        OLLAMA_FLASH_ATTENTION = "1";
+        OLLAMA_KV_CACHE_TYPE = "q8_0";
       };
     };
   };
