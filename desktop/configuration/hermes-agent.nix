@@ -748,6 +748,7 @@ let
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       path = [
+        pkgs.acl
         pkgs.git
         config.nix.package
       ];
@@ -761,22 +762,30 @@ let
         # and change none of them — the agent works, its edits do not land.
         # 0002 also covers whatever `warmup` writes (node_modules, target/).
         UMask = "0002";
+
+        # UMask only governs what this unit writes. The other half of the
+        # workspace is written by whoever runs `hermes -p <profile>`
+        # interactively, under their own 0022 — a `git push` from that side
+        # leaves refs/remotes/origin/<prefix>/ owned by them and not
+        # group-writable, and the next fetch here dies on
+        #   cannot lock ref ...: Permission denied
+        # A default ACL fixes that at the source: the umask is not applied to
+        # files created under a directory that has one, so every new file in
+        # the tree is group-writable whoever made it. The non-default entry in
+        # the same call repairs what is already there. `+` runs it as root,
+        # since hermes cannot chmod or setfacl a file another user owns; `-`
+        # because the path does not exist yet on the very first run.
+        ExecStartPre = "-+${pkgs.acl}/bin/setfacl -R -m g:hermes:rwX -m d:g:hermes:rwX ${clone}";
       };
       script = ''
         if [ -d ${clone}/.git ]; then
           git -C ${clone} fetch --prune --all
         else
           git clone --filter=blob:none ${repo} ${clone}
+          # ExecStartPre had nothing to act on yet on a first run, and hermes
+          # owns what it just cloned, so it can set the ACL itself.
+          setfacl -R -m g:hermes:rwX -m d:g:hermes:rwX ${clone}
         fi
-
-        # UMask only governs files created from here on. Anything already in
-        # the tree — including a clone made before this unit set a umask — keeps
-        # the mode it was written with. g+w rather than a blanket mode so the
-        # executable bits git tracks survive.
-        #
-        # The parent directory is setgid, so directories git creates below it
-        # stay group-owned by hermes and this stays true as the tree grows.
-        chmod -R g+w ${clone}
 
       ''
       + warmup;
