@@ -507,13 +507,19 @@ let
   });
 
   # `git push` is the deploy button here: master builds on Cloudflare Pages and
-  # goes to production, and the CI workflow gates nothing that blocks it. That
-  # makes anything reaching master a one-way door, which is exactly the shape
-  # of the correctness guarantee this list is for.
+  # goes to production, and the CI workflow gates nothing that blocks it.
+  #
+  # That tempted an earlier version of this list to say "anything that lands on
+  # master" — true, but true of every change to the tree, which put an
+  # always-firing trigger next to "do not escalate on the first attempt at a
+  # routine task". A protocol that contradicts itself on a routine task gets
+  # discarded whole, taking the escalations that matter with it. So the list
+  # names only the changes whose blast radius is the deploy itself: wrong once,
+  # wrong for every visitor, and not caught by a build that still passes.
   escalationSite = mkEscalationHook "site" (mkEscalationText {
     profile = "site";
     artifact = "Svelte, TypeScript, or a Wrangler config";
-    risky = "anything that lands on master (Cloudflare Pages builds and deploys it to production), redirects, headers, cache or CSP rules, the Cloudflare adapter's runtime config, or a change to what the site collects about visitors";
+    risky = "redirects, headers, cache or CSP rules, the Cloudflare adapter's runtime config, or a change to what the site collects about visitors";
     tools = "ripgrep, `npm run lint`, `npm run check`, `npm run test:run`, `npm run build`, a web search skill, or reading the file";
   });
 
