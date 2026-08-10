@@ -284,6 +284,109 @@ let
     ];
   };
 
+  # ── Backing up what the agent wrote ──────────────────────────────────────
+  # The mirror image of the block above: HERMES_HOME/skills is agent-writable,
+  # so everything the agent authors there is unbacked state that a reinstall,
+  # an `hermes update`, or a bad edit takes with it.
+  #
+  # This tool copies exactly those skills into a git work tree and pushes them.
+  # "Those" means skills with no counterpart at the same category/name in the
+  # pinned hermes-agent source — publishing Nous Research's own skill tree back
+  # to GitHub is not a backup, it is a fork nobody asked for.
+  #
+  # Manual on purpose: it runs as the operator, so it uses the operator's git
+  # credentials and no deploy key has to exist on this host. The hermes user
+  # cannot traverse /home/codebam anyway.
+  skillsWorkTree = "/home/codebam/Documents/git/hermes-skills";
+
+  skillsBackup = pkgs.writeShellApplication {
+    name = "hermes-skills-backup";
+    runtimeInputs = with pkgs; [
+      coreutils
+      findutils
+      git
+    ];
+    text = ''
+      upstream=${inputs.hermes-agent}
+      repo=''${HERMES_SKILLS_REPO:-${skillsWorkTree}}
+      push=1
+      [ "''${1:-}" = "--no-push" ] && push=0
+
+      [ -d "$repo/.git" ] || { echo "not a git work tree: $repo" >&2; exit 1; }
+
+      # A skill is upstream's if the same category/name exists in either of the
+      # two trees hermes ships. Content is deliberately not compared: a shipped
+      # skill that merely drifted from a newer upstream rev is not something I
+      # wrote, and diffing it in would churn on every hermes-agent bump.
+      is_upstream() {
+        [ -d "$upstream/skills/$1" ] || [ -d "$upstream/optional-skills/$1" ]
+      }
+
+      # $1 = skill tree to read, $2 = destination inside the repo.
+      collect() {
+        src=$1
+        dst=$2
+        [ -d "$src" ] || return 0
+
+        for cat in "$src"/*; do
+          [ -d "$cat" ] || continue
+          cname=$(basename "$cat")
+          [ "$cname" = "index-cache" ] && continue
+
+          # A category holding a SKILL.md directly is a skill the agent wrote
+          # at the wrong depth (the caveman one is). Keep the layout it has, so
+          # a restore is a plain copy back.
+          if [ -f "$cat/SKILL.md" ] && ! is_upstream "$cname"; then
+            mkdir -p "$dst/$cname"
+            cp -f "$cat/SKILL.md" "$dst/$cname/SKILL.md"
+          fi
+
+          for skill in "$cat"/*; do
+            [ -d "$skill" ] || continue
+            sname=$(basename "$skill")
+            is_upstream "$cname/$sname" && continue
+            mkdir -p "$dst/$cname"
+            cp -rT "$skill" "$dst/$cname/$sname"
+            echo "  $cname/$sname"
+          done
+        done
+      }
+
+      echo "default profile:"
+      collect "${hermesHome}/skills" "$repo/skills"
+
+      for pdir in "${hermesHome}"/profiles/*; do
+        [ -d "$pdir/skills" ] || continue
+        pname=$(basename "$pdir")
+        echo "profile $pname:"
+        collect "$pdir/skills" "$repo/profiles/$pname"
+      done
+
+      # Copies land read-only when the source was; make them editable again so
+      # the work tree behaves like a normal checkout.
+      chmod -R u+w "$repo/skills" "$repo/profiles" 2>/dev/null || true
+
+      # Nothing here deletes: a skill removed from HERMES_HOME stays in the
+      # repo. That is the point of a backup, and `git rm` is one command away
+      # when a removal was deliberate.
+      cd "$repo"
+      if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
+        echo "no changes"
+        exit 0
+      fi
+
+      git add -A
+      git status --short
+      git commit -m "backup: hermes-authored skills $(date -u +%Y-%m-%dT%H:%MZ)"
+
+      if [ "$push" = 1 ]; then
+        git push
+      else
+        echo "committed; not pushed (--no-push)"
+      fi
+    '';
+  };
+
   # ── Immutable hooks ──────────────────────────────────────────────────────
   # Shell hooks are referenced by absolute store path, so the allowlist entry
   # is pinned to exact script content: editing a hook changes its path, which
@@ -1067,6 +1170,9 @@ in
   home-manager.users.codebam = {
     home.packages = [
       inputs.hermes-agent.packages.${system}.desktop
+      # Operator tool, not an agent tool: it reads the agent's skill trees and
+      # pushes with this user's git credentials.
+      skillsBackup
     ];
   };
 }
