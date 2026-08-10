@@ -581,16 +581,27 @@ let
   viewportRepo = "https://github.com/codebam/viewport-smithay.git";
 
   # ── Site profile ─────────────────────────────────────────────────────────
-  # seanbehan.ca. Same clone-not-symlink reasoning as viewport above: the real
-  # tree is under /home/codebam, which the hermes user cannot traverse.
+  # seanbehan.ca, pointed at the operator's own working tree rather than a
+  # clone of its own.
   #
-  # This profile carries no language server. The tree is SvelteKit, and its own
-  # npm scripts (`lint`, `check`, `test:run`) already answer what an LSP would,
-  # from the same node_modules CI uses — one clone unit rather than a server
-  # whose crate graph has to be warmed.
+  # It started as a clone, copying viewport. That does not work here: the clone
+  # unit runs as hermes under the default umask, so the tree comes out
+  # hermes:hermes 0755 and a hermes-group user gets r-x. `hermes -p site` is
+  # run interactively by codebam, who could then read the code and change
+  # nothing. Loosening the clone to 0775 would fix the write but not the
+  # premise — the edits would land in a sibling checkout that fetches once a
+  # day, next to the tree actually being worked on.
+  #
+  # The cost is that this profile is interactive-only. /home/codebam is 0700,
+  # so a gateway or cron session running as hermes cannot traverse into it and
+  # this profile is unusable there. Viewport keeps its clone for exactly that
+  # reason.
+  #
+  # No language server either. The tree is SvelteKit and its own npm scripts
+  # (`lint`, `check`, `test:run`) answer what an LSP would, against the
+  # node_modules already in that tree.
   siteProfile = "${hermesHome}/profiles/site";
-  siteClone = "${config.services.hermes-agent.stateDir}/workspace/seanbehan.ca";
-  siteRepo = "https://github.com/codebam/seanbehan.ca.git";
+  siteTree = "/home/codebam/Documents/git/seanbehan.ca";
 
   # rust-analyzer needs rustc, cargo, and the bindgen/pkg-config environment to
   # resolve the crate graph; a bare binary on PATH resolves nothing. The
@@ -635,6 +646,12 @@ let
         Type = "oneshot";
         User = "hermes";
         Group = "hermes";
+        # The clone is a shared workspace, not this unit's private state. Under
+        # the default 0022 the tree lands hermes:hermes 0755 and an interactive
+        # `hermes -p <profile>` run by a hermes-group user can read every file
+        # and change none of them — the agent works, its edits do not land.
+        # 0002 also covers whatever `warmup` writes (node_modules, target/).
+        UMask = "0002";
       };
       script = ''
         if [ -d ${clone}/.git ]; then
@@ -642,6 +659,15 @@ let
         else
           git clone --filter=blob:none ${repo} ${clone}
         fi
+
+        # UMask only governs files created from here on. Anything already in
+        # the tree — including a clone made before this unit set a umask — keeps
+        # the mode it was written with. g+w rather than a blanket mode so the
+        # executable bits git tracks survive.
+        #
+        # The parent directory is setgid, so directories git creates below it
+        # stay group-owned by hermes and this stays true as the tree grows.
+        chmod -R g+w ${clone}
 
       ''
       + warmup;
@@ -841,7 +867,7 @@ let
       mcp_servers = renderMcp mcpCommon;
       hooks = mkCommonHooks escalationSite;
       terminal = baseSettings.terminal // {
-        cwd = siteClone;
+        cwd = siteTree;
       };
     }
   );
@@ -1014,32 +1040,17 @@ in
         '';
       };
 
-      hermes-site-clone = mkCloneService {
-        what = "seanbehan.ca";
-        repo = siteRepo;
-        clone = siteClone;
-        # Every check the agent is told to run before escalating — lint, check,
-        # test:run, build — needs node_modules, and none of them are useful
-        # advice in a tree without one. `npm ci` rather than `install`: the
-        # lockfile is what CI installs from, so the agent sees the versions CI
-        # sees.
-        #
-        # Not fatal. A failure here still leaves a readable tree and commands
-        # that error loudly, which beats having no checkout at all.
-        warmup = ''
-          nix develop "${siteClone}" --command npm ci --prefix ${siteClone} \
-            || echo "npm ci failed; npm scripts in the site profile will not run until it succeeds" >&2
-        '';
-      };
     };
 
-    timers = lib.genAttrs [ "hermes-viewport-clone" "hermes-site-clone" ] (_: {
+    # The site profile has no unit here on purpose: it works in the operator's
+    # own checkout, which the operator keeps current.
+    timers.hermes-viewport-clone = {
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "daily";
         Persistent = true;
       };
-    });
+    };
   };
 
   # addToSystemPackages exports HERMES_HOME=/var/lib/hermes/.hermes system-wide.
