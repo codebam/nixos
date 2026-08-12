@@ -512,7 +512,7 @@ let
 
   escalationTiers = {
     reasoning = "deepseek/deepseek-v4-pro";
-    frontier = "meta/muse-spark-1.2";
+    frontier = "x-ai/grok-4.6";
   };
 
   # The rule most likely to prevent a pointless escalation is the one naming
