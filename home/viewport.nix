@@ -166,7 +166,7 @@ in
 
     adaptive_sync = true;
     bar = "auto";
-    logo = false;
+    logo = true;
     tutorial = true;
 
     # Override the whole right side of the bar with an explicit, ordered list.
