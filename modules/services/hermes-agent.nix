@@ -763,7 +763,7 @@ let
   # query with EACCES. The tradeoff is drift: this is a sibling checkout, not
   # the tree being edited.
   viewportClone = "${config.services.hermes-agent.stateDir}/workspace/Viewport";
-  viewportRepo = "https://github.com/codebam/viewport-smithay.git";
+  viewportRepo = "https://github.com/codebam/viewport.git";
 
   # ── Site profile ─────────────────────────────────────────────────────────
   # seanbehan.ca, pointed at the operator's own working tree rather than a

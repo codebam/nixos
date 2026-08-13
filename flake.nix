@@ -48,8 +48,8 @@
       url = "git+https://codeberg.org/codebam/sops-pass.git";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    viewport-smithay = {
-      url = "github:codebam/viewport-smithay";
+    viewport = {
+      url = "github:codebam/viewport";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hermes-agent = {

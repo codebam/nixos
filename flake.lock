@@ -598,7 +598,7 @@
         "sops-nix": "sops-nix",
         "sops-pass": "sops-pass",
         "stylix": "stylix",
-        "viewport-smithay": "viewport-smithay"
+        "viewport": "viewport"
       }
     },
     "rust-overlay": {
@@ -624,7 +624,7 @@
     "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
-          "viewport-smithay",
+          "viewport",
           "nixpkgs"
         ]
       },
@@ -835,7 +835,7 @@
         "type": "github"
       }
     },
-    "viewport-smithay": {
+    "viewport": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
@@ -847,13 +847,13 @@
         "lastModified": 1786614009,
         "narHash": "sha256-rquNtqGRIZzwYdMuTZgnHIbi0Opx6+qVUScExcKkz8Q=",
         "owner": "codebam",
-        "repo": "viewport-smithay",
+        "repo": "viewport",
         "rev": "3304276d8f03d8109416d4659adf10ec333a614f",
         "type": "github"
       },
       "original": {
         "owner": "codebam",
-        "repo": "viewport-smithay",
+        "repo": "viewport",
         "type": "github"
       }
     }

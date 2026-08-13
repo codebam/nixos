@@ -22,7 +22,7 @@
 # desktop has already built -- and where it differs, it differs in exactly the
 # packages nixpkgs' own cache does not have: the chaotic `_git` builds
 # (helix_git, mangohud_git, gamescope_git, firefox_nightly), the
-# viewport-smithay flake, and every local override in modules/system/nixpkgs.nix. Those are
+# viewport flake, and every local override in modules/system/nixpkgs.nix. Those are
 # what the laptop was compiling from source.
 #
 # nix-serve-ng rather than nix-serve: same interface, same options, a Haskell
