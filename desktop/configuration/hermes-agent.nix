@@ -712,6 +712,42 @@ let
   siteProfile = "${hermesHome}/profiles/site";
   siteTree = "/home/codebam/Documents/git/seanbehan.ca";
 
+  # ── Upstream packaging gap ───────────────────────────────────────────────
+  # hermes lists its top-level single-file modules by hand in pyproject's
+  # [tool.setuptools] py-modules and left registration_lifecycle out. The
+  # sealed uv2nix venv therefore ships hermes_cli/plugins.py without the module
+  # it imports at line 62, and every `hermes` run dies at startup with
+  #
+  #   ModuleNotFoundError: No module named 'registration_lifecycle'
+  #
+  # The file is stdlib-only, so shipping it as a one-module package on
+  # PYTHONPATH is enough — the venv itself does not have to be rebuilt. Still
+  # missing on upstream main as of 2026-08-13; drop this and the two package
+  # overrides below once the input carries it in py-modules.
+  # Built against hermes's own python, not this system's: the wrapper filters
+  # extraPythonPackages through `requiredPythonModules`, which drops anything
+  # whose `pythonModule` is not that exact interpreter. Built from our pkgs it
+  # is silently discarded — the build succeeds, the wrapper gets no PYTHONPATH
+  # entry, and the ModuleNotFoundError is unchanged.
+  hermesPython = inputs.hermes-agent.inputs.nixpkgs.legacyPackages.${system}.python312;
+
+  registrationLifecycle = hermesPython.pkgs.buildPythonPackage {
+    pname = "hermes-registration-lifecycle";
+    version = "0.20.1";
+    format = "other";
+    src = inputs.hermes-agent;
+    installPhase = ''
+      runHook preInstall
+      install -Dm444 registration_lifecycle.py \
+        $out/${hermesPython.sitePackages}/registration_lifecycle.py
+      runHook postInstall
+    '';
+  };
+
+  hermesPackage = inputs.hermes-agent.packages.${system}.default.override {
+    extraPythonPackages = [ registrationLifecycle ];
+  };
+
   # rust-analyzer needs rustc, cargo, and the bindgen/pkg-config environment to
   # resolve the crate graph; a bare binary on PATH resolves nothing. The
   # project's own devShell already assembles exactly that, so borrow it.
@@ -1000,6 +1036,7 @@ in
   services.hermes-agent = {
     enable = true;
     addToSystemPackages = true;
+    package = hermesPackage;
     environmentFiles = [ config.sops.secrets."hermes-env".path ];
 
     # ── Tools ──────────────────────────────────────────────────────────────
@@ -1178,7 +1215,9 @@ in
   # Add hermes desktop app as a home-manager package for codebam
   home-manager.users.codebam = {
     home.packages = [
-      inputs.hermes-agent.packages.${system}.desktop
+      # Same override as the service package, so the desktop app inherits the
+      # missing-module fix instead of wrapping the unpatched build.
+      hermesPackage.hermesDesktop
       # Operator tool, not an agent tool: it reads the agent's skill trees and
       # pushes with this user's git credentials.
       skillsBackup
