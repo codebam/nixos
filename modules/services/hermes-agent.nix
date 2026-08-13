@@ -584,7 +584,7 @@ let
   # `--once` rather than a bare `/model`: it spends one turn upstairs and
   # restores the default afterwards, so an escalation cannot silently become
   # the new baseline.
-  defaultModel = "~deepseek/deepseek-v4-flash-latest";
+  defaultModel = "openrouter/auto-beta";
 
   escalationTiers = {
     reasoning = "deepseek/deepseek-v4-pro-0813";
