@@ -16,6 +16,7 @@
       "antigravity-ide"
       "claude-code"
       "cuda_nvcc"
+      "discord-unwrapped"
       "discord"
       "discord-canary"
       "discord-ptb"

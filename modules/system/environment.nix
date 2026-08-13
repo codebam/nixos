@@ -29,7 +29,7 @@
       zip
       _7zz
       # Wayland forwarding over SSH
-      waypipe
+      # waypipe
       # Wallpaper Engine
       # linux-wallpaperengine
       # easyeffects
