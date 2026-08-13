@@ -36,6 +36,14 @@
   # equivalent flag.
   initialPrompt ? "okay so here is the thing i was saying earlier about it and then what happened next",
 
+  # How sure the decoder has to be that a segment is speech before it writes
+  # anything down. whisper-cli's own default is 0.60, which on a quiet room
+  # tone is low enough to produce a confident "thank you" from nothing. Raising
+  # it is the half of the hallucination problem that the plainify filter cannot
+  # reach: the filter deletes the stock phrases it knows, this stops some of
+  # them being generated. Too high and quiet real speech is dropped instead.
+  noSpeechThreshold ? 0.8,
+
   # A recording nobody stopped is a microphone left on. Two minutes is longer
   # than anything dictated into a text field and short enough that forgetting
   # about one costs a file, not a day of audio.
@@ -108,12 +116,18 @@ writeShellApplication {
       # target is a text field, and [BLANK_AUDIO] is what silence transcribes
       # to rather than nothing at all.
       text=$(whisper-cli -m ${model} -f "$wav" -l ${language} -nt -np \
+          -nth ${toString noSpeechThreshold} \
           --prompt ${lib.escapeShellArg initialPrompt} 2>/dev/null |
         tr '\n' ' ' |
         sed -e 's/\[BLANK_AUDIO\]//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' |
-        # Lowercase, drop sentence punctuation, drop "um". See
-        # ../pkgs/voice-to-text-plainify.nix for what each rule is for.
-        sed -E ${lib.escapeShellArg plainify})
+        # Lowercase, drop sentence punctuation, drop "um", drop the sentences
+        # whisper invents out of silence, fix the words it always gets wrong.
+        # See ../pkgs/voice-to-text-plainify.nix for what each rule is for.
+        sed -E ${lib.escapeShellArg plainify} |
+        # The one place a newline is wanted: `\x03` is what "new line" became,
+        # kept out of band until now because everything upstream of here is
+        # line-oriented and a real newline would be a record separator to it.
+        tr '\003' '\n')
       rm -f "$wav"
 
       if [ -z "$text" ]; then

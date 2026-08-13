@@ -98,6 +98,13 @@ writeShellApplication {
       while IFS= read -r chunk; do
         [ -n "$chunk" ] || continue
 
+        # `\x03` is what the plainify filter turned "new line" into: a line
+        # break has to travel through a line-oriented pipeline as something
+        # that is not one. This is the far end, where it becomes a real
+        # newline -- and wtype types that as Enter, which in a chat client
+        # sends the message. That is the intent; it is worth knowing.
+        chunk=$(printf '%s' "$chunk" | tr '\003' '\n')
+
         # The space between chunks trails this one rather than leading the
         # next. A wtype invocation whose first character is a space loses it:
         # every chunk here is a separate process, each uploading its own
