@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   services = {
     ananicy = {
@@ -43,10 +43,23 @@
         };
       };
     };
-    speechd.enable = true;
+    # Off: nothing on the desktop or laptop speaks. Enabling it pulls
+    # espeak-ng, which pulls mbrola, whose voice data alone is 644 MB. Turn
+    # back on with a screen reader, not before.
+    #
+    # mkForce, and it has to be: two nixos modules set this to a plain `true`
+    # rather than mkDefault, so an ordinary false is an eval error rather than
+    # an override. graphical-desktop.nix turns it on for any graphical session
+    # (desktop and laptop), and orca.nix does the same on the Steam Deck, which
+    # pulls that module in via Jovian's SteamOS session.
+    #
+    # What this costs: orca, if it is ever launched on any of these hosts, will
+    # be mute. Nothing enables it -- the Deck's only a11y setting is
+    # screen-keyboard-enabled -- so that is a hypothetical, but it is the thing
+    # to undo first if a screen reader is ever wanted.
+    speechd.enable = lib.mkForce false;
     udev = {
       packages = with pkgs; [
-        via
         yubikey-personalization
       ];
       extraRules = ''

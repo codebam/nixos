@@ -18,9 +18,11 @@
   programs.viewport.package =
     inputs.viewport-smithay.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
+  # No `cargo` or `gcc` here. Both were system-wide and between them anchored
+  # rustc (1.0 GB) and a full gcc (264 MB) in every generation, for toolchains
+  # only ever used inside a project. `nix develop` in this flake already
+  # provides the Nix ones; anything else belongs in that project's own shell.
   environment.systemPackages = with pkgs; [
-    cargo
-    gcc
     awakened-poe-trade
     # blender-hip
     # inputs.steel.packages.${pkgs.stdenv.hostPlatform.system}.default

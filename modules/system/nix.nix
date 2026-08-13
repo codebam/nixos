@@ -1,7 +1,31 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
   nix = {
     settings = {
+      # The desktop serves its own store over the tailnet
+      # (desktop/configuration/nix-serve.nix). Everything the other two hosts
+      # would otherwise compile -- the chaotic `_git` builds, the viewport
+      # flakes, every override in nixpkgs.nix -- it has already built.
+      #
+      # `extra-` rather than plain `substituters`: the latter replaces the
+      # list, and quietly dropping cache.nixos.org would look like a slow
+      # network rather than a config error.
+      #
+      # Not on the desktop itself, which would be asking a service on this
+      # machine for paths this machine already has -- and would block on the
+      # connect timeout whenever tailscale is down.
+      extra-substituters = lib.optional (
+        config.networking.hostName != "nixos-desktop"
+      ) "http://nixos-desktop:5000";
+      extra-trusted-public-keys = lib.optional (
+        config.networking.hostName != "nixos-desktop"
+      ) "nixos-desktop-1:YsdpYxRpYwHAN8WFWJhTU9kC1QWc4OqacfZaPfe/ey8=";
+      # A laptop away from the tailnet must fall through to cache.nixos.org
+      # rather than stall on every path. Without these two a substituter that
+      # is merely unreachable turns a rebuild into a source build.
+      connect-timeout = 5;
+      fallback = true;
+
       experimental-features = [
         "nix-command"
         "flakes"

@@ -3,9 +3,11 @@
 {
 
   home = {
+    # android-studio is not here: it is 3.5 GB plus a 470 MB JDK 17 that
+    # nothing else in this closure wants, for a tool used a few times a year.
+    # `nix shell nixpkgs#android-studio` when it is actually needed.
     packages = with pkgs; [
       bolt-launcher
-      android-studio
     ];
   };
 
@@ -90,9 +92,12 @@
   systemd = {
     user = {
       services = {
+        # Login only. Resume is handled by the openrgb-resume system unit in
+        # desktop/configuration/systemd.nix -- there is no user-manager
+        # suspend.target to bind to from here.
         openrgb-apply = {
           Unit = {
-            Description = "Apply OpenRGB settings on login and resume";
+            Description = "Apply OpenRGB settings on login";
             After = [
               "default.target"
             ];

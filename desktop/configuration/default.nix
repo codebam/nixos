@@ -10,6 +10,7 @@ _:
     ./flaresolverr.nix
     ./hardware.nix
     ./networking.nix
+    ./nix-serve.nix
     ./nixpkgs.nix
     ./preservation.nix
     ./security-triage.nix

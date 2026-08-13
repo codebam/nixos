@@ -55,7 +55,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   │                              gaming (Steam/Gamescope), sops-pass, voice-to-text
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # ananicy, scx_lavd, tailscale, pipewire, openssh, ...
-│   ├── stylix/                  # irblack scheme, Papirus icons, Bibata cursor, FiraCode Nerd Font
+│   ├── stylix/                  # irblack scheme, Papirus icons, phinger cursor, FiraCode Nerd Font
 │   ├── sway-patches/            # Patches for sway_git
 │   ├── system/                  # boot, cleanup-root, env, fonts, gcp-builder, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
@@ -66,7 +66,8 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   └── configuration/           # cleanupRoot, CachyOS, Viewport, AMDGPU, NAT, nftables
 │                                  VPN-bypass, services (Lidarr/Prowlarr/Transmission/
 │                                  Navidrome/Ollama/OpenRGB/nginx), audio routing (media
-│                                  ducker, DeepFilterNet), SOPS secrets, GPU OC, makano user
+│                                  ducker, DeepFilterNet), SOPS secrets, GPU OC, makano user,
+│                                  nix-serve (binary cache for the other hosts, tailnet-only)
 ├── desktop-laptop/              # Shared: Podman, IVPN, OBS Studio
 ├── laptop/
 │   └── configuration/           # cleanupRoot (bcachefs), power-profiles-daemon, thermald

@@ -22,6 +22,32 @@
         + "--server-port ${toString config.services.hardware.openrgb.server.port}"
       );
 
+      # The openrgb-apply user unit in desktop/home.nix is WantedBy
+      # default.target, so it runs at login and never again -- the RGB state is
+      # lost across a suspend and nothing put it back, despite that unit's
+      # description claiming "on login and resume".
+      #
+      # This is a system unit rather than a second user unit because systemd
+      # has no per-user suspend.target to hang one off: `systemctl --user cat
+      # suspend.target` finds nothing on 261. post-resume.target is the
+      # system-side hook. User = "codebam" so `-p default.orp` resolves against
+      # that account's OpenRGB config directory, which is where the profile
+      # lives -- as root it would look in /root and silently apply nothing.
+      openrgb-resume = {
+        description = "Re-apply OpenRGB profile after resume";
+        after = [ "post-resume.target" ];
+        wantedBy = [ "post-resume.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "codebam";
+          # USB RGB controllers are not always back on the bus the instant
+          # post-resume.target is reached, and openrgb applies to whatever it
+          # enumerates at start with no retry of its own.
+          ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
+          ExecStart = "${lib.getExe config.services.hardware.openrgb.package} -p default.orp";
+        };
+      };
+
       wifi-performance = {
         description = "Disable Wi-Fi Power Save";
         wantedBy = [ "multi-user.target" ];

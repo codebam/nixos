@@ -10,16 +10,11 @@
     type = lib.types.listOf lib.types.str;
     default = [
       "android-sdk-platform-tools"
-      "android-studio"
       "antigravity"
       "antigravity-cli"
       "antigravity-ide"
       "claude-code"
       "cuda_nvcc"
-      "discord-unwrapped"
-      "discord"
-      "discord-canary"
-      "discord-ptb"
       "firefox-bin"
       "firefox-bin-unwrapped"
       "google-chrome"
@@ -41,9 +36,7 @@
       "steam-unwrapped"
       "steamdeck-hw-theme"
       "steamcmd"
-      "via"
       "vscode"
-      "warp-terminal"
     ];
     description = "Unfree package names this system is allowed to build.";
   };
@@ -98,6 +91,14 @@
               (old: {
                 buildInputs = old.buildInputs ++ [ prev.spirv-headers ];
               });
+          # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
+          # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
+          # closure transitively by mpv. quickjs-ng runs the same extractor
+          # code in a few MB. Do not swap this for `javascriptSupport =
+          # false`: that drops the runtime entirely and YouTube playback in
+          # mpv fails on any nsig-protected video.
+          yt-dlp = prev.yt-dlp.override { jsRuntime = prev.quickjs-ng; };
+
           electron = prev.electron-bin;
           electron-unwrapped = prev.electron-bin;
           electron_41 = prev.electron_41-bin;

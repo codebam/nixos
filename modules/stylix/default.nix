@@ -13,9 +13,12 @@
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
     image = ../../wallpaper.png;
+    # phinger rather than bibata: bibata-cursors builds every colour variant
+    # into one 322 MB output and there is no attribute for a single theme.
+    # This is ~4 MB for the same set of shapes.
     cursor = {
-      package = pkgs.bibata-cursors;
-      name = "Bibata Modern Classic";
+      package = pkgs.phinger-cursors;
+      name = "phinger-cursors-dark";
       size = 24;
     };
     icons = {

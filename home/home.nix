@@ -102,10 +102,6 @@ in
         ${curl}/bin/curl -X POST --data-binary @- https://pastebin.codebam.ca
       '')
 
-      (discord.override {
-        withOpenASAR = true;
-        withVencord = true;
-      })
       bat
       claude-code
       dust
@@ -131,7 +127,6 @@ in
       high-tide
       feishin
       cinny-desktop
-      warp-terminal
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv
