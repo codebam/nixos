@@ -34,7 +34,11 @@
           DNS = "1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net";
           FallbackDNS = "8.8.8.8#dns.google";
           DNSSEC = "allow-downgrade";
-          DNSOverTLS = "true";
+          # Strict here, opportunistic on the laptop (see
+          # laptop/configuration/networking.nix): a portable machine that hits
+          # a captive portal with strict DoT has no working DNS at all, and no
+          # way to reach the portal page to fix it.
+          DNSOverTLS = lib.mkDefault "true";
         };
       };
     };

@@ -23,6 +23,7 @@
     ./programs/pass-sops.nix
     ./programs/voice-to-text.nix
     ./services/default.nix
+    ./services/hermes-agent.nix
     ./services/smartd.nix
     ./security/default.nix
     ./users/default.nix

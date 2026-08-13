@@ -52,7 +52,10 @@
       url = "github:codebam/viewport-smithay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hermes-agent.url = "github:NousResearch/hermes-agent";
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -78,18 +81,9 @@
           specialArgs = { inherit inputs; };
           modules = [
             inputs.disko.nixosModules.disko
+            # Configured in modules/system/boot.nix, next to the systemd-boot
+            # options it overrides.
             inputs.lanzaboote.nixosModules.lanzaboote
-            (
-              { pkgs, lib, ... }:
-              {
-                environment.systemPackages = [ pkgs.sbctl ];
-                boot.loader.systemd-boot.enable = lib.mkForce false;
-                boot.lanzaboote = {
-                  enable = true;
-                  pkiBundle = "/var/lib/sbctl";
-                };
-              }
-            )
             inputs.preservation.nixosModules.default
             inputs.stylix.nixosModules.stylix
             inputs.sops-nix.nixosModules.sops
@@ -153,6 +147,20 @@
         nixpkgs.lib.mapAttrs (_: cfg: cfg.config.system.build.toplevel) hostsFor
         // {
           lint =
+            let
+              # Only the .nix files, plus statix.toml which statix reads for
+              # its ignore list. `${./.}` would be the whole worktree, so the
+              # check rebuilt whenever wallpaper.png or the README changed --
+              # neither of which statix or deadnix ever looks at.
+              inherit (nixpkgs.lib) fileset;
+              src = fileset.toSource {
+                root = ./.;
+                fileset = fileset.unions [
+                  (fileset.fileFilter (file: file.hasExt "nix") ./.)
+                  ./statix.toml
+                ];
+              };
+            in
             pkgs.runCommand "lint"
               {
                 nativeBuildInputs = [
@@ -161,7 +169,7 @@
                 ];
               }
               ''
-                cp -r ${./.} src && cd src
+                cd ${src}
                 deadnix --fail .
                 statix check .
                 touch $out

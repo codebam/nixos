@@ -1,9 +1,12 @@
 _:
 
 {
+  # The module itself is modules/services/hermes-agent.nix, imported by every
+  # host and off everywhere but here.
+  hermesAgent.enable = true;
+
   imports = [
     ../hardware-configuration.nix
-    ./hermes-agent.nix
     ./sops.nix
     ./boot.nix
     ./environment.nix

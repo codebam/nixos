@@ -1103,204 +1103,217 @@ let
   );
 in
 {
-  # `nix run nixpkgs#x` and `,` resolve against the flake registry. Unpinned it
-  # fetches whatever nixos-unstable is right now, which needs network and can
-  # disagree with what this system was built from. Pinning it to our own input
-  # makes the agent's ad-hoc tooling reproducible and offline.
-  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+  options.hermesAgent.enable = lib.mkEnableOption ''
+    the Hermes agent as a system service, with the skill trees, MCP servers,
+    hooks and workspace clones this config wraps around it. Desktop-only in
+    practice: it wants the local ollama, the local SearXNG and a
+    `hermes-env` sops secret, none of which the laptop or the Deck have.
 
-  services.hermes-agent = {
-    enable = true;
-    addToSystemPackages = true;
-    package = hermesPackage;
-    environmentFiles = [ config.sops.secrets."hermes-env".path ];
-    environment = {
-      SEARXNG_URL = "http://127.0.0.1:8081";
-      SEARXNG_API_URL = "http://127.0.0.1:8081";
-    };
+    Imported by every host (modules/services is not host-specific) but gated
+    here rather than by import so `nix flake check` type-checks it on all
+    three, and so turning it on elsewhere is a one-line change
+  '';
 
-    # ── Tools ──────────────────────────────────────────────────────────────
-    # These are on PATH for the terminal tool, cron jobs, and skills without a
-    # `nix run` round-trip. Anything not here is still one `, <cmd>` away.
-    extraPackages = [
-      config.nix.package
-      inputs.nix-index-database.packages.${system}.comma-with-db
-    ]
-    ++ (with pkgs; [
-      # Nix toolchain
-      nixfmt
-      statix
-      deadnix
-      manix
-      nix-output-monitor
-      nix-tree
-      nix-diff
-      nvd
-      nurl
-      nix-init
-      # Source navigation — cheaper than reading files one by one
-      ripgrep
-      fd
-      universal-ctags
-      repomix
-      tree
-      bat
-      eza
-      # Data wrangling
-      jq
-      yq-go
-      gnused
-      gawk
-      coreutils
-      # Network / VCS
-      git
-      gh
-      curl
-      wget
-      # Languages and their formatters
-      python3
-      uv
-      nodejs
-      ruff
-      shellcheck
-      shfmt
-    ]);
+  config = lib.mkIf config.hermesAgent.enable {
+    # `nix run nixpkgs#x` and `,` resolve against the flake registry. Unpinned it
+    # fetches whatever nixos-unstable is right now, which needs network and can
+    # disagree with what this system was built from. Pinning it to our own input
+    # makes the agent's ad-hoc tooling reproducible and offline.
+    nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
-    # ── MCP ────────────────────────────────────────────────────────────────
-    # Every tool schema here is in the prompt on every turn, so this list is
-    # deliberately short. Anything reachable with one shell command stays a
-    # shell command. rust-lsp is not here on purpose — it lives in the
-    # viewport profile below.
-    mcpServers = mcpCommon // mcpNixos;
-
-    settings = baseSettings // {
-      hooks = (mkCommonHooks escalationDefault) // {
-        # Default profile only: the flake is the tree this lints.
-        pre_verify = [
-          {
-            command = verifyNix;
-            timeout = 90;
-          }
-        ];
+    services.hermes-agent = {
+      enable = true;
+      addToSystemPackages = true;
+      package = hermesPackage;
+      environmentFiles = [ config.sops.secrets."hermes-env".path ];
+      environment = {
+        SEARXNG_URL = "http://127.0.0.1:8081";
+        SEARXNG_API_URL = "http://127.0.0.1:8081";
       };
-    };
-  };
 
-  # ── Extra profile plumbing ───────────────────────────────────────────────
-  # A profile is just a directory hermes recognises; `hermes profile create`
-  # would bootstrap these, but doing it here keeps the profile declarative and
-  # reproducible instead of depending on a one-time imperative command.
-  systemd = {
-    tmpfiles.rules =
-      let
-        # 2770, matching the rest of HERMES_HOME: the gateway runs as hermes
-        # but interactive users in the hermes group run `hermes -p viewport`
-        # themselves, and hermes creates subdirectories (logs/curator, ...) on
-        # first run. Setgid keeps those group-owned by hermes so both sides
-        # keep seeing each other's state.
-        dir = d: "d ${d} 2770 hermes hermes - -";
+      # ── Tools ──────────────────────────────────────────────────────────────
+      # These are on PATH for the terminal tool, cron jobs, and skills without a
+      # `nix run` round-trip. Anything not here is still one `, <cmd>` away.
+      extraPackages = [
+        config.nix.package
+        inputs.nix-index-database.packages.${system}.comma-with-db
+      ]
+      ++ (with pkgs; [
+        # Nix toolchain
+        nixfmt
+        statix
+        deadnix
+        manix
+        nix-output-monitor
+        nix-tree
+        nix-diff
+        nvd
+        nurl
+        nix-init
+        # Source navigation — cheaper than reading files one by one
+        ripgrep
+        fd
+        universal-ctags
+        repomix
+        tree
+        bat
+        eza
+        # Data wrangling
+        jq
+        yq-go
+        gnused
+        gawk
+        coreutils
+        # Network / VCS
+        git
+        gh
+        curl
+        wget
+        # Languages and their formatters
+        python3
+        uv
+        nodejs
+        ruff
+        shellcheck
+        shfmt
+      ]);
 
-        mkProfile =
-          path: cfg:
-          [
-            (dir path)
-          ]
-          ++ map (d: dir "${path}/${d}") [
-            "memories"
-            "sessions"
-            "skills"
-            "skins"
-            "logs"
-            "plans"
-            "workspace"
-            "cron"
-            "home"
-          ]
-          ++ [
-            # Store symlink, so the agent cannot edit its own config out from
-            # under the module. L+ replaces whatever is there on every
-            # activation.
-            "L+ ${path}/config.yaml - - - - ${cfg}"
-            # Profiles do not inherit the default profile's secrets, and the
-            # activation script only writes the default .env. Share it rather
-            # than decrypting the same sops secret to two places.
-            "L+ ${path}/.env - - - - ${hermesHome}/.env"
+      # ── MCP ────────────────────────────────────────────────────────────────
+      # Every tool schema here is in the prompt on every turn, so this list is
+      # deliberately short. Anything reachable with one shell command stays a
+      # shell command. rust-lsp is not here on purpose — it lives in the
+      # viewport profile below.
+      mcpServers = mcpCommon // mcpNixos;
+
+      settings = baseSettings // {
+        hooks = (mkCommonHooks escalationDefault) // {
+          # Default profile only: the flake is the tree this lints.
+          pre_verify = [
+            {
+              command = verifyNix;
+              timeout = 90;
+            }
           ];
-      in
-      [ (dir "${hermesHome}/profiles") ]
-      ++ mkProfile viewportProfile viewportConfig
-      ++ mkProfile siteProfile siteConfig
-      ++ [
-        # hermes rewrites this file itself (profiles.py / doctor.py chmod it to
-        # 0600 whenever it persists a key), which locks out the hermes-group
-        # users who run `hermes -p viewport` interactively. Put the mode back at
-        # boot; hermes-env-mode.path does it for the runtime rewrites.
-        "z ${hermesHome}/.env 0640 hermes hermes - -"
-      ];
-
-    # Re-apply 0640 every time hermes rewrites $HERMES_HOME/.env, otherwise the
-    # next `hermes -p viewport` from an interactive account dies with
-    # "PermissionError: [Errno 13] Permission denied: .../viewport/.env".
-    paths.hermes-env-mode = {
-      wantedBy = [ "multi-user.target" ];
-      pathConfig = {
-        PathModified = "${hermesHome}/.env";
-        Unit = "hermes-env-mode.service";
+        };
       };
     };
 
-    services = {
-      hermes-env-mode = {
-        description = "Restore group-readable mode on the shared hermes .env";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.coreutils}/bin/chmod 0640 ${hermesHome}/.env";
+    # ── Extra profile plumbing ───────────────────────────────────────────────
+    # A profile is just a directory hermes recognises; `hermes profile create`
+    # would bootstrap these, but doing it here keeps the profile declarative and
+    # reproducible instead of depending on a one-time imperative command.
+    systemd = {
+      tmpfiles.rules =
+        let
+          # 2770, matching the rest of HERMES_HOME: the gateway runs as hermes
+          # but interactive users in the hermes group run `hermes -p viewport`
+          # themselves, and hermes creates subdirectories (logs/curator, ...) on
+          # first run. Setgid keeps those group-owned by hermes so both sides
+          # keep seeing each other's state.
+          dir = d: "d ${d} 2770 hermes hermes - -";
+
+          mkProfile =
+            path: cfg:
+            [
+              (dir path)
+            ]
+            ++ map (d: dir "${path}/${d}") [
+              "memories"
+              "sessions"
+              "skills"
+              "skins"
+              "logs"
+              "plans"
+              "workspace"
+              "cron"
+              "home"
+            ]
+            ++ [
+              # Store symlink, so the agent cannot edit its own config out from
+              # under the module. L+ replaces whatever is there on every
+              # activation.
+              "L+ ${path}/config.yaml - - - - ${cfg}"
+              # Profiles do not inherit the default profile's secrets, and the
+              # activation script only writes the default .env. Share it rather
+              # than decrypting the same sops secret to two places.
+              "L+ ${path}/.env - - - - ${hermesHome}/.env"
+            ];
+        in
+        [ (dir "${hermesHome}/profiles") ]
+        ++ mkProfile viewportProfile viewportConfig
+        ++ mkProfile siteProfile siteConfig
+        ++ [
+          # hermes rewrites this file itself (profiles.py / doctor.py chmod it to
+          # 0600 whenever it persists a key), which locks out the hermes-group
+          # users who run `hermes -p viewport` interactively. Put the mode back at
+          # boot; hermes-env-mode.path does it for the runtime rewrites.
+          "z ${hermesHome}/.env 0640 hermes hermes - -"
+        ];
+
+      # Re-apply 0640 every time hermes rewrites $HERMES_HOME/.env, otherwise the
+      # next `hermes -p viewport` from an interactive account dies with
+      # "PermissionError: [Errno 13] Permission denied: .../viewport/.env".
+      paths.hermes-env-mode = {
+        wantedBy = [ "multi-user.target" ];
+        pathConfig = {
+          PathModified = "${hermesHome}/.env";
+          Unit = "hermes-env-mode.service";
         };
       };
 
-      hermes-viewport-clone = mkCloneService {
-        what = "Viewport";
-        repo = viewportRepo;
-        clone = viewportClone;
-        # Realise the devShell now so rust-lsp's first connection does not have
-        # to. Cold, that work takes minutes; warm, the shell is already in the
-        # store and rust-analyzer starts immediately. Failure here is not fatal
-        # — the server still works, it is just slow to connect.
-        #
-        # `#rust` is named explicitly for the same reason as rustAnalyzer above:
-        # a bare devShell here builds WPE WebKit.
-        warmup = ''
-          nix develop "${viewportClone}#rust" --command true \
-            || echo "devShell warm-up failed; rust-lsp will be slow on first connect" >&2
-        '';
+      services = {
+        hermes-env-mode = {
+          description = "Restore group-readable mode on the shared hermes .env";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.coreutils}/bin/chmod 0640 ${hermesHome}/.env";
+          };
+        };
+
+        hermes-viewport-clone = mkCloneService {
+          what = "Viewport";
+          repo = viewportRepo;
+          clone = viewportClone;
+          # Realise the devShell now so rust-lsp's first connection does not have
+          # to. Cold, that work takes minutes; warm, the shell is already in the
+          # store and rust-analyzer starts immediately. Failure here is not fatal
+          # — the server still works, it is just slow to connect.
+          #
+          # `#rust` is named explicitly for the same reason as rustAnalyzer above:
+          # a bare devShell here builds WPE WebKit.
+          warmup = ''
+            nix develop "${viewportClone}#rust" --command true \
+              || echo "devShell warm-up failed; rust-lsp will be slow on first connect" >&2
+          '';
+        };
+
       };
 
-    };
-
-    # The site profile has no unit here on purpose: it works in the operator's
-    # own checkout, which the operator keeps current.
-    timers.hermes-viewport-clone = {
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "daily";
-        Persistent = true;
+      # The site profile has no unit here on purpose: it works in the operator's
+      # own checkout, which the operator keeps current.
+      timers.hermes-viewport-clone = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+        };
       };
     };
-  };
 
-  # addToSystemPackages exports HERMES_HOME=/var/lib/hermes/.hermes system-wide.
-  # That tree is 2770/0640 hermes:hermes, so interactive users need the group.
-  users.users.codebam.extraGroups = [ "hermes" ];
+    # addToSystemPackages exports HERMES_HOME=/var/lib/hermes/.hermes system-wide.
+    # That tree is 2770/0640 hermes:hermes, so interactive users need the group.
+    users.users.codebam.extraGroups = [ "hermes" ];
 
-  # Add hermes desktop app as a home-manager package for codebam
-  home-manager.users.codebam = {
-    home.packages = [
-      # Same override as the service package, so the desktop app inherits the
-      # missing-module fix instead of wrapping the unpatched build.
-      hermesPackage.hermesDesktop
-      # Operator tool, not an agent tool: it reads the agent's skill trees and
-      # pushes with this user's git credentials.
-      skillsBackup
-    ];
+    # Add hermes desktop app as a home-manager package for codebam
+    home-manager.users.codebam = {
+      home.packages = [
+        # Same override as the service package, so the desktop app inherits the
+        # missing-module fix instead of wrapping the unpatched build.
+        hermesPackage.hermesDesktop
+        # Operator tool, not an agent tool: it reads the agent's skill trees and
+        # pushes with this user's git credentials.
+        skillsBackup
+      ];
+    };
   };
 }

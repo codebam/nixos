@@ -51,8 +51,14 @@
       # No system-features override: "i686-linux" is a platform, not a feature
       # (extra-platforms already resolves to [aarch64-linux i686-linux] via
       # boot.binfmt), and big-parallel/kvm are NixOS defaults.
+      # `auto` jobs (one per core) with `cores = 0` (each job then told it may
+      # use every core) is the classic oversubscription: 16 threads here means
+      # up to 16 x 16 compile processes, which thrashes rather than parallelises
+      # -- most visible on the chaotic `_git` rebuilds this host does for the
+      # other two. Cap the inner width instead and let the job count do the
+      # parallelism, which is the axis that actually has independent work.
       max-jobs = "auto";
-      cores = 0;
+      cores = 2;
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
       # No GCS substituter. services.gcp-builder is off by default and no
