@@ -12,13 +12,19 @@
 # play back. AV1 ingests without complaint -- every segment PUT returns 202 -- but the
 # stream never comes up in Studio, so YouTube drops it at decode. hevc is untested.
 #
-# Usage: ./stream-display.sh [--codec h264|hevc|av1] [--pass-entry NAME | --key-file PATH]
+# Usage: ./stream-display.sh [--output DP-1|DP-3|...] [--file OUT.mkv]
+#                            [--codec h264|hevc|av1] [--pass-entry NAME | --key-file PATH]
 #                            [--fps N] [--bitrate 6M] [--size WxH]
+#
+# --output picks one monitor by connector name; without it, capture follows whichever
+# plane kmsgrab finds first. --file records to a local Matroska file instead of
+# streaming, in which case no stream key is read at all.
 #
 # Env overrides are all STREAM_-prefixed -- bare names like SIZE collide with what is
 # already in the ambient environment:
 #   STREAM_CODEC STREAM_PASS_ENTRY STREAM_KEY_FILE STREAM_FPS STREAM_BITRATE
 #   STREAM_SIZE STREAM_KMS_DEVICE STREAM_VAAPI_DEVICE STREAM_LOGLEVEL
+#   STREAM_OUTPUT STREAM_FILE
 
 set -euo pipefail
 
@@ -31,10 +37,14 @@ SIZE="${STREAM_SIZE:-}"   # empty = native resolution
 KMS_DEVICE="${STREAM_KMS_DEVICE:-}"
 VAAPI_DEVICE="${STREAM_VAAPI_DEVICE:-/dev/dri/renderD128}"
 LOGLEVEL="${STREAM_LOGLEVEL:-warning}"
+OUTPUT="${STREAM_OUTPUT:-}"        # connector name, e.g. DP-1; empty = first active plane
+OUTFILE="${STREAM_FILE:-}"         # record here instead of streaming
 INGEST="https://a.upload.youtube.com/http_upload_hls"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
+	--output) OUTPUT="$2"; shift 2 ;;
+	--file) OUTFILE="$2"; shift 2 ;;
 	--codec) CODEC="$2"; shift 2 ;;
 	--key-file) KEY_FILE="$2"; PASS_ENTRY=""; shift 2 ;;
 	--pass-entry) PASS_ENTRY="$2"; KEY_FILE=""; shift 2 ;;
@@ -42,7 +52,7 @@ while [ $# -gt 0 ]; do
 	--bitrate) BITRATE="$2"; shift 2 ;;
 	--size) SIZE="$2"; shift 2 ;;
 	--kms-device) KMS_DEVICE="$2"; shift 2 ;;
-	-h | --help) sed -n '2,15p' "$0"; exit 0 ;;
+	-h | --help) sed -n '2,25p' "$0"; exit 0 ;;
 	*) echo "unknown arg: $1" >&2; exit 2 ;;
 	esac
 done
@@ -65,13 +75,22 @@ esac
 # systemd unit properties) -- it goes into a 0600 file whose path is handed over
 # instead, and the privileged half unlinks it immediately after reading.
 if [ "${STREAM_DISPLAY_PRIVILEGED:-}" != 1 ]; then
-	if [ -n "$PASS_ENTRY" ]; then
+	# run0 does not carry the working directory across, so a relative path would land
+	# somewhere else entirely once we are root.
+	[ -n "$OUTFILE" ] && OUTFILE="$(realpath -m "$OUTFILE")"
+
+	# Recording to a file needs no stream key, so do not touch the password store.
+	if [ -n "$OUTFILE" ]; then
+		PASS_ENTRY=""
+		KEY_FILE=""
+	elif [ -n "$PASS_ENTRY" ]; then
 		KEY_FILE="$(mktemp -t stream-key.XXXXXX)"
 		chmod 600 "$KEY_FILE"
 		trap 'rm -f "$KEY_FILE"' EXIT INT TERM
 		pass show "$PASS_ENTRY" >"$KEY_FILE"
 	fi
-	[ -s "$KEY_FILE" ] || { echo "no stream key (${PASS_ENTRY:-$KEY_FILE})" >&2; exit 1; }
+	[ -n "$OUTFILE" ] || [ -s "$KEY_FILE" ] ||
+		{ echo "no stream key (${PASS_ENTRY:-$KEY_FILE})" >&2; exit 1; }
 
 	# run0 runs the command as a transient systemd unit off PID 1, so the privileged
 	# half is NOT our child: killing this process (timeout, closed terminal, kill from
@@ -96,13 +115,19 @@ if [ "${STREAM_DISPLAY_PRIVILEGED:-}" != 1 ]; then
 		--setenv=STREAM_KMS_DEVICE="$KMS_DEVICE" \
 		--setenv=STREAM_VAAPI_DEVICE="$VAAPI_DEVICE" \
 		--setenv=STREAM_LOGLEVEL="$LOGLEVEL" \
+		--setenv=STREAM_OUTPUT="$OUTPUT" \
+		--setenv=STREAM_FILE="$OUTFILE" \
+		--setenv=STREAM_INVOKER_UID="$(id -u)" \
 		-- "$(realpath "$0")"
 fi
 
 # --- from here on: running as root ---------------------------------------------
-STREAM_KEY="$(tr -d '[:space:]' <"$KEY_FILE")"
-[ "${STREAM_KEY_FILE_EPHEMERAL:-}" = 1 ] && rm -f "$KEY_FILE" || true
-[ -n "$STREAM_KEY" ] || { echo "stream key is empty" >&2; exit 1; }
+STREAM_KEY=""
+if [ -z "$OUTFILE" ]; then
+	STREAM_KEY="$(tr -d '[:space:]' <"$KEY_FILE")"
+	[ "${STREAM_KEY_FILE_EPHEMERAL:-}" = 1 ] && rm -f "$KEY_FILE" || true
+	[ -n "$STREAM_KEY" ] || { echo "stream key is empty" >&2; exit 1; }
+fi
 
 # Pick the DRM card that actually has a connected, enabled connector.
 if [ -z "$KMS_DEVICE" ]; then
@@ -125,10 +150,40 @@ else
 	VF="$VF,scale_vaapi=format=nv12"
 fi
 
+# --output NAME -> plane id. DRM exposes no connector names, only a type plus an
+# index within that type, which is exactly how the kernel builds "DP-1"; drm_info
+# reports connectors in enumeration order, so counting per type reproduces the name.
+# From the connector comes its CRTC, and from the CRTC the plane currently scanned
+# out on it -- which is what kmsgrab actually wants.
+PLANE_ID=""
+if [ -n "$OUTPUT" ]; then
+	DRM_JSON="$(nix run --extra-experimental-features 'nix-command flakes' nixpkgs#drm_info -- -j "$KMS_DEVICE" 2>/dev/null)"
+	# shellcheck disable=SC2016  # the jq program is literal, $types/$conns are jq vars
+	PLANE_ID="$(printf '%s' "$DRM_JSON" | nix run --extra-experimental-features 'nix-command flakes' nixpkgs#jq -- -r --arg want "$OUTPUT" '
+		# kernel connector type names, indexed by DRM connector type
+		["Unknown","VGA","DVI-I","DVI-D","DVI-A","Composite","SVIDEO","LVDS",
+		 "Component","DIN","DP","HDMI-A","HDMI-B","TV","eDP","Virtual","DSI",
+		 "DPI","Writeback","SPI","USB"] as $types
+		| .[] | .connectors as $conns | .planes as $planes
+		| [ $conns[] | .type ] as $all
+		| [ range($conns | length) as $i
+		    | { name: ($types[$conns[$i].type] + "-" +
+		               ((( $all[0:$i+1] | map(select(. == $conns[$i].type)) | length ))|tostring)),
+		        crtc: $conns[$i].properties.CRTC_ID.value } ]
+		| map(select(.name == $want)) | .[0].crtc // empty
+		| . as $crtc
+		| ($planes[] | select(.properties.CRTC_ID.value == $crtc and .properties.FB_ID.value != 0) | .id)
+	' 2>/dev/null | head -1)"
+	[ -n "$PLANE_ID" ] || { echo "no active plane for output '$OUTPUT'" >&2; exit 1; }
+	echo "output $OUTPUT -> plane $PLANE_ID"
+fi
+
 CAPTURE_IN=(
 	-init_hw_device "vaapi=vd:$VAAPI_DEVICE" -filter_hw_device vd
-	-device "$KMS_DEVICE" -f kmsgrab -framerate "$FPS" -i -
+	-device "$KMS_DEVICE" -f kmsgrab -framerate "$FPS"
 )
+[ -n "$PLANE_ID" ] && CAPTURE_IN+=(-plane_id "$PLANE_ID")
+CAPTURE_IN+=(-i -)
 CAPTURE_OUT=(-vf "$VF" -c:v "$ENCODER" -b:v "$BITRATE" -g "$((FPS * 2))")
 
 HLS=(
@@ -161,7 +216,15 @@ else
 	FEED_IN=(-fflags +genpts+igndts -f mpegts -i)
 fi
 
-echo "streaming $KMS_DEVICE via $ENCODER -> YouTube HLS. ctrl-c to stop."
+# Streaming needs the silent track and the HLS muxer; recording just copies the
+# elementary stream into Matroska, no audio invented for it.
+if [ -n "$OUTFILE" ]; then
+	MUX_OUT=(-map 0:v:0 -c:v copy -f matroska -y "$OUTFILE")
+	echo "recording $KMS_DEVICE via $ENCODER -> $OUTFILE. ctrl-c to stop."
+else
+	MUX_OUT=("${SILENCE[@]}" -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 128k -shortest "${HLS[@]}")
+	echo "streaming $KMS_DEVICE via $ENCODER -> YouTube HLS. ctrl-c to stop."
+fi
 
 # --- capture and muxing split across a FIFO ------------------------------------
 # ffmpeg exits when the scanned-out framebuffer disappears (TTY <-> compositor
@@ -179,6 +242,24 @@ mkfifo -m 600 "$FIFO"
 # inherits the write end, holds the FIFO open against itself and never sees EOF.
 exec 9<>"$FIFO"
 
+# Build the drop-master shim into the root-owned workdir. It must not live anywhere
+# a non-root user could write, since root ffmpeg LD_PRELOADs it. See the .c file for
+# why capture needs it at all: without it, capture steals DRM master on a bare TTY
+# and the compositor cannot start.
+SHIM_SRC="$(dirname "$(realpath "$0")")/kms-dropmaster.c"
+SHIM=""
+if [ -r "$SHIM_SRC" ]; then
+	SHIM="$WORKDIR/kms-dropmaster.so"
+	if ! nix shell --extra-experimental-features 'nix-command flakes' nixpkgs#gcc \
+		-c gcc -O2 -shared -fPIC -o "$SHIM" "$SHIM_SRC" 2>"$WORKDIR/shim.log"; then
+		echo "warning: drop-master shim failed to build; capture will hold DRM master" >&2
+		sed -n '1,3p' "$WORKDIR/shim.log" >&2
+		SHIM=""
+	fi
+else
+	echo "warning: $SHIM_SRC missing; capture will hold DRM master on a bare TTY" >&2
+fi
+
 cleanup() {
 	trap - EXIT INT TERM
 	exec 9>&-
@@ -188,6 +269,9 @@ cleanup() {
 	wait 2>/dev/null || true
 	rm -rf "$WORKDIR"
 	[ -n "${STREAM_WATCH:-}" ] && rm -rf "$(dirname "$STREAM_WATCH")" || true
+	# The recording is written by root; hand it back to whoever launched the script.
+	[ -n "$OUTFILE" ] && [ -e "$OUTFILE" ] &&
+		chown "${STREAM_INVOKER_UID:-0}" "$OUTFILE" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
@@ -203,14 +287,12 @@ if [ -n "${STREAM_WATCH:-}" ]; then
 fi
 
 "${FFMPEG[@]}" -hide_banner -loglevel "$LOGLEVEL" \
-	"${FEED_IN[@]}" "$FIFO" "${SILENCE[@]}" \
-	-map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 128k -shortest \
-	"${HLS[@]}" 9>&- &
+	"${FEED_IN[@]}" "$FIFO" "${MUX_OUT[@]}" 9>&- &
 MUX_PID=$!
 
 (
 	while :; do
-		"${FFMPEG[@]}" -hide_banner -loglevel "$LOGLEVEL" \
+		LD_PRELOAD="$SHIM" "${FFMPEG[@]}" -hide_banner -loglevel "$LOGLEVEL" \
 			"${CAPTURE_IN[@]}" "${CAPTURE_OUT[@]}" -f "$FEED_FORMAT" - >"$FIFO" || true
 		kill -0 "$MUX_PID" 2>/dev/null || exit 0
 		echo "capture ended (VT switch?) -- restarting in 1s" >&2
