@@ -2,6 +2,7 @@
   pkgs,
   lib,
   inputs,
+  osConfig,
   ...
 }:
 
@@ -84,7 +85,7 @@
           command = "${pkgs.nixd}/bin/nixd";
           config.nixd = {
             nixpkgs.expr = "import (builtins.getFlake \"/etc/nixos\").inputs.nixpkgs { }";
-            options.nixos.expr = "(builtins.getFlake \"/etc/nixos\").nixosConfigurations.nixos-desktop.options";
+            options.nixos.expr = "(builtins.getFlake \"/etc/nixos\").nixosConfigurations.${osConfig.networking.hostName}.options";
           };
         };
       };
@@ -509,7 +510,8 @@
         set fish_greeting ""
         set -gx PATH $PATH /home/codebam/.local/bin /home/codebam/.cargo/bin /home/codebam/.npm-global/bin /home/codebam/.kimi-code/bin
         set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
-        set -gx SEARXNG_API_URL http://localhost:8081
+        set -gx SEARXNG_API_URL http://127.0.0.1:8081
+        set -gx SEARXNG_URL http://127.0.0.1:8081
         set -gx EDITOR hx
         set -gx NIXOS_OZONE_WL 1
         set -gx WLR_RENDERER vulkan
@@ -690,9 +692,10 @@
           text = "Lock";
           keybind = "l";
         }
-        # No hibernate entry: swap is 2G+2G and boot.resumeDevice is unset, so
-        # `systemctl hibernate` cannot save an image on these machines. Re-add
-        # once swap is at least RAM-sized and resumeDevice points at it.
+        # No hibernate entry: the GPT swap partitions are no longer
+        # activated, the remaining swapfile is 2G, and boot.resumeDevice is
+        # unset, so `systemctl hibernate` cannot save an image. Re-add once
+        # swap is at least RAM-sized and resumeDevice points at it.
         {
           label = "logout";
           action = "${pkgs.sway}/bin/swaymsg exit";

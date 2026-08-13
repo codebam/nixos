@@ -62,23 +62,6 @@ in
     };
   };
 
-  systemd.services.mopidy = {
-    environment = {
-      GST_PLUGIN_SYSTEM_PATH_1_0 = lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [
-        pkgs.gst_all_1.gst-plugins-base
-        pkgs.gst_all_1.gst-plugins-good
-        pkgs.pipewire
-      ];
-      PIPEWIRE_RUNTIME_DIR = "/run/user/1000";
-      PIPEWIRE_REMOTE = "pipewire-0";
-    };
-    serviceConfig = {
-      BindReadOnlyPaths = [ "/run/user/1000" ];
-      User = lib.mkForce "codebam";
-      Group = lib.mkForce "users";
-    };
-  };
-
   services = {
     # Every admin UI below binds loopback and is reached only through nginx.
     #

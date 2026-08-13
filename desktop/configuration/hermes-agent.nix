@@ -275,12 +275,88 @@ let
     something to work around with another scraper.
   '';
 
+  # Local SearXNG, not a public instance. The optional-skill copy talks about
+  # SEARXNG_URL in the abstract; this one names the bind this host actually
+  # runs and the JSON formats it has enabled.
+  searxngSkill = pkgs.writeTextDir "research/searxng/SKILL.md" ''
+    ---
+    name: searxng
+    description: Use when searching the web from this host. Query the local loopback SearXNG JSON API.
+    version: 1.0.0
+    license: MIT
+    platforms: [linux]
+    metadata:
+      hermes:
+        tags: [search, searxng, web]
+        related_skills: [duckduckgo-search, flaresolverr]
+    ---
+
+    # Local SearXNG
+
+    This machine runs SearXNG on loopback. There is no public vhost and the
+    port is not in the firewall. Use it before a public search engine.
+
+    Base: `http://127.0.0.1:8081`
+    Also exported as `SEARXNG_URL` and `SEARXNG_API_URL`.
+
+    ## When to Use
+
+    - Looking up current pages, docs, news, or package names
+    - Need more than one engine's results in one call
+
+    Do not use for:
+
+    - Fetching a page you already have the URL for — use `fetch` / curl
+    - A Cloudflare interstitial — use the flaresolverr skill after a normal fetch fails
+
+    ## Search
+
+    Always request JSON. HTML is enabled for a browser, not for you.
+
+    ```bash
+    curl -sS --max-time 20 \
+      -G http://127.0.0.1:8081/search \
+      --data-urlencode "q=QUERY" \
+      --data-urlencode "format=json"
+    ```
+
+    Useful extra fields (all optional):
+
+    | Field | Values |
+    |---|---|
+    | `categories` | `general`, `news`, `science`, `it` |
+    | `time_range` | `day`, `week`, `month`, `year` |
+    | `pageno` | `1`, `2`, ... |
+    | `language` | `en` |
+
+    Parse with jq. Print title and url only:
+
+    ```bash
+    ... | jq -r '.results[:8][] | [.title, .url] | @tsv'
+    ```
+
+    Then fetch the one or two URLs that actually answer the question. Do not
+    dump the raw JSON into the conversation.
+
+    ## Completion
+
+    Done when you have either (a) titles+URLs you then read, or (b) a failed
+    curl/HTTP you reported instead of retrying more than twice.
+
+    ## Pitfalls
+
+    1. `format=json` is required. A missing format returns HTML.
+    2. Empty `results` is a real answer — try a shorter query, not a third engine.
+    3. The instance is local. If curl fails, check `systemctl status searx` rather than switching to a public SearXNG.
+  '';
+
   hermesSkills = pkgs.symlinkJoin {
     name = "hermes-skills";
     paths = [
       optionalSkillTree
       hostSkill
       flaresolverrSkill
+      searxngSkill
     ];
   };
 
@@ -1038,6 +1114,10 @@ in
     addToSystemPackages = true;
     package = hermesPackage;
     environmentFiles = [ config.sops.secrets."hermes-env".path ];
+    environment = {
+      SEARXNG_URL = "http://127.0.0.1:8081";
+      SEARXNG_API_URL = "http://127.0.0.1:8081";
+    };
 
     # ── Tools ──────────────────────────────────────────────────────────────
     # These are on PATH for the terminal tool, cron jobs, and skills without a

@@ -9,14 +9,10 @@
   options.unfreePackages = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [
-      "android-sdk-platform-tools"
       "antigravity"
       "antigravity-cli"
       "antigravity-ide"
       "claude-code"
-      "cuda_nvcc"
-      "firefox-bin"
-      "firefox-bin-unwrapped"
       "google-chrome"
       "google-chrome-unstable"
       "google-cloud-sdk"
@@ -26,8 +22,6 @@
       "libretro-mame2003"
       "libretro-mame2015"
       "libretro-snes9x"
-      "mongodb"
-      "open-webui"
       "rpcs3"
       "steam"
       "steam-jupiter-unwrapped"
@@ -36,7 +30,6 @@
       "steam-unwrapped"
       "steamdeck-hw-theme"
       "steamcmd"
-      "vscode"
     ];
     description = "Unfree package names this system is allowed to build.";
   };
@@ -46,9 +39,6 @@
       config = {
         # checkMeta = true;
         # showDerivationWarnings = [ "maintainerless" ];
-        permittedInsecurePackages = [
-          "pnpm-9.15.9"
-        ];
         allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) config.unfreePackages;
       };
       overlays = [

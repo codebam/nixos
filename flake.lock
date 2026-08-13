@@ -230,24 +230,6 @@
         "type": "github"
       }
     },
-    "flake-utils_2": {
-      "inputs": {
-        "systems": "systems_3"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
     "fromYaml": {
       "flake": false,
       "locked": {
@@ -630,7 +612,6 @@
         "sops-nix": "sops-nix",
         "sops-pass": "sops-pass",
         "stylix": "stylix",
-        "viewport": "viewport",
         "viewport-smithay": "viewport-smithay"
       }
     },
@@ -779,21 +760,6 @@
         "type": "github"
       }
     },
-    "systems_3": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
     "tinted-kitty": {
       "flake": false,
       "locked": {
@@ -883,30 +849,9 @@
         "type": "github"
       }
     },
-    "viewport": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1785191793,
-        "narHash": "sha256-5lIIItW4rBfMltzeRX/1UprLVBYFVy3YwdJ/xOQ8Cjs=",
-        "owner": "codebam",
-        "repo": "viewport",
-        "rev": "f5ac08090252bd972e12cf2726996ebf8e15702c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "codebam",
-        "repo": "viewport",
-        "type": "github"
-      }
-    },
     "viewport-smithay": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils",
         "nixpkgs": [
           "nixpkgs"
         ],

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -114,31 +119,23 @@ let
     MACHINE_TYPE="${cfg.machineType}"
     DISK_SIZE="${cfg.diskSize}"
 
-    USE_GCP=true
-    PREV_ARG=""
+    # Local unless the operator asks. `--gcp` is the only way this script
+    # provisions a Spot VM.
+    USE_GCP=false
+    PASSTHRU=()
     for arg in "$@"; do
-      if [ "$PREV_ARG" = "--builders" ] && [ -z "$arg" ]; then
-        USE_GCP=false
-      elif [[ "$arg" =~ ^--builders= ]]; then
-        val="''${arg#--builders=}"
-        val="''${val#\"}"
-        val="''${val%\"}"
-        if [ -z "$val" ] || [[ "$val" =~ ^\'*\'*$ ]]; then
-          USE_GCP=false
-        fi
-      fi
-      PREV_ARG="$arg"
+      case "$arg" in
+        --gcp) USE_GCP=true ;;
+        *) PASSTHRU+=("$arg") ;;
+      esac
     done
 
-
     if [ "$USE_GCP" = "false" ]; then
-      echo "==> [gcp-builder] Local build requested (--builders). Skipping GCP VM provisioning."
+      echo "==> [gcp-builder] Local build (pass --gcp to provision a Spot VM)."
       if command -v nh >/dev/null 2>&1; then
-        # nh takes nix flags only after `--`; without it, `rebuild-switch
-        # --builders ""` dies on an unknown option instead of building locally.
-        exec nh os switch "${cfg.flakePath}" -- "$@"
+        exec nh os switch "${cfg.flakePath}" -- "''${PASSTHRU[@]}"
       else
-        exec nixos-rebuild switch --flake "${cfg.flakePath}" "$@"
+        exec nixos-rebuild switch --flake "${cfg.flakePath}" "''${PASSTHRU[@]}"
       fi
     fi
 
@@ -185,9 +182,9 @@ let
 
     echo "==> [gcp-builder] Running NixOS rebuild-switch with build host ($BUILD_HOST)..."
     if command -v nh >/dev/null 2>&1; then
-      nh os switch "${cfg.flakePath}" -- "$@" --build-host "$BUILD_HOST"
+      nh os switch "${cfg.flakePath}" -- "''${PASSTHRU[@]}" --build-host "$BUILD_HOST"
     else
-      nixos-rebuild switch --flake "${cfg.flakePath}" --build-host "$BUILD_HOST" "$@"
+      nixos-rebuild switch --flake "${cfg.flakePath}" --build-host "$BUILD_HOST" "''${PASSTHRU[@]}"
     fi
 
     echo "==> [gcp-builder] Rebuild completed successfully."
@@ -197,8 +194,8 @@ in
   options.services.gcp-builder = {
     enable = mkOption {
       type = types.bool;
-      default = true;
-      description = "Enable GCP ephemeral NixOS builder integration and rebuild-switch script.";
+      default = false;
+      description = "Install rebuild-switch / gcp-cache-bucket. Off by default: remote builds are opt-in via `services.gcp-builder.enable = true`.";
     };
     project = mkOption {
       type = types.str;
@@ -251,6 +248,9 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = [ rebuildSwitch gcpCacheBucket ];
+    environment.systemPackages = [
+      rebuildSwitch
+      gcpCacheBucket
+    ];
   };
 }

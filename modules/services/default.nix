@@ -1,11 +1,6 @@
 { pkgs, lib, ... }:
 {
   services = {
-    ananicy = {
-      enable = false;
-      package = pkgs.ananicy-cpp;
-      rulesProvider = pkgs.ananicy-rules-cachyos_git;
-    };
     scx = {
       enable = true;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md

@@ -55,19 +55,10 @@
       cores = 0;
       extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
-      # The GCP cache is not listed here, and the note that used to explain
-      # why is out of date: it said the bucket and its public key arrive with
-      # the viewport-smithay module, and that module has been deleted. So
-      # nothing configures this machine to *read* the bucket now.
-      #
-      # `services.gcp-builder` below still writes to it. That is a real
-      # asymmetry rather than an oversight to fix in passing: the cache existed
-      # to substitute a WebKit this machine would otherwise compile, and the
-      # compositor's default backend no longer builds an engine at all. If a
-      # reader is wanted again it has to be spelled out here — and it needs the
-      # key as well as the URL, or nix reaches the bucket and rejects every
-      # narinfo in it as unsigned, which fails silently and looks exactly like
-      # a cache with nothing in it.
+      # No GCS substituter. services.gcp-builder is off by default and no
+      # longer fills a bucket; add both the URL and its public key here if a
+      # reader is wanted again. A URL without the key rejects every narinfo
+      # as unsigned, which looks exactly like an empty cache.
     };
     gc = {
       automatic = false;

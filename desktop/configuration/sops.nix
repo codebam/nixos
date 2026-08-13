@@ -18,14 +18,6 @@ _:
         owner = "hermes";
         group = "hermes";
       };
-      mopidy-subidy = {
-        owner = "codebam";
-        group = "users";
-      };
-      duckdns-token = {
-        owner = "codebam";
-        group = "users";
-      };
       searx-secret = { };
       "unredacted.org" = {
         sopsFile = ../../secrets/passwords.enc.yaml;

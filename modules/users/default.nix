@@ -8,23 +8,21 @@
       };
       codebam = {
         isNormalUser = true;
-        # Pinned because config hardcodes /run/user/1000 (mopidy's pipewire
-        # bind). Without this the uid is only stable via preserved
-        # /var/lib/nixos, so a lost state file would silently break those paths.
+        # Pinned because config hardcodes /run/user/1000. Without this the uid
+        # is only stable via preserved /var/lib/nixos, so a lost state file
+        # would silently break those paths.
         uid = 1000;
         home = "/home/codebam";
         description = "Sean Behan";
         extraGroups = [
           "wheel"
           "networkmanager"
-          "libvirtd"
           "audio"
           "video"
           "uinput"
           "wireshark"
           "pipewire"
           "gamemode"
-          "docker"
         ];
         hashedPassword = "$6$TIP8YR83obmkq8T2$T3lYdPbPj9wysMznNlS5J0qHo2eyTr43aF/ZWSMWHdNRob4dkBB0s3KpBLUgYRTyPZxbb1ZgeqCrrx.DEEkQX1";
         packages = [ ];

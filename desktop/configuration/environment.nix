@@ -27,11 +27,8 @@
     # blender-hip
     # inputs.steel.packages.${pkgs.stdenv.hostPlatform.system}.default
     # inputs.lulu.packages.${pkgs.stdenv.hostPlatform.system}.default
-    # The rewrite rather than the C build. Both install a binary called
-    # `viewport` and would collide; the C one stays a flake input because the
-    # portal routing below still comes from it.
-    #
-    # `.default`, so this follows whichever engine that flake recommends —
+    # The Smithay rewrite. `.default` follows whichever engine that flake
+    # recommends —
     # `.cef` today. The alternative is naming a backend (`.wpe`, `.webkitgtk`,
     # `.chromium`, `.cef`) and being held to it, which is what naming the old
     # `.viewport-smithay` attribute did: it resolved to `.wpe` and quietly kept

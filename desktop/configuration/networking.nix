@@ -17,11 +17,8 @@ in
   };
 
   networking = {
-    nat = {
-      enable = true;
-      internalInterfaces = [ "dns0" ];
-      externalInterface = "wlan0";
-    };
+    # NAT used to exist for a dns0 interface that is gone. Do not re-enable
+    # until something actually needs to be forwarded off this host.
     timeServers = [
       "time.cloudflare.com"
       "time.google.com"

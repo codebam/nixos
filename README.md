@@ -1,6 +1,6 @@
 # NixOS Flake — codebam
 
-Personal NixOS configuration managing four machines: a desktop, a laptop, a Steam Deck, and an AArch64 AVM. The same flake defines every host via a shared module tree, with per-host overrides for hardware, networking, and services.
+Personal NixOS configuration managing four machines: a desktop, a laptop, a Steam Deck, and an AArch64 AVF VM. The same flake defines every host via a shared module tree, with per-host overrides for hardware, networking, and services.
 
 ## Hosts
 
@@ -36,8 +36,8 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 - Distributed builds off the desktop
 
 ### AVF (`nixos-avf`)
-- AArch64 AVM via `nixos-avf` NixOS module
-- Lightweight: tailscale, SSH on port 8022, no display server
+- AArch64 Android VM via `nixos-avf`
+- Lightweight: tailscale, SSH on port 8022 (tailnet-only), no display server
 - Fish shell, Helix, basic CLI tools
 
 ## Flake Structure
@@ -54,20 +54,19 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   ├── programs/                # nix-index, ccache, UWSM/sway, fish, wireshark, gnupg,
 │   │                              gaming (Steam/Gamescope), sops-pass, voice-to-text
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
-│   ├── services/                # ananicy, scx_lavd, tailscale, pipewire, openssh, ...
+│   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # irblack scheme, Papirus icons, phinger cursor, FiraCode Nerd Font
-│   ├── sway-patches/            # Patches for sway_git
 │   ├── system/                  # boot, cleanup-root, env, fonts, gcp-builder, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
 │   │                              sysctl, systemd, time, xdg, zram
 │   └── users/                   # Root + codebam (immutable, fish, Yubikey SSH keys)
 ├── desktop/
 │   ├── disko.nix                # GPT → LUKS → btrfs subvolumes
-│   └── configuration/           # cleanupRoot, CachyOS, Viewport, AMDGPU, NAT, nftables
+│   └── configuration/           # cleanupRoot, CachyOS, Viewport, AMDGPU, nftables
 │                                  VPN-bypass, services (Lidarr/Prowlarr/Transmission/
-│                                  Navidrome/Ollama/OpenRGB/nginx), audio routing (media
-│                                  ducker, DeepFilterNet), SOPS secrets, GPU OC, makano user,
-│                                  nix-serve (binary cache for the other hosts, tailnet-only)
+│                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG), audio routing
+│                                  (media ducker, DeepFilterNet), SOPS secrets, GPU OC,
+│                                  makano user, nix-serve (binary cache, tailnet-only)
 ├── desktop-laptop/              # Shared: Podman, IVPN, OBS Studio
 ├── laptop/
 │   └── configuration/           # cleanupRoot (bcachefs), power-profiles-daemon, thermald
@@ -115,8 +114,8 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 | `lsfg-vk-flake` | pabloaul/lsfg-vk-flake |
 | `nixos-avf` | nix-community/nixos-avf |
 | `sops-pass` | codebam/sops-pass (codeberg) |
-| `viewport` | codebam/viewport (legacy C compositor) |
 | `viewport-smithay` | codebam/viewport-smithay (active compositor) |
+| `hermes-agent` | NousResearch/hermes-agent |
 
 ## Key Features
 
@@ -130,7 +129,7 @@ Every bare-metal host wipes `/` to a fresh subvolume on every boot using `cleanu
 Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`, `nix-fast-build`, and `colmena`.
 
 ### GCP Builder
-`rebuild-switch` — spins up an ephemeral GCP Spot VM (n2-standard-32) to build remotely. Falls back to local when `--builders ""` is passed.
+Off by default (`services.gcp-builder.enable = false`). When enabled, `rebuild-switch` is local unless you pass `--gcp`, which spins up an ephemeral Spot VM (n2-standard-32).
 
 ### Audio Pipeline (Desktop)
 - **Media ducker**: LSP sidechain compressor ducks media when game audio detected
@@ -140,9 +139,10 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`, 
 
 ### Services
 - **Media**: Lidarr, Prowlarr, Transmission, Navidrome behind nginx + ACME
-- **Local AI**: Ollama (0.0.0.0, AMD ROCm override)
+- **Search**: SearXNG on 127.0.0.1:8081 (JSON API for Hermes/Claude)
+- **Local AI**: Ollama (loopback, AMD ROCm override)
 - **Networking**: Tailscale, IVPN, NetworkManager/iwd, systemd-resolved (DoT)
-- **Gaming**: Steam (extest, Gamescope, Proton GE/CachyOS)
+- **Gaming**: Steam (extest, Gamescope, Proton GE/CachyOS); Steam firewall holes closed
 - **GPU**: OpenRGB
 - **Monitoring**: SMART disk monitoring
 
@@ -164,8 +164,8 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`, 
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)
 
 ### Security
-- AppArmor enabled, polkit (local wheel passwordless), no sudo
-- OpenSSH: key-only, no root, persistent host keys
+- AppArmor enabled, polkit (local/active wheel passwordless), no sudo
+- OpenSSH: key-only, no root, kbd-interactive off, tailnet-only (`openFirewall = false`)
 - GPG agent with Yubikeys (graphical pinentry)
 - SOPS secrets via age + Yubikeys
 - Secure Boot via lanzaboote
@@ -185,6 +185,6 @@ nix flake check
 # Rebuild
 nh os switch
 
-# Rebuild with GCP builder
-rebuild-switch
+# Rebuild on a GCP Spot VM (requires services.gcp-builder.enable = true)
+rebuild-switch --gcp
 ```

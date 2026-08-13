@@ -21,17 +21,14 @@ _: {
           directory = "/etc/NetworkManager/system-connections";
         }
         {
-          directory = "/etc/mullvad-vpn";
-        }
-        {
           directory = "/etc/opt/ivpn";
         }
         "/var/lib/OpenRGB"
         "/var/lib/transmission"
         {
           directory = "/var/lib/lidarr";
-          user = "lidarr";
-          group = "lidarr";
+          user = "codebam";
+          group = "users";
         }
         "/var/lib/navidrome"
         "/var/lib/private/prowlarr"
@@ -52,11 +49,6 @@ _: {
           directory = "/var/lib/private/ollama";
           user = "ollama";
           group = "ollama";
-        }
-        {
-          directory = "/var/lib/private/open-webui";
-          user = "open-webui";
-          group = "open-webui";
         }
         {
           directory = "/var/lib/acme";

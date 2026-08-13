@@ -52,7 +52,8 @@ in
       NIXOS_OZONE_WL = "1";
       WLR_RENDERER = "vulkan";
       GTK_USE_PORTAL = "1";
-      SEARXNG_API_URL = "http://localhost:8081";
+      SEARXNG_API_URL = "http://127.0.0.1:8081";
+      SEARXNG_URL = "http://127.0.0.1:8081";
       _JAVA_AWT_WM_NONREPARENTING = "1";
     };
 
@@ -188,6 +189,28 @@ in
       ".gitignore".text = ''
         Session.vim
         .claude/
+      '';
+
+      ".claude/skills/searxng/SKILL.md".text = ''
+        ---
+        name: searxng
+        description: Use when searching the web from this host. Query the local loopback SearXNG JSON API.
+        ---
+
+        Local SearXNG listens on `http://127.0.0.1:8081` (also `$SEARXNG_URL`).
+        Loopback only, JSON enabled.
+
+        ```bash
+        curl -sS --max-time 20 \
+          -G http://127.0.0.1:8081/search \
+          --data-urlencode "q=QUERY" \
+          --data-urlencode "format=json" \
+          | jq -r '.results[:8][] | [.title, .url] | @tsv'
+        ```
+
+        Then fetch the one or two URLs that answer the question. `format=json`
+        is required. If curl fails, `systemctl status searx` — do not fall
+        through to a public instance.
       '';
     };
 
