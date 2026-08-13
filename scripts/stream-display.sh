@@ -39,10 +39,15 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
+# FEED_FORMAT is the container carried over the internal FIFO. It must survive the
+# capture process restarting mid-stream. MPEG-TS does that by design; for AV1 it is
+# not an option (ffmpeg muxes AV1 into TS as an undeclared private stream and cannot
+# demux its own output), so AV1 rides as raw OBU instead -- a restart just injects a
+# fresh sequence header, which the demuxer picks up.
 case "$CODEC" in
-av1) ENCODER=av1_vaapi; SEGMENT_TYPE=fmp4 ;;
-hevc) ENCODER=hevc_vaapi; SEGMENT_TYPE=mpegts ;;
-h264) ENCODER=h264_vaapi; SEGMENT_TYPE=mpegts ;;
+av1) ENCODER=av1_vaapi; SEGMENT_TYPE=fmp4; FEED_FORMAT=obu ;;
+hevc) ENCODER=hevc_vaapi; SEGMENT_TYPE=mpegts; FEED_FORMAT=mpegts ;;
+h264) ENCODER=h264_vaapi; SEGMENT_TYPE=mpegts; FEED_FORMAT=mpegts ;;
 *) echo "unknown codec: $CODEC (av1|hevc|h264)" >&2; exit 2 ;;
 esac
 
@@ -120,63 +125,57 @@ HLS+=("$INGEST?cid=$STREAM_KEY&copy=0&file=stream.m3u8")
 # YouTube rejects a video-only ingest, so a silent AAC track rides along.
 SILENCE=(-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100)
 
+# Raw OBU carries no timestamps, so the muxer reconstructs them at a fixed rate;
+# MPEG-TS carries its own, but a capture restart resets them, hence igndts+genpts.
+if [ "$FEED_FORMAT" = obu ]; then
+	FEED_IN=(-fflags +genpts -framerate "$FPS" -f obu -i)
+else
+	FEED_IN=(-fflags +genpts+igndts -f mpegts -i)
+fi
+
 echo "streaming $KMS_DEVICE via $ENCODER -> YouTube HLS. ctrl-c to stop."
 
-if [ "$SEGMENT_TYPE" = mpegts ]; then
-	# --- resilient path: capture and muxing split across a FIFO ----------------
-	# ffmpeg exits when the scanned-out framebuffer disappears (TTY <-> compositor
-	# switch). Keeping the muxer in its own process, fed MPEG-TS over a FIFO, means
-	# only the capture half restarts and the YouTube session stays up.
-	WORKDIR="$(mktemp -d /run/stream-display.XXXXXX)"
-	chmod 700 "$WORKDIR"
-	FIFO="$WORKDIR/feed.ts"
-	mkfifo -m 600 "$FIFO"
+# --- capture and muxing split across a FIFO ------------------------------------
+# ffmpeg exits when the scanned-out framebuffer disappears (TTY <-> compositor
+# switch). Keeping the muxer in its own process, fed over a FIFO, means only the
+# capture half restarts and the YouTube session stays up across the switch.
+WORKDIR="$(mktemp -d /run/stream-display.XXXXXX)"
+chmod 700 "$WORKDIR"
+FIFO="$WORKDIR/feed.$FEED_FORMAT"
+mkfifo -m 600 "$FIFO"
 
-	# Hold the FIFO open for writing from the shell itself; without this the muxer
-	# sees EOF on every capture restart and tears the whole stream down.
-	exec 9>"$FIFO"
+# Hold the FIFO open from the shell itself; without this the muxer sees EOF on every
+# capture restart and tears the whole stream down. The open must be read-write: a
+# write-only open blocks until a reader shows up, and the reader is started below.
+# Both children get 9>&- so this shell stays the only holder -- otherwise the muxer
+# inherits the write end, holds the FIFO open against itself and never sees EOF.
+exec 9<>"$FIFO"
 
-	cleanup() {
-		trap - EXIT INT TERM
-		exec 9>&-
-		[ -n "${MUX_PID:-}" ] && kill "$MUX_PID" 2>/dev/null || true
-		[ -n "${CAP_PID:-}" ] && kill "$CAP_PID" 2>/dev/null || true
-		wait 2>/dev/null || true
-		rm -rf "$WORKDIR"
-	}
-	trap cleanup EXIT INT TERM
+cleanup() {
+	trap - EXIT INT TERM
+	exec 9>&-
+	[ -n "${MUX_PID:-}" ] && kill "$MUX_PID" 2>/dev/null || true
+	[ -n "${CAP_PID:-}" ] && kill "$CAP_PID" 2>/dev/null || true
+	wait 2>/dev/null || true
+	rm -rf "$WORKDIR"
+}
+trap cleanup EXIT INT TERM
 
-	"${FFMPEG[@]}" -hide_banner -loglevel warning \
-		-fflags +genpts+igndts -i "$FIFO" "${SILENCE[@]}" \
-		-map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 128k \
-		"${HLS[@]}" &
-	MUX_PID=$!
+"${FFMPEG[@]}" -hide_banner -loglevel warning \
+	"${FEED_IN[@]}" "$FIFO" "${SILENCE[@]}" \
+	-map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 128k -shortest \
+	"${HLS[@]}" 9>&- &
+MUX_PID=$!
 
-	(
-		while :; do
-			"${FFMPEG[@]}" -hide_banner -loglevel warning \
-				"${CAPTURE_IN[@]}" "${CAPTURE_OUT[@]}" -f mpegts - >"$FIFO" || true
-			kill -0 "$MUX_PID" 2>/dev/null || exit 0
-			echo "capture ended (VT switch?) -- restarting in 1s" >&2
-			sleep 1
-		done
-	) &
-	CAP_PID=$!
-
-	wait "$MUX_PID"
-else
-	# --- AV1 path: single process ---------------------------------------------
-	# AV1 has no usable MPEG-TS carriage, so the FIFO trick above is off the table:
-	# segments must be fMP4 and the encoder has to sit in the same process as the
-	# muxer. A VT switch therefore kills the whole pipeline and the loop restarts
-	# it, which costs a few seconds of dead air on the YouTube side.
-	trap 'exit 0' INT TERM
+(
 	while :; do
 		"${FFMPEG[@]}" -hide_banner -loglevel warning \
-			"${CAPTURE_IN[@]}" "${SILENCE[@]}" \
-			-map 0:v:0 -map 1:a:0 "${CAPTURE_OUT[@]}" -c:a aac -b:a 128k \
-			"${HLS[@]}" || true
-		echo "pipeline ended (VT switch?) -- restarting in 1s" >&2
+			"${CAPTURE_IN[@]}" "${CAPTURE_OUT[@]}" -f "$FEED_FORMAT" - >"$FIFO" || true
+		kill -0 "$MUX_PID" 2>/dev/null || exit 0
+		echo "capture ended (VT switch?) -- restarting in 1s" >&2
 		sleep 1
 	done
-fi
+) 9>&- &
+CAP_PID=$!
+
+wait "$MUX_PID"
