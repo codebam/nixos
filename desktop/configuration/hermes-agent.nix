@@ -511,7 +511,7 @@ let
   defaultModel = "~deepseek/deepseek-v4-flash-latest";
 
   escalationTiers = {
-    reasoning = "deepseek/deepseek-v4-pro";
+    reasoning = "deepseek/deepseek-v4-pro-0813";
     frontier = "x-ai/grok-4.6";
   };
 
