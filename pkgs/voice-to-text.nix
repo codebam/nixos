@@ -10,15 +10,31 @@
   coreutils,
   gnused,
 
-  # ggml-base.en, 148 MB: English-only, and the smallest model that punctuates
-  # dictation rather than emitting one unbroken sentence. Override both of
-  # these together for a bigger one -- every model is listed at
+  # ggml-base.en, 148 MB: English-only, and the smallest model that segments
+  # dictation into utterances rather than emitting one unbroken run of words.
+  # Its punctuation and casing matter less than they used to -- `plainifyArgs`
+  # below strips both -- but where it puts the boundaries still does. Override
+  # both of these together for a bigger one -- every model is listed at
   # https://huggingface.co/ggerganov/whisper.cpp -- and get the hash from
   # `nix-prefetch-url` on the URL you picked.
   modelUrl ? "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin",
   modelHash ? "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=",
 
   language ? "en",
+
+  # Passed through to ../pkgs/voice-to-text-plainify.nix, which is what makes
+  # the transcript lowercase, unpunctuated and free of "um". Set to `{
+  # lowercase = false; punctuation = ""; fillers = []; }` for whisper's own
+  # output verbatim.
+  plainifyArgs ? { },
+
+  # An unpunctuated lowercase initial prompt is a decoder bias towards
+  # unpunctuated lowercase output -- whisper continues the style it is given.
+  # It is a suggestion rather than a rule, which is why the sed program above
+  # exists as well; what it buys is that the sed has less to do, so fewer
+  # sentences arrive already mangled into one word. whisper-stream has no
+  # equivalent flag.
+  initialPrompt ? "okay so here is the thing i was saying earlier about it and then what happened next",
 
   # A recording nobody stopped is a microphone left on. Two minutes is longer
   # than anything dictated into a text field and short enough that forgetting
@@ -31,6 +47,8 @@ let
     url = modelUrl;
     hash = modelHash;
   };
+
+  plainify = import ./voice-to-text-plainify.nix ({ inherit lib; } // plainifyArgs);
 in
 writeShellApplication {
   name = "voice-to-text";
@@ -89,9 +107,13 @@ writeShellApplication {
       # loader still writes to stderr. Newlines become spaces because the
       # target is a text field, and [BLANK_AUDIO] is what silence transcribes
       # to rather than nothing at all.
-      text=$(whisper-cli -m ${model} -f "$wav" -l ${language} -nt -np 2>/dev/null |
+      text=$(whisper-cli -m ${model} -f "$wav" -l ${language} -nt -np \
+          --prompt ${lib.escapeShellArg initialPrompt} 2>/dev/null |
         tr '\n' ' ' |
-        sed -e 's/\[BLANK_AUDIO\]//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        sed -e 's/\[BLANK_AUDIO\]//g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' |
+        # Lowercase, drop sentence punctuation, drop "um". See
+        # ../pkgs/voice-to-text-plainify.nix for what each rule is for.
+        sed -E ${lib.escapeShellArg plainify})
       rm -f "$wav"
 
       if [ -z "$text" ]; then

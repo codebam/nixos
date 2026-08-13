@@ -90,7 +90,9 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   ├── waybar.nix               # Base Waybar bar config
 │   └── xdg.nix                  # MIME apps
 ├── pkgs/
-│   └── voice-to-text.nix        # Custom whisper.cpp offline dictation package
+│   ├── voice-to-text.nix        # Custom whisper.cpp offline dictation package
+│   ├── voice-to-text-stream.nix # Streaming variant: types each utterance
+│   └── voice-to-text-plainify.nix # Shared transcript filter: lowercase, no punctuation, no "um"
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
 ```

@@ -11,13 +11,20 @@
   gawk,
 
   # Same model and default as the one-shot command, for the same reason: the
-  # smallest one that punctuates. It matters more here -- VAD mode transcribes
-  # each utterance with `no_context`, so every chunk has to punctuate itself
-  # with no sight of the sentence it continues.
+  # smallest one that segments rather than running everything together. VAD
+  # mode transcribes each utterance with `no_context`, so every chunk is
+  # decoded with no sight of the sentence it continues -- which is exactly the
+  # case where a model that cannot find utterance boundaries falls apart.
   modelUrl ? "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin",
   modelHash ? "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=",
 
   language ? "en",
+
+  # Passed through to ./voice-to-text-plainify.nix, exactly as in
+  # voice-to-text.nix -- lowercase, no sentence punctuation, no "um". It does
+  # more here than there: chunk-boundary punctuation is the thing VAD mode is
+  # worst at, and deleting it removes the artefact instead of improving it.
+  plainifyArgs ? { },
 
   # `--step 0` picks whisper-stream's VAD mode over its sliding window. The
   # window mode re-emits a revised transcript of the last `--length` on every
@@ -49,6 +56,8 @@ let
     url = modelUrl;
     hash = modelHash;
   };
+
+  plainify = import ./voice-to-text-plainify.nix ({ inherit lib; } // plainifyArgs);
 in
 writeShellApplication {
   name = "voice-to-text-stream";
@@ -140,6 +149,11 @@ writeShellApplication {
           -e 's/\[[^][]*\]//g' \
           -e 's/[[:space:]]\{1,\}/ /g' \
           -e 's/^ //' -e 's/ $//' |
+        # Lowercase, drop sentence punctuation, drop "um" -- before the
+        # deduplication rather than after it, so the overlap comparison and
+        # the typed text are the same string. A chunk that was nothing but a
+        # hesitation comes out empty here and the awk drops it.
+        sed -E -u ${lib.escapeShellArg plainify} |
         # The ring buffer whisper-stream grabs from is never cleared, so
         # consecutive utterances share audio and the tail of what was already
         # typed comes back as the head of the next chunk. Emit only the part

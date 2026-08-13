@@ -21,8 +21,10 @@
       thing whisper-stream emits is one chunk per pause. What that buys is
       seeing the first sentence while still saying the third; what it costs is
       that each chunk is transcribed with no sight of the one before it, so
-      punctuation and casing across a pause are worse than the one-shot
-      command's, and the model stays resident for the length of the session.
+      wording across a pause is worse than the one-shot command's, and the
+      model stays resident for the length of the session. Casing and
+      punctuation are no longer part of that cost -- `plainifyArgs` removes
+      both from either command's output.
 
       Turning this on does not replace `voice-to-text`, which stays installed
       -- but it does move the Viewport binding onto the streaming one
@@ -37,14 +39,32 @@
       not on a laptop
     '';
 
+    plainifyArgs = lib.mkOption {
+      type = lib.types.attrs;
+      default = { };
+      example = {
+        lowercase = false;
+        fillers = [ ];
+      };
+      description = ''
+        Arguments for `pkgs/voice-to-text-plainify.nix`, which decides what
+        both commands do to a transcript before typing it: fold to lowercase,
+        drop sentence punctuation, drop hesitation noises. The defaults do all
+        three, which is what dictation into a chat box or a shell wants.
+        `{ lowercase = false; punctuation = ""; fillers = []; }` is whisper's
+        own output verbatim.
+      '';
+    };
+
     package = lib.mkOption {
       type = lib.types.package;
       readOnly = true;
-      default =
-        if config.voiceToText.gpu then
-          pkgs.voice-to-text.override { whisper-cpp = pkgs.whisper-cpp-vulkan; }
-        else
-          pkgs.voice-to-text;
+      default = pkgs.voice-to-text.override (
+        {
+          inherit (config.voiceToText) plainifyArgs;
+        }
+        // lib.optionalAttrs config.voiceToText.gpu { whisper-cpp = pkgs.whisper-cpp-vulkan; }
+      );
       defaultText = lib.literalMD "`pkgs.voice-to-text`, Vulkan-backed when `gpu` is set";
       description = ''
         The dictation command as this host configures it. Whatever runs it has
@@ -57,11 +77,12 @@
     streamingPackage = lib.mkOption {
       type = lib.types.package;
       readOnly = true;
-      default =
-        if config.voiceToText.gpu then
-          pkgs.voice-to-text-stream.override { whisper-cpp = pkgs.whisper-cpp-vulkan; }
-        else
-          pkgs.voice-to-text-stream;
+      default = pkgs.voice-to-text-stream.override (
+        {
+          inherit (config.voiceToText) plainifyArgs;
+        }
+        // lib.optionalAttrs config.voiceToText.gpu { whisper-cpp = pkgs.whisper-cpp-vulkan; }
+      );
       defaultText = lib.literalMD "`pkgs.voice-to-text-stream`, Vulkan-backed when `gpu` is set";
       description = ''
         The streaming dictation command as this host configures it. Defined
@@ -91,6 +112,7 @@
   config = lib.mkIf config.voiceToText.enable {
     environment.systemPackages = [
       config.voiceToText.package
-    ] ++ lib.optional config.voiceToText.streaming config.voiceToText.streamingPackage;
+    ]
+    ++ lib.optional config.voiceToText.streaming config.voiceToText.streamingPackage;
   };
 }
