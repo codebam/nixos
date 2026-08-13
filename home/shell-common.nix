@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 
 {
   # Shared by every home-manager user (see home/default.nix and
@@ -74,6 +74,55 @@
         bind j select-pane -D
         bind k select-pane -U
         bind l select-pane -R
+
+        # ── Working with agents ────────────────────────────────────────────
+        # An agent pane emits far more than a shell does, and some of it is not
+        # plain text.
+        #
+        # 100k lines rather than the default 2000: a long agent run scrolls its
+        # own start out of history, and the transcript is the thing you go back
+        # to. allow-passthrough lets an inner program's escape sequences reach
+        # the terminal (inline images, progress protocols) instead of tmux
+        # eating them; set-clipboard makes OSC 52 yanks land in the real
+        # clipboard, which is the only copy path that survives ssh.
+        set -g history-limit 100000
+        set -g allow-passthrough on
+        set -s set-clipboard on
+        set -g focus-events on
+
+        # Agents finish silently while you are looking at another window. Flag
+        # the window instead of interrupting: activity-action other means only
+        # windows you are *not* in raise the flag, and visual-activity off
+        # keeps it to a status-bar marker rather than a message overlay.
+        set -g monitor-activity on
+        set -g monitor-bell on
+        set -g activity-action other
+        set -g visual-activity off
+
+        # Three agent panes look identical without titles. pane_title is set by
+        # whatever runs in the pane (printf '\033]2;name\033\\'); fall back to
+        # the command name when nothing set one.
+        set -g pane-border-status top
+        set -g pane-border-format ' #{pane_index} #{?pane_title,#{pane_title},#{pane_current_command}} '
+        bind T command-prompt -p title 'select-pane -T "%%"'
+
+        # Popups: reach another repo, git, or a throwaway shell without
+        # disturbing the layout the agents are running in. Store paths rather
+        # than PATH lookups — a popup gets the login environment, not this
+        # shell's, and a missing binary there fails with an empty flash.
+        bind f display-popup -E -w 80% -h 60% "${pkgs.sesh}/bin/sesh connect \"\$(${pkgs.sesh}/bin/sesh list | ${pkgs.fzf}/bin/fzf)\""
+        bind g display-popup -E -w 90% -h 90% "${pkgs.lazygit}/bin/lazygit"
+        bind - display-popup -E -w 80% -h 70% "$SHELL"
+
+        # Multi-agent ergonomics. respawn-pane -k restarts a wedged agent in
+        # place, keeping the layout; synchronize-panes types one command into
+        # every pane of the window, which is how you restart or re-prompt a row
+        # of agents at once — it stays off unless toggled, since a stray
+        # keystroke otherwise goes everywhere.
+        bind S set-window-option synchronize-panes \; display "sync #{?pane_synchronized,on,off}"
+        bind r respawn-pane -k
+        bind C-l select-layout main-vertical
+        set -g main-pane-width 60%
       '';
     };
 

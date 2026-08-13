@@ -484,6 +484,27 @@
     };
     fish = {
       enable = true;
+      # A long agent run tied to a terminal window dies with the window. This
+      # puts it in a session of its own, named after the repo, so closing the
+      # terminal detaches instead of killing: `agent claude`, `agent hermes`,
+      # or bare `agent` for a shell. Already inside tmux, it switches to that
+      # session rather than nesting one inside another.
+      functions.agent = {
+        description = "Attach or create a detached-safe tmux session for this repo";
+        body = ''
+          set -l root (git rev-parse --show-toplevel 2>/dev/null)
+          test -n "$root"; or set root $PWD
+          set -l name agent-(basename $root)
+
+          if set -q TMUX
+            tmux has-session -t "=$name" 2>/dev/null
+            or tmux new-session -d -s $name -c $root $argv
+            tmux switch-client -t "=$name"
+          else
+            tmux new-session -A -s $name -c $root $argv
+          end
+        '';
+      };
       interactiveShellInit = ''
         set fish_greeting ""
         set -gx PATH $PATH /home/codebam/.local/bin /home/codebam/.cargo/bin /home/codebam/.npm-global/bin /home/codebam/.kimi-code/bin
@@ -571,6 +592,21 @@
             set -g @resurrect-strategy-nvim 'session'
             set -g @resurrect-capture-pane-contents 'on'
             set -g @resurrect-processes '"~vi->vi -S" "~hx" "~e"'
+          '';
+        }
+        {
+          # resurrect alone only saves when you press prefix C-s, which is
+          # never the moment the machine actually goes down. continuum saves on
+          # a timer and restores on tmux start.
+          #
+          # Deliberately no agent binary in @resurrect-processes: a restored
+          # `claude` or `hermes` comes back with no conversation and looks
+          # alive. @resurrect-capture-pane-contents (above) keeps the
+          # transcript, which is the part worth having back.
+          plugin = continuum;
+          extraConfig = ''
+            set -g @continuum-restore 'on'
+            set -g @continuum-save-interval '10'
           '';
         }
       ];

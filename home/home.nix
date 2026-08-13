@@ -105,6 +105,10 @@ in
       bat
       claude-code
       dust
+      # Both are bound to tmux popups in home/shell-common.nix by store path;
+      # on PATH as well so they are usable outside tmux.
+      sesh
+      lazygit
       nvtopPackages.amd
       antigravity-cli
       google-cloud-sdk
