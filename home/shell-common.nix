@@ -90,6 +90,22 @@
         set -s set-clipboard on
         set -g focus-events on
 
+        # keyMode = "vi" only affects movement in copy-mode. Selection keeps
+        # tmux's own bindings: Space starts a selection, Enter copies, and `v`
+        # is rectangle-toggle. Rebind to what vi actually does, since reading
+        # agent output is mostly copy-mode work.
+        #
+        # wl-copy rather than a bare copy-pipe-and-cancel: set-clipboard on
+        # covers OSC 52, which the Wayland clipboard only sees if the outer
+        # terminal forwards it. Piping to wl-copy is direct and also works when
+        # the yank happens over ssh into this host.
+        bind -T copy-mode-vi v send-keys -X begin-selection
+        bind -T copy-mode-vi C-v send-keys -X rectangle-toggle
+        bind -T copy-mode-vi y send-keys -X copy-pipe-and-cancel '${pkgs.wl-clipboard}/bin/wl-copy'
+        bind -T copy-mode-vi Y send-keys -X copy-pipe-line-and-cancel '${pkgs.wl-clipboard}/bin/wl-copy'
+        bind -T copy-mode-vi Escape send-keys -X cancel
+        bind -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel '${pkgs.wl-clipboard}/bin/wl-copy'
+
         # Agents finish silently while you are looking at another window. Flag
         # the window instead of interrupting: activity-action other means only
         # windows you are *not* in raise the flag, and visual-activity off
