@@ -252,7 +252,7 @@ in
     # engine installed for this to be worth binding: the Steam Deck imports
     # this file too and does not.
     // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
-      "Mouse5" = "exec ${lib.getExe osConfig.voiceToText.binding}";
+      "Mod4+Mouse5" = "exec ${lib.getExe osConfig.voiceToText.binding}";
     };
   };
 }
