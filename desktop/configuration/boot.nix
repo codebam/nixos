@@ -16,7 +16,7 @@
 
   boot = {
     supportedFilesystems = [ "btrfs" ];
-    kernelPackages = pkgs.linuxPackages_cachyos;
+    kernelPackages = pkgs.linuxPackages_latest;
     kernelParams = [
       "usbcore.autosuspend=-1"
       "amd_pstate=active"

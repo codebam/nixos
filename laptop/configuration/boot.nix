@@ -11,7 +11,7 @@
   };
 
   boot = {
-    kernelPackages = pkgs.linuxPackages_cachyos;
+    kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = [ "bcachefs" ];
     # The root filesystem is only unlocked partway through stage 1, so the
     # cleanup service has to wait for it.
