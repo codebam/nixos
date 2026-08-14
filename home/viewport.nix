@@ -158,6 +158,18 @@ in
     # built-in default, which is foot.
     terminal = "rio";
 
+    # The desktop background, taken from stylix so that the picture the rest of
+    # the session is themed against is the one the compositor draws. Stylix has
+    # no target for this compositor and never will set it by itself, so this is
+    # the wiring: without these two lines the shell paints its own gradient and
+    # `stylix.image` reaches nothing.
+    #
+    # The fitting names are stylix's own -- viewport takes `fill`, `fit`,
+    # `stretch`, `center` and `tile`, which is `imageScalingMode` exactly -- so
+    # this is handed across rather than translated.
+    wallpaper = "${osConfig.stylix.image}";
+    wallpaper_mode = osConfig.stylix.imageScalingMode;
+
     outputs = {
       "*" = {
         max_refresh = true;
