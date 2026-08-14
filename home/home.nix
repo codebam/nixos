@@ -100,7 +100,7 @@ in
         until "$@"; do sleep 1; done
       '')
       (writeShellScriptBin "spaste" ''
-        ${curl}/bin/curl -X POST --data-binary @- https://pastebin.codebam.ca
+        ${curl}/bin/curl -X POST --data-binary @- https://paste.codebam.ca
       '')
 
       bat
