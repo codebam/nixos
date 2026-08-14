@@ -11,7 +11,7 @@
       gtk.enable = false;
       qt.enable = false;
     };
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/irblack.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa.yaml";
     image = ../../wallpaper.png;
     # phinger rather than bibata: bibata-cursors builds every colour variant
     # into one 322 MB output and there is no attribute for a single theme.
