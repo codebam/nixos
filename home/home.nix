@@ -191,6 +191,34 @@ in
         .claude/
       '';
 
+      # The caveman marketplace plugin shipped 8 skills, 3 subagents, and a
+      # SessionStart hook that reprinted its whole ruleset every session — all
+      # of it in the system prompt whether used or not. The plugin is disabled
+      # in ~/.claude/settings.json; the rules now live in ~/.claude/CLAUDE.md
+      # and only the level table is a skill, loaded on demand.
+      ".claude/skills/caveman/SKILL.md".text = ''
+        ---
+        name: caveman
+        description: Switch caveman terseness level (lite/full/ultra). Use only when user types /caveman or asks to change caveman intensity.
+        ---
+
+        Set level for rest of session, then confirm in one line.
+
+        | Level | Rules |
+        |-------|-------|
+        | lite | Drop filler and pleasantries. Keep full sentences and articles. |
+        | full | Drop articles too. Fragments OK. Short synonyms. Default. |
+        | ultra | Max compression: keyword strings, minimal verbs, one clause per idea. Still exact on code/errors/technical terms. |
+
+        All levels keep exact code, error strings, API/CLI names, and technical
+        substance. All levels drop to normal prose for code, commits, PRs,
+        security warnings, irreversible-action confirmations, and
+        order-sensitive multi-step instructions.
+
+        Persist the chosen level until the user changes it or says "stop
+        caveman" / "normal mode".
+      '';
+
       ".claude/skills/searxng/SKILL.md".text = ''
         ---
         name: searxng

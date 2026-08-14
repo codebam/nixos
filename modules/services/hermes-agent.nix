@@ -25,30 +25,18 @@ let
   #
   # devops/cli is deliberately absent: despite the name it is the inference.sh
   # CLI, not a general shell skill.
+  # Every skill here costs a description line in the system prompt on every
+  # turn, whether or not it is ever loaded. Search is the only category that
+  # earns that on this host; the rest (docker, pentest, code-wiki, fastmcp,
+  # cloudflare deploy, ...) were paid for continuously and used ~never. Add one
+  # back when a task actually wants it.
+  #
+  # Both are keyless — no API token to leak into the agent's environment.
   optionalSkills = {
-    devops = [
-      "docker-management"
-      "watchers"
-    ];
-    security = [
-      "oss-forensics"
-      "web-pentest"
-    ];
-    software-development = [
-      "code-wiki"
-      "rest-graphql-debug"
-      "subagent-driven-development"
-    ];
-    # Both are keyless — no API token to leak into the agent's environment.
     research = [
       "duckduckgo-search"
       "searxng-search"
     ];
-    mcp = [
-      "fastmcp"
-      "mcporter"
-    ];
-    web-development = [ "cloudflare-temporary-deploy" ];
   };
 
   optionalSkillTree = pkgs.runCommand "hermes-optional-skills" { } (
@@ -567,9 +555,11 @@ let
         branch=$(git -C ${nixosRepo} rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
         head=$(git -C ${nixosRepo} rev-parse --short HEAD 2>/dev/null || echo unknown)
         dirty=$(git -C ${nixosRepo} status --porcelain 2>/dev/null | wc -l)
+        # Stated here rather than carrying an MCP time server for it.
+        now=$(date --iso-8601=minutes)
 
-        ctx=$(printf 'Host: NixOS, declarative. Flake: %s (branch %s @ %s, %s uncommitted paths). Running generation: %s. Any nixpkgs tool is available via "nix run nixpkgs#<pkg>" or ", <command>" - do not ask for installs to run something once. There is no sudo on this host: escalate with "run0 <command>". System activation (nixos-rebuild switch/boot) and garbage collection are blocked and operator-only. Load the nixos-host skill before editing the flake.' \
-          "${nixosRepo}" "$branch" "$head" "$dirty" "$generation")
+        ctx=$(printf 'Host: NixOS, declarative. Now: %s (%s). Flake: %s (branch %s @ %s, %s uncommitted paths). Running generation: %s. Any nixpkgs tool: "nix run nixpkgs#<pkg>" or ", <command>" - never ask for an install to run something once. No sudo: escalate with "run0 <command>". nixos-rebuild switch/boot and garbage collection are blocked, operator-only. Load the nixos-host skill before editing the flake.' \
+          "$now" "${config.time.timeZone}" "${nixosRepo}" "$branch" "$head" "$dirty" "$generation")
 
         jq -cn --arg c "$ctx" '{context: $c}'
       '';
@@ -605,50 +595,35 @@ let
     pkgs.writeText "hermes-escalation-protocol-${profile}.md" ''
       ## Escalation protocol
 
-      You are ${defaultModel} — fast and cheap, and deliberately
-      not the strongest model available. You are not expected to solve
-      everything. Stopping and handing up is a correct outcome, not a failure.
+      You are ${defaultModel}: fast, cheap, deliberately not the strongest
+      model here. Handing up is a correct outcome, not a failure.
 
-      Escalate when any of these is true:
+      Escalate when any holds: two attempts at one subproblem failed; the
+      answer needs more than three interdependent files/options held at once;
+      you are about to write ${artifact} you cannot execute end-to-end in your
+      head; the task carries a correctness guarantee (${risky}); or your answer
+      would contain a placeholder, a guessed name, or "roughly" / "should work".
 
-      - Two attempts at the same subproblem have already failed.
-      - The answer depends on more than three interdependent files, options, or
-        constraints held at once.
-      - You are about to write ${artifact} you cannot execute end-to-end in
-        your head.
-      - The task carries a correctness guarantee: ${risky}.
-      - Your answer would contain a placeholder, a guessed name, or the words
-        "roughly", "something like", or "should work".
+      Do not escalate on a first attempt at a routine task, or to dodge work a
+      command settles — if ${tools} would answer it, run that. A stronger model
+      cannot see this machine and will guess where you could have looked.
 
-      Do not escalate:
-
-      - On the first attempt at a routine task.
-      - To avoid work a command would settle. If ${tools} would answer it, do
-        that instead — a stronger model cannot see this machine and will guess
-        where you could have looked.
-
-      To escalate, stop. Do not answer the question anyway, and do not append a
-      best guess after the block. Emit exactly:
+      To escalate, stop. No answer anyway, no best guess appended. Emit exactly:
 
           ESCALATE
           REASON: <one line>
-          STATE: <established facts, files read, what was already tried and how
-                  it failed — written so the next model needs no other context>
+          STATE: <facts established, files read, what was tried and how it
+                  failed — enough that the next model needs no other context>
           ASK: <the single question the stronger model must answer>
           RUN: /model <tier-model> --once
 
-      Tiers:
+      Tiers: `${escalationTiers.reasoning}` for long multi-step logic,
+      algorithm design, a bug that resisted two hypotheses.
+      `${escalationTiers.frontier}` for architecture, ambiguous requirements,
+      security review, anything under the correctness guarantee above.
 
-      - `${escalationTiers.reasoning}` — long multi-step logic, algorithm
-        design, a bug whose cause has resisted two hypotheses.
-      - `${escalationTiers.frontier}` — architecture and design calls,
-        ambiguous requirements, security review, anything under a correctness
-        guarantee above.
-
-      The STATE block is the whole point of the handoff: `--once` carries the
-      session, but the operator is paying for a turn on a large model, so the
-      question should arrive already researched. At most one escalation per
-      operator turn.
+      STATE is the point of the handoff — the operator pays for that turn, so
+      the question arrives researched. Max one escalation per operator turn.
     '';
 
   # The marker is namespaced by profile: the two profiles keep their sessions
@@ -917,29 +892,13 @@ let
       timeout = 60;
     };
 
-    # Version-accurate library documentation, pulled on demand. Covers the
-    # ground mcp-nixos does not: everything that is not a NixOS option.
+    # Deliberately absent, to keep the always-loaded tool schemas small:
     #
-    # The key is interpolated by Hermes at connect time from the process
-    # environment, which systemd fills from the sops-decrypted
-    # environmentFiles below. Written as a literal ${...} placeholder on
-    # purpose — putting the key itself here would put it in /nix/store,
-    # world-readable.
-    context7 = {
-      command = lib.getExe pkgs.context7-mcp;
-      env.CONTEXT7_API_KEY = "\${CONTEXT7_API_KEY}";
-      timeout = 60;
-    };
-
-    # Models have no clock. Two tools, negligible schema cost.
-    time = {
-      command = lib.getExe pkgs.mcp-server-time;
-      args = [
-        "--local-timezone"
-        config.time.timeZone
-      ];
-      timeout = 15;
-    };
+    # - context7 (library docs): a paid key for ground the search skills plus
+    #   `fetch` already cover. CONTEXT7_API_KEY stays in the sops env file, so
+    #   restoring it is just this block.
+    # - time: the session-context hook below states the date and timezone once
+    #   per session, which is what the clock was actually for.
   };
 
   # Default profile only: this host and its flake.
