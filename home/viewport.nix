@@ -62,6 +62,19 @@ let
         pass
   '';
 
+  # The notification sound: a dog bark, one of the four alert sounds GNOME 2
+  # shipped. GNOME dropped the chooser and the files with it; MATE, being that
+  # desktop's fork, is what still carries them. The freedesktop sound theme --
+  # the one every distribution installs -- has no equivalent, which is why this
+  # is not simply a `sound_name`.
+  #
+  # The file alone, not the package holding it. mate-media is a mixer
+  # application: 1.3G of closure, GTK and all, to carry 13kB of ogg. Copying it
+  # out means the sound is in the runtime closure and the mixer is not.
+  bark = pkgs.runCommand "bark.ogg" { } ''
+    cp ${pkgs.mate-media}/share/sounds/mate/default/alerts/bark.ogg $out
+  '';
+
   screenshot = pkgs.writeShellScript "screenshot" ''
     set -euo pipefail
     shots="$HOME/Pictures/Screenshots"
@@ -174,6 +187,15 @@ in
       "*" = {
         max_refresh = true;
       };
+    };
+
+    # What a notification sounds like when the program sending it does not ask
+    # for something else. Viewport holds org.freedesktop.Notifications itself,
+    # so this is the setting a mako or dunst config would carry -- there is no
+    # notification daemon here to configure instead. A sender's own `sound-file`
+    # or `sound-name` hint wins over this, and `suppress-sound` silences it.
+    notifications = {
+      sound_file = "${bark}";
     };
 
     adaptive_sync = true;
