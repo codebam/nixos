@@ -82,12 +82,12 @@ writeShellApplication {
     }
 
     draw() {
-      local now sess attached activity pane dir body tool status branch ctx cost row
+      local now sess attached activity pane dir body tool prof status branch ctx cost row
       now=$(date +%s)
       rows=()
       lines=()
 
-      printf '\033[1m%2s  %-20s %-7s %-7s %-8s %-28s %-14s %-5s %s\033[0m\n' \
+      printf '\033[1m%2s  %-18s %-16s %-7s %-8s %-24s %-12s %-5s %s\033[0m\n' \
         "#" SESSION TOOL STATUS ACTIVE DIR BRANCH CTX COST
 
       # A session with no panes is a session being torn down; `|| continue`
@@ -172,6 +172,17 @@ writeShellApplication {
           hermes)
             ctx=$(grep -oE '\] [0-9]+%' <<<"$body" | tail -1 || true)
             ctx=''${ctx#* }
+
+            # `hermes -p viewport` selects a profile, not a directory, so a
+            # hermes session started from anywhere reports the cwd it was
+            # launched in -- usually ~ -- and every profile looks alike in the
+            # table. The profile is what names the session's work, and hermes
+            # puts it in front of its prompt (`viewport ❯`); the default
+            # profile prints the bare ⚕ prompt and gets no suffix.
+            prof=$(grep -oE '(^|⚕ )[A-Za-z0-9._-]+ ❯' <<<"$body" | tail -1 || true)
+            prof=''${prof#⚕ }
+            prof=''${prof% ❯}
+            [ -n "$prof" ] && tool="hermes:$prof"
             ;;
         esac
 
@@ -179,7 +190,7 @@ writeShellApplication {
 
         # %b on status, because the colour is already an escape sequence and
         # its bytes would otherwise count towards the field width.
-        row=$(printf '%2d  %-20s %-7s %b%*s %-8s %-28s %-14s %-5s %s' \
+        row=$(printf '%2d  %-18s %-16s %b%*s %-8s %-24s %-12s %-5s %s' \
           "''${#rows[@]}" "''${sess#"$prefix"}" "$tool" "$status" 3 "" \
           "$(fmt_age $((now - activity)))" \
           "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}")
