@@ -6,9 +6,10 @@
   coreutils,
   fzf,
 
-  # Which tmux sessions count as agents. `sesh` and the agent launcher both
-  # name their sessions after the repo they run in, so the prefix is the only
-  # thing separating an agent session from a shell someone opened by hand.
+  # Sessions are found by what is running in them, not by their name, so this
+  # is only the fallback: a session named like an agent still gets a row while
+  # its CLI is starting up, or after it has exited, when there is no UI on
+  # screen to recognise. It is also the prefix stripped from the name shown.
   sessionPrefix ? "agent-",
 
   # Seconds between redraws in `--watch`. Every refresh capture-panes each
@@ -34,8 +35,9 @@ writeShellApplication {
 
     usage() {
       echo "usage: agent-overview [--watch [seconds]]"
-      echo "  Lists Claude Code agents running in ''${prefix}* tmux sessions."
-      echo "  --watch redraws in place; press a row's number to connect to it."
+      echo "  Lists claude, hermes and agy sessions running in tmux, plus any"
+      echo "  ''${prefix}* session whose agent has not drawn its UI yet."
+      echo "  --watch redraws in place; a row's number or / connects to it."
     }
 
     watch=0
@@ -63,40 +65,86 @@ writeShellApplication {
     rows=()
     lines=()
 
+    # Which CLI is in this pane. Each one is named by something only it puts
+    # on screen: hermes' ⚕ statusline, antigravity's fixed bottom-left hint,
+    # and Claude's mode line. Content rather than the process name, because
+    # hermes shows up as `python3.12` and any of the three can be behind a
+    # wrapper -- and a pane is only worth a row once it has drawn its UI.
+    detect() {
+      local body=$1
+      if grep -qE '⚕|Hermes Agent' <<<"$body"; then
+        printf 'hermes'
+      elif grep -qE '\? for shortcuts|esc to cancel' <<<"$body"; then
+        printf 'agy'
+      elif grep -qE 'bypass permissions|shift\+tab to cycle|\| \$[0-9.]+ \|' <<<"$body"; then
+        printf 'claude'
+      fi
+    }
+
     draw() {
-      local now sess attached activity pane dir body status branch line ctx cost row
+      local now sess attached activity pane dir body tool status branch ctx cost row
       now=$(date +%s)
       rows=()
       lines=()
 
-      printf '\033[1m%2s  %-20s %-7s %-8s %-30s %-16s %-5s %s\033[0m\n' \
-        "#" SESSION STATUS ACTIVE DIR BRANCH CTX COST
+      printf '\033[1m%2s  %-20s %-7s %-7s %-8s %-28s %-14s %-5s %s\033[0m\n' \
+        "#" SESSION TOOL STATUS ACTIVE DIR BRANCH CTX COST
 
       # A session with no panes is a session being torn down; `|| continue`
       # rather than a failure, since this runs on a timer.
       while IFS=$'\t' read -r sess attached activity; do
-        case $sess in "$prefix"*) ;; *) continue ;; esac
+        # Every pane, not just the first: a window can hold an agent beside a
+        # shell, and which half is pane 0 is an accident of how it was split.
+        # The first pane running one of the three wins.
+        tool=""
+        while read -r p; do
+          # Only the footer: the spinner line, the prompt box, the statusline,
+          # and a permission dialog if one is up. Everything above that is
+          # transcript, where a sentence about waiting on a permission prompt
+          # reads exactly like a permission prompt.
+          # `|| true` because a pane that has printed nothing yet -- a session
+          # opened a second ago, or one running something silent -- gives grep
+          # no lines to keep, and a non-zero exit there would take the whole
+          # table down with it under `set -o pipefail`.
+          body=$(tmux capture-pane -p -t "$p" | grep -v '^ *$' | tail -12 || true)
+          tool=$(detect "$body")
+          if [ -n "$tool" ]; then
+            pane=$p
+            break
+          fi
+        done < <(tmux list-panes -t "$sess" -F '#{pane_id}' 2>/dev/null)
 
-        pane=$(tmux list-panes -t "$sess" -F '#{pane_id}' | head -1) || continue
+        # No agent found. Keep the session anyway if it is named like one --
+        # that is an agent still starting up, or one that just exited, and
+        # dropping it from the table is how you lose track of it.
+        if [ -z "$tool" ]; then
+          case $sess in
+            "$prefix"*)
+              pane=$(tmux list-panes -t "$sess" -F '#{pane_id}' | head -1) || continue
+              tool="-"
+              ;;
+            *) continue ;;
+          esac
+        fi
+
         dir=$(tmux display -p -t "$pane" '#{pane_current_path}')
 
-        # Only the footer: the spinner line, the prompt box, the statusline,
-        # and a permission dialog if one is up. Everything above that is
-        # transcript, where a sentence about waiting on a permission prompt
-        # reads exactly like a permission prompt.
-        # `|| true` because a pane that has printed nothing yet -- a session
-        # opened a second ago, or one running something silent -- gives grep no
-        # lines to keep, and a non-zero exit there would take the whole table
-        # down with it under `set -o pipefail`.
-        body=$(tmux capture-pane -p -t "$pane" | grep -v '^ *$' | tail -12 || true)
+        # window_activity, not session_activity: the session clock only moves
+        # when a client sends input, so an unattended agent that had been
+        # working for an hour still read as last-active whenever someone last
+        # typed at it. The window clock moves on pane output, which is the
+        # agent itself.
+        activity=$(tmux display -p -t "$pane" '#{window_activity}')
 
-        # The spinner, not "esc to interrupt" -- the hint only shows in some
-        # states, but the elapsed/token counter is on screen for every second
-        # Claude is working: `✻ Galloping… (3s · ↑ 103 tokens)`. The finished
-        # form ("Worked for 35s") has no parenthesis, so it cannot match.
-        if grep -qE '\([0-9]+[hms].*(tokens|esc to interrupt)' <<<"$body"; then
+        # Busy, in each CLI's own words. Claude: the elapsed/token counter
+        # beside the spinner, which is up for every second of work, unlike the
+        # "esc to interrupt" hint that comes and goes. Hermes and antigravity
+        # both swap their input footer for a cancel hint while a turn runs, so
+        # that is the marker there; hermes' is the whole `Ctrl+C cancel` line,
+        # antigravity's replaces "? for shortcuts" with "esc to cancel".
+        if grep -qE '\([0-9]+[hms].*(tokens|esc to interrupt)|Ctrl\+C cancel|esc to cancel' <<<"$body"; then
           status=$'\033[33mbusy\033[0m'
-        elif grep -qE 'Do you want|❯ *[0-9]+\.|Yes, and (don|do not)' <<<"$body"; then
+        elif grep -qE 'Do you want|❯ *[0-9]+\.|Yes, and (don|do not)|\[y/N\]|Approve\?' <<<"$body"; then
           # Waiting on a permission answer. Worth its own colour: it looks
           # exactly like idle from the outside, but nothing moves until
           # someone attaches.
@@ -109,20 +157,30 @@ writeShellApplication {
 
         branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo -)
 
-        # Context % and session cost come off Claude's own statusline rather
-        # than any API -- it is the one place a session publishes them, and the
-        # pane is already captured. Anchored on the ` | NN% | $N.NN ` run so a
-        # percentage elsewhere in the transcript cannot match.
-        line=$(grep -oE '\| [0-9]+% \| \$[0-9.]+' <<<"$body" | tail -1 || true)
-        ctx=$(grep -oE '[0-9]+%' <<<"$line" | tail -1 || true)
-        cost=$(grep -oE '\$[0-9.]+' <<<"$line" | tail -1 || true)
+        # Context and cost come off each CLI's own statusline -- the one place
+        # a session publishes them, and the pane is already captured. Claude
+        # prints ` | 73% | $151.34 |`; hermes a bar and a percentage after it,
+        # `[░░░░░] 12%`, with tokens rather than money; antigravity shows
+        # neither, so both columns stay `-` for it.
+        ctx="" cost=""
+        case $tool in
+          claude)
+            line=$(grep -oE '\| [0-9]+% \| \$[0-9.]+' <<<"$body" | tail -1 || true)
+            ctx=$(grep -oE '[0-9]+%' <<<"$line" | tail -1 || true)
+            cost=$(grep -oE '\$[0-9.]+' <<<"$line" | tail -1 || true)
+            ;;
+          hermes)
+            ctx=$(grep -oE '\] [0-9]+%' <<<"$body" | tail -1 || true)
+            ctx=''${ctx#* }
+            ;;
+        esac
 
         rows+=("$sess")
 
         # %b on status, because the colour is already an escape sequence and
         # its bytes would otherwise count towards the field width.
-        row=$(printf '%2d  %-20s %b%*s %-8s %-30s %-16s %-5s %s' \
-          "''${#rows[@]}" "''${sess#"$prefix"}" "$status" 3 "" \
+        row=$(printf '%2d  %-20s %-7s %b%*s %-8s %-28s %-14s %-5s %s' \
+          "''${#rows[@]}" "''${sess#"$prefix"}" "$tool" "$status" 3 "" \
           "$(fmt_age $((now - activity)))" \
           "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}")
         lines+=("$row")
