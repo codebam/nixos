@@ -33,6 +33,7 @@ writeShellApplication {
     usage() {
       echo "usage: agent-overview [--watch [seconds]]"
       echo "  Lists Claude Code agents running in ''${prefix}* tmux sessions."
+      echo "  --watch redraws in place; press a row's number to connect to it."
     }
 
     watch=0
@@ -52,12 +53,18 @@ writeShellApplication {
       fi
     }
 
+    # Filled by draw(), read by the key handler: row number -> session name.
+    # The loop below runs in this shell (`done < <(...)`, not a pipe), so the
+    # array survives the function.
+    rows=()
+
     draw() {
       local now sess attached activity pane dir body status branch line ctx cost
       now=$(date +%s)
+      rows=()
 
-      printf '\033[1m%-20s %-7s %-8s %-30s %-16s %-5s %s\033[0m\n' \
-        SESSION STATUS ACTIVE DIR BRANCH CTX COST
+      printf '\033[1m%2s  %-20s %-7s %-8s %-30s %-16s %-5s %s\033[0m\n' \
+        "#" SESSION STATUS ACTIVE DIR BRANCH CTX COST
 
       # A session with no panes is a session being torn down; `|| continue`
       # rather than a failure, since this runs on a timer.
@@ -100,26 +107,64 @@ writeShellApplication {
         ctx=$(grep -oE '[0-9]+%' <<<"$line" | tail -1 || true)
         cost=$(grep -oE '\$[0-9.]+' <<<"$line" | tail -1 || true)
 
+        rows+=("$sess")
+
         # %b on status, because the colour is already an escape sequence and
         # its bytes would otherwise count towards the field width.
-        printf '%-20s %b%*s %-8s %-30s %-16s %-5s %s\n' \
-          "''${sess#"$prefix"}" "$status" 3 "" \
+        printf '%2d  %-20s %b%*s %-8s %-30s %-16s %-5s %s\n' \
+          "''${#rows[@]}" "''${sess#"$prefix"}" "$status" 3 "" \
           "$(fmt_age $((now - activity)))" \
           "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}"
       done < <(tmux list-sessions -F '#{session_name}	#{session_attached}	#{session_activity}' 2>/dev/null)
 
-      printf '\n\033[90mattach: tmux attach -t %s<name>   ·  %s\033[0m\n' \
-        "$prefix" "$(date +%H:%M:%S)"
+      if [ "$watch" = 1 ]; then
+        printf '\n\033[90m1-9 connect  ·  q quit  ·  %s\033[0m\n' "$(date +%H:%M:%S)"
+      else
+        printf '\n\033[90mattach: tmux attach -t %s<name>   ·  %s\033[0m\n' \
+          "$prefix" "$(date +%H:%M:%S)"
+      fi
+    }
+
+    # Connect this terminal to $1. Inside tmux -- which is where the popup
+    # binding puts us -- `attach` would be nesting; switch-client moves the
+    # client that opened the popup, and closing the popup then leaves it on the
+    # chosen session. Outside tmux there is no client to move, so attach.
+    connect() {
+      local target=$1
+      if [ -n "''${TMUX-}" ]; then
+        tmux switch-client -t "$target"
+      else
+        tmux attach -t "$target"
+      fi
     }
 
     if [ "$watch" = 1 ]; then
+      # Hide the cursor while the table owns the screen, and put it back on any
+      # exit -- including the q and Ctrl-C paths, which leave mid-loop.
+      printf '\033[?25l'
+      trap 'printf "\033[?25h"' EXIT
+
       while true; do
         # Home, then clear-to-end after drawing, so the screen does not blink
         # on every redraw the way `clear` makes it.
         printf '\033[H'
         draw
         printf '\033[J'
-        sleep "$interval"
+
+        # The read timeout is the refresh interval: a keypress acts at once,
+        # and the table redraws on its own when none comes. Numbers are the
+        # visible row order, which is tmux's session order -- alphabetical, so
+        # it only changes when a session appears or dies.
+        if read -rsn1 -t "$interval" key; then
+          case $key in
+            [1-9])
+              [ -n "''${rows[key - 1]-}" ] || continue
+              connect "''${rows[key - 1]}"
+              exit 0
+              ;;
+            q | $'\e') exit 0 ;;
+          esac
+        fi
       done
     else
       draw

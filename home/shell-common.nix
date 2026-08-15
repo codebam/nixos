@@ -131,8 +131,9 @@
         bind - display-popup -E -w 80% -h 70% "$SHELL"
 
         # Which agents are running, working, or stuck on a permission prompt.
-        # --watch redraws in place, so the popup stays live while it is open;
-        # any key closes it, since the popup shell exits with the loop.
+        # --watch redraws in place, so the popup stays live while it is open,
+        # and a row's number switches this client to that agent -- the popup
+        # exits with it, leaving the session it picked on screen. q closes it.
         bind A display-popup -E -w 90% -h 50% "${pkgs.agent-overview}/bin/agent-overview --watch"
 
         # Multi-agent ergonomics. respawn-pane -k restarts a wedged agent in
