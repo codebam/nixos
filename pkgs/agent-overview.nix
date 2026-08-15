@@ -67,15 +67,19 @@ writeShellApplication {
         pane=$(tmux list-panes -t "$sess" -F '#{pane_id}' | head -1) || continue
         dir=$(tmux display -p -t "$pane" '#{pane_current_path}')
 
-        # 60 lines is enough to hold Claude's footer -- the prompt box, the
-        # statusline and any permission dialog above it -- without pulling in
-        # so much transcript that a stale "esc to interrupt" from an earlier
-        # turn is still in the window and reads as busy.
-        body=$(tmux capture-pane -p -t "$pane" -S -60)
+        # Only the footer: the spinner line, the prompt box, the statusline,
+        # and a permission dialog if one is up. Everything above that is
+        # transcript, where a sentence about waiting on a permission prompt
+        # reads exactly like a permission prompt.
+        body=$(tmux capture-pane -p -t "$pane" | grep -v '^ *$' | tail -12)
 
-        if grep -qi 'esc to interrupt' <<<"$body"; then
+        # The spinner, not "esc to interrupt" -- the hint only shows in some
+        # states, but the elapsed/token counter is on screen for every second
+        # Claude is working: `✻ Galloping… (3s · ↑ 103 tokens)`. The finished
+        # form ("Worked for 35s") has no parenthesis, so it cannot match.
+        if grep -qE '\([0-9]+[hms].*(tokens|esc to interrupt)' <<<"$body"; then
           status=$'\033[33mbusy\033[0m'
-        elif grep -qE 'Do you want|Allow .* to' <<<"$body"; then
+        elif grep -qE 'Do you want|❯ *[0-9]+\.|Yes, and (don|do not)' <<<"$body"; then
           # Waiting on a permission answer. Worth its own colour: it looks
           # exactly like idle from the outside, but nothing moves until
           # someone attaches.
