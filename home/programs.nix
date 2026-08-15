@@ -490,12 +490,17 @@
       # terminal detaches instead of killing: `agent claude`, `agent hermes`,
       # or bare `agent` for a shell. Already inside tmux, it switches to that
       # session rather than nesting one inside another.
+      #
+      # The command is part of the session name: with the repo alone, a second
+      # `agent hermes` in a repo that already has `agent claude` running would
+      # attach to the claude session and silently drop its own arguments.
       functions.agent = {
         description = "Attach or create a detached-safe tmux session for this repo";
         body = ''
           set -l root (git rev-parse --show-toplevel 2>/dev/null)
           test -n "$root"; or set root $PWD
           set -l name agent-(basename $root)
+          test (count $argv) -gt 0; and set name $name-(basename $argv[1])
 
           if set -q TMUX
             tmux has-session -t "=$name" 2>/dev/null
