@@ -1,6 +1,27 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
+  # A running tmux server keeps whatever config it last read, and the bindings
+  # in it name store paths -- the agent-overview popup among them. So a rebuild
+  # that changes one of those packages leaves the server calling the previous
+  # build until someone sources the config again, which looks like the rebuild
+  # not having happened.
+  #
+  # Sourcing is idempotent and only reaches servers that already exist; with no
+  # server running there is nothing to update, and the next one starts from the
+  # new config anyway. `|| true` because a server that dies between the check
+  # and the source is not a failed activation.
+  home.activation.reloadTmux = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ${pkgs.tmux}/bin/tmux list-sessions > /dev/null 2>&1; then
+      run ${pkgs.tmux}/bin/tmux source-file ${config.xdg.configHome}/tmux/tmux.conf || true
+    fi
+  '';
+
   # Shared by every home-manager user (see home/default.nix and
   # desktop/makano-home.nix). Only the parts that were byte-identical between
   # users live here -- starship prompts, fish setup and fzf options genuinely
