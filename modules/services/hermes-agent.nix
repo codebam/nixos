@@ -1006,6 +1006,22 @@ let
       # it here puts it back on every activation.
       provider = "openrouter";
     };
+    # A turn that carries an image is described by a cheap vision model first,
+    # and the main model only ever sees that text. `text` rather than `auto`
+    # because auto hands the pixels straight to the main model whenever that
+    # model reports supports_vision -- and with `openrouter/auto-beta` as the
+    # default, which model that is changes per request. Pinning the mode keeps
+    # image turns on one known-priced model instead of whatever auto picked.
+    agent.image_input_mode = "text";
+
+    auxiliary.vision = {
+      # Both keys are load-bearing: the provider must be named, because "auto"
+      # resolves OpenRouter -> Nous Portal -> main endpoint and would send the
+      # OpenRouter-shaped slug below to whichever won.
+      provider = "openrouter";
+      model = "google/gemini-2.5-flash-lite";
+    };
+
     toolsets = [ "all" ];
     terminal = {
       backend = "local";
