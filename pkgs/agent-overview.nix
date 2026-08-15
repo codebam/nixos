@@ -82,7 +82,7 @@ writeShellApplication {
     }
 
     draw() {
-      local now sess attached activity pane dir body tool prof status branch ctx cost row
+      local now sess attached activity pane path dir body tool prof status branch ctx cost row
       now=$(date +%s)
       rows=()
       lines=()
@@ -127,7 +127,14 @@ writeShellApplication {
           esac
         fi
 
-        dir=$(tmux display -p -t "$pane" '#{pane_current_path}')
+        # Keep the real path for git, and abbreviate only what is printed --
+        # `~/...` is not a path any command can follow.
+        path=$(tmux display -p -t "$pane" '#{pane_current_path}')
+        dir=''${path/#"$HOME"/\~}
+        # Keep the tail, not the head: the repo name is the part that tells
+        # rows apart, and a path long enough to overflow pushed every column
+        # after it out of line.
+        [ "''${#dir}" -gt 24 ] && dir="…''${dir: -23}"
 
         # window_activity, not session_activity: the session clock only moves
         # when a client sends input, so an unattended agent that had been
@@ -155,7 +162,7 @@ writeShellApplication {
           status=$'\033[90midle\033[0m'
         fi
 
-        branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo -)
+        branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || echo -)
 
         # Context and cost come off each CLI's own statusline -- the one place
         # a session publishes them, and the pane is already captured. Claude
@@ -193,7 +200,7 @@ writeShellApplication {
         row=$(printf '%2d  %-18s %-16s %b%*s %-8s %-24s %-12s %-5s %s' \
           "''${#rows[@]}" "''${sess#"$prefix"}" "$tool" "$status" 3 "" \
           "$(fmt_age $((now - activity)))" \
-          "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}")
+          "$dir" "$branch" "''${ctx:--}" "''${cost:--}")
         lines+=("$row")
         printf '%s\n' "$row"
       done < <(tmux list-sessions -F '#{session_name}	#{session_attached}	#{session_activity}' 2>/dev/null)
