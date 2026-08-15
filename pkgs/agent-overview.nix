@@ -4,6 +4,7 @@
   git,
   gnugrep,
   coreutils,
+  fzf,
 
   # Which tmux sessions count as agents. `sesh` and the agent launcher both
   # name their sessions after the repo they run in, so the prefix is the only
@@ -24,6 +25,7 @@ writeShellApplication {
     git
     gnugrep
     coreutils
+    fzf
   ];
 
   text = ''
@@ -53,15 +55,19 @@ writeShellApplication {
       fi
     }
 
-    # Filled by draw(), read by the key handler: row number -> session name.
-    # The loop below runs in this shell (`done < <(...)`, not a pipe), so the
-    # array survives the function.
+    # Filled by draw(), read by the key handler: row number -> session name,
+    # and the rendered line for each, which is what `/` hands to fzf so the
+    # filter list is the table rather than a second, plainer view of it. The
+    # loop below runs in this shell (`done < <(...)`, not a pipe), so both
+    # arrays survive the function.
     rows=()
+    lines=()
 
     draw() {
-      local now sess attached activity pane dir body status branch line ctx cost
+      local now sess attached activity pane dir body status branch line ctx cost row
       now=$(date +%s)
       rows=()
+      lines=()
 
       printf '\033[1m%2s  %-20s %-7s %-8s %-30s %-16s %-5s %s\033[0m\n' \
         "#" SESSION STATUS ACTIVE DIR BRANCH CTX COST
@@ -78,7 +84,11 @@ writeShellApplication {
         # and a permission dialog if one is up. Everything above that is
         # transcript, where a sentence about waiting on a permission prompt
         # reads exactly like a permission prompt.
-        body=$(tmux capture-pane -p -t "$pane" | grep -v '^ *$' | tail -12)
+        # `|| true` because a pane that has printed nothing yet -- a session
+        # opened a second ago, or one running something silent -- gives grep no
+        # lines to keep, and a non-zero exit there would take the whole table
+        # down with it under `set -o pipefail`.
+        body=$(tmux capture-pane -p -t "$pane" | grep -v '^ *$' | tail -12 || true)
 
         # The spinner, not "esc to interrupt" -- the hint only shows in some
         # states, but the elapsed/token counter is on screen for every second
@@ -111,14 +121,16 @@ writeShellApplication {
 
         # %b on status, because the colour is already an escape sequence and
         # its bytes would otherwise count towards the field width.
-        printf '%2d  %-20s %b%*s %-8s %-30s %-16s %-5s %s\n' \
+        row=$(printf '%2d  %-20s %b%*s %-8s %-30s %-16s %-5s %s' \
           "''${#rows[@]}" "''${sess#"$prefix"}" "$status" 3 "" \
           "$(fmt_age $((now - activity)))" \
-          "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}"
+          "''${dir/#"$HOME"/\~}" "$branch" "''${ctx:--}" "''${cost:--}")
+        lines+=("$row")
+        printf '%s\n' "$row"
       done < <(tmux list-sessions -F '#{session_name}	#{session_attached}	#{session_activity}' 2>/dev/null)
 
       if [ "$watch" = 1 ]; then
-        printf '\n\033[90m1-9 connect  ·  q quit  ·  %s\033[0m\n' "$(date +%H:%M:%S)"
+        printf '\n\033[90m1-9 connect  ·  / filter  ·  q quit  ·  %s\033[0m\n' "$(date +%H:%M:%S)"
       else
         printf '\n\033[90mattach: tmux attach -t %s<name>   ·  %s\033[0m\n' \
           "$prefix" "$(date +%H:%M:%S)"
@@ -136,6 +148,25 @@ writeShellApplication {
       else
         tmux attach -t "$target"
       fi
+    }
+
+    # Number keys only reach nine rows, and typing a name is what the table
+    # exists to avoid. Filter over the rendered rows -- session name, directory
+    # and branch are all in the line, so any of them narrows it. Prints the
+    # chosen session name, nothing if the pick was cancelled.
+    filter() {
+      local sel n
+      [ "''${#rows[@]}" -gt 0 ] || return 0
+
+      # --ansi so the status colours survive; the row number leads each line
+      # and is what maps back, since two agents can share a directory name.
+      sel=$(printf '%s\n' "''${lines[@]}" |
+        fzf --ansi --no-sort --height=100% --reverse \
+          --prompt='agent> ' --header='enter connects · esc cancels') || return 0
+
+      [[ $sel =~ ^[[:space:]]*([0-9]+) ]] || return 0
+      n=''${BASH_REMATCH[1]}
+      [ -n "''${rows[n - 1]-}" ] && printf '%s' "''${rows[n - 1]}"
     }
 
     if [ "$watch" = 1 ]; then
@@ -160,6 +191,15 @@ writeShellApplication {
             [1-9])
               [ -n "''${rows[key - 1]-}" ] || continue
               connect "''${rows[key - 1]}"
+              exit 0
+              ;;
+            /)
+              # fzf draws over the table and restores the screen on exit; the
+              # cursor it leaves visible is hidden again by the next redraw.
+              picked=$(filter)
+              printf '\033[?25l'
+              [ -n "$picked" ] || continue
+              connect "$picked"
               exit 0
               ;;
             q | $'\e') exit 0 ;;
