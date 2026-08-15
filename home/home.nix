@@ -103,6 +103,9 @@ in
         ${curl}/bin/curl -X POST --data-binary @- https://paste.codebam.ca
       '')
 
+      # Bound to a tmux popup in home/shell-common.nix by store path; on PATH
+      # as well, since the same table is worth having in a plain shell.
+      agent-overview
       bat
       claude-code
       dust

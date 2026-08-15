@@ -57,6 +57,11 @@
           # deciding what `voice-to-text` means.
           voice-to-text-stream = prev.callPackage ../../pkgs/voice-to-text-stream.nix { };
 
+          # Same reason as the two above: home-manager both installs this and
+          # names it in a tmux popup binding, and a second `callPackage` on
+          # each side would be two derivations that happen to agree.
+          agent-overview = prev.callPackage ../../pkgs/agent-overview.nix { };
+
           # Two things are wrong with nixpkgs' own `whisper-cpp-vulkan` here.
           #
           # It declares vulkan-headers and vulkan-loader, and 1.8.7's

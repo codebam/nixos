@@ -130,6 +130,11 @@
         bind g display-popup -E -w 90% -h 90% "${pkgs.lazygit}/bin/lazygit"
         bind - display-popup -E -w 80% -h 70% "$SHELL"
 
+        # Which agents are running, working, or stuck on a permission prompt.
+        # --watch redraws in place, so the popup stays live while it is open;
+        # any key closes it, since the popup shell exits with the loop.
+        bind A display-popup -E -w 90% -h 50% "${pkgs.agent-overview}/bin/agent-overview --watch"
+
         # Multi-agent ergonomics. respawn-pane -k restarts a wedged agent in
         # place, keeping the layout; synchronize-panes types one command into
         # every pane of the window, which is how you restart or re-prompt a row
