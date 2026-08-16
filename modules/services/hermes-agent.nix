@@ -564,125 +564,10 @@ let
         jq -cn --arg c "$ctx" '{context: $c}'
       '';
 
-  # ── Escalation protocol ──────────────────────────────────────────────────
-  # The default model is a flash model. It is fast and cheap and it will not
-  # notice when a problem has outgrown it — left alone it produces a confident
-  # wrong answer rather than stopping. Hermes has no way for a model to switch
-  # itself (`/model` and `/handoff` are operator commands), so the next best
-  # thing is a fixed, checkable stopping rule and a paste-ready command.
-  #
-  # `--once` rather than a bare `/model`: it spends one turn upstairs and
-  # restores the default afterwards, so an escalation cannot silently become
-  # the new baseline.
-  defaultModel = "openrouter/auto-beta";
-
-  escalationTiers = {
-    reasoning = "deepseek/deepseek-v4-pro-0813";
-    frontier = "x-ai/grok-4.6";
-  };
-
-  # The rule most likely to prevent a pointless escalation is the one naming
-  # the tools that would have answered the question — so it has to name the
-  # tools that profile actually has. A protocol telling the viewport agent to
-  # run `nix flake check` on a Rust tree teaches it to ignore the whole list.
-  mkEscalationText =
-    {
-      profile,
-      artifact,
-      risky,
-      tools,
-    }:
-    pkgs.writeText "hermes-escalation-protocol-${profile}.md" ''
-      ## Escalation protocol
-
-      You are ${defaultModel}: fast, cheap, deliberately not the strongest
-      model here. Handing up is a correct outcome, not a failure.
-
-      Escalate when any holds: two attempts at one subproblem failed; the
-      answer needs more than three interdependent files/options held at once;
-      you are about to write ${artifact} you cannot execute end-to-end in your
-      head; the task carries a correctness guarantee (${risky}); or your answer
-      would contain a placeholder, a guessed name, or "roughly" / "should work".
-
-      Do not escalate on a first attempt at a routine task, or to dodge work a
-      command settles — if ${tools} would answer it, run that. A stronger model
-      cannot see this machine and will guess where you could have looked.
-
-      To escalate, stop. No answer anyway, no best guess appended. Emit exactly:
-
-          ESCALATE
-          REASON: <one line>
-          STATE: <facts established, files read, what was tried and how it
-                  failed — enough that the next model needs no other context>
-          ASK: <the single question the stronger model must answer>
-          RUN: /model <tier-model> --once
-
-      Tiers: `${escalationTiers.reasoning}` for long multi-step logic,
-      algorithm design, a bug that resisted two hypotheses.
-      `${escalationTiers.frontier}` for architecture, ambiguous requirements,
-      security review, anything under the correctness guarantee above.
-
-      STATE is the point of the handoff — the operator pays for that turn, so
-      the question arrives researched. Max one escalation per operator turn.
-    '';
-
-  # The marker is namespaced by profile: the two profiles keep their sessions
-  # in separate directories but share this state directory, so an unqualified
-  # name would let one profile's marker suppress the other's injection.
-  mkEscalationHook =
-    profile: text:
-    mkHook "hermes-hook-escalation-protocol-${profile}"
-      [
-        pkgs.jq
-        pkgs.coreutils
-      ]
-      ''
-        payload=$(cat)
-        session=$(printf '%s' "$payload" | jq -r '.session_id // "unknown"' | tr -cd 'A-Za-z0-9._-')
-
-        # Once per session, like the context hook: these are standing rules,
-        # not per-turn advice, and re-sending them every turn is pure cost.
-        mkdir -p ${hookState}
-        marker="${hookState}/escalate-${profile}-''${session:-unknown}"
-        if [ -e "$marker" ]; then
-          printf '{}\n'
-          exit 0
-        fi
-        : > "$marker"
-
-        jq -Rs '{context: .}' < ${text}
-      '';
-
-  escalationDefault = mkEscalationHook "default" (mkEscalationText {
-    profile = "default";
-    artifact = "code or a nix expression";
-    risky = "secrets, authentication, network exposure, data migration, concurrency, or anything that activates a system generation";
-    tools = "ripgrep, the `nixos` MCP server, `nix-lsp`, `manix`, `nix flake check`, a web search skill, or reading the file";
-  });
-
-  # `git push` is the deploy button here: master builds on Cloudflare Pages and
-  # goes to production, and the CI workflow gates nothing that blocks it.
-  #
-  # That tempted an earlier version of this list to say "anything that lands on
-  # master" — true, but true of every change to the tree, which put an
-  # always-firing trigger next to "do not escalate on the first attempt at a
-  # routine task". A protocol that contradicts itself on a routine task gets
-  # discarded whole, taking the escalations that matter with it. So the list
-  # names only the changes whose blast radius is the deploy itself: wrong once,
-  # wrong for every visitor, and not caught by a build that still passes.
-  escalationSite = mkEscalationHook "site" (mkEscalationText {
-    profile = "site";
-    artifact = "Svelte, TypeScript, or a Wrangler config";
-    risky = "redirects, headers, cache or CSP rules, the Cloudflare adapter's runtime config, or a change to what the site collects about visitors";
-    tools = "ripgrep, `npm run lint`, `npm run check`, `npm run test:run`, `npm run build`, a web search skill, or reading the file";
-  });
-
-  escalationViewport = mkEscalationHook "viewport" (mkEscalationText {
-    profile = "viewport";
-    artifact = "Rust";
-    risky = "`unsafe`, FFI boundaries, lifetimes or `Send`/`Sync` bounds you are guessing at, concurrency, or Wayland protocol state machines";
-    tools = "ripgrep, the `rust-lsp` MCP server, `cargo check`, `cargo test`, a web search skill, or reading the file";
-  });
+  # Pinned rather than left to `hermes model`: that command writes into the
+  # mutable HERMES_HOME/config.yaml, and whatever it last selected would win
+  # over anything set here.
+  defaultModel = "openrouter/pareto-code";
 
   verifyNix =
     mkHook "hermes-hook-verify-nix"
@@ -961,10 +846,9 @@ let
     // lib.optionalAttrs (srv ? connect_timeout) { inherit (srv) connect_timeout; }
   );
 
-  # Hooks that apply wherever the agent runs, given that profile's escalation
-  # hook. verifyNix is deliberately absent: it lints *.nix in the flake, which
-  # is noise in a Rust tree.
-  mkCommonHooks = escalationHook: {
+  # Hooks that apply wherever the agent runs. verifyNix is deliberately absent:
+  # it lints *.nix in the flake, which is noise in a Rust tree.
+  commonHooks = {
     pre_tool_call = [
       {
         matcher = "terminal";
@@ -982,10 +866,6 @@ let
     pre_llm_call = [
       {
         command = sessionContext;
-        timeout = 15;
-      }
-      {
-        command = escalationHook;
         timeout = 15;
       }
     ];
@@ -1006,12 +886,20 @@ let
       # it here puts it back on every activation.
       provider = "openrouter";
     };
+
+    # Read only when model.default is `openrouter/pareto-code`: it becomes the
+    # pareto-router plugin's `min_coding_score`, the floor OpenRouter routes
+    # against when picking a coder. Out of range or empty means unset, which
+    # lets OR pick the strongest coder regardless of price.
+    openrouter.min_coding_score = 0.65;
+
     # A turn that carries an image is described by a cheap vision model first,
     # and the main model only ever sees that text. `text` rather than `auto`
     # because auto hands the pixels straight to the main model whenever that
-    # model reports supports_vision -- and with `openrouter/auto-beta` as the
-    # default, which model that is changes per request. Pinning the mode keeps
-    # image turns on one known-priced model instead of whatever auto picked.
+    # model reports supports_vision -- and with `openrouter/pareto-code` as
+    # the default, which model that is changes per request. Pinning the mode keeps
+    # image turns on one known-priced model instead of whatever the router
+    # picked.
     agent.image_input_mode = "text";
 
     auxiliary.vision = {
@@ -1040,9 +928,9 @@ let
     # away by the agent or by `hermes update`.
     skills.external_dirs = [ "${hermesSkills}" ];
 
-    # No `hooks` here on purpose: the escalation hook differs per profile, so
-    # each consumer below builds its own set with mkCommonHooks. Inheriting a
-    # default here would silently give a new profile the flake's tool list.
+    # No `hooks` here on purpose: each consumer below sets its own from
+    # commonHooks. Inheriting a default here would silently give a new profile
+    # the flake's tool list.
 
     # The gateway and cron run with no TTY, so the first-use consent prompt
     # can never be answered there. Safe here only because every `command:`
@@ -1059,7 +947,7 @@ let
     baseSettings
     // {
       mcp_servers = renderMcp (mcpCommon // mcpViewport);
-      hooks = mkCommonHooks escalationViewport;
+      hooks = commonHooks;
       terminal = baseSettings.terminal // {
         cwd = viewportClone;
       };
@@ -1070,7 +958,7 @@ let
     baseSettings
     // {
       mcp_servers = renderMcp mcpCommon;
-      hooks = mkCommonHooks escalationSite;
+      hooks = commonHooks;
       terminal = baseSettings.terminal // {
         cwd = siteTree;
       };
@@ -1161,7 +1049,7 @@ in
       mcpServers = mcpCommon // mcpNixos;
 
       settings = baseSettings // {
-        hooks = (mkCommonHooks escalationDefault) // {
+        hooks = commonHooks // {
           # Default profile only: the flake is the tree this lints.
           pre_verify = [
             {
