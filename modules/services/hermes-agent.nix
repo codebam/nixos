@@ -684,6 +684,35 @@ let
     extraPythonPackages = [ registrationLifecycle ];
   };
 
+  # Upstream's `hermesDesktop` does not build at 411903b: the renderer's
+  # `npm exec -- tsc -b` typechecks the test files next to the sources, and
+  # apps/desktop/src/app/session/hooks/use-session-actions.test.tsx imports
+  # `tests/fixtures/session-resume-active-turn.json` from the repo root --
+  # a directory the package's own source filter (nix/lib.nix `mkNpmSrc`,
+  # scoped by `dirs = [ "apps/desktop" "apps/shared" ]`) does not include, so
+  # the build dies on TS2307 "Cannot find module".
+  #
+  # The renderer is a `let` binding inside nix/desktop.nix, so there is
+  # nothing to overrideAttrs from out here. Call that file again instead with
+  # a hermesNpmLib whose buildNpmPackage widens `dirs` -- the fixture then
+  # lands in the filtered src and tsc resolves it. Everything else (electron
+  # version, node-pty headers, the wrapper) stays upstream's.
+  #
+  # Drop this once the fixture is in `dirs` upstream, or the typecheck stops
+  # covering *.test.tsx.
+  hermesDesktop = pkgs.callPackage "${inputs.hermes-agent}/nix/desktop.nix" {
+    inherit pkgs;
+    hermesAgent = hermesPackage;
+    inherit (pkgs) electron;
+    hermesNpmLib = hermesPackage.hermesNpmLib // {
+      buildNpmPackage =
+        attrs:
+        hermesPackage.hermesNpmLib.buildNpmPackage (
+          attrs // { dirs = attrs.dirs ++ [ "tests/fixtures" ]; }
+        );
+    };
+  };
+
   # rust-analyzer needs rustc, cargo, and the bindgen/pkg-config environment to
   # resolve the crate graph; a bare binary on PATH resolves nothing. The
   # project's own devShell already assembles exactly that, so borrow it.
@@ -1170,9 +1199,9 @@ in
     # Add hermes desktop app as a home-manager package for codebam
     home-manager.users.codebam = {
       home.packages = [
-        # Same override as the service package, so the desktop app inherits the
-        # missing-module fix instead of wrapping the unpatched build.
-        hermesPackage.hermesDesktop
+        # Wraps hermesPackage, so the desktop app inherits the same
+        # missing-module fix as the service instead of the unpatched build.
+        hermesDesktop
         # Operator tool, not an agent tool: it reads the agent's skill trees and
         # pushes with this user's git credentials.
         skillsBackup
