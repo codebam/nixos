@@ -20,7 +20,7 @@
     cursor = {
       package = pkgs.capitaine-cursors;
       name = "capitaine-cursors";
-      size = 24;
+      size = 32;
     };
     icons = {
       package = pkgs.papirus-icon-theme;
