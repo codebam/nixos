@@ -262,6 +262,16 @@ in
     # left. Milliseconds, not the seconds the idle block uses, because the
     # useful values here are not whole seconds. Zero or absent is off.
     cursor = {
+      # Named here rather than left to XCURSOR_THEME and XCURSOR_SIZE in the
+      # environment. The user manager outlives a rebuild and keeps whatever it
+      # imported: a phinger-era 24 was still being handed to every session long
+      # after stylix had moved to capitaine at 32, and the compositor honoured
+      # it — correctly, having no way to tell a stale value from a chosen one.
+      # Set here it is the compositor that decides, and it exports the pair and
+      # announces the size over the settings portal, so toolkits agree with the
+      # pointer on the desktop.
+      theme = osConfig.stylix.cursor.name;
+      size = osConfig.stylix.cursor.size;
       hide_after_ms = 2000;
     };
 
