@@ -287,6 +287,13 @@ in
     # this file too and does not.
     // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
       "Mod4+Mouse5" = "exec ${lib.getExe osConfig.voiceToText.binding}";
+    }
+    # Same chord as in home/sway.nix. Throttles builds.slice down to a tenth of
+    # the machine (and off the reserved cores) so a rebuild cannot stutter an
+    # OBS capture; press again to give the CPU back. Only bound where the host
+    # enables the module -- the Steam Deck imports this file too.
+    // lib.optionalAttrs (osConfig.streamingMode.enable or false) {
+      "Mod4+Shift+o" = "exec ${lib.getExe osConfig.streamingMode.package} toggle";
     };
   };
 }

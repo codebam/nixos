@@ -9,6 +9,19 @@
   powerManagement.enable = true;
   powerManagement.cpuFreqGovernor = "performance";
 
+  # 5700X3D: 8 cores, SMT on, siblings paired as n / n+8. Excluding 6,7,14,15
+  # hands two whole physical cores to the compositor and OBS while streaming
+  # mode is on; builds keep the other six. max-jobs is `auto` (16) with
+  # cores = 2 (modules/system/nix.nix), so a rebuild will happily fill every
+  # thread it is allowed to see -- the point is that it can no longer see
+  # these four.
+  streamingMode = {
+    buildCpus = "0-5,8-13";
+    # 32G of the 64G stays out of the builders' reach, so a big link step
+    # cannot evict the page cache the encoder is reading through.
+    buildMemoryHigh = "32G";
+  };
+
   systemd = {
     services = {
       # services.hardware.openrgb exposes a port but no host, and OpenRGB's

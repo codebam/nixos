@@ -207,6 +207,10 @@ in
             "XF86MonBrightnessUp" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set +1%";
             "XF86MonBrightnessDown" = "exec ${pkgs.brightnessctl}/bin/brightnessctl set 1%-";
             "${modifier}+i" = "inhibit_idle toggle";
+            # By name, not by store path: the script comes from the system
+            # closure (streamingMode.enable in modules/system/streaming-mode.nix)
+            # and this home config is shared with hosts that do not set it.
+            "${modifier}+shift+o" = "exec streaming-mode toggle";
             "${modifier}+Shift+e" = "exec ${pkgs.wlogout}/bin/wlogout -b 2";
           };
         assigns = { };

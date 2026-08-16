@@ -13,6 +13,7 @@
     ./system/nix.nix
     ./system/nixpkgs.nix
     ./system/preservation.nix
+    ./system/streaming-mode.nix
     ./system/sysctl.nix
     ./system/systemd.nix
     ./system/time.nix
