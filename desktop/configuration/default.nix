@@ -16,7 +16,6 @@ _:
     ./nix-serve.nix
     ./nixpkgs.nix
     ./preservation.nix
-    ./security-triage.nix
     ./searx.nix
     ./programs.nix
     ./services.nix
