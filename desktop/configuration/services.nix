@@ -506,6 +506,36 @@ in
         # it hard-locked the session once already. 160k runs at the same
         # speed with ~1.5 GiB of slack.
         #
+        # qwen3.8 (27.3B dense, arch qwen35, vision) lands on 160k too, for a
+        # different reason. Its attention is hybrid, so KV is only ~5 MiB per
+        # 1k against qwen3-coder's 27, and KV is never the binding constraint;
+        # the compute buffer and the ROCm allocator are. Measured on the card
+        # itself (mem_info_vram_used with the model resident, compositor idle
+        # at ~600 MiB), 100% GPU by ollama's own reckoning at every size:
+        #
+        #        ctx     card in use / free      tok/s
+        #        128k    22104 MiB / 2456 MiB    67.5
+        #        160k    22981 MiB / 1579 MiB    67.4
+        #        192k    23883 MiB /  677 MiB    67.4
+        #        224k    24192 MiB /  368 MiB     6.6
+        #        256k         (does not fit: 64/66 layers offloaded)
+        #
+        # 224k is the trap. Ollama reports it as 100% GPU and it still runs at
+        # a tenth the speed, because 368 MiB is not enough for the allocator to
+        # work in and it thrashes. Believe mem_info_vram_used, not `ollama ps`:
+        # ollama projects 21319 MiB for 224k while the card actually commits
+        # 24192, a ~2.9 GiB gap of allocator overhead that its fit check never
+        # sees. 192k is fast but leaves less room than the compositor wants
+        # under real load, so 160k again, on the same ~1.5 GiB rule.
+        #
+        # Probe new sizes with care. The 256k attempt OOM-killed llama-server
+        # and left one of its threads wedged in D state in amdgpu's
+        # kfd_process_notifier_release_internal, holding 22 GiB of VRAM as a
+        # zombie that survived a service restart -- the card only came back on
+        # reboot. Watch the "offloaded N/66 layers" line in the journal and
+        # abort the moment N < 66, rather than letting the load run to
+        # ollama's five-minute timeout.
+        #
         # Retrieval is unaffected: a needle-in-haystack over 101k prompt
         # tokens at depths 10/50/90% answered 3/3 at q4_0, same as q8_0.
         #

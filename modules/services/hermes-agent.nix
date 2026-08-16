@@ -1196,6 +1196,14 @@ in
     # That tree is 2770/0640 hermes:hermes, so interactive users need the group.
     users.users.codebam.extraGroups = [ "hermes" ];
 
+    # Pin the ids. The state dir is preserved across rebuilds and stores numeric
+    # ownership, so if the auto-allocated id ever moves (it has: hermes used to
+    # be 997:996, which another system user then inherited) every file in
+    # /var/lib/hermes becomes unreadable to the service and the gateway
+    # crash-loops on PermissionError for .hermes/.env and config.yaml.
+    users.users.hermes.uid = 987;
+    users.groups.hermes.gid = 980;
+
     # Add hermes desktop app as a home-manager package for codebam
     home-manager.users.codebam = {
       home.packages = [
