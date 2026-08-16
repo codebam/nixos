@@ -12,13 +12,6 @@ _:
           group = "hermes";
           mode = "2770";
         }
-        # Just the journal cursor and the escalation cooldown stamp. Losing it
-        # is not fatal, but a fresh cursor means the first scan after every
-        # boot classifies nothing.
-        {
-          directory = "/var/lib/security-triage";
-          mode = "0700";
-        }
       ];
       users = {
         codebam = {
