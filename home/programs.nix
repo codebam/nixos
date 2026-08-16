@@ -55,6 +55,12 @@
         # y/n prompt of its own — unconditionally, whether or not anything is
         # running in the shell. Closing an idle terminal is not a question.
         confirm-before-quit = false;
+        # "Plain" is rio 0.5.24's no-tabs navigation mode (the only other
+        # value is "Tab"): no tab bar, and the tab keybindings are inert.
+        # The compositor already handles windowing.
+        navigation = {
+          mode = "Plain";
+        };
         cursor = {
           shape = "block";
           blinking = false;
