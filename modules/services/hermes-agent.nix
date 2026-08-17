@@ -1198,6 +1198,19 @@ in
       };
 
       services = {
+        # terminal.cwd is "." now (see baseSettings), which is right for an
+        # interactive launch and wrong for the daemon: gateway/run.py resolves a
+        # placeholder on a local backend to Path.home(), i.e. /var/lib/hermes —
+        # the state directory, .hermes and its decrypted .env included. The unit
+        # env is the one lever that separates the two, because the gateway's
+        # config bridge deliberately skips a placeholder cwd rather than
+        # clobbering an existing TERMINAL_CWD.
+        #
+        # Not services.hermes-agent.environment: that writes to the shared
+        # $HERMES_HOME/.env, which interactive sessions read too — pinning it
+        # there would put the bug back for every `hermes` in a project.
+        hermes-agent.environment.TERMINAL_CWD = config.services.hermes-agent.workingDirectory;
+
         hermes-env-mode = {
           description = "Restore group-readable mode on the shared hermes .env";
           serviceConfig = {
