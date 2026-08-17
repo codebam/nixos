@@ -9,6 +9,7 @@ _:
     ../hardware-configuration.nix
     ./sops.nix
     ./boot.nix
+    ./cockpit.nix
     ./environment.nix
     ./flaresolverr.nix
     ./hardware.nix

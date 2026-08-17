@@ -64,7 +64,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   ├── disko.nix                # GPT → LUKS → btrfs subvolumes
 │   └── configuration/           # cleanupRoot, CachyOS, Viewport, AMDGPU, nftables
 │                                  VPN-bypass, services (Lidarr/Prowlarr/Transmission/
-│                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG), audio routing
+│                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG/Cockpit), audio routing
 │                                  (media ducker, DeepFilterNet), SOPS secrets, GPU OC,
 │                                  makano user, nix-serve (binary cache, tailnet-only)
 ├── desktop-laptop/              # Shared: Podman, IVPN, OBS Studio
@@ -145,6 +145,8 @@ Off by default (`services.gcp-builder.enable = false`). When enabled, `rebuild-s
 - **Gaming**: Steam (extest, Gamescope, Proton GE/CachyOS); Steam firewall holes closed
 - **GPU**: OpenRGB
 - **Monitoring**: SMART disk monitoring
+- **Cockpit**: web console at `http://nixos-desktop.tail7d7a2.ts.net/cockpit`
+  (loopback bind, tailnet-only vhost), with podman + files plugins
 
 ### Desktop
 - **Viewport** (Smithay rewrite): Primary Wayland compositor
