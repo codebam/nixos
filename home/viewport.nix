@@ -134,27 +134,64 @@ let
     ${pkgs.imv}/bin/imv -f "$temp_file" &
     imv_pid=$!
     sleep 0.2
-    region=$(${pkgs.slurp}/bin/slurp -o "$focused") || exit 0
+    # Bare, deliberately. `slurp -o "$focused"` reads as "select on this
+    # output" and is nothing of the kind: -o takes no argument -- it adds a
+    # snap rectangle for every output -- and the name was a positional
+    # argument slurp ignores. The selection was never held to the frozen
+    # output while the crop below assumed it was, so a drag on the other
+    # monitor cropped a region that is not in the file: ImageMagick warns
+    # "geometry does not contain image", writes a 1x1 PNG, and exits 0, which
+    # `set -e` cannot see. A selection spanning both monitors was truncated at
+    # the edge just as quietly.
+    region=$(${pkgs.slurp}/bin/slurp) || exit 0
     [ -n "$region" ] || exit 0
+
+    # The frozen file's own size, which is what the selection has to fall
+    # inside. Read from the file rather than assumed from the mode: the output
+    # is captured at its transform and scale, and this is the picture that
+    # exists.
+    # The newline is not decoration: `identify` writes the format string and
+    # nothing else, and `read` reports failure at an EOF it did not reach
+    # through one -- which under `set -e` is the whole script, two lines after
+    # the screen was frozen.
+    read -r fw fh < <(
+      ${pkgs.imagemagick}/bin/magick identify -format "%w %h\n" "$temp_file"
+    )
 
     # slurp answers in the layout's own coordinates and the frozen file is one
     # output's pixels: shift by the output's origin, and multiply by its scale,
     # which is the factor between the two. A 1.5x monitor selected 400 wide is
     # 600 pixels of the file.
+    #
+    # Unless the selection is not on that output at all, or hangs over its
+    # edge -- both of which are ordinary on two monitors, because only the
+    # focused one is frozen and the other is still live and still selectable.
+    # Then there is no crop of this file that answers, and awk says so.
     pos=''${region%% *}
     size=''${region##* }
-    read -r cx cy cw ch < <(
+    read -r mode cx cy cw ch < <(
       ${pkgs.gawk}/bin/awk -v x="''${pos%%,*}" -v y="''${pos##*,}" \
         -v w="''${size%%x*}" -v h="''${size##*x}" \
-        -v ox="$ox" -v oy="$oy" -v s="$scale" \
-        'BEGIN { printf "%d %d %d %d\n",
-                   int((x - ox) * s + 0.5), int((y - oy) * s + 0.5),
-                   int(w * s + 0.5), int(h * s + 0.5) }'
+        -v ox="$ox" -v oy="$oy" -v s="$scale" -v fw="$fw" -v fh="$fh" \
+        'BEGIN {
+           inside = (x >= ox && y >= oy &&
+                     (x + w) <= ox + fw / s && (y + h) <= oy + fh / s)
+           if (!inside) { print "live 0 0 0 0"; exit }
+           printf "crop %d %d %d %d\n",
+                    int((x - ox) * s + 0.5), int((y - oy) * s + 0.5),
+                    int(w * s + 0.5), int(h * s + 0.5) }'
     )
 
     out="$shots/screenshot-$(date +%Y%m%d%H%M%S).png"
-    ${pkgs.imagemagick}/bin/magick "$temp_file" \
-      -crop "''${cw}x''${ch}+''${cx}+''${cy}" +repage "$out"
+    if [ "$mode" = crop ]; then
+      ${pkgs.imagemagick}/bin/magick "$temp_file" \
+        -crop "''${cw}x''${ch}+''${cx}+''${cy}" +repage "$out"
+    else
+      # Off the frozen output, so cut it out of the live desktop instead: the
+      # pixels are right, they were simply not held still while the selection
+      # was made. Better than a screenshot of one pixel.
+      ${pkgs.grim}/bin/grim -g "$region" "$out"
+    fi
     ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
   '';
 in
