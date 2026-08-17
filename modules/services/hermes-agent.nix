@@ -552,16 +552,43 @@ let
         : > "$marker"
 
         generation=$(readlink -f /run/current-system 2>/dev/null || echo unknown)
-        branch=$(git -C ${nixosRepo} rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
-        head=$(git -C ${nixosRepo} rev-parse --short HEAD 2>/dev/null || echo unknown)
-        dirty=$(git -C ${nixosRepo} status --porcelain 2>/dev/null | wc -l)
         # Stated here rather than carrying an MCP time server for it.
         now=$(date --iso-8601=minutes)
 
-        ctx=$(printf 'Host: NixOS, declarative. Now: %s (%s). Flake: %s (branch %s @ %s, %s uncommitted paths). Running generation: %s. Any nixpkgs tool: "nix run nixpkgs#<pkg>" or ", <command>" - never ask for an install to run something once. No sudo: escalate with "run0 <command>". nixos-rebuild switch/boot and garbage collection are blocked, operator-only. Load the nixos-host skill before editing the flake.' \
-          "$now" "${config.time.timeZone}" "${nixosRepo}" "$branch" "$head" "$dirty" "$generation")
+        host=$(printf 'Host: NixOS, declarative. Now: %s (%s). Running generation: %s. Any nixpkgs tool: "nix run nixpkgs#<pkg>" or ", <command>" - never ask for an install to run something once. No sudo: escalate with "run0 <command>". nixos-rebuild switch/boot and garbage collection are blocked, operator-only.' \
+          "$now" "${config.time.timeZone}" "$generation")
 
-        jq -cn --arg c "$ctx" '{context: $c}'
+        # Which tree this session is in. The agent kept assuming the flake was
+        # the work whatever directory it was started in, because this hook used
+        # to describe the flake unconditionally and nothing named the actual
+        # cwd. The hook payload carries it; say it first and say it plainly.
+        cwd=$(printf '%s' "$payload" | jq -r '.cwd // empty')
+        [ -n "$cwd" ] && [ -d "$cwd" ] || cwd=$PWD
+
+        describe_repo() {
+          root=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || {
+            printf 'not a git work tree'
+            return
+          }
+          branch=$(git -C "$1" rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+          head=$(git -C "$1" rev-parse --short HEAD 2>/dev/null || echo unknown)
+          dirty=$(git -C "$1" status --porcelain 2>/dev/null | wc -l)
+          printf 'git repo %s, branch %s @ %s, %s uncommitted paths' \
+            "$root" "$branch" "$head" "$dirty"
+        }
+
+        case "$cwd" in
+          ${nixosRepo} | ${nixosRepo}/* | /etc/nixos | /etc/nixos/*)
+            work=$(printf 'Working directory: %s - this is the NixOS flake (%s). Load the nixos-host skill before editing it.' \
+              "$cwd" "$(describe_repo "$cwd")")
+            ;;
+          *)
+            work=$(printf 'Working directory: %s (%s). This is the project for this session: relative paths, searches, and edits belong here. The NixOS flake at %s is a DIFFERENT tree that merely happens to configure this machine - do not read, edit, or reason about it unless the user asks about the system config itself.' \
+              "$cwd" "$(describe_repo "$cwd")" "${nixosRepo}")
+            ;;
+        esac
+
+        jq -cn --arg w "$work" --arg h "$host" '{context: ($w + " " + $h)}'
       '';
 
   # Pinned rather than left to `hermes model`: that command writes into the
@@ -943,6 +970,23 @@ let
     terminal = {
       backend = "local";
       timeout = 600;
+      # "." is hermes's placeholder for "use the launch directory" (cli.py and
+      # tui_gateway/server.py both special-case ".", "auto", "cwd").
+      #
+      # It has to be said explicitly, because the upstream NixOS module always
+      # renders `terminal.cwd = cfg.workingDirectory` into config.yaml, i.e.
+      # /var/lib/hermes/workspace. The TUI gateway reads that file directly
+      # (_launch_configured_cwd) and it wins over os.getcwd(), so every
+      # interactive `hermes` started inside a project believed its workspace
+      # was the empty service directory and had to be told the project path by
+      # hand. The plain CLI path never had the bug — it force-overwrites cwd
+      # with os.getcwd() for a local backend — which is why it only showed up
+      # some of the time.
+      #
+      # The headless gateway is unaffected: its unit sets
+      # WorkingDirectory=/var/lib/hermes/workspace, so os.getcwd() lands in the
+      # same place the pinned value used to.
+      cwd = ".";
     };
     display = {
       compact = false;
