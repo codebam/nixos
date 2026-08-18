@@ -30,7 +30,6 @@
       "steam-unwrapped"
       "steamdeck-hw-theme"
       "steamcmd"
-      "ndi-6"
     ];
     description = "Unfree package names this system is allowed to build.";
   };
