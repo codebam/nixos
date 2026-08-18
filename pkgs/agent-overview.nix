@@ -57,11 +57,13 @@ writeShellApplication {
       fi
     }
 
-    # Filled by draw(), read by the key handler: row number -> session name,
+    # Filled by draw(), read by the key handler: row number -> session id,
     # and the rendered line for each, which is what `/` hands to fzf so the
     # filter list is the table rather than a second, plainer view of it. The
     # loop below runs in this shell (`done < <(...)`, not a pipe), so both
-    # arrays survive the function.
+    # arrays survive the function. Ids rather than names, because a session
+    # named `agent-seanbehan.ca-claude` is parsed by tmux as pane `ca-claude`
+    # of session `agent-seanbehan` -- any `.` or `:` in a name splits a target.
     rows=()
     lines=()
 
@@ -82,7 +84,7 @@ writeShellApplication {
     }
 
     draw() {
-      local now sess attached activity pane path dir body tool prof status branch ctx cost row
+      local now sess sid attached activity pane path dir body tool prof status branch ctx cost row
       now=$(date +%s)
       rows=()
       lines=()
@@ -92,7 +94,7 @@ writeShellApplication {
 
       # A session with no panes is a session being torn down; `|| continue`
       # rather than a failure, since this runs on a timer.
-      while IFS=$'\t' read -r sess attached activity; do
+      while IFS=$'\t' read -r sid sess attached activity; do
         # Every pane, not just the first: a window can hold an agent beside a
         # shell, and which half is pane 0 is an accident of how it was split.
         # The first pane running one of the three wins.
@@ -112,7 +114,7 @@ writeShellApplication {
             pane=$p
             break
           fi
-        done < <(tmux list-panes -t "$sess" -F '#{pane_id}' 2>/dev/null)
+        done < <(tmux list-panes -t "$sid" -F '#{pane_id}' 2>/dev/null)
 
         # No agent found. Keep the session anyway if it is named like one --
         # that is an agent still starting up, or one that just exited, and
@@ -120,7 +122,7 @@ writeShellApplication {
         if [ -z "$tool" ]; then
           case $sess in
             "$prefix"*)
-              pane=$(tmux list-panes -t "$sess" -F '#{pane_id}' | head -1) || continue
+              pane=$(tmux list-panes -t "$sid" -F '#{pane_id}' | head -1) || continue
               tool="-"
               ;;
             *) continue ;;
@@ -193,7 +195,7 @@ writeShellApplication {
             ;;
         esac
 
-        rows+=("$sess")
+        rows+=("$sid")
 
         # %b on status, because the colour is already an escape sequence and
         # its bytes would otherwise count towards the field width.
@@ -203,7 +205,7 @@ writeShellApplication {
           "$dir" "$branch" "''${ctx:--}" "''${cost:--}")
         lines+=("$row")
         printf '%s\n' "$row"
-      done < <(tmux list-sessions -F '#{session_name}	#{session_attached}	#{session_activity}' 2>/dev/null)
+      done < <(tmux list-sessions -F '#{session_id}	#{session_name}	#{session_attached}	#{session_activity}' 2>/dev/null)
 
       if [ "$watch" = 1 ]; then
         printf '\n\033[90m1-9 connect  ·  / filter  ·  q quit  ·  %s\033[0m\n' "$(date +%H:%M:%S)"
