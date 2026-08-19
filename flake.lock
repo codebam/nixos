@@ -268,6 +268,7 @@
     "hermes-agent": {
       "inputs": {
         "flake-parts": "flake-parts",
+        "home-manager": "home-manager_2",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -277,11 +278,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1787067744,
-        "narHash": "sha256-DwiA4XOZxpbJuLGc/niq95txAUzT0YghkKLQwF7VZMU=",
+        "lastModified": 1787102933,
+        "narHash": "sha256-iqhYpopnmz/9s77VFwP51oGt5KQuNn1TF7DvLF19iX4=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "9664e386f67965ec8bec5cf3db9d411f2c2b6cc0",
+        "rev": "66bb77cbf95614760d12445218a8e5af18e0b0a1",
         "type": "github"
       },
       "original": {
@@ -312,6 +313,27 @@
       }
     },
     "home-manager_2": {
+      "inputs": {
+        "nixpkgs": [
+          "hermes-agent",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786487128,
+        "narHash": "sha256-ad60hrRVhH/bo3Jl1YLzO+QcS3mUNZr9LNJdzhMO2P4=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "f404edbfa4117810c96b97048299242fc50e5362",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "home-manager_3": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -587,7 +609,7 @@
         "chaotic": "chaotic",
         "disko": "disko",
         "hermes-agent": "hermes-agent",
-        "home-manager": "home-manager_2",
+        "home-manager": "home-manager_3",
         "lanzaboote": "lanzaboote",
         "lsfg-vk-flake": "lsfg-vk-flake",
         "nix-index-database": "nix-index-database",
