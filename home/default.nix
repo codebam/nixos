@@ -4,6 +4,7 @@ _:
   imports = [
     ./sops.nix
     ./home.nix
+    ./agents.nix
     ./programs.nix
     ./services.nix
     ./shell-common.nix

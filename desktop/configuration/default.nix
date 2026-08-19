@@ -2,8 +2,10 @@ _:
 
 {
   # The module itself is modules/services/hermes-agent.nix, imported by every
-  # host and off everywhere but here.
-  hermesAgent.enable = true;
+  # host and now off everywhere: opencode and pi replaced it as the harnesses
+  # on this machine. Flipping this back restores the service, its user, and the
+  # hermes-env secret ownership in ./sops.nix.
+  hermesAgent.enable = false;
 
   imports = [
     ../hardware-configuration.nix

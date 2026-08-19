@@ -1,4 +1,8 @@
-_:
+{
+  config,
+  lib,
+  ...
+}:
 
 {
   sops = {
@@ -14,9 +18,21 @@ _:
         owner = "navidrome";
         group = "navidrome";
       };
-      hermes-env = {
+      # Gated on the module: it owns the `hermes` user, so leaving the
+      # ownership here unconditional would hand sops-nix a chown against a
+      # user that no longer exists once hermesAgent.enable is false.
+      hermes-env = lib.mkIf config.hermesAgent.enable {
         owner = "hermes";
         group = "hermes";
+      };
+      # Same yaml key as hermes-env, mounted separately for codebam so the
+      # opencode and pi wrappers can lift OPENROUTER_API_KEY out of it. One key
+      # in secrets.yaml, one rotation point, and it stays mounted whether or
+      # not the hermes module is enabled.
+      opencode-env = {
+        key = "hermes-env";
+        owner = "codebam";
+        group = "users";
       };
       searx-secret = { };
       "unredacted.org" = {
