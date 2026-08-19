@@ -262,7 +262,6 @@ in
       "cpu"
       "load"
       "memory"
-      { type = "net"; }
       "clock"
     ];
 
