@@ -20,9 +20,26 @@ let
     fi
   '';
 
-  # Priced at $1.4/$4.4 per Mtok with a 1M context window. The cheap model
-  # handles titles, summaries, and other background turns.
-  codingModel = "z-ai/glm-5.3";
+  # OpenRouter's Pareto Code Router picks a coder per request off the current
+  # price/capability frontier, so there is no fixed per-token price to quote.
+  # The floor below is what keeps it from bottoming out on a weak one.
+  codingModel = "openrouter/pareto-code";
+
+  # min_coding_score (0.0-1.0) is the router's capability floor: higher routes
+  # to stronger and pricier coders, lower opens up cheap ones. 0.65 lands
+  # mid-frontier and is the same floor the hermes module used. Omitting the
+  # plugin entirely is NOT the neutral choice -- the router then picks the
+  # strongest available coder, which is the expensive end.
+  minCodingScore = 0.65;
+  paretoPlugin = [
+    {
+      id = "pareto-router";
+      min_coding_score = minCodingScore;
+    }
+  ];
+
+  # Background turns (titles, summaries) do not need the router. $0.3/$1.2 per
+  # Mtok, fixed.
   cheapModel = "minimax/minimax-m3";
 
   opencode = pkgs.symlinkJoin {
@@ -51,6 +68,41 @@ let
     defaultProvider = "openrouter";
     defaultModel = codingModel;
     enableInstallTelemetry = false;
+    # Cheapest reasoning tier that still routes; raise per session with the
+    # thinking-level picker when a task actually needs it.
+    defaultThinkingLevel = "low";
+    # Pi has no permission system, so this is the one guardrail it offers:
+    # never load a project's own settings, resources, or extensions without an
+    # explicit `/trust`.
+    defaultProjectTrust = "never";
+  };
+
+  # pi 0.84.2 bundles an OpenRouter catalog that predates the Pareto router
+  # (it knows openrouter/auto, auto-beta, free, and fusion), so the model is
+  # added by hand. Custom models are upserted by id into the built-in
+  # provider, which keeps its baseUrl and auth.
+  #
+  # samplingParams is merged verbatim into the request body, which is how the
+  # router plugin gets through. Metadata mirrors openrouter/auto: the router
+  # advertises a 2M window and variable pricing, so cost is left at zero
+  # rather than guessed at.
+  piModels = {
+    providers.openrouter.models = [
+      {
+        id = codingModel;
+        name = "Pareto Code Router";
+        api = "openai-completions";
+        reasoning = true;
+        input = [ "text" ];
+        contextWindow = 2000000;
+        maxTokens = 32000;
+        compat = {
+          supportsDeveloperRole = false;
+          thinkingFormat = "openrouter";
+        };
+        samplingParams.plugins = paretoPlugin;
+      }
+    ];
   };
 
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
@@ -68,25 +120,51 @@ let
   '';
 in
 {
-  home.packages = [
-    opencode
-    pi
-  ];
+  home = {
+    packages = [
+      opencode
+      pi
+    ];
+
+    # Pi's settings.json is mutable state — `/settings` and the model picker
+    # write to it — so it cannot be a read-only store symlink like opencode's
+    # config. Merge instead, nix keys winning, the same way the hermes module
+    # handled its own config.yaml.
+    activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${piSettingsMerge}
+    '';
+
+    # models.json, unlike settings.json, is user-authored config that pi only
+    # reads, so it can be a plain store symlink.
+    file.".pi/agent/models.json".text = builtins.toJSON piModels;
+  };
 
   # Written from nix rather than left to `opencode` itself: the TUI's model
   # picker persists into this same file, and a hand-picked model would
   # otherwise outlive the choice made here.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
+    # provider/model, so the openrouter provider plus the router's own
+    # `openrouter/pareto-code` id doubles the prefix.
     model = "openrouter/${codingModel}";
     small_model = "openrouter/${cheapModel}";
+
+    # opencode ships permissive: every tool runs unprompted. Edits and shell
+    # commands ask first here, since these harnesses run against this flake.
+    permission = {
+      edit = "ask";
+      bash = "ask";
+      external_directory = "ask";
+      webfetch = "ask";
+      task = "ask";
+    };
+
+    # The binary is a store path it cannot rewrite, and sessions should not
+    # leave the machine unless asked for explicitly.
+    autoupdate = false;
+    share = "disabled";
+
+    provider.openrouter.models.${codingModel}.options.plugins = paretoPlugin;
   };
 
-  # Pi's settings.json is mutable state — `/settings` and the model picker
-  # write to it — so it cannot be a read-only store symlink like opencode's
-  # config. Merge instead, nix keys winning, the same way the hermes module
-  # handles its own config.yaml.
-  home.activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${piSettingsMerge}
-  '';
 }
