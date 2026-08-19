@@ -202,7 +202,7 @@ in
   # state, which is the difference between a broken desktop and a machine you
   # cannot quit without switching to a TTY.
   xdg.configFile."viewport/config.json".text = builtins.toJSON {
-    layout = "canvas";
+    layout = "scrolling";
 
     # What Mod4+Return opens. Without it the compositor falls back to its
     # built-in default, which is foot.
