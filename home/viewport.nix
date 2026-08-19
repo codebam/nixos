@@ -280,8 +280,8 @@ in
     # surface the compositor draws, so it crops each client to the same corner
     # the page drew — square here, which costs it nothing.
     border = {
-      radius = 0;
-      width = 1;
+      radius = 25;
+      width = 2;
     };
 
     # No theme block, deliberately. Every key here is written straight onto
