@@ -24,6 +24,7 @@
       "libretro-snes9x"
       "rpcs3"
       "sigmashake-desktop"
+      "ssg"
       "steam"
       "steam-jupiter-unwrapped"
       "steam-original"
@@ -65,8 +66,11 @@
 
           # Vendor ships a prebuilt Wails + WebKitGTK tarball, no nixpkgs
           # package. Overlay so home-manager and systemPackages name one
-          # derivation (useGlobalPkgs).
+          # derivation (useGlobalPkgs). Not installed right now; the CLI is.
           sigmashake-desktop = prev.callPackage ../../pkgs/sigmashake-desktop.nix { };
+
+          # Official CLI from https://sigmashake.com/install (static Go binary).
+          ssg = prev.callPackage ../../pkgs/ssg.nix { };
 
           # Two things are wrong with nixpkgs' own `whisper-cpp-vulkan` here.
           #
