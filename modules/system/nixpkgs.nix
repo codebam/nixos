@@ -23,6 +23,7 @@
       "libretro-mame2015"
       "libretro-snes9x"
       "rpcs3"
+      "sigmashake-desktop"
       "steam"
       "steam-jupiter-unwrapped"
       "steam-original"
@@ -61,6 +62,11 @@
           # names it in a tmux popup binding, and a second `callPackage` on
           # each side would be two derivations that happen to agree.
           agent-overview = prev.callPackage ../../pkgs/agent-overview.nix { };
+
+          # Vendor ships a prebuilt Wails + WebKitGTK tarball, no nixpkgs
+          # package. Overlay so home-manager and systemPackages name one
+          # derivation (useGlobalPkgs).
+          sigmashake-desktop = prev.callPackage ../../pkgs/sigmashake-desktop.nix { };
 
           # Two things are wrong with nixpkgs' own `whisper-cpp-vulkan` here.
           #

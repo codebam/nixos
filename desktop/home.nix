@@ -8,6 +8,7 @@
     # `nix shell nixpkgs#android-studio` when it is actually needed.
     packages = with pkgs; [
       bolt-launcher
+      sigmashake-desktop
     ];
   };
 

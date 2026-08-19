@@ -166,6 +166,9 @@ _: {
             ".cache/iamb"
             ".local/share/uv"
             ".local/bin"
+            # SigmaShake Desktop: license, prefs, daemon state. Not generated
+            # by the flake; a root wipe would drop the login.
+            ".sigmashake"
           ];
         };
       };
