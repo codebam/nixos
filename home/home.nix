@@ -135,6 +135,7 @@ in
       high-tide
       feishin
       cinny-desktop
+      vesktop
       (pkgs.python3.withPackages (
         python-pkgs: with python-pkgs; [
           virtualenv
