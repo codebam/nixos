@@ -111,6 +111,14 @@
         set -s set-clipboard on
         set -g focus-events on
 
+        # Without this tmux strips the modifier off Enter, so Shift+Enter and
+        # Ctrl+Enter arrive as a plain `\r`. Agent TUIs bind Enter to submit
+        # and Shift+Enter to newline, which collapse into each other. csi-u
+        # rather than the `xterm` default: both work, but csi-u is what the
+        # agents document, and it needs tmux 3.5+ (this host is on 3.7b).
+        set -g extended-keys on
+        set -g extended-keys-format csi-u
+
         # keyMode = "vi" only affects movement in copy-mode. Selection keeps
         # tmux's own bindings: Space starts a selection, Enter copies, and `v`
         # is rectangle-toggle. Rebind to what vi actually does, since reading
