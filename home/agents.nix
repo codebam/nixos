@@ -68,9 +68,9 @@ let
     defaultProvider = "openrouter";
     defaultModel = codingModel;
     enableInstallTelemetry = false;
-    # Cheapest reasoning tier that still routes; raise per session with the
-    # thinking-level picker when a task actually needs it.
-    defaultThinkingLevel = "low";
+    # Adjust per session with the thinking-level picker when a task wants
+    # more or less.
+    defaultThinkingLevel = "medium";
     # Pi has no permission system, so this is the one guardrail it offers:
     # never load a project's own settings, resources, or extensions without an
     # explicit `/trust`.
@@ -164,7 +164,23 @@ in
     autoupdate = false;
     share = "disabled";
 
-    provider.openrouter.models.${codingModel}.options.plugins = paretoPlugin;
+    # models.dev lists the router as non-reasoning, so opencode would send no
+    # thinking parameters at all for it; `reasoning` here marks it capable and
+    # `options.reasoning` sets the tier the underlying coder gets.
+    #
+    # Caveat: opencode has a standing report of provider model `options` being
+    # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
+    # closed unresolved). Whether 1.18.18 still drops them is unverified here,
+    # and the failure is silent both ways -- no plugin means the router takes
+    # the strongest, priciest coder, and no reasoning block means default
+    # effort. Check one live request body before trusting either.
+    provider.openrouter.models.${codingModel} = {
+      reasoning = true;
+      options = {
+        plugins = paretoPlugin;
+        reasoning.effort = "medium";
+      };
+    };
   };
 
 }
