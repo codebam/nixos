@@ -423,6 +423,12 @@
           "network.predictor.enabled" = false;
           "gfx.webrender.all" = true;
           "layers.acceleration.force-enabled" = true;
+          # Follow the desktop's colour scheme. The default here is 2,
+          # "auto", which means the portal is only read inside a sandbox —
+          # a native build falls back to GTK settings instead, and this
+          # machine has none, so Firefox stayed light while every portal
+          # client went dark. 1 is always.
+          "widget.use-xdg-desktop-portal.settings" = 1;
         };
       };
     };
