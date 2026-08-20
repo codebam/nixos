@@ -34,6 +34,12 @@
         owner = "codebam";
         group = "users";
       };
+      # Same hermes-env key again, this time left root-owned: litellm runs
+      # under a DynamicUser, and systemd reads EnvironmentFile as root before
+      # the unit drops privileges, so no chown is needed and none is wanted.
+      litellm-env = {
+        key = "hermes-env";
+      };
       searx-secret = { };
       "unredacted.org" = {
         sopsFile = ../../secrets/passwords.enc.yaml;

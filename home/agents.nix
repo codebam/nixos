@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  osConfig ? { },
   ...
 }:
 
@@ -67,6 +68,49 @@ let
   # Background turns (titles, summaries) do not need the router. $0.3/$1.2 per
   # Mtok, fixed.
   cheapModel = "minimax/minimax-m3";
+
+  # The litellm gateway from desktop/configuration/litellm.nix: qwen3.8 27B on
+  # the local card, transparently continued on OpenRouter's copy of the same
+  # model once a session outgrows the 160k the GPU can hold. One model id from
+  # opencode's side; the switch happens inside the proxy.
+  gatewayUrl = "http://127.0.0.1:4000/v1";
+  gatewayModel = "qwen3.8";
+
+  # Only the desktop has the card and therefore the gateway; this same home
+  # config lands on the laptop and the steamdeck, where pointing the default
+  # model at a port nothing is listening on would break every session. Those
+  # hosts stay on the router.
+  hasGateway = osConfig.services.litellm.enable or false;
+
+  # The gateway is OpenAI-compatible and unknown to models.dev, so both the
+  # transport and the whole model entry are spelled out. The key is ignored --
+  # litellm is bound to loopback with no master_key -- but the ai-sdk client
+  # refuses to construct without one.
+  #
+  # `limit.context` is deliberately the *fallback's* window, not the local
+  # 160k: it is what opencode counts against before it decides to compact, and
+  # compacting at 160k would defeat the point of having a 1M-token deployment
+  # waiting behind the proxy. Sessions now compact only when OpenRouter's copy
+  # is full too.
+  gatewayProvider = lib.optionalAttrs hasGateway {
+    litellm = {
+      npm = "@ai-sdk/openai-compatible";
+      name = "LiteLLM (local qwen3.8, OpenRouter fallback)";
+      options = {
+        baseURL = gatewayUrl;
+        apiKey = "unused";
+      };
+      models.${gatewayModel} = {
+        name = "qwen3.8 27B (local, cloud past 145k)";
+        tool_call = true;
+        reasoning = true;
+        limit = {
+          context = 1000000;
+          output = 32000;
+        };
+      };
+    };
+  };
 
   opencode = pkgs.symlinkJoin {
     name = "opencode-wrapped-${pkgs.opencode.version}";
@@ -170,9 +214,15 @@ in
   # otherwise outlive the choice made here.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    # provider/model, so the openrouter provider plus the router's own
-    # `openrouter/pareto-code` id doubles the prefix.
-    model = "openrouter/${codingModel}";
+    # Local-first: this is the litellm gateway, not a cloud endpoint. The
+    # openrouter models below stay in `/models` for a session that wants a
+    # different model rather than a bigger window -- the window is already
+    # handled, by the gateway falling back on its own.
+    #
+    # Note the id shape: opencode addresses models as provider/model, so the
+    # openrouter provider plus the router's own `openrouter/pareto-code` id
+    # doubles the prefix, while the gateway's flat `qwen3.8` does not.
+    model = if hasGateway then "litellm/${gatewayModel}" else "openrouter/${codingModel}";
     small_model = "openrouter/${cheapModel}";
 
     # opencode ships permissive: every tool runs unprompted. Kept that way on
@@ -197,25 +247,39 @@ in
     # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
     # comes from models.dev, and the endpoint is built from
     # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
-    provider.cloudflare-workers-ai.models.${cfModel} = { };
+    provider = {
+      cloudflare-workers-ai.models.${cfModel} = { };
 
-    # models.dev lists the router as non-reasoning, so opencode would send no
-    # thinking parameters at all for it; `reasoning` here marks it capable and
-    # `options.reasoning` sets the tier the underlying coder gets.
-    #
-    # Caveat: opencode has a standing report of provider model `options` being
-    # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
-    # closed unresolved). Whether 1.18.18 still drops them is unverified here,
-    # and the failure is silent both ways -- no plugin means the router takes
-    # the strongest, priciest coder, and no reasoning block means default
-    # effort. Check one live request body before trusting either.
-    provider.openrouter.models.${codingModel} = {
-      reasoning = true;
-      options = {
-        plugins = paretoPlugin;
-        reasoning.effort = "medium";
+      # The gateway is OpenAI-compatible and unknown to models.dev, so both the
+      # transport and the whole model entry are spelled out here. The key is
+      # ignored -- litellm is bound to loopback with no master_key -- but the
+      # ai-sdk client refuses to construct without one.
+      #
+      # `limit.context` is deliberately the *fallback's* window, not the local
+      # 160k: it is what opencode counts against before it decides to compact,
+      # and compacting at 160k would defeat the point of having a 1M-token
+      # deployment waiting behind the proxy. Sessions now compact only when
+      # OpenRouter's copy is also full.
+
+      # models.dev lists the router as non-reasoning, so opencode would send no
+      # thinking parameters at all for it; `reasoning` here marks it capable and
+      # `options.reasoning` sets the tier the underlying coder gets.
+      #
+      # Caveat: opencode has a standing report of provider model `options` being
+      # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
+      # closed unresolved). Whether 1.18.18 still drops them is unverified here,
+      # and the failure is silent both ways -- no plugin means the router takes
+      # the strongest, priciest coder, and no reasoning block means default
+      # effort. Check one live request body before trusting either.
+      openrouter.models.${codingModel} = {
+        reasoning = true;
+        options = {
+          plugins = paretoPlugin;
+          reasoning.effort = "medium";
+        };
       };
-    };
+    }
+    // gatewayProvider;
   };
 
 }

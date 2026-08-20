@@ -15,6 +15,7 @@ _:
     ./environment.nix
     ./flaresolverr.nix
     ./hardware.nix
+    ./litellm.nix
     ./networking.nix
     ./nix-serve.nix
     ./nixpkgs.nix
