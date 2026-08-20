@@ -312,6 +312,10 @@ in
     # binds_override appends/overrides keybindings on top of built-in defaults
     # without suppressing the default keymap.
     binds_override = {
+      # Mute or unmute the microphone. wpctl talks to wireplumber, which is
+      # what the bar's mic module and sway's push-to-talk binding already use,
+      # so all three agree on one mute state.
+      "Mod4+space" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
