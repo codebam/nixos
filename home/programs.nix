@@ -422,6 +422,8 @@
           "network.http.speculative-parallel-limit" = 0;
           "network.predictor.enabled" = false;
           "gfx.webrender.all" = true;
+          "webgl.disabled" = false;
+          "webgl.force-enabled" = true;
           "layers.acceleration.force-enabled" = true;
           # Read the colour scheme from the portal rather than from GTK.
           # The default is 2, "auto", which means the portal is only read
