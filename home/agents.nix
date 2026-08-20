@@ -175,14 +175,14 @@ in
     model = "openrouter/${codingModel}";
     small_model = "openrouter/${cheapModel}";
 
-    # opencode ships permissive: every tool runs unprompted. Edits and shell
-    # commands ask first here, since these harnesses run against this flake.
+    # opencode ships permissive: every tool runs unprompted. Kept that way on
+    # purpose -- the prompts were more friction than guardrail here.
     permission = {
-      edit = "ask";
-      bash = "ask";
-      external_directory = "ask";
-      webfetch = "ask";
-      task = "ask";
+      edit = "allow";
+      bash = "allow";
+      external_directory = "allow";
+      webfetch = "allow";
+      task = "allow";
     };
 
     # The binary is a store path it cannot rewrite, and sessions should not
