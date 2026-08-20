@@ -10,13 +10,34 @@ let
   # mounted a second time as `opencode-env` (same yaml key, owned by codebam)
   # rather than duplicated in secrets.yaml — one key, one place to rotate it.
   #
-  # Only OPENROUTER_API_KEY is lifted out: hermes-env also carries chat-gateway
+  # Only the names below are lifted out: hermes-env also carries chat-gateway
   # tokens that have no business in an interactive shell's environment.
-  loadKey = pkgs.writeShellScript "openrouter-load-key" ''
+  #
+  # CLOUDFLARE_* are what opencode wants for the `cloudflare-workers-ai`
+  # provider (account id goes into the endpoint path, the token into the auth
+  # header). They live in the same hermes-env blob rather than a secret of
+  # their own so that a missing value is a no-op instead of an activation
+  # failure: add them with `sudo sops secrets/secrets.yaml`, as extra lines
+  # inside the hermes-env value —
+  #
+  #   CLOUDFLARE_ACCOUNT_ID=<32-hex account id>
+  #   CLOUDFLARE_API_KEY=<Workers AI API token>
+  #
+  # Until then the vars are simply unset and only the Cloudflare models are
+  # unusable. Note the blob is also hermes' EnvironmentFile, so the agent
+  # service sees these too.
+  envNames = [
+    "OPENROUTER_API_KEY"
+    "CLOUDFLARE_ACCOUNT_ID"
+    "CLOUDFLARE_API_KEY"
+  ];
+  loadKey = pkgs.writeShellScript "agent-load-env" ''
     secret=/run/secrets/opencode-env
     if [ -r "$secret" ]; then
-      key=$(${pkgs.gnused}/bin/sed -n 's/^OPENROUTER_API_KEY=//p' "$secret" | tr -d '"' | head -n1)
-      [ -n "$key" ] && export OPENROUTER_API_KEY="$key"
+      for name in ${lib.concatStringsSep " " envNames}; do
+        value=$(${pkgs.gnused}/bin/sed -n "s/^$name=//p" "$secret" | tr -d '"' | head -n1)
+        if [ -n "$value" ]; then export "$name=$value"; fi
+      done
     fi
   '';
 
@@ -37,6 +58,11 @@ let
       min_coding_score = minCodingScore;
     }
   ];
+
+  # Qwen 3.8 27B on Cloudflare Workers AI, offered as an alternate rather than
+  # a default: it is cheap and long-context but a 27B model, so it is a
+  # deliberate per-session pick, not the thing every task lands on.
+  cfModel = "@cf/qwen/qwen3.8-27b";
 
   # Background turns (titles, summaries) do not need the router. $0.3/$1.2 per
   # Mtok, fixed.
@@ -163,6 +189,15 @@ in
     # leave the machine unless asked for explicitly.
     autoupdate = false;
     share = "disabled";
+
+    # Alternate, picked per session from the TUI's model list (`/models`);
+    # the choice lives in opencode's own sqlite state, not in this file, so it
+    # survives sessions without fighting the nix-managed config. Listing it
+    # here is what puts `cloudflare-workers-ai` in that list -- the rest of the
+    # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
+    # comes from models.dev, and the endpoint is built from
+    # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
+    provider.cloudflare-workers-ai.models.${cfModel} = { };
 
     # models.dev lists the router as non-reasoning, so opencode would send no
     # thinking parameters at all for it; `reasoning` here marks it capable and
