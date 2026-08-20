@@ -20,7 +20,7 @@ let
         ;;
     esac
     cd "$target" || cd "$HOME" || exit 1
-    exec ${lib.getExe config.programs.rio.package}
+    exec ${lib.getExe config.defaultTerminal}
   '';
 in
 {

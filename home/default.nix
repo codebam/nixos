@@ -10,6 +10,7 @@ _:
     ./shell-common.nix
     ./stylix.nix
     ./sway.nix
+    ./terminal.nix
     ./systemd.nix
     ./viewport.nix
     ./waybar.nix

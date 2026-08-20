@@ -26,11 +26,13 @@ in
     };
     # Shadows the system-wide programs.gnupg.agent for this user: home-manager's
     # units in ~/.config/systemd/user take precedence over /etc/systemd/user, so
-    # this is the agent codebam actually gets (graphical pinentry, not tty).
+    # this is the agent codebam actually gets.
     gpg-agent = {
       enable = true;
       enableSshSupport = true;
-      pinentry.package = pkgs.pinentry-gnome3;
+      # pinentry-tty in a terminal window of its own under a graphical
+      # session, on the calling tty when there is none. See pkgs/pinentry-auto.nix.
+      pinentry.package = pkgs.pinentry-auto.override { terminal = config.defaultTerminal; };
     };
   };
 }

@@ -44,7 +44,7 @@
         allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) config.unfreePackages;
       };
       overlays = [
-        (_: prev: {
+        (final: prev: {
           # Here rather than in the module that installs it, because the
           # keybinding that runs it lives in home-manager and both sides have
           # to name the same derivation. `useGlobalPkgs` is what makes that
@@ -68,6 +68,13 @@
           # package. Overlay so home-manager and systemPackages name one
           # derivation (useGlobalPkgs). Not installed right now; the CLI is.
           sigmashake-desktop = prev.callPackage ../../pkgs/sigmashake-desktop.nix { };
+
+          # Named by both the system gnupg.agent and codebam's home-manager
+          # one, and `pinentry-program` in gpg-agent.conf is a path -- two
+          # callPackages would be two paths for the same wrapper.
+          pinentry-auto = prev.callPackage ../../pkgs/pinentry-auto.nix {
+            terminal = final.rio;
+          };
 
           # Official CLI from https://sigmashake.com/install (static Go binary).
           ssg = prev.callPackage ../../pkgs/ssg.nix { };

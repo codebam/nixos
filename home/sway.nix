@@ -24,7 +24,7 @@ in
       xwayland = true;
       config = rec {
         inherit modifier;
-        terminal = "${pkgs.ghostty}/bin/ghostty";
+        terminal = lib.getExe config.defaultTerminal;
         menu = "${pkgs.wmenu}/bin/wmenu-run -f \"Fira Code NerdFont 11\" -i -N 000000 -n cdd6f4 -M 000000 -m 89b4fa -S 89b4fa -s 000000";
         colors = {
           background = "#000000";
