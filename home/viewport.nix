@@ -281,7 +281,7 @@ in
     # surface the compositor draws, so it crops each client to the same corner
     # the page drew — square here, which costs it nothing.
     border = {
-      radius = 25;
+      radius = 0;
       width = 2;
     };
 
