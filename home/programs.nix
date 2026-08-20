@@ -423,12 +423,19 @@
           "network.predictor.enabled" = false;
           "gfx.webrender.all" = true;
           "layers.acceleration.force-enabled" = true;
-          # Follow the desktop's colour scheme. The default here is 2,
-          # "auto", which means the portal is only read inside a sandbox —
-          # a native build falls back to GTK settings instead, and this
-          # machine has none, so Firefox stayed light while every portal
-          # client went dark. 1 is always.
+          # Read the colour scheme from the portal rather than from GTK.
+          # The default is 2, "auto", which means the portal is only read
+          # inside a sandbox; a native build follows GTK/dconf instead, which
+          # is static. Reading the portal is what makes the compositor's own
+          # dark-mode toggle reach a running Firefox.
           "widget.use-xdg-desktop-portal.settings" = 1;
+          # resistFingerprinting spoofs prefers-color-scheme as light, on
+          # purpose, so a site cannot fingerprint the theme — which is why
+          # every page rendered light here no matter what the portal said.
+          # fingerprintingProtection is the targeted successor and does not
+          # lie about the colour scheme.
+          "privacy.resistFingerprinting" = false;
+          "privacy.fingerprintingProtection" = true;
         };
       };
     };
