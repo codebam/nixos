@@ -1057,82 +1057,82 @@ in
     # makes the agent's ad-hoc tooling reproducible and offline.
     nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
-    services.hermes-agent = {
-      enable = true;
-      addToSystemPackages = true;
-      package = hermesPackage;
-      environmentFiles = [ config.sops.secrets."hermes-env".path ];
-      environment = {
-        SEARXNG_URL = "http://127.0.0.1:8081";
-        SEARXNG_API_URL = "http://127.0.0.1:8081";
-      };
+    # services.hermes-agent = {
+    #   enable = false;
+    #   addToSystemPackages = true;
+    #   package = hermesPackage;
+    #   environmentFiles = [ config.sops.secrets."hermes-env".path ];
+    #   environment = {
+    #     SEARXNG_URL = "http://127.0.0.1:8081";
+    #     SEARXNG_API_URL = "http://127.0.0.1:8081";
+    #   };
 
-      # ── Tools ──────────────────────────────────────────────────────────────
-      # These are on PATH for the terminal tool, cron jobs, and skills without a
-      # `nix run` round-trip. Anything not here is still one `, <cmd>` away.
-      extraPackages = [
-        config.nix.package
-        inputs.nix-index-database.packages.${system}.comma-with-db
-      ]
-      ++ (with pkgs; [
-        # Nix toolchain
-        nixfmt
-        statix
-        deadnix
-        manix
-        nix-output-monitor
-        nix-tree
-        nix-diff
-        nvd
-        nurl
-        nix-init
-        # Source navigation — cheaper than reading files one by one
-        ripgrep
-        fd
-        universal-ctags
-        repomix
-        tree
-        bat
-        eza
-        # Data wrangling
-        jq
-        yq-go
-        gnused
-        gawk
-        coreutils
-        # Network / VCS
-        git
-        gh
-        curl
-        wget
-        # Languages and their formatters
-        python3
-        uv
-        nodejs
-        ruff
-        shellcheck
-        shfmt
-      ]);
+    #   # ── Tools ──────────────────────────────────────────────────────────────
+    #   # These are on PATH for the terminal tool, cron jobs, and skills without a
+    #   # `nix run` round-trip. Anything not here is still one `, <cmd>` away.
+    #   extraPackages = [
+    #     config.nix.package
+    #     inputs.nix-index-database.packages.${system}.comma-with-db
+    #   ]
+    #   ++ (with pkgs; [
+    #     # Nix toolchain
+    #     nixfmt
+    #     statix
+    #     deadnix
+    #     manix
+    #     nix-output-monitor
+    #     nix-tree
+    #     nix-diff
+    #     nvd
+    #     nurl
+    #     nix-init
+    #     # Source navigation — cheaper than reading files one by one
+    #     ripgrep
+    #     fd
+    #     universal-ctags
+    #     repomix
+    #     tree
+    #     bat
+    #     eza
+    #     # Data wrangling
+    #     jq
+    #     yq-go
+    #     gnused
+    #     gawk
+    #     coreutils
+    #     # Network / VCS
+    #     git
+    #     gh
+    #     curl
+    #     wget
+    #     # Languages and their formatters
+    #     python3
+    #     uv
+    #     nodejs
+    #     ruff
+    #     shellcheck
+    #     shfmt
+    #   ]);
 
-      # ── MCP ────────────────────────────────────────────────────────────────
-      # Every tool schema here is in the prompt on every turn, so this list is
-      # deliberately short. Anything reachable with one shell command stays a
-      # shell command. rust-lsp is not here on purpose — it lives in the
-      # viewport profile below.
-      mcpServers = mcpCommon // mcpNixos;
+    #   # ── MCP ────────────────────────────────────────────────────────────────
+    #   # Every tool schema here is in the prompt on every turn, so this list is
+    #   # deliberately short. Anything reachable with one shell command stays a
+    #   # shell command. rust-lsp is not here on purpose — it lives in the
+    #   # viewport profile below.
+    #   mcpServers = mcpCommon // mcpNixos;
 
-      settings = baseSettings // {
-        hooks = commonHooks // {
-          # Default profile only: the flake is the tree this lints.
-          pre_verify = [
-            {
-              command = verifyNix;
-              timeout = 90;
-            }
-          ];
-        };
-      };
-    };
+    #   settings = baseSettings // {
+    #     hooks = commonHooks // {
+    #       # Default profile only: the flake is the tree this lints.
+    #       pre_verify = [
+    #         {
+    #           command = verifyNix;
+    #           timeout = 90;
+    #         }
+    #       ];
+    #     };
+    #   };
+    # };
 
     # ── Extra profile plumbing ───────────────────────────────────────────────
     # A profile is just a directory hermes recognises; `hermes profile create`
