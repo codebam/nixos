@@ -42,10 +42,10 @@ in
     mimeApps = {
       enable = true;
       defaultApplications = {
-        "text/html" = "chromium.desktop";
-        "x-scheme-handler/http" = "chromium.desktop";
-        "x-scheme-handler/https" = "chromium.desktop";
-        "x-scheme-handler/about" = "chromium.desktop";
+        "text/html" = "firefox-nightly.desktop";
+        "x-scheme-handler/http" = "firefox-nightly.desktop";
+        "x-scheme-handler/https" = "firefox-nightly.desktop";
+        "x-scheme-handler/about" = "firefox-nightly.desktop";
         "inode/directory" = "rio-folder.desktop";
       };
     };
