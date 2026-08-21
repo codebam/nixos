@@ -319,6 +319,7 @@ in
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
+      "Mod4+Shift+p" = "shell power";
     }
     # Press to start dictating, press again to stop. Whether that types at the
     # end or as each utterance lands is `voiceToText.streaming`, which is what
