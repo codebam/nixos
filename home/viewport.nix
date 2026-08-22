@@ -237,8 +237,8 @@ in
 
     adaptive_sync = true;
     bar = "auto";
-    logo = true;
-    tutorial = true;
+    logo = false;
+    tutorial = false;
 
     # Override the whole right side of the bar with an explicit, ordered list.
     # A bare string is a built-in module (net, disk, cpu, load, memory, clock,
