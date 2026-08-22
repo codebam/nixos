@@ -16,6 +16,16 @@ in
     "net.ipv4.ip_unprivileged_port_start" = 80;
   };
 
+  # Opportunistic rather than the strict "true" from
+  # modules/services/default.nix. ivpn hands systemd-resolved a plain-IP
+  # resolver on the wgivpn link (resolvectl dns wgivpn 10.0.254.2, with ~. and
+  # default-route true), and that resolver speaks no DoT and has no name to
+  # validate a certificate against -- under strict DoT every query through the
+  # tunnel fails, and ivpn's killswitch drops port 53 to anything else, so the
+  # host has no working DNS at all while connected. Opportunistic still uses
+  # DoT to 1.1.1.1/9.9.9.9 whenever the network allows it.
+  services.resolved.settings.Resolve.DNSOverTLS = "opportunistic";
+
   networking = {
     # NAT used to exist for a dns0 interface that is gone. Do not re-enable
     # until something actually needs to be forwarded off this host.
