@@ -43,12 +43,7 @@
     ];
     window.commands = [
       {
-        command = "tearing enable";
-        criteria = {
-          class = "cs2";
-        };
-      }
-      {
+        # tearing enable for class "cs2" comes from home/sway.nix.
         command = "border none";
         criteria = {
           class = "cs2";
@@ -82,9 +77,6 @@
   };
 
   services = {
-    swaync = {
-      enable = false;
-    };
     podman = {
       enable = true;
       containers = {

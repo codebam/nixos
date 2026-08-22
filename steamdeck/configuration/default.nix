@@ -12,6 +12,5 @@ _:
     ./programs.nix
     ./system.nix
     ./preservation.nix
-    ./specialisation.nix
   ];
 }

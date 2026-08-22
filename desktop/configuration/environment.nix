@@ -15,8 +15,7 @@
   # is that one rather than whatever the flake defaults to. Without it both end
   # up in the closure, and the portal is answered by a compositor this system
   # does not run.
-  programs.viewport.package =
-    inputs.viewport.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  programs.viewport.package = inputs.viewport.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # No `cargo` or `gcc` here. Both were system-wide and between them anchored
   # rustc (1.0 GB) and a full gcc (264 MB) in every generation, for toolchains

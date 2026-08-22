@@ -1,9 +1,9 @@
 { pkgs, lib, ... }:
 
 {
-  # Module definitions shared by every host. Hosts add their own
-  # `modules-right` (and `modules-center`) plus any host-specific blocks:
-  # battery on laptop/deck, network/mpris/temperature/amd_gpu on the desktop.
+  # Module definitions shared by every host. Hosts override `modules-right`
+  # (and add `modules-center`) plus any host-specific blocks:
+  # network/mpris/temperature/amd_gpu on the desktop.
   programs.waybar.settings.mainBar = {
     ipc = true;
 
@@ -16,6 +16,18 @@
     modules-left = [
       "ext/workspaces"
       "wlr/taskbar"
+    ];
+
+    # The plain battery/pulseaudio bar every portable host wants; the desktop
+    # overrides it wholesale with its longer list.
+    modules-right = lib.mkDefault [
+      "pulseaudio"
+      "disk"
+      "memory"
+      "cpu"
+      "custom/load"
+      "clock"
+      "battery"
     ];
 
     "ext/workspaces" = {

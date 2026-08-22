@@ -93,17 +93,5 @@
         signByDefault = true;
       };
     };
-    waybar.settings.mainBar = {
-      modules-right = [
-        "pulseaudio"
-        "disk"
-        "memory"
-        "cpu"
-        "custom/load"
-        "clock"
-        "battery"
-      ];
-
-    };
   };
 }

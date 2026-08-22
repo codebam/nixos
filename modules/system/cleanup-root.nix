@@ -228,6 +228,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Boot entry that keeps the current root instead of archiving it -- useful
+    # when something in /etc or /var needs to survive one more boot. Defined
+    # once here rather than copy-pasted into every host.
+    specialisation.noCleanup.configuration.cleanupRoot.mode = "keep";
+
     boot.initrd.systemd = {
       extraBin.chattr = "${pkgs.busybox}/bin/chattr";
 

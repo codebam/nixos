@@ -15,8 +15,8 @@
       enableShellIntegration = true;
     };
 
-    # services.hermes-agent.addToSystemPackages exports
-    # HERMES_HOME=/var/lib/hermes/.hermes system-wide, and that tree is
+    # The system used to export HERMES_HOME=/var/lib/hermes/.hermes
+    # system-wide (the retired hermes-agent service), and that tree was
     # 2770/0640 hermes:hermes — makano is not in the hermes group, so every
     # `hermes` invocation died on PermissionError reading its .env. Point this
     # user at their own HERMES_HOME instead of granting access to codebam's:

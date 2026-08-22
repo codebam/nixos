@@ -29,11 +29,8 @@ in
   networking = {
     # NAT used to exist for a dns0 interface that is gone. Do not re-enable
     # until something actually needs to be forwarded off this host.
-    timeServers = [
-      "time.cloudflare.com"
-      "time.google.com"
-      "0.ca.pool.ntp.org"
-    ];
+    # NTP servers live in ./services.nix (services.timesyncd.servers); setting
+    # networking.timeServers here too was two sources for one truth.
     hostName = "nixos-desktop";
 
     # Marks inbound connections to published ports so replies leave via the WAN

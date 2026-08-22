@@ -10,9 +10,4 @@
       ];
     };
   };
-  services = {
-    swaync = {
-      enable = false;
-    };
-  };
 }

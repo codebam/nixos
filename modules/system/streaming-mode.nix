@@ -204,7 +204,7 @@ in
     extraBuildUnits = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
-      example = [ "hermes-agent.service" ];
+      example = [ "some-heavy-batch.service" ];
       description = ''
         Further system units to move into builds.slice, so they are throttled
         alongside nix-daemon. nix-daemon.service is always included.
@@ -275,26 +275,20 @@ in
                 "CPUWeight=${toString cfg.buildCpuWeight}"
                 "IOWeight=${toString cfg.buildIOWeight}"
               ])
-              (setProps "streaming-mode-user-apps"
-                [
-                  "app.slice"
-                  "session.slice"
-                ] "--user"
-                [ "CPUWeight=300" ]
-              )
+              (setProps "streaming-mode-user-apps" [
+                "app.slice"
+                "session.slice"
+              ] "--user" [ "CPUWeight=300" ])
             ];
             ExecStop = [
               (setProps "streaming-mode-user-stop" [ "builds.slice" ] "--user" [
                 "CPUWeight="
                 "IOWeight="
               ])
-              (setProps "streaming-mode-user-apps-reset"
-                [
-                  "app.slice"
-                  "session.slice"
-                ] "--user"
-                [ "CPUWeight=" ]
-              )
+              (setProps "streaming-mode-user-apps-reset" [
+                "app.slice"
+                "session.slice"
+              ] "--user" [ "CPUWeight=" ])
             ];
           };
         };

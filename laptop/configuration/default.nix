@@ -7,6 +7,5 @@ _:
     ./boot.nix
     ./power.nix
     ./system.nix
-    ./specialisation.nix
   ];
 }

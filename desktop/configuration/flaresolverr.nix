@@ -3,8 +3,7 @@
 {
   # FlareSolverr solves Cloudflare / DDoS-Guard interstitials by driving a
   # headless Chrome and handing back the resulting HTML and cookies. It is a
-  # plain HTTP service, not an MCP server: the agent talks to it with curl,
-  # guided by the flaresolverr skill in hermes-agent.nix.
+  # plain HTTP service, not an MCP server: agents talk to it with curl.
   #
   # Containerised rather than packaged because the upstream image pins its own
   # Chrome/undetected-chromedriver pair. That pairing is the whole product —
