@@ -10,6 +10,12 @@ let
   tsFwmark = "0x80000/0xff0000";
   # Ahead of tailscale's own 5210, so it wins while wgivpn exists.
   rulePriority = "5100";
+  # Mirrors the `lookup main suppress_prefixlength 0` rule wg-quick installs
+  # at 5208, which the rule above would otherwise skip. Without it, a marked
+  # packet to a directly connected network (the LAN) is sent into the tunnel
+  # instead of out the local interface, so a tailscale peer on this subnet
+  # cannot be reached directly.
+  lanRulePriority = "5099";
 
   # wg-quick picks the table from the interface's fwmark (0xca6c = 51820 for
   # ivpn), but that is an implementation detail of the daemon's generated
@@ -35,13 +41,19 @@ let
         done
         [ -n "$table" ] || { echo "no default route via wgivpn; leaving routing alone"; exit 0; }
 
+        ip rule add priority ${lanRulePriority} fwmark ${tsFwmark} lookup main suppress_prefixlength 0
         ip rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table"
         table6=$(findTable 6)
-        [ -n "$table6" ] && ip -6 rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table6"
+        if [ -n "$table6" ]; then
+          ip -6 rule add priority ${lanRulePriority} fwmark ${tsFwmark} lookup main suppress_prefixlength 0
+          ip -6 rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table6"
+        fi
         ;;
       down)
         ip rule del priority ${rulePriority} fwmark ${tsFwmark} 2>/dev/null
+        ip rule del priority ${lanRulePriority} fwmark ${tsFwmark} 2>/dev/null
         ip -6 rule del priority ${rulePriority} fwmark ${tsFwmark} 2>/dev/null
+        ip -6 rule del priority ${lanRulePriority} fwmark ${tsFwmark} 2>/dev/null
         ;;
     esac
     exit 0
@@ -50,7 +62,7 @@ in
 {
   # Sends tailscale's marked packets into ivpn's routing table for as long as
   # wgivpn exists. Nothing is needed for the fallback: when ivpn is down the
-  # rule is gone (and even if it lingered, the table is empty and the lookup
+  # rules are gone (and even if they lingered, the table is empty and the lookup
   # falls through to tailscale's own rule 5210 -> main), so routing is exactly
   # what it was before.
   systemd.services.tailscale-via-ivpn = {
