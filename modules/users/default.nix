@@ -1,5 +1,7 @@
 { pkgs, ... }:
 {
+  imports = [ ./subids.nix ];
+
   users = {
     mutableUsers = false;
     users = {
@@ -13,6 +15,20 @@
         # would silently break those paths.
         uid = 1000;
         home = "/home/codebam";
+        # Explicit because userborn ignores autoSubUidGidRange; see subids.nix.
+        # Values match the range /var/lib/nixos/auto-subuid-map already recorded.
+        subUidRanges = [
+          {
+            startUid = 100000;
+            count = 65536;
+          }
+        ];
+        subGidRanges = [
+          {
+            startGid = 100000;
+            count = 65536;
+          }
+        ];
         description = "Sean Behan";
         extraGroups = [
           "wheel"

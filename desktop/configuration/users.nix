@@ -5,6 +5,19 @@
     isNormalUser = true;
     uid = 1001;
     home = "/home/makano";
+    # See modules/users/subids.nix.
+    subUidRanges = [
+      {
+        startUid = 165536;
+        count = 65536;
+      }
+    ];
+    subGidRanges = [
+      {
+        startGid = 165536;
+        count = 65536;
+      }
+    ];
     description = "Makano";
     packages = [ ];
     shell = pkgs.fish;
