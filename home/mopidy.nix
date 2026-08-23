@@ -21,9 +21,21 @@
     ];
     settings = {
       core.restore_state = true;
-      # pipewiresink is in mopidy's own gstreamer plugin path already; no
-      # GST_PLUGIN_SYSTEM_PATH_1_0 of our own is needed.
-      audio.output = "pipewiresink";
+      # Every track boundary produced a burst of full-scale static: mopidy
+      # swaps the next URI into playbin from about-to-finish without tearing
+      # the sink down, and the library mixes 16- and 24-bit FLAC, so PCM of
+      # one width reached a sink still configured for the other. The source
+      # files decode clean and the stream URLs are fine -- it is the
+      # renegotiation. Pinning the caps ahead of the sink means the sink is
+      # only ever configured once and a track of any depth or rate is
+      # converted to that before it gets there.
+      #
+      # F32LE/48000/2 is what the graph runs at natively -- media_ducker is
+      # float32le 48000, and everything lands there -- so gstreamer does the
+      # one conversion and pipewire does none. It also keeps the device off
+      # the 44100 side of `default.clock.allowed-rates`, so a 44.1k track no
+      # longer re-clocks the DAC.
+      audio.output = "audioconvert ! audioresample ! audio/x-raw,format=F32LE,rate=48000,channels=2 ! pipewiresink";
       mpd = {
         enabled = true;
         # Loopback only. The old system unit bound 0.0.0.0, and there is
