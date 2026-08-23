@@ -48,6 +48,82 @@
         # key repeats would queue up a request each time.
         incremental_seeking = false;
       };
+      # ncmpcpp has no key chords, so `gg` is not expressible and `g` alone
+      # takes move_home. Defining a key in the bindings file replaces every
+      # default on that key, so anything displaced below is rehomed rather
+      # than dropped: move_selected_items_* off m/n onto J/K, show_lyrics off
+      # l onto L. Multi-command keys run the first action that applies in the
+      # current screen, which is how the arrow keys already work.
+      bindings = [
+        {
+          key = "j";
+          command = "scroll_down";
+        }
+        {
+          key = "k";
+          command = "scroll_up";
+        }
+        {
+          key = "h";
+          command = [
+            "previous_column"
+            "master_screen"
+            "volume_down"
+          ];
+        }
+        {
+          key = "l";
+          command = [
+            "next_column"
+            "slave_screen"
+            "volume_up"
+          ];
+        }
+        {
+          key = "g";
+          command = "move_home";
+        }
+        {
+          key = "G";
+          command = "move_end";
+        }
+        {
+          key = "ctrl-d";
+          command = "page_down";
+        }
+        {
+          key = "ctrl-u";
+          command = "page_up";
+        }
+        # `/` and `?` already search forward and backward; these give the
+        # matches the vim keys instead of the default `.` and `,`.
+        {
+          key = "n";
+          command = "next_found_item";
+        }
+        {
+          key = "N";
+          command = "previous_found_item";
+        }
+        {
+          key = "J";
+          command = [
+            "move_sort_order_down"
+            "move_selected_items_down"
+          ];
+        }
+        {
+          key = "K";
+          command = [
+            "move_sort_order_up"
+            "move_selected_items_up"
+          ];
+        }
+        {
+          key = "L";
+          command = "show_lyrics";
+        }
+      ];
     };
     google-chrome = {
       enable = true;
