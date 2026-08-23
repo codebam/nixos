@@ -1,6 +1,34 @@
-_:
+{ config, ... }:
 
 {
+  # termsonic reads its server URL, username and password out of one TOML
+  # file, with no environment-variable path, so the whole file is rendered
+  # from the secret rather than mounted alongside it. The wrapper in
+  # home/termsonic.nix points `-config` at the result.
+  sops.templates."termsonic.toml" = {
+    content = ''
+      BaseURL = "http://localhost:4533/navidrome"
+      Username = "codebam"
+      Password = "${config.sops.placeholder.navidrome-password}"
+    '';
+    owner = "codebam";
+    group = "users";
+  };
+
+  # The [subidy] section of mopidy's config, read by the user service in
+  # home/mopidy.nix. mopidy has no way to pull one value out of a file, so
+  # the section is rendered whole.
+  sops.templates."mopidy-subidy.conf" = {
+    content = ''
+      [subidy]
+      url = http://localhost:4533/navidrome
+      username = codebam
+      password = ${config.sops.placeholder.navidrome-password}
+    '';
+    owner = "codebam";
+    group = "users";
+  };
+
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";

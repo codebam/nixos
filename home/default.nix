@@ -3,7 +3,8 @@ _:
 {
   imports = [
     ./sops.nix
-    ./cliamp.nix
+    ./mopidy.nix
+    ./termsonic.nix
     ./home.nix
     ./agents.nix
     ./programs.nix

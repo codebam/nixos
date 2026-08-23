@@ -28,6 +28,27 @@
         };
       };
     };
+    # Client for the mopidy MPD socket in home/mopidy.nix, which is Navidrome
+    # behind the MPD protocol. Two screens do not work against that backend
+    # and neither is worth chasing: the visualizer needs a fifo audio output
+    # mopidy is not writing, and the media library builds itself from `list
+    # album` / `list artist`, which mopidy-mpd answers empty. Browser and
+    # search (`/`) both work, and the browser is the way into the library.
+    ncmpcpp = {
+      enable = true;
+      settings = {
+        mpd_host = "127.0.0.1";
+        mpd_port = 6600;
+        # The library hangs off a single "Subsonic" directory
+        # (Albums / Artists / Directories), reachable only from here.
+        startup_screen = "browser";
+        user_interface = "alternative";
+        autocenter_mode = true;
+        # mopidy fetches over the network -- a seek per keystroke while the
+        # key repeats would queue up a request each time.
+        incremental_seeking = false;
+      };
+    };
     google-chrome = {
       enable = true;
     };
