@@ -31,6 +31,11 @@ _:
         key = "hermes-env";
       };
       searx-secret = { };
+      # Read by the cliamp wrapper in home/cliamp.nix, which runs as codebam.
+      navidrome-password = {
+        owner = "codebam";
+        group = "users";
+      };
       "unredacted.org" = {
         sopsFile = ../../secrets/passwords.enc.yaml;
         owner = "codebam";

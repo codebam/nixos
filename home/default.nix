@@ -3,6 +3,7 @@ _:
 {
   imports = [
     ./sops.nix
+    ./cliamp.nix
     ./home.nix
     ./agents.nix
     ./programs.nix
