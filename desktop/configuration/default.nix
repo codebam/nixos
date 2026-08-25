@@ -8,6 +8,7 @@
     ./flaresolverr.nix
     ./hardware.nix
     ./litellm.nix
+    ./llm-proxy.nix
     ./networking.nix
     ./nix-serve.nix
     ./nixpkgs.nix
