@@ -99,7 +99,14 @@ in
       # Under the model's 160k so there is room for the reply, and under it by
       # enough to absorb the estimator's error in the wrong direction.
       PROXY_MAX_PROMPT_TOKENS = "120000";
-      PROXY_MAX_OUTPUT_TOKENS = "8192";
+
+      # Matches what litellm.nix allows the same model. 8192 was too tight for
+      # a coding harness -- a single large file write runs past it, and the
+      # clamp is silent from the caller's side: the reply just stops with
+      # finish_reason "length". The cost of raising it is time on the one slot,
+      # not memory, and PROXY_QUEUE_TIMEOUT already bounds how long a single
+      # request can hold the card against everyone else.
+      PROXY_MAX_OUTPUT_TOKENS = "32000";
 
       # OLLAMA_NUM_PARALLEL is 1, so this is the honest number. Raising it here
       # without raising it there just moves the queue.
