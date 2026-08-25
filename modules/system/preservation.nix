@@ -35,6 +35,10 @@ _: {
         "/var/lib/bluetooth"
         "/var/lib/iwd"
         "/var/lib/nixos"
+        # Root is wiped at boot, so without this every `flatpak install` --
+        # runtimes, apps, and the flathub remote itself -- is undone by the
+        # next reboot. The per-user half is under codebam below.
+        "/var/lib/flatpak"
         "/var/lib/sbctl"
         "/var/lib/systemd/coredump"
         "/var/lib/tailscale"
@@ -100,6 +104,10 @@ _: {
             "Games"
             ".local/share/direnv"
             ".local/share/fish"
+            # `flatpak --user install` and the app data those apps write.
+            # The system-wide half is /var/lib/flatpak above.
+            ".local/share/flatpak"
+            ".var"
             ".steam"
             ".tmux"
             ".local/share/Steam"

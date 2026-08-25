@@ -13,6 +13,17 @@
       enable = false;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
+    # Portals are already set up for sway in modules/system/xdg.nix, which is
+    # what flatpak apps need to reach files, screenshare, and the theme.
+    # /var/lib/flatpak and ~/.local/share/flatpak are preserved across the
+    # root wipe in modules/system/preservation.nix.
+    #
+    # The flathub remote is not declarative -- nothing in nixpkgs adds it --
+    # so a fresh machine still needs, once:
+    #   flatpak remote-add --if-not-exists flathub \
+    #     https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak.enable = true;
+
     lsfg-vk = {
       enable = pkgs.lib.mkDefault false;
       ui.enable = pkgs.lib.mkDefault false;
