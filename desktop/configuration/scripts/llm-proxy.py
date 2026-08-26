@@ -44,6 +44,14 @@ OLLAMA = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 # models evicts the resident one) and a way to load something that does not fit.
 MODEL = os.environ.get("PROXY_MODEL", "qwen3.8:160k")
 
+# The name shown to callers, which is deliberately NOT the upstream one. MODEL
+# changes with the profile -- "qwen3.8:160k" on the ollama rung, "qwen3.8" on
+# the llama-server rungs -- and sanitise() overwrites whatever a client sends
+# with it anyway, so the advertised name is free to be stable. It has to be:
+# the page hands out a config block people paste into a file, and it should not
+# rot the next time the scaler changes engine.
+PUBLIC_MODEL = "qwen3.8"
+
 # Held under the slot's context window so there is room for the reply. The
 # count is an estimate (see estimate_tokens); the margin absorbs its error.
 #
@@ -511,6 +519,9 @@ PAGE = """<!doctype html>
  #msg { margin-top: .9rem; min-height: 1.4rem; }
  .ok { color: var(--ok); } .bad { color: var(--bad); }
  code { color: var(--mut); }
+ pre { margin: 0; padding: .85rem; border: 1px solid var(--line); border-radius: 6px;
+       overflow-x: auto; font-size: 12.5px; line-height: 1.45; background: var(--bg); }
+ button.small { padding: .2rem .7rem; font-size: 13px; }
 </style>
 <main>
 <h1>qwen3.8 &mdash; slot reservation</h1>
@@ -532,8 +543,17 @@ PAGE = """<!doctype html>
   <div id="msg"></div>
 </div>
 
-<p class="sub">Point your client at <code>%(base)s/v1</code> with the same key.
-Reserving again before it lapses extends the hold.</p>
+<div class="card">
+  <div class="row" style="padding-bottom:.6rem">
+    <span>opencode config</span>
+    <button id="c" type="button" class="small">Copy</button>
+  </div>
+  <pre id="cfg">&hellip;</pre>
+  <p class="sub" style="margin:.8rem 0 0">Drop into <code>~/.config/opencode/opencode.json</code>.
+  Any OpenAI-compatible client works too &mdash; base URL <code>%(base)s/v1</code>, same key.</p>
+</div>
+
+<p class="sub">Reserving again before it lapses extends the hold.</p>
 </main>
 <script>
 const $ = i => document.getElementById(i);
@@ -548,8 +568,60 @@ async function refresh() {
     $('s-free').textContent  = d.slots - d.reserved;
     $('s-next').textContent  = d.reserved >= d.slots ? fmt(d.next_free) : 'now';
     $('b').disabled = !d.in_window;
+    renderConfig(d);
   } catch (e) { /* transient; the next tick will pick it up */ }
 }
+
+let lastStatus = null;
+function renderConfig(d) {
+  lastStatus = d;
+  const key = $('k').value.trim() || 'sk-YOUR-KEY-HERE';
+  const cfg = {
+    "$schema": "https://opencode.ai/config.json",
+    provider: {
+      codebam: {
+        npm: "@ai-sdk/openai-compatible",
+        name: "codebam qwen3.8",
+        options: {baseURL: location.origin + '/v1', apiKey: key},
+        models: {
+          // The served model is pinned by the proxy; a client-chosen one is
+          // rewritten, so this name has to match what /status reports.
+          [d.model]: {
+            name: "qwen3.8 27B",
+            tool_call: true,
+            reasoning: true,
+            limit: {
+              context: d.max_prompt_tokens + d.max_output_tokens,
+              input: d.max_prompt_tokens,
+              output: d.max_output_tokens
+            }
+          }
+        }
+      }
+    },
+    model: "codebam/" + d.model
+  };
+  $('cfg').textContent = JSON.stringify(cfg, null, 2);
+}
+
+// Re-render as the key is typed, so what you copy already has your key in it.
+$('k').addEventListener('input', () => { if (lastStatus) renderConfig(lastStatus); });
+
+$('c').addEventListener('click', async () => {
+  const t = $('cfg').textContent;
+  try {
+    await navigator.clipboard.writeText(t);
+    $('c').textContent = 'Copied';
+  } catch (e) {
+    // clipboard needs a secure context; select it so ctrl-c still works
+    const r = document.createRange();
+    r.selectNodeContents($('cfg'));
+    getSelection().removeAllRanges();
+    getSelection().addRange(r);
+    $('c').textContent = 'Select+copy';
+  }
+  setTimeout(() => { $('c').textContent = 'Copy'; }, 1800);
+});
 
 $('f').addEventListener('submit', async ev => {
   ev.preventDefault();
@@ -606,6 +678,14 @@ def public_status(app):
         "window_start": WINDOW_START,
         "window_end": WINDOW_END,
         "reservation_ttl": RESERVATION_TTL,
+        # The page builds a drop-in opencode provider block out of these, so
+        # they have to be the live values rather than anything hardcoded: the
+        # prompt cap moves with the profile (125840 on the one-slot ollama
+        # rung, 65936 on the three-slot one), and opencode computes its
+        # auto-compaction threshold from it.
+        "model": PUBLIC_MODEL,
+        "max_prompt_tokens": MAX_PROMPT_TOKENS,
+        "max_output_tokens": MAX_OUTPUT_TOKENS,
     }
 
 
@@ -619,8 +699,12 @@ async def handle_reserve(request, release=False):
     something to hammer regardless.
     """
     app = request.app
-    peer = request.headers.get("X-Forwarded-For", "") or (request.remote or "?")
-    peer = peer.split(",")[0].strip()
+    # X-Real-IP, not X-Forwarded-For. nginx sets X-Real-IP to $remote_addr,
+    # which a client cannot influence, whereas recommendedProxySettings builds
+    # X-Forwarded-For with $proxy_add_x_forwarded_for -- it APPENDS to whatever
+    # the client sent, so trusting the first entry lets a caller mint a fresh
+    # rate-limit bucket per request on the one endpoint that validates keys.
+    peer = request.headers.get("X-Real-IP", "").strip() or (request.remote or "?")
     if not app["limiter"].allow(f"ip:{peer}"):
         return problem(429, f"rate limit is {RATE_LIMIT_REQUESTS} requests per minute")
 
@@ -698,7 +782,7 @@ async def handle(request):
     # whether the window is open, which it cannot do if being outside the
     # window is what refuses the request.
     if request.path == "/healthz":
-        return web.json_response({"ok": True, "in_window": in_window(), "model": MODEL})
+        return web.json_response({"ok": True, "in_window": in_window(), "model": PUBLIC_MODEL})
 
     if not in_window():
         return problem(
@@ -708,7 +792,7 @@ async def handle(request):
     if request.method == "GET":
         return web.json_response({
             "object": "list",
-            "data": [{"id": MODEL, "object": "model", "owned_by": "local"}],
+            "data": [{"id": PUBLIC_MODEL, "object": "model", "owned_by": "local"}],
         })
 
     try:

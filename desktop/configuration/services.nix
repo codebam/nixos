@@ -62,6 +62,21 @@ in
     };
   };
 
+  # Its own ACME account, deliberately, via a distinct contact address.
+  #
+  # NixOS hangs every cert's order unit off a per-account target, and that
+  # dependency is hard: when codebam.tplinkdns.com fails to validate, the
+  # target fails and llm.codebam.ca's order never runs at all -- it reports
+  # "Dependency failed" having made no attempt of its own. TP-Link's DDNS
+  # nameservers answer Google and Cloudflare fine but SERVFAIL for Let's
+  # Encrypt, which validates from several network vantage points.
+  #
+  # A separate account gives this name a separate target, so its renewals
+  # stand or fall on their own. It does not fix tplinkdns -- that cert still
+  # expires, and music.codebam.ca shares its account -- but it stops an
+  # unrelated failure from taking this one down with it.
+  security.acme.certs."llm.codebam.ca".email = "codebam+llm@riseup.net";
+
   services = {
     # Every admin UI below binds loopback and is reached only through nginx.
     #
@@ -150,6 +165,43 @@ in
         {
           "codebam.tplinkdns.com" = publicNavidrome;
           "music.codebam.ca" = publicNavidrome;
+
+          # The public LLM endpoint. nginx terminates TLS here and llm-proxy
+          # does the rest -- bearer auth, the 03:00-11:00 window gate, and the
+          # body rewriting that keeps a caller from choosing num_ctx. See
+          # ./llm-proxy.nix.
+          #
+          # This replaced a tailscale funnel. The funnel had to live on 8443
+          # because nginx already owned 443, and some networks block
+          # non-standard HTTPS ports outbound; with nginx as the front door
+          # that constraint disappears. It also fixes the rate limiter: through
+          # the funnel every visitor arrived as 127.0.0.1, so the per-client
+          # limit on the key-validating /reserve endpoint bucketed all of them
+          # together and did nothing.
+          "llm.codebam.ca" = {
+            forceSSL = true;
+            enableACME = true;
+            locations."/" = {
+              proxyPass = "http://127.0.0.1:8080";
+              extraConfig = ''
+                # Three defaults that would each break this in a way that reads
+                # as the model misbehaving rather than as a proxy setting.
+                #
+                # A 125k-token prompt spends ~170s in prefill before the first
+                # byte (measured: 744 tok/s), and nginx's default
+                # proxy_read_timeout is 60s -- long requests would 504 mid
+                # flight.
+                proxy_read_timeout 900s;
+                # llm-proxy streams SSE; with buffering on, nginx holds the
+                # whole reply and a streaming client sees nothing until the end.
+                proxy_buffering off;
+                # llm-proxy accepts 64 MiB bodies (client_max_size in
+                # llm-proxy.py). nginx defaults to 1m, which would 413 a large
+                # prompt before the proxy's own token estimator ever saw it.
+                client_max_body_size 64m;
+              '';
+            };
+          };
 
           # Tailnet only. The admin UIs live here, on this host's MagicDNS
           # name, and never appear on the public vhosts above.
