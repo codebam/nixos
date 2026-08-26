@@ -44,19 +44,39 @@ OLLAMA = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 # models evicts the resident one) and a way to load something that does not fit.
 MODEL = os.environ.get("PROXY_MODEL", "qwen3.8:160k")
 
-# Held under the model's real 160k window so there is room for the reply. The
+# Held under the slot's context window so there is room for the reply. The
 # count is an estimate (see estimate_tokens); the margin absorbs its error.
-MAX_PROMPT_TOKENS = int(os.environ.get("PROXY_MAX_PROMPT_TOKENS", "120000"))
+#
+# These defaults are the no-window fallback: one slot on ollama at 160k, which
+# is also the ladder's first rung. During the window llm-scaler.py overrides
+# all of them -- and OLLAMA_URL -- from /run/llm-window.env to match whichever
+# engine and profile is loaded.
+MAX_PROMPT_TOKENS = int(os.environ.get("PROXY_MAX_PROMPT_TOKENS", "125000"))
 MAX_OUTPUT_TOKENS = int(os.environ.get("PROXY_MAX_OUTPUT_TOKENS", "8192"))
 
-# One request at a time, because that is what the card is. OLLAMA_NUM_PARALLEL
-# is 1 and a second caller would queue inside ollama anyway -- queueing here
-# instead means the wait is visible and bounded rather than a silent stall.
+# Must match OLLAMA_NUM_PARALLEL, which llm-scaler.py writes into the same
+# file. More here than there just moves the queue from ollama into the proxy;
+# fewer wastes KV cache the card already paid for.
 SLOTS = int(os.environ.get("PROXY_SLOTS", "1"))
 QUEUE_TIMEOUT = float(os.environ.get("PROXY_QUEUE_TIMEOUT", "300"))
 
 RATE_LIMIT_REQUESTS = int(os.environ.get("PROXY_RATE_LIMIT", "60"))
 RATE_LIMIT_WINDOW = 60.0
+
+# Where the demand snapshot is written for llm-scaler to read. A file rather
+# than an HTTP endpoint on purpose: every route this process serves is reachable
+# from the funnel, so a /metrics route would publish usage patterns to anyone
+# holding a key, and gating it behind its own auth means the scaler needs a key
+# of its own. A file in RuntimeDirectory is readable by root and by nothing
+# else, and it costs no attack surface at all.
+DEMAND_PATH = os.environ.get("PROXY_DEMAND_PATH", "/run/llm-proxy/demand.json")
+
+# Reservations outlive this process on purpose -- see the Reservations
+# docstring. StateDirectory, not RuntimeDirectory, which is cleaned on stop.
+RESERVATION_PATH = os.environ.get("PROXY_RESERVATION_PATH", "/var/lib/llm-proxy/reservations.json")
+RESERVATION_TTL = float(os.environ.get("PROXY_RESERVATION_TTL", "1800"))
+DEMAND_WINDOW = float(os.environ.get("PROXY_DEMAND_WINDOW", "3600"))
+DEMAND_INTERVAL = 15.0
 
 # Second gate behind the funnel on/off timer. The timer is the real boundary;
 # this catches the case where it failed to fire and the tunnel stayed up.
@@ -69,6 +89,16 @@ WINDOW_ENABLED = os.environ.get("PROXY_WINDOW", "1") == "1"
 # and /api/delete, so an endpoint added by a future ollama release is closed by
 # default instead of being a hole nobody noticed opening.
 ALLOWED = {("POST", "/v1/chat/completions"), ("GET", "/v1/models"), ("GET", "/healthz")}
+
+# Reachable without a bearer token. The page has to render before anyone has
+# typed a key, and the status it shows -- how many slots exist and when the
+# next one frees -- is the whole point of publishing it. Everything these two
+# reveal (that the service exists, its hours, its capacity) is already implied
+# by the funnel's certificate being in the CT logs.
+PUBLIC = {("GET", "/"), ("GET", "/status")}
+
+# Takes a key in the body rather than a header, because it is posted by a form.
+RESERVE = {("POST", "/reserve"), ("POST", "/release")}
 
 # Passed through to ollama untouched. Anything absent here is dropped -- most
 # importantly options, num_ctx and keep_alive, which are the three ways a
@@ -205,6 +235,356 @@ class RateLimiter:
         return True
 
 
+class Demand:
+    """Rolling picture of how busy the window actually is.
+
+    The scaler needs to answer one question -- "how many callers want the card
+    at the same time?" -- and the honest signal for it is concurrency, not
+    request count. Ten requests an hour from one caller is a single-slot
+    workload; three simultaneous callers is not, however few requests they send.
+
+    Peak rather than mean concurrency, because the cost of under-provisioning
+    is a caller sitting in the queue for up to QUEUE_TIMEOUT and the cost of
+    over-provisioning is some KV cache nobody reads. Those are not symmetric.
+    """
+
+    def __init__(self):
+        self.active = 0
+        self.starts = deque()     # (ts, kid) -- one per accepted request
+        self.waits = deque()      # (ts, seconds spent queueing)
+        self.rejects = deque()    # ts of "all slots busy" refusals
+        self.samples = deque()    # (ts, active) -- concurrency, sampled on change
+
+    def _trim(self, now):
+        for q in (self.starts, self.waits, self.rejects, self.samples):
+            while q and now - q[0][0] > DEMAND_WINDOW:
+                q.popleft()
+
+    def begin(self, kid, waited):
+        now = time.time()
+        self.active += 1
+        self.starts.append((now, kid))
+        self.waits.append((now, waited))
+        self.samples.append((now, self.active))
+        self._trim(now)
+
+    def end(self):
+        self.active = max(0, self.active - 1)
+        self.samples.append((time.time(), self.active))
+
+    def reject(self):
+        now = time.time()
+        self.rejects.append((now,))
+        self._trim(now)
+
+    def snapshot(self):
+        now = time.time()
+        self._trim(now)
+        waits = sorted(w for _, w in self.waits)
+        return {
+            "ts": now,
+            "slots": SLOTS,
+            "model": MODEL,
+            "window_seconds": DEMAND_WINDOW,
+            "active": self.active,
+            # The number the scaler keys on.
+            "peak_concurrency": max((a for _, a in self.samples), default=self.active),
+            "requests": len(self.starts),
+            "distinct_keys": len({kid for _, kid in self.starts}),
+            # Queueing that actually happened is the direct evidence that the
+            # slot count is too low; rejects are the same evidence, louder.
+            "queued_requests": sum(1 for w in waits if w > 1.0),
+            "max_wait_seconds": waits[-1] if waits else 0.0,
+            "rejects": len(self.rejects),
+        }
+
+
+async def demand_writer(app):
+    """Write the snapshot on a timer, not on every request.
+
+    On a timer because the scaler polls on a timer too and a write per request
+    would be pure churn; and because a snapshot that keeps being refreshed while
+    nothing happens is how the scaler tells "idle" from "proxy is dead", which
+    are decisions it must not confuse -- reloading the model because the proxy
+    crashed would be exactly wrong.
+    """
+    path = DEMAND_PATH
+    tmp = path + ".tmp"
+    try:
+        while True:
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                snap = app["demand"].snapshot()
+                # Reservations ride along in the same file so the scaler has
+                # one thing to read and one moment to read it -- two files
+                # would let it see slots reserved under a profile that had
+                # already changed.
+                resv = app["reservations"]
+                held = resv.active()
+                snap["reserved"] = len(held)
+                snap["reserved_until"] = max(held.values()) if held else 0
+                # Callers who wanted a reservation and could not have one. This
+                # is demand that leaves no other trace: they are turned away at
+                # the page, so they never reach a slot and never queue.
+                snap["reservation_denials"] = len(resv.denials)
+                with open(tmp, "w") as f:
+                    json.dump(snap, f)
+                os.replace(tmp, path)
+            except OSError as e:
+                log.warning("demand snapshot failed: %s", e)
+            await asyncio.sleep(DEMAND_INTERVAL)
+    except asyncio.CancelledError:
+        raise
+
+
+class Reservations:
+    """Thirty-minute holds that let more keys exist than there are slots.
+
+    A reservation is the answer to "will I get kicked off halfway through?".
+    Without one, a caller competes for a slot on every single request, so a
+    long session is a series of chances to lose. With one, a slot is set aside
+    for that key for the duration and nobody else can take it -- which is only
+    a real guarantee if unreserved traffic is kept out of reserved capacity
+    entirely, so that is what admit() does. The cost is that a reserved slot
+    sits idle while its holder is thinking, and that is the point: idle is what
+    "reserved" means.
+
+    Persisted, because llm-scaler restarts this process when it changes profile
+    and an in-memory hold would evaporate exactly when someone was relying on
+    it. The file lives in StateDirectory rather than RuntimeDirectory for the
+    same reason -- RuntimeDirectory is cleaned on stop.
+    """
+
+    def __init__(self, path, ttl):
+        self.path = path
+        self.ttl = ttl
+        self.held = {}      # kid -> expiry epoch
+        self.denials = deque()  # ts of "no slot free to reserve"
+        self._load()
+
+    def _load(self):
+        try:
+            with open(self.path) as f:
+                data = json.load(f)
+            now = time.time()
+            self.held = {k: v for k, v in data.get("held", {}).items() if v > now}
+        except (OSError, ValueError):
+            self.held = {}
+
+    def _save(self):
+        try:
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
+            tmp = self.path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump({"held": self.held}, f)
+            os.replace(tmp, self.path)
+        except OSError as e:
+            log.warning("reservation save failed: %s", e)
+
+    def prune(self, now=None):
+        now = now or time.time()
+        expired = [k for k, v in self.held.items() if v <= now]
+        for k in expired:
+            del self.held[k]
+        while self.denials and now - self.denials[0] > DEMAND_WINDOW:
+            self.denials.popleft()
+        return expired
+
+    def active(self):
+        self.prune()
+        return dict(self.held)
+
+    def holds(self, kid):
+        self.prune()
+        return kid in self.held
+
+    def reserve(self, kid, slots):
+        """Grant or extend. Returns (ok, expiry_or_next_free).
+
+        Extending an existing hold rather than refusing it: a caller who is
+        still working at minute 29 should not have to lose the slot and race
+        for it again, and letting them extend costs nothing that refusing them
+        would save -- they are holding the slot either way.
+        """
+        now = time.time()
+        self.prune(now)
+        if kid not in self.held and len(self.held) >= slots:
+            self.denials.append(now)
+            return False, min(self.held.values()) if self.held else now
+        self.held[kid] = now + self.ttl
+        self._save()
+        return True, self.held[kid]
+
+    def release(self, kid):
+        self.prune()
+        if kid in self.held:
+            del self.held[kid]
+            self._save()
+            return True
+        return False
+
+
+class Slots:
+    """Admission control that keeps reserved capacity genuinely reserved.
+
+    Two pools out of the same N. Each active reservation carves one slot out
+    for its holder; whatever is left is what unreserved callers compete for.
+    They are kept strictly apart on purpose -- letting an unreserved request
+    borrow an idle reserved slot would give back the throughput but take away
+    the only thing a reservation is for, since the holder would then have to
+    wait for that borrower to finish.
+
+    A Condition rather than a Semaphore because the capacity available to
+    unreserved callers moves as reservations come and go, and a Semaphore's
+    count cannot be resized underneath its waiters.
+    """
+
+    def __init__(self, total):
+        self.total = total
+        self.cond = asyncio.Condition()
+        self.busy_reserved = set()
+        self.busy_general = 0
+
+    def general_capacity(self, reserved_count):
+        return max(0, self.total - reserved_count)
+
+    def _can_admit(self, kid, is_reserved, reserved_count):
+        if is_reserved:
+            # One slot per reservation, not per request: a holder firing two
+            # requests at once would otherwise eat a general slot for the
+            # second and starve somebody who has no reservation at all.
+            return kid not in self.busy_reserved
+        return self.busy_general < self.general_capacity(reserved_count)
+
+    async def acquire(self, kid, is_reserved, reserved_count_fn, timeout):
+        # A plain def, emphatically not an "async def". Condition.wait_for
+        # takes a callable returning a bool; hand it a coroutine function and
+        # it tests the coroutine OBJECT for truth, which is always true -- so
+        # every caller is admitted instantly and the reservation guarantee
+        # silently evaporates. It looks completely correct while doing nothing.
+        def ready():
+            return self._can_admit(kid, is_reserved, reserved_count_fn())
+
+        async with self.cond:
+            await asyncio.wait_for(self.cond.wait_for(ready), timeout=timeout)
+            if is_reserved:
+                self.busy_reserved.add(kid)
+            else:
+                self.busy_general += 1
+
+    async def release(self, kid, is_reserved):
+        async with self.cond:
+            if is_reserved:
+                self.busy_reserved.discard(kid)
+            else:
+                self.busy_general = max(0, self.busy_general - 1)
+            self.cond.notify_all()
+
+    def in_flight(self):
+        return len(self.busy_reserved) + self.busy_general
+
+
+# Inlined rather than served from a file: it is one page, it has no assets, and
+# a served directory is another thing reachable from the funnel. Deliberately
+# plain -- no external fonts, no CDN, nothing that phones anywhere.
+PAGE = """<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>slot reservation</title>
+<style>
+ :root { color-scheme: light dark; --fg:#111; --bg:#fafafa; --mut:#666; --line:#ddd; --ok:#0a6b3d; --bad:#8a2020; }
+ @media (prefers-color-scheme: dark) { :root { --fg:#e8e8e8; --bg:#151515; --mut:#999; --line:#333; --ok:#4ade80; --bad:#f87171; } }
+ body { font: 15px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg);
+        background: var(--bg); margin: 0; padding: 2.5rem 1.25rem; }
+ main { max-width: 32rem; margin: 0 auto; }
+ h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 .35rem; }
+ p.sub { color: var(--mut); margin: 0 0 1.75rem; }
+ .card { border: 1px solid var(--line); border-radius: 8px; padding: 1.1rem 1.2rem; margin-bottom: 1rem; }
+ .row { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; }
+ .row span:last-child { color: var(--mut); }
+ form { display: flex; gap: .5rem; margin-top: .25rem; }
+ input { flex: 1; min-width: 0; font: inherit; padding: .5rem .6rem; border: 1px solid var(--line);
+         border-radius: 6px; background: var(--bg); color: var(--fg); }
+ button { font: inherit; padding: .5rem 1rem; border: 1px solid var(--line); border-radius: 6px;
+          background: var(--fg); color: var(--bg); cursor: pointer; }
+ button:disabled { opacity: .5; cursor: default; }
+ #msg { margin-top: .9rem; min-height: 1.4rem; }
+ .ok { color: var(--ok); } .bad { color: var(--bad); }
+ code { color: var(--mut); }
+</style>
+<main>
+<h1>qwen3.8 &mdash; slot reservation</h1>
+<p class="sub">Hold a slot for %(ttl_min)d minutes so a long session is not interrupted.</p>
+
+<div class="card">
+  <div class="row"><span>service hours</span><span>%(start)02d:00&ndash;%(end)02d:00 %(tz)s</span></div>
+  <div class="row"><span>status</span><span id="s-open">&hellip;</span></div>
+  <div class="row"><span>slots</span><span id="s-slots">&hellip;</span></div>
+  <div class="row"><span>free to reserve</span><span id="s-free">&hellip;</span></div>
+  <div class="row"><span>next slot frees</span><span id="s-next">&hellip;</span></div>
+</div>
+
+<div class="card">
+  <form id="f">
+    <input id="k" type="password" placeholder="your key (sk-...)" autocomplete="off" spellcheck="false">
+    <button id="b" type="submit">Reserve</button>
+  </form>
+  <div id="msg"></div>
+</div>
+
+<p class="sub">Point your client at <code>%(base)s/v1</code> with the same key.
+Reserving again before it lapses extends the hold.</p>
+</main>
+<script>
+const $ = i => document.getElementById(i);
+const fmt = t => t ? new Date(t*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '\\u2014';
+
+async function refresh() {
+  try {
+    const r = await fetch('status', {cache:'no-store'});
+    const d = await r.json();
+    $('s-open').textContent  = d.in_window ? 'open' : 'closed';
+    $('s-slots').textContent = d.slots;
+    $('s-free').textContent  = d.slots - d.reserved;
+    $('s-next').textContent  = d.reserved >= d.slots ? fmt(d.next_free) : 'now';
+    $('b').disabled = !d.in_window;
+  } catch (e) { /* transient; the next tick will pick it up */ }
+}
+
+$('f').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const key = $('k').value.trim();
+  if (!key) return;
+  $('b').disabled = true;
+  $('msg').textContent = 'reserving\\u2026';
+  $('msg').className = '';
+  try {
+    const r = await fetch('reserve', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key})
+    });
+    const d = await r.json();
+    if (r.ok) {
+      $('msg').textContent = 'Slot held until ' + fmt(d.expires_at) + '.';
+      $('msg').className = 'ok';
+    } else {
+      $('msg').textContent = (d.error && d.error.message) || 'could not reserve';
+      $('msg').className = 'bad';
+    }
+  } catch (e) {
+    $('msg').textContent = 'network error';
+    $('msg').className = 'bad';
+  }
+  $('b').disabled = false;
+  refresh();
+});
+
+refresh();
+setInterval(refresh, 15000);
+</script>
+"""
+
+
 # --- handlers --------------------------------------------------------------
 
 
@@ -212,9 +592,97 @@ def problem(status, message, **extra):
     return web.json_response({"error": {"message": message, "type": "proxy_error", **extra}}, status=status)
 
 
+def public_status(app):
+    resv = app["reservations"]
+    held = resv.active()
+    now = time.time()
+    return {
+        "in_window": in_window(),
+        "slots": SLOTS,
+        "reserved": len(held),
+        # Only meaningful when everything is held; the page shows "now"
+        # otherwise. min() of the expiries is when the first one lapses.
+        "next_free": min(held.values()) if held else now,
+        "window_start": WINDOW_START,
+        "window_end": WINDOW_END,
+        "reservation_ttl": RESERVATION_TTL,
+    }
+
+
+async def handle_reserve(request, release=False):
+    """Key in the JSON body, because a browser form cannot set a header.
+
+    Rate-limited by client address rather than by key: the key is what is being
+    guessed, so it cannot be the thing that identifies the guesser. Keys are 48
+    hex characters and not realistically brute-forceable, but an endpoint that
+    validates secrets and is reachable from the open internet should cost
+    something to hammer regardless.
+    """
+    app = request.app
+    peer = request.headers.get("X-Forwarded-For", "") or (request.remote or "?")
+    peer = peer.split(",")[0].strip()
+    if not app["limiter"].allow(f"ip:{peer}"):
+        return problem(429, f"rate limit is {RATE_LIMIT_REQUESTS} requests per minute")
+
+    try:
+        body = await request.json()
+    except Exception:
+        return problem(400, "body is not valid JSON")
+
+    presented = (body.get("key") or "").strip()
+    matched = None
+    for k in app["keys"]:
+        if hmac.compare_digest(presented, k):
+            matched = k
+    if matched is None:
+        log.info("reserve: bad key from %s", peer)
+        return problem(401, "that key is not recognised")
+
+    kid = key_id(matched)
+    resv = app["reservations"]
+
+    if release:
+        resv.release(kid)
+        return web.json_response({"ok": True, **public_status(app)})
+
+    if not in_window():
+        return problem(
+            503, f"outside service hours ({WINDOW_START:02d}:00-{WINDOW_END:02d}:00 {TZ.key})"
+        )
+
+    ok, when = resv.reserve(kid, SLOTS)
+    if not ok:
+        log.info("reserve: kid=%s refused, all %d slots held", kid, SLOTS)
+        return problem(
+            503,
+            f"all {SLOTS} slot(s) are reserved right now; the next frees at "
+            f"{datetime.fromtimestamp(when, TZ).strftime('%H:%M')}",
+            **public_status(app),
+        )
+    log.info("reserve: kid=%s held until %.0f", kid, when)
+    return web.json_response({"ok": True, "expires_at": when, **public_status(app)})
+
+
 async def handle(request):
     app = request.app
     route = (request.method, request.path)
+
+    if route == ("GET", "/"):
+        return web.Response(
+            text=PAGE % {
+                "ttl_min": int(RESERVATION_TTL // 60),
+                "start": WINDOW_START,
+                "end": WINDOW_END,
+                "tz": TZ.key,
+                "base": str(request.url.origin()),
+            },
+            content_type="text/html",
+        )
+    if route == ("GET", "/status"):
+        return web.json_response(public_status(app))
+    if route in RESERVE:
+        return await handle_reserve(request, release=(request.path == "/release"))
+
     if route not in ALLOWED:
         return problem(404, "not found")
 
@@ -253,17 +721,37 @@ async def handle(request):
         # 413 for the size case specifically -- it is the one a caller can fix.
         return problem(413 if "limit" in err else 400, err)
 
+    resv = app["reservations"]
+    is_reserved = resv.holds(kid)
+
     started = time.monotonic()
     try:
-        await asyncio.wait_for(app["slots"].acquire(), timeout=QUEUE_TIMEOUT)
+        await app["slots"].acquire(
+            kid, is_reserved, lambda: len(resv.active()), QUEUE_TIMEOUT
+        )
     except asyncio.TimeoutError:
-        return problem(503, f"all {SLOTS} slot(s) busy for over {QUEUE_TIMEOUT:.0f}s")
+        app["demand"].reject()
+        held = len(resv.active())
+        if is_reserved:
+            # Their own slot, so the only way to wait this long is their own
+            # earlier request still running. Say so rather than blaming load.
+            return problem(503, "your reserved slot is still busy with an earlier request")
+        free = app["slots"].general_capacity(held)
+        if free == 0 and held:
+            return problem(
+                503,
+                f"all {SLOTS} slot(s) are reserved; reserve one at / to get a "
+                f"guaranteed {int(RESERVATION_TTL // 60)}-minute hold",
+            )
+        return problem(503, f"all {free} unreserved slot(s) busy for over {QUEUE_TIMEOUT:.0f}s")
     waited = time.monotonic() - started
 
+    app["demand"].begin(kid, waited)
     try:
         return await proxy(request, clean, kid, waited)
     finally:
-        app["slots"].release()
+        app["demand"].end()
+        await app["slots"].release(kid, is_reserved)
 
 
 async def proxy(request, body, kid, waited):
@@ -310,9 +798,15 @@ async def on_startup(app):
     # No total timeout: a 128k prompt spends minutes in prefill before the
     # first token and a whole-request deadline would kill it mid-answer.
     app["session"] = ClientSession(timeout=ClientTimeout(total=None, sock_connect=10))
+    app["demand_task"] = asyncio.create_task(demand_writer(app))
 
 
 async def on_cleanup(app):
+    app["demand_task"].cancel()
+    try:
+        await app["demand_task"]
+    except asyncio.CancelledError:
+        pass
     await app["session"].close()
 
 
@@ -325,7 +819,9 @@ def main():
     app = web.Application(client_max_size=64 * 1024 * 1024)
     app["keys"] = load_keys()
     app["limiter"] = RateLimiter()
-    app["slots"] = asyncio.Semaphore(SLOTS)
+    app["slots"] = Slots(SLOTS)
+    app["demand"] = Demand()
+    app["reservations"] = Reservations(RESERVATION_PATH, RESERVATION_TTL)
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
     app.router.add_route("*", "/{tail:.*}", handle)
