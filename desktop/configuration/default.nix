@@ -9,7 +9,7 @@
     ./hardware.nix
     ./cloudflare-ddns.nix
     ./litellm.nix
-    ./llm-proxy.nix
+    # ./llm-proxy.nix
     ./networking.nix
     ./nix-serve.nix
     ./nixpkgs.nix
