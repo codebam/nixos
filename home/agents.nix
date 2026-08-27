@@ -65,10 +65,6 @@ let
   # deliberate per-session pick, not the thing every task lands on.
   cfModel = "@cf/qwen/qwen3.8-27b";
 
-  # Background turns (titles, summaries) do not need the router. $0.3/$1.2 per
-  # Mtok, fixed.
-  cheapModel = "minimax/minimax-m3";
-
   # The litellm gateway from desktop/configuration/litellm.nix: qwen3.8 27B on
   # the local card, transparently continued on OpenRouter's copy of the same
   # model once a session outgrows the 160k the GPU can hold. One model id from
@@ -217,21 +213,10 @@ in
     file.".pi/agent/models.json".text = builtins.toJSON piModels;
   };
 
-  # Written from nix rather than left to `opencode` itself: the TUI's model
-  # picker persists into this same file, and a hand-picked model would
-  # otherwise outlive the choice made here.
+  # Leave `model` unset: opencode then restores the last model selected in the
+  # TUI.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    # Local-first: this is the litellm gateway, not a cloud endpoint. The
-    # openrouter models below stay in `/models` for a session that wants a
-    # different model rather than a bigger window -- the window is already
-    # handled, by the gateway falling back on its own.
-    #
-    # Note the id shape: opencode addresses models as provider/model, so the
-    # openrouter provider plus the router's own `openrouter/pareto-code` id
-    # doubles the prefix, while the gateway's flat `qwen3.8` does not.
-    model = if hasGateway then "litellm/${gatewayModel}" else "openrouter/${codingModel}";
-    small_model = "openrouter/${cheapModel}";
 
     # opencode ships permissive: every tool runs unprompted. Kept that way on
     # purpose -- the prompts were more friction than guardrail here.
@@ -257,10 +242,10 @@ in
     autoupdate = false;
     share = "disabled";
 
-    # Alternate, picked per session from the TUI's model list (`/models`);
-    # the choice lives in opencode's own sqlite state, not in this file, so it
-    # survives sessions without fighting the nix-managed config. Listing it
-    # here is what puts `cloudflare-workers-ai` in that list -- the rest of the
+    # Models picked from the TUI's model list (`/models`) live in opencode's
+    # own sqlite state, so the last selection survives sessions without
+    # fighting the Nix-managed config. Listing this provider is what puts
+    # `cloudflare-workers-ai` in that list -- the rest of the
     # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
     # comes from models.dev, and the endpoint is built from
     # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
