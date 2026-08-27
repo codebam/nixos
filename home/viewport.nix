@@ -330,10 +330,10 @@ in
       "Mod4+Shift+p" = "shell power";
     }
     # Press to start dictating, press again to stop and transcribe the whole
-    # take. Not `Mod4+v`, which the built-in keymap already spends on splitting
-    # the next window vertically.
+    # take. Both keys sit under the left hand, and `Mod4+c` is otherwise unused
+    # by the built-in keymap.
     // lib.optionalAttrs config.programs.voxtype.enable {
-      "Mod4+Mouse5" = "exec ${lib.getExe config.programs.voxtype.package} record toggle";
+      "Mod4+c" = "exec ${lib.getExe config.programs.voxtype.package} record toggle";
     }
     # Same chord as in home/sway.nix. Throttles builds.slice down to a tenth of
     # the machine (and off the reserved cores) so a rebuild cannot stutter an
