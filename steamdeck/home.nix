@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   lib,
   config,
@@ -6,6 +7,8 @@
 }:
 
 {
+  programs.voxtype.package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
+
   stylix = {
     targets = {
       qt.enable = lib.mkForce false;

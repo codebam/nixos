@@ -14,6 +14,7 @@ _:
     ./sway.nix
     ./terminal.nix
     ./systemd.nix
+    ./voxtype.nix
     ./viewport.nix
     ./waybar.nix
     ./xdg.nix

@@ -10,7 +10,6 @@ _:
   imports = [
     ./virtualisation.nix
     ./environment.nix
-    ./programs.nix
     ./services.nix
     ./tailscale-ivpn.nix
     ./systemd.nix

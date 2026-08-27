@@ -1,6 +1,8 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 {
+
+  programs.voxtype.package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
 
   home = {
     # android-studio is not here: it is 3.5 GB plus a 470 MB JDK 17 that

@@ -52,6 +52,10 @@
       url = "github:codebam/viewport";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    voxtype = {
+      url = "github:peteonrails/voxtype/v0.7.5";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -100,6 +104,7 @@
                 };
                 sharedModules = [
                   inputs.sops-nix.homeManagerModules.sops
+                  inputs.voxtype.homeManagerModules.default
                 ];
               };
             }

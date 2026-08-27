@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   osConfig,
@@ -328,15 +329,11 @@ in
       "Print" = "exec ${screenshot}";
       "Mod4+Shift+p" = "shell power";
     }
-    # Press to start dictating, press again to stop. Whether that types at the
-    # end or as each utterance lands is `voiceToText.streaming`, which is what
-    # `binding` resolves -- both commands toggle the same way, so the binding
-    # is the same either way. Not `Mod4+v`, which the built-in keymap already
-    # spends on splitting the next window vertically. The host has to have the
-    # engine installed for this to be worth binding: the Steam Deck imports
-    # this file too and does not.
-    // lib.optionalAttrs (osConfig.voiceToText.enable or false) {
-      "Mod4+Mouse5" = "exec ${lib.getExe osConfig.voiceToText.binding}";
+    # Press to start dictating, press again to stop and transcribe the whole
+    # take. Not `Mod4+v`, which the built-in keymap already spends on splitting
+    # the next window vertically.
+    // lib.optionalAttrs config.programs.voxtype.enable {
+      "Mod4+Mouse5" = "exec ${lib.getExe config.programs.voxtype.package} record toggle";
     }
     # Same chord as in home/sway.nix. Throttles builds.slice down to a tenth of
     # the machine (and off the reserved cores) so a rebuild cannot stutter an

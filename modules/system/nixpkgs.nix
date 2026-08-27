@@ -45,23 +45,9 @@
       };
       overlays = [
         (final: prev: {
-          # Here rather than in the module that installs it, because the
-          # keybinding that runs it lives in home-manager and both sides have
-          # to name the same derivation. `useGlobalPkgs` is what makes that
-          # work. CPU whisper.cpp, which is the build the binary cache has; a
-          # host wanting the Vulkan one asks with `voiceToText.gpu` and gets an
-          # override of this rather than a second overlay entry.
-          voice-to-text = prev.callPackage ../../pkgs/voice-to-text.nix { };
-
-          # The streaming variant, for the same reason and by the same route.
-          # A separate derivation rather than a flag on the one above: the two
-          # share only a model, and a host can bind either without the other
-          # deciding what `voice-to-text` means.
-          voice-to-text-stream = prev.callPackage ../../pkgs/voice-to-text-stream.nix { };
-
-          # Same reason as the two above: home-manager both installs this and
-          # names it in a tmux popup binding, and a second `callPackage` on
-          # each side would be two derivations that happen to agree.
+          # Home-manager both installs this and names it in a tmux popup
+          # binding. Keeping it in the shared overlay makes both uses resolve
+          # to the same derivation.
           agent-overview = prev.callPackage ../../pkgs/agent-overview.nix { };
 
           # Vendor ships a prebuilt Wails + WebKitGTK tarball, no nixpkgs
@@ -79,30 +65,6 @@
           # Official CLI from https://sigmashake.com/install (static Go binary).
           ssg = prev.callPackage ../../pkgs/ssg.nix { };
 
-          # Two things are wrong with nixpkgs' own `whisper-cpp-vulkan` here.
-          #
-          # It declares vulkan-headers and vulkan-loader, and 1.8.7's
-          # ggml-vulkan.cpp also includes <spirv/unified1/spirv.hpp>, which is
-          # in neither -- it is spirv-headers, which nothing pulls in. The
-          # include is written as an `__has_include` chain ending in a
-          # deliberate hard error, so the build gets to 55% and then stops on
-          # "file not found".
-          #
-          # And `rocmSupport` is on for this desktop, which makes the same
-          # derivation set CMAKE_CXX_COMPILER to hipcc -- so the Vulkan sources
-          # compile as HIP, for all sixteen AMDGPU targets, to produce a
-          # backend that talks to Vulkan anyway. Turning it off for this build
-          # is not losing a backend: GGML_HIPBLAS is the pre-0.15 spelling and
-          # ggml ignores it, which is why the rocm-enabled `whisper-cpp` in
-          # this closure ships CPU backends and nothing else.
-          whisper-cpp-vulkan =
-            (prev.whisper-cpp.override {
-              vulkanSupport = true;
-              rocmSupport = false;
-            }).overrideAttrs
-              (old: {
-                buildInputs = old.buildInputs ++ [ prev.spirv-headers ];
-              });
           # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
           # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
           # closure transitively by mpv. quickjs-ng runs the same extractor

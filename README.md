@@ -52,7 +52,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   ├── lix.nix                  # Lix Nix implementation overlay
 │   ├── hardware/                # Bluetooth, uinput, graphics, QMK, redistributable firmware
 │   ├── programs/                # nix-index, ccache, UWSM/sway, fish, wireshark, gnupg,
-│   │                              gaming (Steam/Gamescope), sops-pass, voice-to-text
+│   │                              gaming (Steam/Gamescope), sops-pass
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # irblack scheme, Papirus icons, capitaine cursor, FiraCode Nerd Font
@@ -86,13 +86,12 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   ├── stylix.nix               # Per-user theming targets
 │   ├── sway.nix                 # Sway config (keybindings, outputs, inputs, gaps, bars)
 │   ├── systemd.nix              # Tmux systemd user service
+│   ├── voxtype.nix              # Offline dictation daemon and transcript processing
 │   ├── viewport.nix             # Viewport bootstrap config
 │   ├── waybar.nix               # Base Waybar bar config
 │   └── xdg.nix                  # MIME apps
 ├── pkgs/
-│   ├── voice-to-text.nix        # Custom whisper.cpp offline dictation package
-│   ├── voice-to-text-stream.nix # Streaming variant: types each utterance
-│   └── voice-to-text-plainify.nix # Shared transcript filter: lowercase, no punctuation, no "um"
+│   └── voxtype-plainify.nix     # Transcript filter: lowercase, no punctuation, no "um"
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
 ```
@@ -112,6 +111,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 | `preservation` | nix-community/preservation |
 | `nix-index-database` | nix-community/nix-index-database |
 | `lsfg-vk-flake` | pabloaul/lsfg-vk-flake |
+| `voxtype` | peteonrails/voxtype v0.7.5 |
 | `nixos-avf` | nix-community/nixos-avf |
 | `sops-pass` | codebam/sops-pass (codeberg) |
 | `viewport-smithay` | codebam/viewport-smithay (active compositor) |

@@ -1,14 +1,13 @@
-# A sed program that turns a whisper transcript into what dictation into a
+# A sed program that turns a Voxtype transcript into what dictation into a
 # chat box or a shell actually wants: one lowercase line, no sentence
 # punctuation, none of the hesitation noises whisper faithfully writes down,
-# and none of the sentences it invents out of silence. Shared by
-# `voice-to-text` and `voice-to-text-stream` so the two commands cannot drift
-# apart on what "plain" means.
+# and none of the sentences Whisper invents out of silence. Voxtype runs it as
+# its output post-processing command before typing the result.
 #
 # This is post-processing rather than prompting on purpose. `--prompt` biases
 # the decoder and is worth setting, but it is a suggestion the model is free to
-# ignore mid-utterance -- and whisper-stream has no `--prompt` at all. A sed
-# program applied to the output is the only part of this that is deterministic.
+# ignore mid-utterance. A sed program applied to the output is the only part of
+# this that is deterministic.
 #
 # The rules run in a fixed order, and it matters: everything below the
 # lowercasing is written expecting lowercase input, and the whole-line
@@ -121,7 +120,7 @@
   # With punctuation stripped there is no way left to dictate a line break, so
   # one is given back as a phrase. Values are typed literally, except for
   # `\x03`: that is the sentinel both commands turn into a newline at the point
-  # where they type. A real newline cannot travel through here -- it is a
+  # where it types. A real newline cannot travel through here -- it is a
   # record separator to the sed and awk this feeds, and the streaming pipeline
   # is line-oriented -- and `\v`, the obvious stand-in, is matched by
   # `[[:space:]]` and would be squeezed back into a space by the tidying pass.
@@ -143,7 +142,7 @@
 
 let
   # `\L&`, the `:label`/`t` loops and `\x01` are all GNU sed. Both commands
-  # already depend on GNU sed through `gnused` in their runtime inputs.
+  # depends on GNU sed through `gnused` in its runtime inputs.
   lowercaseCmd = lib.optionalString lowercase "s/.*/\\L&/\n";
 
   fillerAlternation = lib.concatStringsSep "|" fillers;
