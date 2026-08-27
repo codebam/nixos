@@ -246,7 +246,14 @@ in
     # volume far left, then the Pickering weather, network, the root disk with
     # the /games watcher right after it, and the rest of the modules.
     bar_items = [
-      { type = "mpris"; }
+      {
+        type = "ai";
+        provider = "openai";
+      }
+      {
+        type = "ai";
+        provider = "openrouter";
+      }
       { type = "volume"; }
       { type = "mic"; }
       {

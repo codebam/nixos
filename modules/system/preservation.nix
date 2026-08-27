@@ -168,6 +168,7 @@ _: {
             ".config/google-chrome"
             ".config/google-chrome-unstable"
             ".config/agy-sandbox"
+            ".config/viewport"
             ".local/share/vkBasalt/shaders"
             ".local/share/kwalletd"
             ".local/share/iamb"
