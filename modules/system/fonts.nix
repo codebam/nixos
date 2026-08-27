@@ -6,6 +6,7 @@
       fira-code
       fira-code-symbols
       font-awesome
+      nerd-fonts.jetbrains-mono
       miracode
       monocraft
       nerd-fonts.fira-code

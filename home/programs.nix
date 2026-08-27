@@ -218,7 +218,7 @@
         * {
           border: none;
           border-radius: 0;
-          font-family: "FiraCode Nerd Font", "Fira Code", monospace;
+          font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
           font-size: 13px;
           font-weight: bold;
           min-height: 0;

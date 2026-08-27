@@ -55,7 +55,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 │   │                              gaming (Steam/Gamescope), sops-pass
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
-│   ├── stylix/                  # irblack scheme, Papirus icons, capitaine cursor, FiraCode Nerd Font
+│   ├── stylix/                  # irblack scheme, Papirus icons, capitaine cursor, JetBrainsMono Nerd Font
 │   ├── system/                  # boot, cleanup-root, env, fonts, gcp-builder, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
 │   │                              sysctl, systemd, time, xdg, zram
