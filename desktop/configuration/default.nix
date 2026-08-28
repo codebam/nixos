@@ -7,7 +7,7 @@
     ./environment.nix
     ./flaresolverr.nix
     ./hardware.nix
-    ./cloudflare-ddns.nix
+    # ./cloudflare-ddns.nix
     ./litellm.nix
     # ./llm-proxy.nix
     ./networking.nix
