@@ -96,6 +96,10 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
+                # On file collision, move the existing file to <path>.hm-backup
+                # and activate over it; clobber old backups instead of failing.
+                backupFileExtension = "hm-backup";
+                overwriteBackup = true;
                 extraSpecialArgs = { inherit inputs; };
                 users.codebam = {
                   imports = [
