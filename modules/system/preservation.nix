@@ -105,6 +105,11 @@ _: {
             "Games"
             ".local/share/direnv"
             ".local/share/fish"
+            # OpenCode sessions, auth, snapshots, selected model, prompt
+            # history, and mutable global plugin/config state.
+            ".local/share/opencode"
+            ".local/state/opencode"
+            ".config/opencode"
             # `flatpak --user install` and the app data those apps write.
             # The system-wide half is /var/lib/flatpak above.
             ".local/share/flatpak"
