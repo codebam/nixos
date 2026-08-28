@@ -163,6 +163,13 @@ in
           };
         in
         {
+          # Never let an IP address or unknown Host fall through to a real vhost.
+          "_" = {
+            default = true;
+            rejectSSL = true;
+            locations."/".return = "444";
+          };
+
           "codebam.tplinkdns.com" = publicNavidrome;
           "music.codebam.ca" = publicNavidrome;
 
