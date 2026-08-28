@@ -8,7 +8,7 @@
     ./flaresolverr.nix
     ./hardware.nix
     # ./cloudflare-ddns.nix
-    ./litellm.nix
+    # ./litellm.nix
     # ./llm-proxy.nix
     ./networking.nix
     ./nix-serve.nix
