@@ -478,7 +478,7 @@
     };
     firefox = {
       enable = true;
-      package = inputs.chaotic.packages.${pkgs.stdenv.hostPlatform.system}.firefox_nightly;
+      # package = inputs.chaotic.packages.${pkgs.stdenv.hostPlatform.system}.firefox_nightly;
       policies = {
         DisableTelemetry = true;
         DisableFirefoxStudies = true;
