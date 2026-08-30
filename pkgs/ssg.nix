@@ -6,15 +6,14 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "ssg";
-  # Pinned to the linux-x64 default in https://sigmashake.com/install.
-  version = "1.1.2";
+  version = "1.1.6";
 
   src = fetchurl {
-    url = "https://download.sigmashake.com/cli/${finalAttrs.version}/ssg-linux-x64.tar.gz";
-    hash = "sha256-DzNNajtH71vhfvmH7uM5p6YFuiRIAuqB/SycmtVNUqA=";
+    url = "https://registry.npmjs.org/@sigmashake/ssg-linux-x64/-/ssg-linux-x64-${finalAttrs.version}.tgz";
+    hash = "sha256-/7AyOzXNFA9uuU7ynuetDMvLDWn/wKL6CqNCoN6Ctig=";
   };
 
-  sourceRoot = ".";
+  sourceRoot = "package";
 
   dontConfigure = true;
   dontBuild = true;
@@ -26,7 +25,8 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 ssg $out/bin/ssg
+    install -Dm755 bin/ssg $out/bin/ssg
+    cp -R public $out/bin/public
 
     runHook postInstall
   '';
