@@ -6,11 +6,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "ssg";
-  version = "1.1.6";
+  version = "1.1.7";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@sigmashake/ssg-linux-x64/-/ssg-linux-x64-${finalAttrs.version}.tgz";
-    hash = "sha256-/7AyOzXNFA9uuU7ynuetDMvLDWn/wKL6CqNCoN6Ctig=";
+    hash = "sha256-gaPvgReHDCCNd/iJuSIjR90ebhCB6MuyNpg80lu+Eco=";
   };
 
   sourceRoot = "package";
