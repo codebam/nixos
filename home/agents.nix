@@ -40,6 +40,12 @@ let
         if [ -n "$value" ]; then export "$name=$value"; fi
       done
     fi
+
+    qwen_secret=/run/secrets/qwen-api-key
+    if [ -r "$qwen_secret" ]; then
+      QWEN_API_KEY=$(cat "$qwen_secret")
+      export QWEN_API_KEY
+    fi
   '';
 
   # OpenRouter's Pareto Code Router picks a coder per request off the current
@@ -71,6 +77,35 @@ let
   # opencode's side; the switch happens inside the proxy.
   gatewayUrl = "http://127.0.0.1:4000/v1";
   gatewayModel = "qwen3.8";
+
+  qwenProvider = {
+    qwen = {
+      npm = "@ai-sdk/openai-compatible";
+      name = "Qwen (DashScope International)";
+      options = {
+        baseURL = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+        apiKey = "{env:QWEN_API_KEY}";
+      };
+      models = builtins.listToAttrs (
+        map
+          (id: {
+            name = id;
+            value = {
+              name = id;
+              reasoning = true;
+              tool_call = true;
+            };
+          })
+          [
+            "qwen3.8-max"
+            "qwen3.8-flash"
+            "qwen3.7-max"
+            "qwen3.7-plus"
+            "qwen3.6-flash"
+          ]
+      );
+    };
+  };
 
   # Only the desktop has the card and therefore the gateway; this same home
   # config lands on the laptop and the steamdeck, where pointing the default
@@ -281,7 +316,8 @@ in
         };
       };
     }
-    // gatewayProvider;
+    // gatewayProvider
+    // qwenProvider;
   };
 
 }

@@ -52,6 +52,10 @@
         owner = "codebam";
         group = "users";
       };
+      qwen-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       # Same key again, this time left root-owned: litellm runs
       # under a DynamicUser, and systemd reads EnvironmentFile as root before
       # the unit drops privileges, so no chown is needed and none is wanted.
