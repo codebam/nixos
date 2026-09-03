@@ -10,6 +10,11 @@ _:
             ".android"
             ".config/sunshine"
             ".config/bolt-launcher"
+            # zvec-grep state: downloaded embedding models (~640M GGUF under
+            # models/), the global config, and the MCP request key. Not
+            # reproducible from the flake; re-downloading on every boot is
+            # wasteful.
+            ".zvec-grep"
           ];
         };
         makano = {
