@@ -277,6 +277,26 @@ in
     autoupdate = false;
     share = "disabled";
 
+    # Declarative equivalent of `zg install --target opencode
+    # --mcp-transport stdio` from zvec-grep 0.2.1 (install.ts
+    # installOpenCodeIntegration). stdio means no daemon to keep up: each
+    # opencode session spawns `zg server --stdio`, which manages its own
+    # shared daemon. Re-derive both this and the AGENTS.md block below from
+    # the new package (run the installer with HOME pointed at a scratch dir)
+    # when bumping zvec-grep's version.
+    mcp.zvec_grep = {
+      type = "local";
+      # Resolved from the session PATH; zvec-grep is in home.packages.
+      command = [
+        "zg"
+        "server"
+        "--stdio"
+      ];
+      enabled = true;
+      # The installer's --mcp-tool-timeout default: 600s in ms.
+      timeout = 600000;
+    };
+
     # Models picked from the TUI's model list (`/models`) live in opencode's
     # own sqlite state, so the last selection survives sessions without
     # fighting the Nix-managed config. Listing this provider is what puts
@@ -319,5 +339,40 @@ in
     // gatewayProvider
     // qwenProvider;
   };
+
+  # The guidance block `zg install` writes to ~/.config/opencode/AGENTS.md,
+  # copied verbatim from its 0.2.1 output (opencode loads the config-dir
+  # AGENTS.md globally; the markers let the installer's uninstall find it too
+  # if one ever runs against this file).
+  xdg.configFile."opencode/AGENTS.md".text = ''
+    <!-- ZVEC_GREP_START -->
+    ## zvec-grep
+
+    Choose the evidence source before the retrieval mode.
+
+    ### Workspace evidence
+    - Use the current workspace as the evidence source when the user asks about local material, prior context establishes it as relevant, or the question concerns how the current project works—even if the workspace is not mentioned explicitly.
+    - A workspace may contain any mix of code, documents, configuration, and data.
+    - Do not use workspace retrieval for unrelated open-world questions, current external facts, or web content that does not depend on local evidence.
+
+    ### Retrieval routing
+    - When an exact word, phrase, name, date, identifier, filename, path, configuration key, error message, source fragment, literal, or regex is known and locating its occurrences is sufficient, use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
+    - Use `zvec_grep_zvec_grep_search` when wording or location is unknown, or when the answer requires semantic, conceptual, fuzzy, or paraphrase discovery; relationships, chronology, causality, architecture, or data or control flow; or comparison or synthesis across files, sections, or documents.
+    - For a mixed task with exact anchors that still requires relationships or cross-file synthesis, call `zvec_grep_zvec_grep_search` with the concept and anchors, then use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg` for focused follow-up.
+    - When no sufficient exact anchor is available and the user asks whether conceptually related material exists locally, make at most one focused `zvec_grep_zvec_grep_search` probe using the question plus distinctive names, dates, or terms. This probe does not apply to exact quotations, configuration keys, filenames, regexes, or exhaustive occurrence requests. Continue only when results are relevant; otherwise stop and report that the indexed workspace did not establish the answer.
+    - Before broad file reads or delegating workspace discovery, use the appropriate search route. Do not delegate solely to locate material, and stop when the evidence is sufficient.
+
+    ### Search evidence
+    - Search results include bounded source snippets. Treat a sufficient snippet as already-read evidence, and read a cited file only when a required detail falls outside the snippet.
+
+    ### Freshness and index lifecycle
+    - Pass a daemon-visible absolute `root` on every zvec-grep workspace call.
+    - Read `freshness` and `background_refresh` from search results without a status preflight.
+    - When results are `served_from_current_index`, use them when sufficient instead of waiting for the background refresh.
+    - If the index is missing but exact or regex lookup can answer the task, use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
+    - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
+
+    <!-- ZVEC_GREP_END -->
+  '';
 
 }
