@@ -204,6 +204,13 @@ in
   # cannot quit without switching to a TTY.
   xdg.configFile."viewport/config.json".text = builtins.toJSON {
     layout = "scrolling";
+    rules = [
+      # Don't capture OBS Studio
+      {
+        app_id = "com.obsproject.Studio";
+        capture = false;
+      }
+    ];
 
     # What Mod4+Return opens. Without it the compositor falls back to its
     # built-in default, which is foot.
