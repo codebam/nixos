@@ -65,6 +65,13 @@
           # Official CLI from https://sigmashake.com/install (static Go binary).
           ssg = prev.callPackage ../../pkgs/ssg.nix { };
 
+          # npm CLI (@zvec/zvec-grep) with no nixpkgs package. The registry
+          # tarball ships a prebuilt dist/ but no lockfile, so the derivation
+          # pins the upstream tag's package-lock.json and skips install
+          # scripts; every native dependency (zvec, onnxruntime, ripgrep,
+          # llama.cpp, sharp) arrives as a prebuilt platform package.
+          zvec-grep = prev.callPackage ../../pkgs/zvec-grep.nix { };
+
           # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
           # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
           # closure transitively by mpv. quickjs-ng runs the same extractor

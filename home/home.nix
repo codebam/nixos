@@ -131,6 +131,8 @@ in
       jq
       supersonic
       weechat
+      # Agent-facing hybrid workspace search (provides the `zg` command).
+      zvec-grep
       calcurse
       high-tide
       feishin
