@@ -295,12 +295,15 @@ let
     '';
   };
   piSettings = {
-    defaultProvider = "openrouter";
-    defaultModel = codingModel;
+    defaultProvider = "qwen-token-plan-individual";
+    defaultModel = "qwen3.8-flash";
     enableInstallTelemetry = false;
     # Adjust per session with the thinking-level picker when a task wants
     # more or less.
     defaultThinkingLevel = "medium";
+    # qwen3.8-flash's thinking map only supports high/max (medium is null),
+    # so pin a valid level for it rather than letting startup clamp one.
+    modelThinkingLevels."qwen-token-plan-individual/qwen3.8-flash" = "high";
     # Pi has no permission system, so this is the one guardrail it offers:
     # never load a project's own settings, resources, or extensions without an
     # explicit `/trust`.
