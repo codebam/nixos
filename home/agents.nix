@@ -45,6 +45,10 @@ let
     if [ -r "$qwen_secret" ]; then
       QWEN_API_KEY=$(cat "$qwen_secret")
       export QWEN_API_KEY
+      # pi resolves its built-in qwen-token-plan* providers from this exact
+      # name (env-api-keys.ts envMap); same plan key, second name.
+      QWEN_TOKEN_PLAN_API_KEY=$QWEN_API_KEY
+      export QWEN_TOKEN_PLAN_API_KEY
     fi
   '';
 
@@ -78,32 +82,149 @@ let
   gatewayUrl = "http://127.0.0.1:4000/v1";
   gatewayModel = "qwen3.8";
 
+  # Qwen Cloud Token Plan, following the vendor's opencode recipe
+  # (docs.qwencloud.com/developer-guides/clients-and-developer-tools/opencode):
+  # the Anthropic Messages endpoint rather than the OpenAI-compatible one.
+  # The provider id stays `qwen` so existing `qwen/<model>` selections and
+  # session history resolve unchanged.
+  #
+  # The model set is exactly what the plan key serves (GET /models on the
+  # compatible-mode endpoint): the eight chat models of the Personal Edition.
+  # The key also lists wan2.7-image{,-pro} and qwen-audio-3.0-*, but those
+  # answer neither chat-completions nor messages requests (image-generation,
+  # TTS, and realtime APIs respectively), so they have no place in either
+  # harness. Limits are the documented 983616-token window and per-model
+  # output caps; thinking is pinned the way the recipe pins it (effort for
+  # the 3.8 pair, a fixed 8192-token budget for 3.7/3.6/glm, default-on for
+  # the deepseek pair).
   qwenProvider = {
     qwen = {
-      npm = "@ai-sdk/openai-compatible";
-      name = "Qwen (DashScope International)";
+      npm = "@ai-sdk/anthropic";
+      name = "Qwen Cloud (Token Plan)";
       options = {
-        baseURL = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+        baseURL = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1";
         apiKey = "{env:QWEN_API_KEY}";
       };
-      models = builtins.listToAttrs (
-        map
-          (id: {
-            name = id;
-            value = {
-              name = id;
-              reasoning = true;
-              tool_call = true;
-            };
-          })
-          [
-            "qwen3.8-max"
-            "qwen3.8-flash"
-            "qwen3.7-max"
-            "qwen3.7-plus"
-            "qwen3.6-flash"
-          ]
-      );
+      models = {
+        "qwen3.8-max" = {
+          name = "Qwen3.8 Max";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 131072;
+          };
+          modalities = {
+            input = [
+              "text"
+              "image"
+            ];
+            output = [ "text" ];
+          };
+          options.effort = "xhigh";
+        };
+        "qwen3.8-flash" = {
+          name = "Qwen3.8 Flash";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 131072;
+          };
+          modalities = {
+            input = [
+              "text"
+              "image"
+            ];
+            output = [ "text" ];
+          };
+          options.effort = "xhigh";
+        };
+        "qwen3.7-max" = {
+          name = "Qwen3.7 Max";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 131072;
+          };
+          options.thinking = {
+            type = "enabled";
+            budgetTokens = 8192;
+          };
+        };
+        "qwen3.7-plus" = {
+          name = "Qwen3.7 Plus";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 65536;
+          };
+          modalities = {
+            input = [
+              "text"
+              "image"
+            ];
+            output = [ "text" ];
+          };
+          options.thinking = {
+            type = "enabled";
+            budgetTokens = 8192;
+          };
+        };
+        "qwen3.6-flash" = {
+          name = "Qwen3.6 Flash";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 65536;
+          };
+          modalities = {
+            input = [
+              "text"
+              "image"
+            ];
+            output = [ "text" ];
+          };
+          options.thinking = {
+            type = "enabled";
+            budgetTokens = 8192;
+          };
+        };
+        "glm-5.2" = {
+          name = "GLM-5.2";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 131072;
+          };
+          options.thinking = {
+            type = "enabled";
+            budgetTokens = 8192;
+          };
+        };
+        "deepseek-v4-pro" = {
+          name = "DeepSeek V4 Pro";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 384000;
+          };
+        };
+        "deepseek-v4-flash-0731" = {
+          name = "DeepSeek V4 Flash 0731";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 384000;
+          };
+        };
+      };
     };
   };
 
@@ -186,7 +307,7 @@ let
     defaultProjectTrust = "never";
   };
 
-  # pi 0.84.2 bundles an OpenRouter catalog that predates the Pareto router
+  # pi 0.84.2 bundled an OpenRouter catalog that predates the Pareto router
   # (it knows openrouter/auto, auto-beta, free, and fusion), so the model is
   # added by hand. Custom models are upserted by id into the built-in
   # provider, which keeps its baseUrl and auth.
@@ -195,6 +316,18 @@ let
   # router plugin gets through. Metadata mirrors openrouter/auto: the router
   # advertises a 2M window and variable pricing, so cost is left at zero
   # rather than guessed at.
+  #
+  # The Qwen side needs no provider of its own: pi ships
+  # `qwen-token-plan-individual`, the narrow Personal-Edition catalog on the
+  # same compatible-mode endpoint, keyed from QWEN_TOKEN_PLAN_API_KEY (which
+  # the wrapper above exports from the same secret as QWEN_API_KEY). Two
+  # catalog inaccuracies remain because pi ships a fixed list:
+  #   - qwen3.8-flash is served by the subscription but missing from the
+  #     individual catalog, so it is upserted below with the metadata pi's
+  #     broader qwen-token-plan catalog carries for it.
+  #   - deepseek-v4-pro-0813 is in the catalog but not the subscription;
+  #     models.json cannot remove built-in models, so it stays listed and
+  #     simply errors if selected.
   piModels = {
     providers.openrouter.models = [
       {
@@ -210,6 +343,34 @@ let
           thinkingFormat = "openrouter";
         };
         samplingParams.plugins = paretoPlugin;
+      }
+    ];
+    providers."qwen-token-plan-individual".models = [
+      {
+        id = "qwen3.8-flash";
+        name = "Qwen3.8 Flash";
+        api = "openai-completions";
+        reasoning = true;
+        input = [
+          "text"
+          "image"
+        ];
+        contextWindow = 1000000;
+        maxTokens = 131072;
+        compat = {
+          thinkingFormat = "qwen";
+          supportsDeveloperRole = false;
+          supportsStore = false;
+          supportsReasoningEffort = true;
+        };
+        thinkingLevelMap = {
+          minimal = null;
+          low = null;
+          medium = null;
+          high = "high";
+          xhigh = null;
+          max = "max";
+        };
       }
     ];
   };
