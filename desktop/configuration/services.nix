@@ -226,20 +226,22 @@ in
               allow 127.0.0.1;
               deny all;
             '';
-            locations."/lidarr" = {
-              proxyPass = "http://127.0.0.1:8686";
-              proxyWebsockets = true;
-            };
-           locations."/prowlarr" = {
-             proxyPass = "http://127.0.0.1:9696";
-             proxyWebsockets = true;
-           };
-            locations."/navidrome" = {
-              proxyPass = "http://127.0.0.1:4533";
-              proxyWebsockets = true;
-              extraConfig = ''
-                proxy_set_header X-Forwarded-Protocol $scheme;
-              '';
+            locations = {
+              "/lidarr" = {
+                proxyPass = "http://127.0.0.1:8686";
+                proxyWebsockets = true;
+              };
+              "/prowlarr" = {
+                proxyPass = "http://127.0.0.1:9696";
+                proxyWebsockets = true;
+              };
+              "/navidrome" = {
+                proxyPass = "http://127.0.0.1:4533";
+                proxyWebsockets = true;
+                extraConfig = ''
+                  proxy_set_header X-Forwarded-Protocol $scheme;
+                '';
+              };
             };
           };
         };

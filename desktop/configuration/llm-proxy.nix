@@ -13,7 +13,6 @@ let
 
   port = 8080;
 
-
   # llama-server, not ollama, for the public model. ollama refuses to batch
   # this architecture outright -- measured on 0.32.14, with the reason in its
   # own journal:
@@ -152,8 +151,7 @@ let
   # the next restart instead of silently serving stale ones. The projector
   # layer is deliberately not used -- it costs ~1.1 GiB and a text endpoint
   # never touches it.
-  ollamaManifest =
-    "/var/lib/ollama/models/manifests/registry.ollama.ai/library/qwen3.8/latest";
+  ollamaManifest = "/var/lib/ollama/models/manifests/registry.ollama.ai/library/qwen3.8/latest";
 
   # A wrapper rather than flags in ExecStart: systemd's $VAR expansion does not
   # word-split inside ${...} and does split bare $VAR, which is a subtle way to
@@ -235,313 +233,322 @@ in
   # kfd_process_notifier_release_internal holding 22 GiB of VRAM through a
   # service restart -- the card only came back on reboot. A client-supplied
   # context size is a reboot someone else gets to schedule.
-  systemd.services.llm-proxy = {
-    description = "Sanitising reverse proxy for ollama";
-    after = [
-      "network.target"
-      "llm-server.service"
-    ];
-    # After= but deliberately NOT Wants=. llm-proxy runs all day so that its
-    # window gate can answer "outside service hours" to anyone who calls; if it
-    # pulled the server in, 20 GiB of weights would be resident all day too,
-    # and -- worse -- llm-window-down restarts llm-proxy, which would drag the
-    # server back up at 11:00 immediately after stopping it. llm-window-up owns
-    # starting it; llm-window-down owns stopping it.
-    wantedBy = [ "multi-user.target" ];
+  systemd = {
+    services = {
+      llm-proxy = {
+        description = "Sanitising reverse proxy for ollama";
+        after = [
+          "network.target"
+          "llm-server.service"
+        ];
+        # After= but deliberately NOT Wants=. llm-proxy runs all day so that its
+        # window gate can answer "outside service hours" to anyone who calls; if it
+        # pulled the server in, 20 GiB of weights would be resident all day too,
+        # and -- worse -- llm-window-down restarts llm-proxy, which would drag the
+        # server back up at 11:00 immediately after stopping it. llm-window-up owns
+        # starting it; llm-window-down owns stopping it.
+        wantedBy = [ "multi-user.target" ];
 
-    environment = {
-      PROXY_HOST = "127.0.0.1";
-      PROXY_PORT = toString port;
-      # OLLAMA_URL is absent here for the same reason as PROXY_MODEL below: the
-      # upstream changes with the engine, so llm-scaler.py writes it into
-      # /run/llm-window.env alongside the rest of the profile. The script's own
-      # default is ollama, which is both the fast rung and the right thing to
-      # fall back to when no window is open.
+        environment = {
+          PROXY_HOST = "127.0.0.1";
+          PROXY_PORT = toString port;
+          # OLLAMA_URL is absent here for the same reason as PROXY_MODEL below: the
+          # upstream changes with the engine, so llm-scaler.py writes it into
+          # /run/llm-window.env alongside the rest of the profile. The script's own
+          # default is ollama, which is both the fast rung and the right thing to
+          # fall back to when no window is open.
 
-      # PROXY_MODEL, PROXY_SLOTS and PROXY_MAX_PROMPT_TOKENS are deliberately
-      # absent. They belong to whichever profile is loaded, so llm-scaler.py
-      # writes all three into /run/llm-window.env -- the same file ollama reads
-      # OLLAMA_NUM_PARALLEL from, which is what keeps the two from disagreeing.
-      # A proxy with more slots than ollama just moves the queue; one with
-      # fewer wastes KV the card already paid for.
-      #
-      # Setting them here as well would be a coin flip: systemd applies
-      # Environment= and EnvironmentFile= in unit-file order, and the NixOS
-      # module does not promise which it emits first. The script's own defaults
-      # (one slot, qwen3.8:140k) are the fallback instead, which is also the
-      # right state for a boot with no window open.
+          # PROXY_MODEL, PROXY_SLOTS and PROXY_MAX_PROMPT_TOKENS are deliberately
+          # absent. They belong to whichever profile is loaded, so llm-scaler.py
+          # writes all three into /run/llm-window.env -- the same file ollama reads
+          # OLLAMA_NUM_PARALLEL from, which is what keeps the two from disagreeing.
+          # A proxy with more slots than ollama just moves the queue; one with
+          # fewer wastes KV the card already paid for.
+          #
+          # Setting them here as well would be a coin flip: systemd applies
+          # Environment= and EnvironmentFile= in unit-file order, and the NixOS
+          # module does not promise which it emits first. The script's own defaults
+          # (one slot, qwen3.8:140k) are the fallback instead, which is also the
+          # right state for a boot with no window open.
 
-      # Matches what litellm.nix allows the same model. 8192 was too tight for
-      # a coding harness -- a single large file write runs past it, and the
-      # clamp is silent from the caller's side: the reply just stops with
-      # finish_reason "length". The cost of raising it is time on the one slot,
-      # not memory, and PROXY_QUEUE_TIMEOUT already bounds how long a single
-      # request can hold the card against everyone else.
-      PROXY_MAX_OUTPUT_TOKENS = "32000";
+          # Matches what litellm.nix allows the same model. 8192 was too tight for
+          # a coding harness -- a single large file write runs past it, and the
+          # clamp is silent from the caller's side: the reply just stops with
+          # finish_reason "length". The cost of raising it is time on the one slot,
+          # not memory, and PROXY_QUEUE_TIMEOUT already bounds how long a single
+          # request can hold the card against everyone else.
+          PROXY_MAX_OUTPUT_TOKENS = "32000";
 
-      PROXY_QUEUE_TIMEOUT = "300";
-      PROXY_RATE_LIMIT = "60";
+          PROXY_QUEUE_TIMEOUT = "300";
+          PROXY_RATE_LIMIT = "60";
 
-      # Read by llm-scaler.service. RuntimeDirectory below creates the
-      # directory owned by the DynamicUser and removes it when the unit stops,
-      # so a stale snapshot cannot outlive the process that wrote it -- which
-      # matters, because the scaler treats a stale file as "do nothing".
-      PROXY_DEMAND_PATH = "/run/llm-proxy/demand.json";
+          # Read by llm-scaler.service. RuntimeDirectory below creates the
+          # directory owned by the DynamicUser and removes it when the unit stops,
+          # so a stale snapshot cannot outlive the process that wrote it -- which
+          # matters, because the scaler treats a stale file as "do nothing".
+          PROXY_DEMAND_PATH = "/run/llm-proxy/demand.json";
 
-      PROXY_RESERVATION_PATH = "/var/lib/llm-proxy/reservations.json";
+          PROXY_RESERVATION_PATH = "/var/lib/llm-proxy/reservations.json";
 
-      # 30 minutes. Long enough that a working session is not punctuated by
-      # re-reserving, short enough that a slot abandoned by someone who closed
-      # their laptop comes back the same night. Re-reserving before it lapses
-      # extends it, so the ceiling is politeness rather than a hard cap.
-      PROXY_RESERVATION_TTL = "1800";
+          # 30 minutes. Long enough that a working session is not punctuated by
+          # re-reserving, short enough that a slot abandoned by someone who closed
+          # their laptop comes back the same night. Re-reserving before it lapses
+          # extends it, so the ceiling is politeness rather than a hard cap.
+          PROXY_RESERVATION_TTL = "1800";
 
-      PROXY_TZ = "America/Toronto";
-      PROXY_WINDOW_START = toString windowStart;
-      PROXY_WINDOW_END = toString windowEnd;
-      PROXY_WINDOW = "1";
+          PROXY_TZ = "America/Toronto";
+          PROXY_WINDOW_START = toString windowStart;
+          PROXY_WINDOW_END = toString windowEnd;
+          PROXY_WINDOW = "1";
+        };
+
+        serviceConfig = {
+          ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-proxy.py}";
+          Restart = "on-failure";
+          RestartSec = 5;
+
+          # systemd reads the credential as root and hands it to the DynamicUser,
+          # so the sops secret stays root-owned 0400 and there is no static account
+          # to chown to -- same arrangement as litellm.nix and nix-serve.nix.
+          LoadCredential = [ "keys:${config.sops.secrets.llm-proxy-keys.path}" ];
+
+          RuntimeDirectory = "llm-proxy";
+          RuntimeDirectoryMode = "0755";
+
+          # Reservations live here rather than in RuntimeDirectory: llm-scaler
+          # restarts this unit when it changes profile, and a hold that evaporated
+          # on restart would break exactly when someone was relying on it.
+          StateDirectory = "llm-proxy";
+          StateDirectoryMode = "0700";
+
+          # Written by llm-scaler.py. Optional (-) so a boot with no window open
+          # falls back to the script's single-slot defaults rather than failing.
+          EnvironmentFile = "-/run/llm-window.env";
+
+          DynamicUser = true;
+          # It talks to loopback and reads one credential. Nothing else.
+          CapabilityBoundingSet = [ "" ];
+          AmbientCapabilities = [ "" ];
+          NoNewPrivileges = true;
+          PrivateDevices = true;
+          PrivateTmp = true;
+          ProtectClock = true;
+          ProtectControlGroups = true;
+          ProtectHome = true;
+          ProtectHostname = true;
+          ProtectKernelLogs = true;
+          ProtectKernelModules = true;
+          ProtectKernelTunables = true;
+          ProtectProc = "invisible";
+          ProtectSystem = "strict";
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+          ];
+          RestrictNamespaces = true;
+          RestrictRealtime = true;
+          RestrictSUIDSGID = true;
+          SystemCallArchitectures = "native";
+          SystemCallFilter = [
+            "@system-service"
+            "~@privileged"
+            "~@resources"
+          ];
+          LockPersonality = true;
+          MemoryDenyWriteExecute = true;
+        };
+      };
+
+      # The public inference server. Started on demand by llm-scaler rather than at
+      # boot: outside the window there is nobody to serve, and 20 GiB of resident
+      # weights is 20 GiB the compositor cannot have.
+      llm-server = {
+        description = "llama-server for the public qwen3.8 endpoint";
+        after = [ "network.target" ];
+
+        # The same override ollama needs on this card (see services.nix). Without
+        # it ROCm does not recognise the GPU and llama.cpp logs "no usable GPU" and
+        # runs the whole 27B on the CPU -- which starts, answers /health, and looks
+        # entirely healthy while serving at a few tokens a second.
+        environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+
+        serviceConfig = {
+          # The same window gate as the timers. Without it, anything that starts
+          # this unit outside service hours -- a nixos-rebuild switch restarting a
+          # changed unit, most easily -- parks 20 GiB on the card until 11:00, with
+          # nobody to serve and a compositor that may want it back. Exit non-zero
+          # is "skip", not "fail", so a switch does not report an error either.
+          ExecCondition = [ "${inWindow}" ];
+
+          ExecStart = "${llamaServerExec}";
+          Restart = "on-failure";
+          RestartSec = 5;
+
+          # Written by llm-scaler.py; carries LLM_PARALLEL and LLM_CTX_TOTAL.
+          # Optional (-) so a start with no window open falls back to the wrapper's
+          # single-slot defaults rather than failing.
+          EnvironmentFile = "-/run/llm-window.env";
+
+          # Loading 16.8 GiB and allocating up to 328k of KV is not fast, and a
+          # timeout here would read as "the model does not fit" when it merely did
+          # not finish.
+          TimeoutStartSec = "10min";
+
+          # Mirrors ollama's own hardening from the NixOS module, minus the nvidia
+          # device classes. That set is proven to reach this exact card, which is
+          # worth more here than a set reasoned out from first principles: three of
+          # these were found the hard way.
+          #
+          # char-kfd and char-drm as device CLASSES, not "/dev/kfd rw" -- a path
+          # that is not a device node matches nothing, and since any DeviceAllow
+          # turns the unit into an allowlist, the mistake denies the GPU instead of
+          # erroring. llama.cpp then logs "no usable GPU" and runs the 27B on the
+          # CPU, which starts, answers /health, and looks entirely healthy.
+          DevicePolicy = "closed";
+          DeviceAllow = [
+            "char-drm"
+            "char-kfd"
+          ];
+
+          # AF_UNIX belongs here. Without it the ROCm stack segfaults during model
+          # load rather than reporting a failed socket.
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+            "AF_UNIX"
+          ];
+
+          # Required, not incidental: ProtectSystem=strict makes /tmp read-only,
+          # and rocBLAS and comgr write kernel caches there during load.
+          PrivateTmp = true;
+
+          SupplementaryGroups = [ "render" ];
+
+          # Not an empty set. It runs as root but reads two files it does not own
+          # out of ollama's store, and the manifest is 0600 ollama:ollama --
+          # bypassing that needs CAP_DAC_READ_SEARCH. An empty bounding set here
+          # failed as EACCES from jq, which reads as "the model is missing" rather
+          # than "the sandbox is too tight".
+          CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
+          NoNewPrivileges = true;
+          # NOT PrivateUsers, which ollama's own unit does set. This one runs as
+          # real root specifically to read ollama's blob store -- the manifest is
+          # 0600 ollama:ollama -- and a user namespace maps root to nobody, which
+          # turns that read into EACCES.
+          ProtectClock = true;
+          ProtectControlGroups = true;
+          ProtectHome = true;
+          ProtectHostname = true;
+          ProtectKernelLogs = true;
+          ProtectKernelModules = true;
+          ProtectKernelTunables = true;
+          ProtectProc = "invisible";
+          # ProtectSystem=strict already makes the whole hierarchy read-only, which
+          # is all this needs: it opens one GGUF out of ollama's blob store and
+          # writes nothing to disk at all.
+          ProtectSystem = "strict";
+          RestrictNamespaces = true;
+          RestrictRealtime = true;
+          RestrictSUIDSGID = true;
+          SystemCallArchitectures = "native";
+          SystemCallFilter = [
+            "@system-service"
+            "@resources"
+            "~@privileged"
+          ];
+          LockPersonality = true;
+        };
+      };
+
+      # Opens the window on the top of the ladder and lets llm-scaler take it from
+      # there. The down side is a separate unit with its own timer, rather than a
+      # stop on this one, because it must run even if the up side never did -- an
+      # 03:00 that skipped on the VRAM guard still needs 11:00 to release the card
+      # if anything else started a server in between.
+      llm-window-up = {
+        description = "Load the initial serving profile for the window";
+        path = [ scalerPath ];
+        environment = scalerEnv // {
+          LLM_SCALER_INITIAL = "1";
+        };
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          # Skip-not-fail, so Persistent=true on the timer cannot replay an 03:00
+          # trigger into a 13:00 load with the compositor up.
+          ExecCondition = [ "${inWindow}" ];
+          ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-scaler.py}";
+          StateDirectory = "llm-scaler";
+          TimeoutStartSec = "15min";
+        };
+      };
+
+      llm-window-down = {
+        description = "Stop the public server and release the card";
+        serviceConfig = {
+          Type = "oneshot";
+          # The card has to be empty before the tty1 login asks for its ~1 GiB
+          # back. Restarting llm-proxy drops it to its own single-slot defaults so
+          # nothing advertises slots that no longer exist.
+          ExecStart = pkgs.writeShellScript "llm-window-down" ''
+            set -eu
+            ${pkgs.systemd}/bin/systemctl stop llm-server.service || true
+            # Either engine may be the one holding the card, so release both. The
+            # keep_alive 0 evicts ollama's copy without stopping ollama itself,
+            # which litellm still wants on the private path.
+            ${lib.getExe pkgs.curl} -sf -m 120 ${ollamaUrl}/api/generate \
+              -d '{"model":"${ollamaModel}","keep_alive":0}' >/dev/null || true
+            rm -f /run/llm-window.env
+            ${pkgs.systemd}/bin/systemctl restart llm-proxy.service || true
+          '';
+        };
+      };
+
+      # The scaler proper. Every ten minutes during the window it reads the proxy's
+      # demand snapshot and decides whether a different profile is worth a restart.
+      # It usually decides no: there is a 30-minute cooldown, an hour of required
+      # quiet before it will trade slots back for context, and a hard refusal to
+      # restart while any request is in flight.
+      llm-scaler = {
+        description = "Trade context length against slots based on demand";
+        after = [ "llm-window-up.service" ];
+        path = [ scalerPath ];
+        environment = scalerEnv;
+        serviceConfig = {
+          Type = "oneshot";
+          ExecCondition = [ "${inWindow}" ];
+          ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-scaler.py}";
+          StateDirectory = "llm-scaler";
+          TimeoutStartSec = "15min";
+        };
+      };
+
     };
 
-    serviceConfig = {
-      ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-proxy.py}";
-      Restart = "on-failure";
-      RestartSec = 5;
+    timers = {
+      llm-window-up = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* ${lib.fixedWidthNumber 2 windowStart}:00:00";
+          Persistent = true;
+        };
+      };
 
-      # systemd reads the credential as root and hands it to the DynamicUser,
-      # so the sops secret stays root-owned 0400 and there is no static account
-      # to chown to -- same arrangement as litellm.nix and nix-serve.nix.
-      LoadCredential = [ "keys:${config.sops.secrets.llm-proxy-keys.path}" ];
+      llm-window-down = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* ${lib.fixedWidthNumber 2 windowEnd}:00:00";
+          Persistent = false;
+        };
+      };
 
-      RuntimeDirectory = "llm-proxy";
-      RuntimeDirectoryMode = "0755";
-
-      # Reservations live here rather than in RuntimeDirectory: llm-scaler
-      # restarts this unit when it changes profile, and a hold that evaporated
-      # on restart would break exactly when someone was relying on it.
-      StateDirectory = "llm-proxy";
-      StateDirectoryMode = "0700";
-
-      # Written by llm-scaler.py. Optional (-) so a boot with no window open
-      # falls back to the script's single-slot defaults rather than failing.
-      EnvironmentFile = "-/run/llm-window.env";
-
-      DynamicUser = true;
-      # It talks to loopback and reads one credential. Nothing else.
-      CapabilityBoundingSet = [ "" ];
-      AmbientCapabilities = [ "" ];
-      NoNewPrivileges = true;
-      PrivateDevices = true;
-      PrivateTmp = true;
-      ProtectClock = true;
-      ProtectControlGroups = true;
-      ProtectHome = true;
-      ProtectHostname = true;
-      ProtectKernelLogs = true;
-      ProtectKernelModules = true;
-      ProtectKernelTunables = true;
-      ProtectProc = "invisible";
-      ProtectSystem = "strict";
-      RestrictAddressFamilies = [
-        "AF_INET"
-        "AF_INET6"
-      ];
-      RestrictNamespaces = true;
-      RestrictRealtime = true;
-      RestrictSUIDSGID = true;
-      SystemCallArchitectures = "native";
-      SystemCallFilter = [
-        "@system-service"
-        "~@privileged"
-        "~@resources"
-      ];
-      LockPersonality = true;
-      MemoryDenyWriteExecute = true;
-    };
-  };
-
-  # The public inference server. Started on demand by llm-scaler rather than at
-  # boot: outside the window there is nobody to serve, and 20 GiB of resident
-  # weights is 20 GiB the compositor cannot have.
-  systemd.services.llm-server = {
-    description = "llama-server for the public qwen3.8 endpoint";
-    after = [ "network.target" ];
-
-    # The same override ollama needs on this card (see services.nix). Without
-    # it ROCm does not recognise the GPU and llama.cpp logs "no usable GPU" and
-    # runs the whole 27B on the CPU -- which starts, answers /health, and looks
-    # entirely healthy while serving at a few tokens a second.
-    environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-
-    serviceConfig = {
-      # The same window gate as the timers. Without it, anything that starts
-      # this unit outside service hours -- a nixos-rebuild switch restarting a
-      # changed unit, most easily -- parks 20 GiB on the card until 11:00, with
-      # nobody to serve and a compositor that may want it back. Exit non-zero
-      # is "skip", not "fail", so a switch does not report an error either.
-      ExecCondition = [ "${inWindow}" ];
-
-      ExecStart = "${llamaServerExec}";
-      Restart = "on-failure";
-      RestartSec = 5;
-
-      # Written by llm-scaler.py; carries LLM_PARALLEL and LLM_CTX_TOTAL.
-      # Optional (-) so a start with no window open falls back to the wrapper's
-      # single-slot defaults rather than failing.
-      EnvironmentFile = "-/run/llm-window.env";
-
-      # Loading 16.8 GiB and allocating up to 328k of KV is not fast, and a
-      # timeout here would read as "the model does not fit" when it merely did
-      # not finish.
-      TimeoutStartSec = "10min";
-
-      # Mirrors ollama's own hardening from the NixOS module, minus the nvidia
-      # device classes. That set is proven to reach this exact card, which is
-      # worth more here than a set reasoned out from first principles: three of
-      # these were found the hard way.
-      #
-      # char-kfd and char-drm as device CLASSES, not "/dev/kfd rw" -- a path
-      # that is not a device node matches nothing, and since any DeviceAllow
-      # turns the unit into an allowlist, the mistake denies the GPU instead of
-      # erroring. llama.cpp then logs "no usable GPU" and runs the 27B on the
-      # CPU, which starts, answers /health, and looks entirely healthy.
-      DevicePolicy = "closed";
-      DeviceAllow = [
-        "char-drm"
-        "char-kfd"
-      ];
-
-      # AF_UNIX belongs here. Without it the ROCm stack segfaults during model
-      # load rather than reporting a failed socket.
-      RestrictAddressFamilies = [
-        "AF_INET"
-        "AF_INET6"
-        "AF_UNIX"
-      ];
-
-      # Required, not incidental: ProtectSystem=strict makes /tmp read-only,
-      # and rocBLAS and comgr write kernel caches there during load.
-      PrivateTmp = true;
-
-      SupplementaryGroups = [ "render" ];
-
-      # Not an empty set. It runs as root but reads two files it does not own
-      # out of ollama's store, and the manifest is 0600 ollama:ollama --
-      # bypassing that needs CAP_DAC_READ_SEARCH. An empty bounding set here
-      # failed as EACCES from jq, which reads as "the model is missing" rather
-      # than "the sandbox is too tight".
-      CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
-      NoNewPrivileges = true;
-      # NOT PrivateUsers, which ollama's own unit does set. This one runs as
-      # real root specifically to read ollama's blob store -- the manifest is
-      # 0600 ollama:ollama -- and a user namespace maps root to nobody, which
-      # turns that read into EACCES.
-      ProtectClock = true;
-      ProtectControlGroups = true;
-      ProtectHome = true;
-      ProtectHostname = true;
-      ProtectKernelLogs = true;
-      ProtectKernelModules = true;
-      ProtectKernelTunables = true;
-      ProtectProc = "invisible";
-      # ProtectSystem=strict already makes the whole hierarchy read-only, which
-      # is all this needs: it opens one GGUF out of ollama's blob store and
-      # writes nothing to disk at all.
-      ProtectSystem = "strict";
-      RestrictNamespaces = true;
-      RestrictRealtime = true;
-      RestrictSUIDSGID = true;
-      SystemCallArchitectures = "native";
-      SystemCallFilter = [
-        "@system-service"
-        "@resources"
-        "~@privileged"
-      ];
-      LockPersonality = true;
-    };
-  };
-
-  # Opens the window on the top of the ladder and lets llm-scaler take it from
-  # there. The down side is a separate unit with its own timer, rather than a
-  # stop on this one, because it must run even if the up side never did -- an
-  # 03:00 that skipped on the VRAM guard still needs 11:00 to release the card
-  # if anything else started a server in between.
-  systemd.services.llm-window-up = {
-    description = "Load the initial serving profile for the window";
-    path = [ scalerPath ];
-    environment = scalerEnv // { LLM_SCALER_INITIAL = "1"; };
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      # Skip-not-fail, so Persistent=true on the timer cannot replay an 03:00
-      # trigger into a 13:00 load with the compositor up.
-      ExecCondition = [ "${inWindow}" ];
-      ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-scaler.py}";
-      StateDirectory = "llm-scaler";
-      TimeoutStartSec = "15min";
-    };
-  };
-
-  systemd.services.llm-window-down = {
-    description = "Stop the public server and release the card";
-    serviceConfig = {
-      Type = "oneshot";
-      # The card has to be empty before the tty1 login asks for its ~1 GiB
-      # back. Restarting llm-proxy drops it to its own single-slot defaults so
-      # nothing advertises slots that no longer exist.
-      ExecStart = pkgs.writeShellScript "llm-window-down" ''
-        set -eu
-        ${pkgs.systemd}/bin/systemctl stop llm-server.service || true
-        # Either engine may be the one holding the card, so release both. The
-        # keep_alive 0 evicts ollama's copy without stopping ollama itself,
-        # which litellm still wants on the private path.
-        ${lib.getExe pkgs.curl} -sf -m 120 ${ollamaUrl}/api/generate \
-          -d '{"model":"${ollamaModel}","keep_alive":0}' >/dev/null || true
-        rm -f /run/llm-window.env
-        ${pkgs.systemd}/bin/systemctl restart llm-proxy.service || true
-      '';
-    };
-  };
-
-  # The scaler proper. Every ten minutes during the window it reads the proxy's
-  # demand snapshot and decides whether a different profile is worth a restart.
-  # It usually decides no: there is a 30-minute cooldown, an hour of required
-  # quiet before it will trade slots back for context, and a hard refusal to
-  # restart while any request is in flight.
-  systemd.services.llm-scaler = {
-    description = "Trade context length against slots based on demand";
-    after = [ "llm-window-up.service" ];
-    path = [ scalerPath ];
-    environment = scalerEnv;
-    serviceConfig = {
-      Type = "oneshot";
-      ExecCondition = [ "${inWindow}" ];
-      ExecStart = "${pythonEnv}/bin/python ${./scripts/llm-scaler.py}";
-      StateDirectory = "llm-scaler";
-      TimeoutStartSec = "15min";
-    };
-  };
-
-  systemd.timers.llm-window-up = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* ${lib.fixedWidthNumber 2 windowStart}:00:00";
-      Persistent = true;
-    };
-  };
-
-  systemd.timers.llm-window-down = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* ${lib.fixedWidthNumber 2 windowEnd}:00:00";
-      Persistent = false;
-    };
-  };
-
-  systemd.timers.llm-scaler = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* *:00/10:00";
-      Persistent = false;
+      llm-scaler = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* *:00/10:00";
+          Persistent = false;
+        };
+      };
     };
   };
 
