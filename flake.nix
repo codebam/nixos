@@ -45,7 +45,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-pass = {
-      url = "git+https://codeberg.org/codebam/sops-pass.git";
+      url = "github:codebam/sops-pass";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     viewport = {
