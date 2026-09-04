@@ -110,6 +110,8 @@ _: {
             ".local/share/opencode"
             ".local/state/opencode"
             ".config/opencode"
+            # Pi agent settings and plugins
+            ".pi"
             # `flatpak --user install` and the app data those apps write.
             # The system-wide half is /var/lib/flatpak above.
             ".local/share/flatpak"
