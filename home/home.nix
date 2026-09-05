@@ -107,7 +107,7 @@ in
       # as well, since the same table is worth having in a plain shell.
       agent-overview
       bat
-      claude-code
+      # claude-code
       dust
       # Both are bound to tmux popups in home/shell-common.nix by store path;
       # on PATH as well so they are usable outside tmux.
