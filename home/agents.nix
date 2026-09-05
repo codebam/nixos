@@ -332,6 +332,27 @@ let
   #     models.json cannot remove built-in models, so it stays listed and
   #     simply errors if selected.
   piModels = {
+    # Local Ollama. apiKey is the documented placeholder — Ollama ignores it,
+    # but pi keeps the model listed (auth-required) until a dummy value is set.
+    # _launch is not a pi models.json field (docs/models.md); kept as-is in case
+    # another host consumes this entry.
+    providers.ollama = {
+      api = "openai-completions";
+      apiKey = "ollama";
+      baseUrl = "http://127.0.0.1:11434/v1";
+      models = [
+        {
+          _launch = true;
+          contextWindow = 262144;
+          id = "qwen3.8:160k";
+          input = [
+            "text"
+            "image"
+          ];
+          reasoning = true;
+        }
+      ];
+    };
     providers.openrouter.models = [
       {
         id = codingModel;
