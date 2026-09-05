@@ -343,7 +343,7 @@ let
       models = [
         {
           _launch = true;
-          contextWindow = 262144;
+          contextWindow = 153600; # ~150k; qwen3.8:160k's max context is 160k, leave headroom
           id = "qwen3.8:160k";
           input = [
             "text"
