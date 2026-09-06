@@ -210,6 +210,11 @@ in
         app_id = "com.obsproject.Studio";
         capture = false;
       }
+      # Don't capture chromium
+      {
+        app_id = "chromium-browser";
+        capture = false;
+      }
     ];
 
     # What Mod4+Return opens. Without it the compositor falls back to its
