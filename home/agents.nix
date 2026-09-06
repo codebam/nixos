@@ -281,6 +281,21 @@ let
     '';
   };
 
+  # Desktop front-end of the same agent. It reads the shared
+  # ~/.config/opencode/opencode.json (written below), whose providers key off
+  # `{env:QWEN_API_KEY}` and OPENROUTER_API_KEY. Launched from a .desktop entry
+  # it inherits no shell environment, so wrap it with the same loadKey the CLI
+  # uses: symlinkJoin keeps the package's share/applications, and the bundled
+  # Exec=opencode-desktop resolves to this wrapped binary on PATH.
+  opencode-desktop = pkgs.symlinkJoin {
+    name = "opencode-desktop-wrapped-${pkgs.opencode-desktop.version}";
+    paths = [ pkgs.opencode-desktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/opencode-desktop --run '. ${loadKey}'
+    '';
+  };
+
   # Pi ships its own updater and an install/version ping, neither of which
   # applies to a /nix/store copy it cannot write to.
   pi = pkgs.symlinkJoin {
@@ -472,6 +487,7 @@ in
   home = {
     packages = [
       opencode
+      opencode-desktop
       pi
     ];
 
