@@ -1,5 +1,7 @@
 { pkgs, lib, ... }:
 {
+  imports = [ ./smartd.nix ];
+
   services = {
     # Off: scx_lavd 1.1.3 on kernel 7.2.0 does not dispatch tasks that are
     # migration-disabled and affine to a single CPU onto that CPU, which then
@@ -24,14 +26,15 @@
     #     https://dl.flathub.org/repo/flathub.flatpakrepo
     flatpak.enable = true;
 
-    lsfg-vk = {
-      enable = pkgs.lib.mkDefault false;
-      ui.enable = pkgs.lib.mkDefault false;
-    };
     tailscale = {
       enable = true;
-      openFirewall = true;
-      useRoutingFeatures = "both";
+      # Client-only by default: subnet-router/exit-node ("both") plus
+      # an open firewall hole belongs on the desktop alone, which
+      # overrides these in desktop/configuration/networking.nix.
+      # Leaving "both" on the laptop/Deck needlessly exposes UDP 41641
+      # on whatever WAN they sit behind.
+      openFirewall = lib.mkDefault false;
+      useRoutingFeatures = lib.mkDefault "client";
     };
     networkd-dispatcher = {
       enable = true;
@@ -81,7 +84,9 @@
         yubikey-personalization
       ];
       extraRules = ''
-        KERNEL=="ntsync", MODE="0660", TAG+="uaccess"
+        # uaccess alone grants the seat's active user; an explicit
+        # MODE was redundant with the tag's dynamic ACL.
+        KERNEL=="ntsync", TAG+="uaccess"
 
         # MelGeek Made68 Ultra
         SUBSYSTEM=="usb", ATTR{idVendor}=="1f3a", ATTR{idProduct}=="efe8", TAG+="uaccess"

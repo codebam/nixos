@@ -21,12 +21,14 @@ _: {
             }
         });
 
-        // Safe unit check for systemd user services
+        // Safe unit check for systemd user services. Pinned to
+        // user@1000.service (codebam): the old ^user@\d+\.service$
+        // pattern let any UID's user manager be driven passwordless.
         polkit.addRule(function(action, subject) {
             var unit = action.lookup("unit");
             if (action.id && action.id.match("org.freedesktop.systemd1.manage-units") &&
                 subject.user == "codebam" &&
-                unit && unit.match(/^user@\d+\.service$/)) {
+                unit && unit == "user@1000.service") {
                 return polkit.Result.YES;
             }
         });

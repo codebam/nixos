@@ -36,10 +36,12 @@ let
       mkdir -p /etc/nix
       printf '%s\n' \
         "experimental-features = nix-command flakes" \
-        "trusted-users = root codebam debian" \
+        "trusted-users = root debian" \
         "max-jobs = auto" \
         "cores = 0" > /etc/nix/nix.conf
 
+      # Pinned installer URL over HTTPS; the install script itself
+      # verifies the fetched binaries. Re-pin if nixos.org changes it.
       curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
     fi
   '';
@@ -159,7 +161,7 @@ let
       --machine-type="$MACHINE_TYPE" \
       --provisioning-model=SPOT \
       --instance-termination-action=DELETE \
-      --scopes=cloud-platform \
+      --scopes=storage-ro,logging-write,monitoring-write \
       --boot-disk-size="$DISK_SIZE" \
       --boot-disk-type=pd-balanced \
       --image-family=debian-12 \
@@ -211,11 +213,6 @@ in
       type = types.str;
       default = "nix-builder";
       description = "Instance name for the ephemeral builder.";
-    };
-    repoUrl = mkOption {
-      type = types.str;
-      default = "https://github.com/codebam/nixos.git";
-      description = "Flake repository the cache fill VM clones and builds.";
     };
     machineType = mkOption {
       type = types.str;

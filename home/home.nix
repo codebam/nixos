@@ -35,6 +35,8 @@ in
     homeDirectory = "/home/codebam";
 
     sessionPath = [
+      "${config.home.homeDirectory}/.local/bin"
+      "${config.home.homeDirectory}/.cargo/bin"
       "${config.home.homeDirectory}/.npm-global/bin"
       "${config.home.homeDirectory}/.kimi-code/bin"
     ];
@@ -44,8 +46,6 @@ in
     };
 
     pointerCursor.enable = true;
-
-    shellAliases = { };
 
     sessionVariables = {
       EDITOR = "hx";
@@ -58,56 +58,80 @@ in
     };
 
     packages = with pkgs; [
-      (pkgs.writeShellScriptBin "vim" ''
-        hx $@
-      '')
-      (pkgs.writeShellScriptBin "hxg" ''
-        set -euo pipefail
-        if [[ $# -eq 0 ]]; then
-          echo "Usage: $(basename "$0") <pattern>"
-          echo "Searches for a pattern and opens ALL matches in Helix."
-          exit 1
-        fi
-        ${pkgs.ripgrep}/bin/rg --vimgrep "$1" | cut -d ':' -f 1-3 | xargs --no-run-if-empty hx
-      '')
-      (writeShellScriptBin "trace" ''
-        ${curl}/bin/curl https://www.cloudflare.com/cdn-cgi/trace
-      '')
-      (writeShellScriptBin "sway-kill-parent-fzf" ''
-        set -euo pipefail
-        WINDOW_LIST=$(${config.wayland.windowManager.sway.package}/bin/swaymsg -t get_tree | ${pkgs.jq}/bin/jq -r '.. | select(.pid? and .name) | "\(.pid) | \(.app_id // .window_properties.class // .name)"')
-        if [ -z "$WINDOW_LIST" ]; then
-          echo "No selectable windows found." >&2
-          exit 0
-        fi
-        CHOSEN_WINDOW=$(echo "$WINDOW_LIST" | ${pkgs.fzf}/bin/fzf --prompt="Kill Parent Of> " --height=40% --layout=reverse --border)
-        if [ -z "$CHOSEN_WINDOW" ]; then
-            echo "Operation cancelled."
-            exit 0
-        fi
-        PID=$(echo "$CHOSEN_WINDOW" | cut -d'|' -f1 | tr -d ' ')
-        # Not PPID: bash marks that one readonly, so assigning to it aborts the
-        # script under `set -e` before anything is killed.
-        parent_pid=$(${pkgs.procps}/bin/ps -o ppid= -p "$PID" | tr -d ' ' || true)
-        if [ -z "$parent_pid" ]; then
-            echo "Error: Could not find parent process for PID $PID." >&2
+      (pkgs.writeShellApplication {
+        name = "vim";
+        runtimeInputs = [ pkgs.helix ];
+        text = ''hx "$@"'';
+      })
+      (pkgs.writeShellApplication {
+        name = "hxg";
+        runtimeInputs = [
+          pkgs.ripgrep
+          pkgs.helix
+          pkgs.findutils
+        ];
+        text = ''
+          set -euo pipefail
+          if [[ $# -eq 0 ]]; then
+            echo "Usage: $(basename "$0") <pattern>"
+            echo "Searches for a pattern and opens ALL matches in Helix."
             exit 1
-        fi
-        kill "$parent_pid"
-        echo "Sent kill signal to parent process with PID $parent_pid."
-      '')
-      (writeShellScriptBin "sretry" ''
-        until "$@"; do sleep 1; done
-      '')
-      (writeShellScriptBin "spaste" ''
-        ${curl}/bin/curl -X POST --data-binary @- https://paste.codebam.ca
-      '')
+          fi
+          rg --vimgrep "$1" | cut -d ':' -f 1-3 | xargs --no-run-if-empty hx
+        '';
+      })
+      (writeShellApplication {
+        name = "trace";
+        runtimeInputs = [ curl ];
+        text = "curl https://www.cloudflare.com/cdn-cgi/trace";
+      })
+      (writeShellApplication {
+        name = "sway-kill-parent-fzf";
+        runtimeInputs = [
+          pkgs.jq
+          pkgs.fzf
+          pkgs.procps
+          pkgs.coreutils
+        ];
+        text = ''
+          set -euo pipefail
+          WINDOW_LIST=$(${config.wayland.windowManager.sway.package}/bin/swaymsg -t get_tree | jq -r '.. | select(.pid? and .name) | "\(.pid) | \(.app_id // .window_properties.class // .name)"')
+          if [ -z "$WINDOW_LIST" ]; then
+            echo "No selectable windows found." >&2
+            exit 0
+          fi
+          CHOSEN_WINDOW=$(echo "$WINDOW_LIST" | fzf --prompt="Kill Parent Of> " --height=40% --layout=reverse --border)
+          if [ -z "$CHOSEN_WINDOW" ]; then
+              echo "Operation cancelled."
+              exit 0
+          fi
+          PID=$(echo "$CHOSEN_WINDOW" | cut -d'|' -f1 | tr -d ' ')
+          # Not PPID: bash marks that one readonly, so assigning to it aborts the
+          # script under `set -e` before anything is killed.
+          parent_pid=$(ps -o ppid= -p "$PID" | tr -d ' ' || true)
+          if [ -z "$parent_pid" ]; then
+              echo "Error: Could not find parent process for PID $PID." >&2
+              exit 1
+          fi
+          kill "$parent_pid"
+          echo "Sent kill signal to parent process with PID $parent_pid."
+        '';
+      })
+      (writeShellApplication {
+        name = "sretry";
+        runtimeInputs = [ coreutils ];
+        text = ''until "$@"; do sleep 1; done'';
+      })
+      (writeShellApplication {
+        name = "spaste";
+        runtimeInputs = [ curl ];
+        text = "curl -X POST --data-binary @- https://paste.codebam.ca";
+      })
 
       # Bound to a tmux popup in home/shell-common.nix by store path; on PATH
       # as well, since the same table is worth having in a plain shell.
       agent-overview
       bat
-      # claude-code
       dust
       # Both are bound to tmux popups in home/shell-common.nix by store path;
       # on PATH as well so they are usable outside tmux.
@@ -116,6 +140,8 @@ in
       nvtopPackages.amd
       antigravity-cli
       google-cloud-sdk
+      # Discord Rich Presence server for vesktop (ArRPC); drop together
+      # with vesktop if that ever goes.
       arrpc
       grim
       nil

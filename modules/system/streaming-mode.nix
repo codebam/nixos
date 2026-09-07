@@ -230,9 +230,11 @@ in
       # Sandboxed nix builds are children of nix-daemon.service, so they inherit
       # this placement; there is nothing per-build to catch.
       services =
-        lib.genAttrs ([ "nix-daemon" ] ++ map (lib.removeSuffix ".service") cfg.extraBuildUnits) (_: {
-          serviceConfig.Slice = "builds.slice";
-        })
+        lib.genAttrs
+          ([ "nix-daemon" ] ++ lib.unique (map (lib.removeSuffix ".service") cfg.extraBuildUnits))
+          (_: {
+            serviceConfig.Slice = "builds.slice";
+          })
         // {
           streaming-mode = {
             description = "Throttle background builds so a stream keeps the CPU";

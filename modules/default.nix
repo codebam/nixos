@@ -22,8 +22,9 @@
 
     ./programs/default.nix
     ./programs/pass-sops.nix
+    # gaming.nix intentionally excluded here: the laptop must not get
+    # Steam. Desktop and Steam Deck import it per-host.
     ./services/default.nix
-    ./services/smartd.nix
     ./security/default.nix
     ./users/default.nix
     ./stylix/default.nix

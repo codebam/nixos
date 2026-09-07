@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
 
@@ -81,8 +86,6 @@
   services = {
     podman = {
       enable = true;
-      containers = {
-      };
     };
   };
 
@@ -101,7 +104,7 @@
           };
           Service = {
             Type = "oneshot";
-            ExecStart = "${pkgs.openrgb}/bin/openrgb -p default.orp";
+            ExecStart = "${lib.getExe pkgs.openrgb} -p default.orp";
           };
           Install = {
             WantedBy = [
@@ -117,7 +120,6 @@
     git = {
       signing = {
         key = "0271B12CCF0A185B01EB25FA4B1C30CAAB93976B";
-        signByDefault = true;
       };
     };
 
@@ -143,7 +145,7 @@
         format = " {format_source} ";
         format-source = " 󰍬 {volume}% ";
         format-source-muted = " 󰍭 muted ";
-        on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+        on-click = "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
       };
 
       "mpris" = {
@@ -160,11 +162,11 @@
           "artist"
         ];
         dynamic-len = 25;
-        on-click = "${pkgs.playerctl}/bin/playerctl play-pause";
-        on-click-middle = "${pkgs.playerctl}/bin/playerctl previous";
-        on-click-right = "${pkgs.playerctl}/bin/playerctl next";
-        on-scroll-up = "${pkgs.playerctl}/bin/playerctl position 10+";
-        on-scroll-down = "${pkgs.playerctl}/bin/playerctl position 10-";
+        on-click = "${lib.getExe pkgs.playerctl} play-pause";
+        on-click-middle = "${lib.getExe pkgs.playerctl} previous";
+        on-click-right = "${lib.getExe pkgs.playerctl} next";
+        on-scroll-up = "${lib.getExe pkgs.playerctl} position 10+";
+        on-scroll-down = "${lib.getExe pkgs.playerctl} position 10-";
       };
 
       "network" = {
@@ -189,15 +191,21 @@
       };
 
       "custom/amd_gpu" = {
-        exec = "${pkgs.writeShellScript "amd-gpu-status" ''
-          gpu=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
-          vram_used=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/mem_info_vram_used 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
-          vram_total=$(${pkgs.coreutils}/bin/cat /sys/class/drm/card*/device/mem_info_vram_total 2>/dev/null | ${pkgs.coreutils}/bin/head -n1)
-          if [ -n "$gpu" ] && [ -n "$vram_used" ] && [ -n "$vram_total" ] && [ "$vram_total" -gt 0 ]; then
-            vram_pct=$(( vram_used * 100 / vram_total ))
-            echo "󰢮 ''${gpu}% (''${vram_pct}%)"
-          fi
-        ''}";
+        exec = lib.getExe (
+          pkgs.writeShellApplication {
+            name = "amd-gpu-status";
+            runtimeInputs = [ pkgs.coreutils ];
+            text = ''
+              gpu=$(cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -n1)
+              vram_used=$(cat /sys/class/drm/card*/device/mem_info_vram_used 2>/dev/null | head -n1)
+              vram_total=$(cat /sys/class/drm/card*/device/mem_info_vram_total 2>/dev/null | head -n1)
+              if [ -n "$gpu" ] && [ -n "$vram_used" ] && [ -n "$vram_total" ] && [ "$vram_total" -gt 0 ]; then
+                vram_pct=$(( vram_used * 100 / vram_total ))
+                echo "󰢮 ''${gpu}% (''${vram_pct}%)"
+              fi
+            '';
+          }
+        );
         interval = 2;
         format = " {} ";
       };
@@ -212,8 +220,8 @@
 
   wayland.windowManager.sway.extraConfig = ''
     # Push to talk
-    bindsym --whole-window button9 exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0"
-    bindsym --whole-window --release button9 exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1"
-    exec "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1"
+    bindsym --whole-window button9 exec "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SOURCE@ 0"
+    bindsym --whole-window --release button9 exec "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SOURCE@ 1"
+    exec "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SOURCE@ 1"
   '';
 }

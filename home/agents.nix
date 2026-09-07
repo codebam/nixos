@@ -351,67 +351,69 @@ let
     # but pi keeps the model listed (auth-required) until a dummy value is set.
     # _launch is not a pi models.json field (docs/models.md); kept as-is in case
     # another host consumes this entry.
-    providers.ollama = {
-      api = "openai-completions";
-      apiKey = "ollama";
-      baseUrl = "http://127.0.0.1:11434/v1";
-      models = [
+    providers = {
+      ollama = {
+        api = "openai-completions";
+        apiKey = "ollama";
+        baseUrl = "http://127.0.0.1:11434/v1";
+        models = [
+          {
+            _launch = true;
+            contextWindow = 153600; # ~150k; qwen3.8:160k's max context is 160k, leave headroom
+            id = "qwen3.8:160k";
+            input = [
+              "text"
+              "image"
+            ];
+            reasoning = true;
+          }
+        ];
+      };
+      openrouter.models = [
         {
-          _launch = true;
-          contextWindow = 153600; # ~150k; qwen3.8:160k's max context is 160k, leave headroom
-          id = "qwen3.8:160k";
+          id = codingModel;
+          name = "Pareto Code Router";
+          api = "openai-completions";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 2000000;
+          maxTokens = 32000;
+          compat = {
+            supportsDeveloperRole = false;
+            thinkingFormat = "openrouter";
+          };
+          samplingParams.plugins = paretoPlugin;
+        }
+      ];
+      "qwen-token-plan-individual".models = [
+        {
+          id = "qwen3.8-flash";
+          name = "Qwen3.8 Flash";
+          api = "openai-completions";
+          reasoning = true;
           input = [
             "text"
             "image"
           ];
-          reasoning = true;
+          contextWindow = 1000000;
+          maxTokens = 131072;
+          compat = {
+            thinkingFormat = "qwen";
+            supportsDeveloperRole = false;
+            supportsStore = false;
+            supportsReasoningEffort = true;
+          };
+          thinkingLevelMap = {
+            minimal = null;
+            low = null;
+            medium = null;
+            high = "high";
+            xhigh = null;
+            max = "max";
+          };
         }
       ];
     };
-    providers.openrouter.models = [
-      {
-        id = codingModel;
-        name = "Pareto Code Router";
-        api = "openai-completions";
-        reasoning = true;
-        input = [ "text" ];
-        contextWindow = 2000000;
-        maxTokens = 32000;
-        compat = {
-          supportsDeveloperRole = false;
-          thinkingFormat = "openrouter";
-        };
-        samplingParams.plugins = paretoPlugin;
-      }
-    ];
-    providers."qwen-token-plan-individual".models = [
-      {
-        id = "qwen3.8-flash";
-        name = "Qwen3.8 Flash";
-        api = "openai-completions";
-        reasoning = true;
-        input = [
-          "text"
-          "image"
-        ];
-        contextWindow = 1000000;
-        maxTokens = 131072;
-        compat = {
-          thinkingFormat = "qwen";
-          supportsDeveloperRole = false;
-          supportsStore = false;
-          supportsReasoningEffort = true;
-        };
-        thinkingLevelMap = {
-          minimal = null;
-          low = null;
-          medium = null;
-          high = "high";
-          xhigh = null;
-          max = "max";
-        };
-      }
-    ];
   };
 
   # zvec-grep's MCP server, declared once and then emitted in each host's own

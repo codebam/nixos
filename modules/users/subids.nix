@@ -9,12 +9,16 @@ let
   renderRanges =
     field:
     lib.concatStrings (
-      lib.mapAttrsToList (
-        name: user:
-        lib.concatMapStrings (
-          range: "${name}:${toString range.${field}}:${toString range.count}\n"
-        ) user."${if field == "startUid" then "subUidRanges" else "subGidRanges"}"
-      ) config.users.users
+      lib.mapAttrsToList
+        (
+          name: user:
+          lib.concatMapStrings (
+            range: "${name}:${toString range.${field}}:${toString range.count}\n"
+          ) user."${if field == "startUid" then "subUidRanges" else "subGidRanges"}"
+          # Skip system users with no ranges so /etc/subuid|subgid
+          # contain only real mappings, not blank lines.
+        )
+        (lib.filterAttrs (_: user: user.subUidRanges != [ ] || user.subGidRanges != [ ]) config.users.users)
     );
 in
 {

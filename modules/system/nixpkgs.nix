@@ -80,6 +80,10 @@
           # mpv fails on any nsig-protected video.
           yt-dlp = prev.yt-dlp.override { jsRuntime = prev.quickjs-ng; };
 
+          # Prebuilt Electron instead of source builds: upstream binaries
+          # are trusted here to avoid compiling Chromium per Electron
+          # major. Revisit if reproducibility of the desktop closure
+          # matters more than the build time this saves.
           electron = prev.electron-bin;
           electron-unwrapped = prev.electron-bin;
           electron_41 = prev.electron_41-bin;

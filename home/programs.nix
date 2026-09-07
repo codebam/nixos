@@ -630,22 +630,18 @@
       };
       interactiveShellInit = ''
         set fish_greeting ""
-        set -gx PATH $PATH /home/codebam/.local/bin /home/codebam/.cargo/bin /home/codebam/.npm-global/bin /home/codebam/.kimi-code/bin
+        # PATH comes from home.sessionPath (home/home.nix), which
+        # home-manager exports to every shell; the statics below are in
+        # home.sessionVariables for the same reason. Only the dynamic
+        # gpgconf lookup has to live here.
         set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
-        set -gx SEARXNG_API_URL http://127.0.0.1:8081
-        set -gx SEARXNG_URL http://127.0.0.1:8081
-        set -gx EDITOR hx
-        set -gx NIXOS_OZONE_WL 1
-        set -gx WLR_RENDERER vulkan
         # set -gx AMD_USERQ 1
         # set -gx RADV_PERFTEST userq
-        set -gx GTK_USE_PORTAL 1
         # set -gx WLR_DRM_NO_ATOMIC 1
         # set -gx MANGOHUD_CONFIGFILE /home/codebam/.config/MangoHud/MangoHud.conf
         # set -gx PROTON_ENABLE_WAYLAND 1
         # set -gx PROTON_ENABLE_HDR 1
         # set -gx PROTON_USE_NTSYNC 1
-        set _JAVA_AWT_WM_NONREPARENTING 1
         function __hm_play_bell_on_postexec --on-event fish_postexec
           if test $status -eq 0
             tput bel
@@ -657,6 +653,9 @@
     };
     git = {
       enable = true;
+      # Keys stay per-host (desktop/laptop/steamdeck home.nix); default
+      # signing on here so hosts only name their key.
+      signing.signByDefault = true;
       settings = {
         user = {
           email = "codebam@riseup.net";

@@ -234,7 +234,20 @@ in
     specialisation.noCleanup.configuration.cleanupRoot.mode = "keep";
 
     boot.initrd.systemd = {
-      extraBin.chattr = "${pkgs.busybox}/bin/chattr";
+      # The script uses seq/sleep/find/stat/date/ls/mv in stage 1; only
+      # chattr used to be wired in, the rest relied on whatever the initrd
+      # happened to carry. mount/umount/fsck/less already come from
+      # nixpkgs' own initrd extraBin, so only the missing ones are added.
+      extraBin = {
+        chattr = "${pkgs.busybox}/bin/chattr";
+        seq = "${pkgs.coreutils}/bin/seq";
+        sleep = "${pkgs.coreutils}/bin/sleep";
+        find = "${pkgs.findutils}/bin/find";
+        stat = "${pkgs.coreutils}/bin/stat";
+        date = "${pkgs.coreutils}/bin/date";
+        ls = "${pkgs.coreutils}/bin/ls";
+        mv = "${pkgs.coreutils}/bin/mv";
+      };
 
       services = {
         # The new root has to exist before NixOS populates it.

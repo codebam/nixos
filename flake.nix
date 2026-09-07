@@ -36,6 +36,9 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Pinned to main ~Aug 2025 (update deliberately: upstream breaks
+    # the nixos module options every few months; bump with
+    # `nix flake update lsfg-vk-flake` + a Deck rebuild to verify).
     lsfg-vk-flake = {
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -52,6 +55,8 @@
       url = "github:codebam/viewport";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Pinned to v0.7.5 (update deliberately: whisper model behavior
+    # and CLI flags shift between releases; bump + re-test dictation).
     voxtype = {
       url = "github:peteonrails/voxtype/v0.7.5";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -90,7 +95,8 @@
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
             inputs.chaotic.nixosModules.default
-            inputs.lsfg-vk-flake.nixosModules.default
+            # lsfg-vk intentionally not here: Steam Deck only, added
+            # per-host below so other hosts skip the input entirely.
             ./modules
             {
               home-manager = {
@@ -213,6 +219,7 @@
           system = "x86_64-linux";
           extraModules = [
             jovian.nixosModules.default
+            inputs.lsfg-vk-flake.nixosModules.default
             ./steamdeck/configuration
             { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
           ];

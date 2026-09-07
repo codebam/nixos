@@ -24,13 +24,21 @@ _: {
           directory = "/etc/opt/ivpn";
         }
         "/var/lib/OpenRGB"
-        "/var/lib/transmission"
+        {
+          directory = "/var/lib/transmission";
+          user = "codebam";
+          group = "users";
+        }
         {
           directory = "/var/lib/lidarr";
           user = "codebam";
           group = "users";
         }
-        "/var/lib/navidrome"
+        {
+          directory = "/var/lib/navidrome";
+          user = "navidrome";
+          group = "navidrome";
+        }
         "/var/lib/private/prowlarr"
         "/var/lib/bluetooth"
         "/var/lib/iwd"
@@ -208,7 +216,6 @@ _: {
 
   systemd.services.systemd-machine-id-commit = {
     unitConfig.ConditionPathIsMountPoint = [
-      ""
       "/persistent/etc/machine-id"
     ];
     serviceConfig.ExecStart = [

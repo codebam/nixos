@@ -43,12 +43,6 @@
       unzip
       zip
       _7zz
-      # Wayland forwarding over SSH
-      # waypipe
-      # Wallpaper Engine
-      # linux-wallpaperengine
-      # easyeffects
-      # kdePackages.wallpaper-engine-plugin
       vkbasalt
       sops
       ssh-to-age

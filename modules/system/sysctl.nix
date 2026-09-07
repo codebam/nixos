@@ -4,7 +4,10 @@ _: {
   # Host-specific networking sysctls (forwarding, rp_filter, low port range)
   # stay next to the NAT rules in desktop/configuration/networking.nix.
   boot.kernel.sysctl = {
-    "kernel.sysrq" = 1;
+    # 16 (sync) only: 1 allows all magic SysRq keys (remount-ro, kill,
+    # reboot) to any local console user. Sync-only still lets a hung
+    # desktop flush filesystems without handing out reboot/kill.
+    "kernel.sysrq" = 16;
 
     "net.core.default_qdisc" = "cake";
     "net.ipv4.tcp_congestion_control" = "bbr";

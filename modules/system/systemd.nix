@@ -12,8 +12,8 @@
         };
         polkit-gnome-authentication-agent-1 = {
           description = "polkit-gnome-authentication-agent-1";
+          # wantedBy implies the pull-in; a separate wants was redundant.
           wantedBy = [ "sway-session.target" ];
-          wants = [ "sway-session.target" ];
           after = [ "sway-session.target" ];
           serviceConfig = {
             Type = "simple";

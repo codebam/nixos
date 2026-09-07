@@ -26,6 +26,13 @@ in
   # DoT to 1.1.1.1/9.9.9.9 whenever the network allows it.
   services.resolved.settings.Resolve.DNSOverTLS = "opportunistic";
 
+  # This host is the tailnet subnet-router/exit-node; the laptop and
+  # Steam Deck stay client-only (see modules/services/default.nix).
+  services.tailscale = {
+    openFirewall = lib.mkForce true;
+    useRoutingFeatures = lib.mkForce "both";
+  };
+
   networking = {
     # NAT used to exist for a dns0 interface that is gone. Do not re-enable
     # until something actually needs to be forwarded off this host.
