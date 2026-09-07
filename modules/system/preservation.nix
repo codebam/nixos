@@ -111,6 +111,8 @@ _: {
             "Documents"
             "Videos"
             "Games"
+            # systemd user services
+            ".config/systemd/user"
             ".local/share/direnv"
             ".local/share/fish"
             # OpenCode sessions, auth, snapshots, selected model, prompt
