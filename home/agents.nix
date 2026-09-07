@@ -471,6 +471,34 @@ let
     - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
   '';
 
+  # ripwire's use-when blurb, copied verbatim from the packaged binary's own
+  # `ripwire wrap opencode` output (v0.3.8): the CLI-first protocol both
+  # harnesses share, since both have a shell tool. Re-derive it the same way
+  # (`ripwire wrap opencode`) when bumping ripwire. The RIPWIRE_START/END
+  # markers stay per-host, mirroring the ZVEC_GREP block.
+  ripwireGuidance = ''
+    ## ripwire — deterministic codebase maps (on PATH as `ripwire`)
+    Reach for it BEFORE blind grep + whole-file reads. First call ~1s cold; after that warm, ~0.1s.
+    - Orient on a task: `ripwire <dir> --for="<task in words>"` — ranked, quality-annotated
+      signatures. Paste symbol/file names from the issue verbatim; named mentions get anchored.
+    - Everything at once under one token budget: `ripwire <dir> --pack-task="<task>"`.
+    - Have a stack trace / build error: `ripwire <dir> --from-trace=FILE` (`-` = stdin) —
+      paste the error, don't paraphrase it into a query.
+    - Who calls X: `--callers=SYM`. "Is it safe to change X?" needs the full blast radius:
+      `--impact=SYM` (transitive) plus `--uses=SYM` (every read/write/import site).
+    - Just edited a symbol: `--edit-check=SYM` — contract change + newly incompatible callers.
+    - Before writing a new fn/class/helper: `--exemplar="<what you're writing>"` — duplicates
+      are born on tasks that feel too small to tool up for.
+    - Before calling work done: `--quality-delta` (what you made worse), then `--test-gate`.
+    - Trust notes: counts marked counts_floor are floors, not totals; a zero means "none
+      found", never "none exists".
+    Defaults to break (less context is measurably MORE accurate, not just cheaper — code-repair
+    accuracy fell 29% -> 3% as context grew 32K -> 256K tokens, LongCodeBench):
+    - Do NOT open a file you have not located first: rank with `--for`/`--grep`, then read what it names.
+    - Do NOT read a whole file to understand one symbol: `--expand=SYM` gives the body + callee sigs.
+    - Do NOT fan reads across several files to learn one thing: `--pack-task="<task>"` is one call.
+  '';
+
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
   # half-finished edit) left unparseable is rebuilt rather than aborting
   # activation.
@@ -541,6 +569,22 @@ in
 
       ${zgGuidance}
       <!-- ZVEC_GREP_END -->
+      <!-- RIPWIRE_START -->
+      ## ripwire is a CLI first, MCP server second here
+
+      ripwire is on PATH. Prefer the CLI forms in the block below via Bash —
+      they cost no context until invoked.
+
+      The MCP server (`ripwire --mcp`, registered in ~/.config/mcp/mcp.json)
+      is the warm-index alternative, reached through pi-mcp-adapter's single
+      `mcp` proxy tool exactly like zvec-grep above: `mcp({ search: "ripwire" })`
+      to discover, then `mcp({ tool: "ripwire_<verb>", args: { path: "/absolute/path", ... } })`
+      (verbs include `for`, `explore`, `impact`, `find_symbol`, `quality_delta`).
+      The first call connects and starts the stdio bootstrap, so judge
+      availability after it rather than from the empty initial tool list.
+
+      ${ripwireGuidance}
+      <!-- RIPWIRE_END -->
     '';
   };
 
@@ -589,6 +633,22 @@ in
           command = zgArgv;
           enabled = true;
           timeout = zgTimeoutMs;
+        };
+
+        # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
+        # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
+        # each session spawns `ripwire --mcp`, which manages its own warm index
+        # cache. The CLI-first blurb in AGENTS.md below is the recommended path
+        # (zero context until invoked); this is the warm-index alternative.
+        # `command` is the whole argv here (opencode shape, top-level `mcp`).
+        mcp.ripwire = {
+          type = "local";
+          # Resolved from the session PATH; ripwire is in home.packages.
+          command = [
+            "ripwire"
+            "--mcp"
+          ];
+          enabled = true;
         };
 
         # Models picked from the TUI's model list (`/models`) live in opencode's
@@ -640,6 +700,9 @@ in
         <!-- ZVEC_GREP_START -->
         ${zgGuidance}
         <!-- ZVEC_GREP_END -->
+        <!-- RIPWIRE_START -->
+        ${ripwireGuidance}
+        <!-- RIPWIRE_END -->
       '';
 
       # The same server in the host-agnostic format pi-mcp-adapter reads. The
@@ -690,6 +753,32 @@ in
             "ripgrep"
             "regex"
             "search"
+          ];
+        };
+
+        # The same server in the host-agnostic format pi-mcp-adapter reads:
+        # `command` is only the executable, argv goes to `args`. No timeout
+        # override: ripwire parses ~1s cold and answers warm in ~0.1s, so the
+        # adapter default is plenty, unlike zvec-grep's cold index builds.
+        #
+        # Tool names come out as `ripwire_<verb>` (server name prefix +
+        # upstream verb, e.g. `ripwire_for`, `ripwire_explore`), matching what
+        # pi's AGENTS.md header above promises.
+        mcpServers.ripwire = {
+          command = "ripwire";
+          args = [ "--mcp" ];
+
+          searchKeywords."*" = [
+            "codebase"
+            "map"
+            "callgraph"
+            "callers"
+            "impact"
+            "blast"
+            "radius"
+            "orient"
+            "explore"
+            "symbols"
           ];
         };
       };

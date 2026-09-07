@@ -159,6 +159,9 @@ in
       weechat
       # Agent-facing hybrid workspace search (provides the `zg` command).
       zvec-grep
+      # Deterministic codebase maps for agents (provides the `ripwire` CLI,
+      # used directly and as an MCP server by home/agents.nix).
+      ripwire
       calcurse
       high-tide
       feishin

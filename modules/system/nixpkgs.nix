@@ -65,6 +65,14 @@
           # Official CLI from https://sigmashake.com/install (static Go binary).
           ssg = prev.callPackage ../../pkgs/ssg.nix { };
 
+          # Zero-dependency C++23 CLI + MCP server that hands coding agents a
+          # ranked, deterministic call-graph map of a repo. All deps vendored
+          # in-tree, so the build needs no network; the binary installs with
+          # `--component ripwire` and skills/ + hooks/ are staged under
+          # share/ripwire (v0.3.8's CMake predates upstream's own asset
+          # install rules), mirroring the upstream install.sh layout.
+          ripwire = prev.callPackage ../../pkgs/ripwire.nix { };
+
           # npm CLI (@zvec/zvec-grep) with no nixpkgs package. The registry
           # tarball ships a prebuilt dist/ but no lockfile, so the derivation
           # pins the upstream tag's package-lock.json and skips install
