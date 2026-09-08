@@ -50,6 +50,19 @@ let
       QWEN_TOKEN_PLAN_API_KEY=$QWEN_API_KEY
       export QWEN_TOKEN_PLAN_API_KEY
     fi
+
+    # OpenCode Go. models.dev gives both `opencode` (Zen) and `opencode-go` the
+    # same env entry -- OPENCODE_API_KEY -- so exporting it once makes the Go
+    # models show up as opencode-go/<model-id> in the picker with no provider
+    # block in opencode.json: the catalog already carries all 35 models, their
+    # limits and their per-model npm package. The side effect is that the Zen
+    # provider is offered too, and this key is not a Zen balance, so a Zen model
+    # there is a request that fails.
+    go_secret=/run/secrets/opencode-go-api-key
+    if [ -r "$go_secret" ]; then
+      OPENCODE_API_KEY=$(cat "$go_secret")
+      export OPENCODE_API_KEY
+    fi
   '';
 
   # OpenRouter's Pareto Code Router picks a coder per request off the current

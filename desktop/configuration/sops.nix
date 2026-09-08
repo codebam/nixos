@@ -57,6 +57,15 @@
         owner = "codebam";
         group = "users";
       };
+      # OpenCode Go subscription key, exported as OPENCODE_API_KEY by the
+      # wrapper in home/agents.nix. Its own secret rather than one more line in
+      # hermes-env: that blob is also the EnvironmentFile of litellm and hermes,
+      # and a personal subscription key has no business in a server process's
+      # environment.
+      opencode-go-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       # Same key again, this time left root-owned: litellm runs
       # under a DynamicUser, and systemd reads EnvironmentFile as root before
       # the unit drops privileges, so no chown is needed and none is wanted.
