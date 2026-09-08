@@ -296,6 +296,20 @@ let
     '';
   };
 
+  # The beta channel of the same agent (npm @opencode/cli, upstream command
+  # `opencode2`), built from the registry binaries in pkgs/opencode-cli.nix.
+  # Wrapped with loadKey like the stable one so both see the same provider
+  # secrets; it stays a separate binary so the nixpkgs `opencode` is
+  # untouched until the beta proves itself.
+  opencode2 = pkgs.symlinkJoin {
+    name = "opencode2-wrapped-${pkgs.opencode-cli.version}";
+    paths = [ pkgs.opencode-cli ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/opencode2 --run '. ${loadKey}'
+    '';
+  };
+
   # Pi ships its own updater and an install/version ping, neither of which
   # applies to a /nix/store copy it cannot write to.
   pi = pkgs.symlinkJoin {
@@ -518,6 +532,7 @@ in
     packages = [
       opencode
       opencode-desktop
+      opencode2
       pi
     ];
 

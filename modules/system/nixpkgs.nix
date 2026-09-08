@@ -80,6 +80,12 @@
           # llama.cpp, sharp) arrives as a prebuilt platform package.
           zvec-grep = prev.callPackage ../../pkgs/zvec-grep.nix { };
 
+          # OpenCode's beta CLI from npm (@opencode/cli, command `opencode2`):
+          # the derivation pins the registry's per-platform binary tarballs
+          # directly. Overlay so home-manager and the system resolve one
+          # derivation (useGlobalPkgs).
+          opencode-cli = prev.callPackage ../../pkgs/opencode-cli.nix { };
+
           # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
           # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
           # closure transitively by mpv. quickjs-ng runs the same extractor
