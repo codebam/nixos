@@ -133,7 +133,7 @@
     };
     ghostty = {
       enable = true;
-      package = pkgs.ghostty_git;
+      # package = pkgs.ghostty_git;
       enableFishIntegration = true;
       settings = {
         cursor-style = "block";
