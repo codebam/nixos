@@ -23,8 +23,7 @@ let
   };
 
   variant =
-    variants.${system}
-    or (throw "opencode-cli: no @opencode/cli binary package for ${system}");
+    variants.${system} or (throw "opencode-cli: no @opencode/cli binary package for ${system}");
 
   pkgSuffix = if useBaseline then "${variant.npmName}-baseline" else variant.npmName;
 in
@@ -48,16 +47,40 @@ stdenv.mkDerivation (finalAttrs: {
   # NixOS's and resolves its glibc-only needs (libc, libm, libdl, libpthread).
   nativeBuildInputs = [ autoPatchelfHook ];
 
+  # `bun build --compile` parks a 4-byte absolute pointer to the `.bun` section's
+  # vaddr in the alignment slack just after `.data.rel.ro` -- outside every
+  # section, so it belongs to no symbol and no relocation. stdenv's fixup `strip`
+  # rewrites the file from section contents, zeroing that slack (and clipping the
+  # tail off the last PT_LOAD). Without the pointer Bun never finds its embedded
+  # graph and silently degrades into the plain `bun` CLI: `opencode2 --version`
+  # answers `1.4.2`, `--help` prints Bun's usage, exit status stays 0.
+  # patchelf survives because it shifts whole pages instead of repacking gaps.
+  dontStrip = true;
+
   installPhase = ''
     runHook preInstall
     install -Dm755 bin/opencode2 "$out/bin/opencode2"
     runHook postInstall
   '';
 
-  # Upstream smoke-tests the binary the same way.
+  # Upstream smoke-tests the binary the same way, which proves nothing: the
+  # payload-free binary still exits 0, because it is really `bun --version`.
+  # Assert the banner so a damaged graph fails the build instead of shipping.
   doInstallCheck = true;
   installCheckPhase = ''
-    "$out/bin/opencode2" --version
+    runHook preInstallCheck
+    # The beta opens a log file under $HOME/.local/share/opencode before it
+    # answers even `--version`, and the build sandbox points HOME at the
+    # non-existent /homeless-shelter.
+    export HOME="$PWD"
+    version="$($out/bin/opencode2 --version)"
+    echo "opencode2 --version: $version"
+    if [ "$version" != "opencode2 v${finalAttrs.version}" ]; then
+      echo "expected 'opencode2 v${finalAttrs.version}'; a bare bun version here" \
+        "means the embedded module graph was damaged during the build (see dontStrip)"
+      exit 1
+    fi
+    runHook postInstallCheck
   '';
 
   # npm republishes a new beta-<build> essentially daily:

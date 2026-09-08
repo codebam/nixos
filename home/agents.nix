@@ -301,12 +301,24 @@ let
   # Wrapped with loadKey like the stable one so both see the same provider
   # secrets; it stays a separate binary so the nixpkgs `opencode` is
   # untouched until the beta proves itself.
+  #
+  # OPENCODE_DISABLE_AUTOUPDATE: the beta polls
+  # opencode.ai/update/api/<platform>/<arch>/npm on a 10-minute interval and,
+  # when it recognises its own install method (npm/pnpm/bun/yarn -g), offers to
+  # reinstall itself. A /nix/store binary is read-only and pkged here, so both
+  # the poll and the offer are noise; the stable nixpkgs opencode wrapper sets
+  # the same variable. ripgrep joins PATH because opencode2 shells out to `rg`
+  # for grep/search and, unlike the stable package, gets no wrapper that names
+  # it for it.
   opencode2 = pkgs.symlinkJoin {
     name = "opencode2-wrapped-${pkgs.opencode-cli.version}";
     paths = [ pkgs.opencode-cli ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/opencode2 --run '. ${loadKey}'
+      wrapProgram $out/bin/opencode2 \
+        --run '. ${loadKey}' \
+        --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep ]} \
+        --set OPENCODE_DISABLE_AUTOUPDATE true
     '';
   };
 
