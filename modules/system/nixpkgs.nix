@@ -59,7 +59,7 @@
           # one, and `pinentry-program` in gpg-agent.conf is a path -- two
           # callPackages would be two paths for the same wrapper.
           pinentry-auto = prev.callPackage ../../pkgs/pinentry-auto.nix {
-            terminal = final.rio;
+            terminal = final.ghostty;
           };
 
           # Official CLI from https://sigmashake.com/install (static Go binary).

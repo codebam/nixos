@@ -49,7 +49,7 @@ writeShellApplication {
     }
     trap cleanup EXIT
 
-    "$term" --title-placeholder pinentry -e sh -c "tty > $tmp/tty; exec sleep 2147483647" &
+    "$term" -e sh -c "tty > $tmp/tty; exec sleep 2147483647" &
     term_pid=$!
 
     # Wall clock, not a handshake: the window reports its pty by writing the

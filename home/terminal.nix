@@ -10,8 +10,8 @@
   # keep in agreement.
   options.defaultTerminal = lib.mkOption {
     type = lib.types.package;
-    default = config.programs.rio.package;
-    defaultText = lib.literalExpression "config.programs.rio.package";
+    default = config.programs.ghostty.package;
+    defaultText = lib.literalExpression "config.programs.ghostty.package";
     description = "Terminal emulator to launch wherever this config needs a new terminal window.";
   };
 }
