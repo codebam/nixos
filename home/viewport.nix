@@ -219,7 +219,7 @@ in
 
     # What Mod4+Return opens. Without it the compositor falls back to its
     # built-in default, which is foot.
-    terminal = "rio";
+    terminal = "ghostty";
 
     # The desktop background, taken from stylix so that the picture the rest of
     # the session is themed against is the one the compositor draws. Stylix has

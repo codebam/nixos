@@ -132,7 +132,7 @@
       package = pkgs.ungoogled-chromium;
     };
     ghostty = {
-      enable = false;
+      enable = true;
       package = pkgs.ghostty_git;
       enableFishIntegration = true;
       settings = {
@@ -145,7 +145,7 @@
       };
     };
     rio = {
-      enable = true;
+      enable = false;
       settings = {
         # Mod4+Shift+q asks the window to close, and rio's default answer is a
         # y/n prompt of its own — unconditionally, whether or not anything is
