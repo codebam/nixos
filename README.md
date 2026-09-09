@@ -1,6 +1,8 @@
 # NixOS Flake — codebam
 
-Personal NixOS configuration managing four machines: a desktop, a laptop, a Steam Deck, and an AArch64 AVF VM. The same flake defines every host via a shared module tree, with per-host overrides for hardware, networking, and services.
+Personal NixOS configuration managing three machines: a desktop, a laptop, and a
+Steam Deck. The same flake defines every host via a shared module tree, with
+per-host overrides for hardware, networking, and services.
 
 ## Hosts
 
@@ -9,89 +11,91 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 | `nixos-desktop` | x86_64 | btrfs on LUKS | Patriot P400L 1 TB |
 | `nixos-laptop` | x86_64 | bcachefs | Samsung MZVLB1T0HALR 1 TB |
 | `nixos-steamdeck` | x86_64 | btrfs | Micron 2500 1 TB |
-| `nixos-avf` | aarch64 | ephemeral | GCE VM (nixos-avf) |
 
 ### Desktop (`nixos-desktop`)
-- AMD Ryzen + Radeon RX 7900 XTX
+- AMD Ryzen 7 5700X3D + Radeon RX 7900 XTX
 - Dual 2560x1440@240 Hz monitors (DP-1, DP-3)
-- CachyOS kernel (`linuxPackages_cachyos`), AMD pstate + prefcore, full preempt
+- `linuxPackages_latest`, AMD pstate + prefcore, full preempt
 - aarch64 binfmt emulation
 - GPU overclocking via `applyGpuSettings` systemd service (3050 MHz core, 334 W power cap)
 - AMDGPU overdrive enabled
 - BTRFS `@root` wiped every boot via `cleanupRoot`
-- ROCm support enabled
+- ROCm support enabled (Ollama)
 
 ### Laptop (`nixos-laptop`)
 - Samsung SSD, bcachefs root filesystem
-- CachyOS kernel, bcachefs support
+- `linuxPackages_latest`
 - Power management: `power-profiles-daemon`, `thermald`, `upower`, `powertop`
-- No Steam or discrete GPU (CPU-only whisper.cpp backend)
+- No Steam or discrete GPU
 
 ### Steam Deck (`nixos-steamdeck`)
-- Jovian NixOS module: Steam Deck device support, Decky Loader, Steam auto-start
+- Jovian NixOS module (vendored prebuilt through `chaotic`): Steam Deck device
+  support, Decky Loader, Steam auto-start
 - Sway session (Plasma6 forced off)
-- Extest layer, Gamescope, Proton GE + CachyOS
-- RetroArch with 12 libretro cores, Prism Launcher, Moonlight
+- Extest layer, Gamescope, Proton CachyOS
+- RetroArch with libretro cores, Prism Launcher, Moonlight
 - VRAM-based swapfile (2 GB)
 - Distributed builds off the desktop
-
-### AVF (`nixos-avf`)
-- AArch64 Android VM via `nixos-avf`
-- Lightweight: tailscale, SSH on port 8022 (tailnet-only), no display server
-- Fish shell, Helix, basic CLI tools
 
 ## Flake Structure
 
 ```
-/etc/nixos/
+/persistent/etc/nixos/
 ├── flake.nix                    # Entry point: hosts, inputs, devShell
 ├── flake.lock
 ├── modules/                     # Shared NixOS modules (every host)
 │   ├── default.nix
-│   ├── chaotic.nix              # Chaotic NG (Mesa Git)
+│   ├── chaotic.nix              # Chaotic NG (vendors prebuilt Jovian; Mesa Git off)
 │   ├── lix.nix                  # Lix Nix implementation overlay
 │   ├── hardware/                # Bluetooth, uinput, graphics, QMK, redistributable firmware
-│   ├── programs/                # nix-index, ccache, UWSM/sway, fish, wireshark, gnupg,
+│   ├── programs/                # nix-index, UWSM/sway, fish, wireshark, gnupg,
 │   │                              gaming (Steam/Gamescope), sops-pass
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
-│   ├── stylix/                  # irblack scheme, Papirus icons, capitaine cursor, JetBrainsMono Nerd Font
-│   ├── system/                  # boot, cleanup-root, env, fonts, gcp-builder, journald,
+│   ├── stylix/                  # kanagawa scheme, Papirus icons, capitaine cursor,
+│   │                              JetBrainsMono Nerd Font
+│   ├── system/                  # boot, cleanup-root, env, fonts, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
-│   │                              sysctl, systemd, time, xdg, zram
+│   │                              streaming-mode, sysctl, systemd, time, xdg, zram
 │   └── users/                   # Root + codebam (immutable, fish, Yubikey SSH keys)
 ├── desktop/
 │   ├── disko.nix                # GPT → LUKS → btrfs subvolumes
-│   └── configuration/           # cleanupRoot, CachyOS, Viewport, AMDGPU, nftables
+│   └── configuration/           # cleanupRoot, Viewport, AMDGPU, nftables
 │                                  VPN-bypass, services (Lidarr/Prowlarr/Transmission/
-│                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG/Cockpit), audio routing
-│                                  (media ducker, DeepFilterNet), SOPS secrets, GPU OC,
-│                                  makano user, nix-serve (binary cache, tailnet-only)
+│                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG/FlareSolverr),
+│                                  audio routing (media ducker, DeepFilterNet), SOPS
+│                                  secrets, GPU OC, makano user, nix-serve (tailnet cache)
 ├── desktop-laptop/              # Shared: Podman, IVPN, OBS Studio
 ├── laptop/
 │   └── configuration/           # cleanupRoot (bcachefs), power-profiles-daemon, thermald
 ├── steamdeck/
 │   └── configuration/           # cleanupRoot (btrfs), Jovian, Decky, Steam, RetroArch,
 │                                  gaming/extest, lsfg-vk, Moonlight, distributed builds
-├── avf/
-│   └── configuration.nix        # Minimal: tailscale, SSH, fish, helix
 ├── home/                        # Shared home-manager for codebam
 │   ├── home.nix                 # Packages, env vars, custom scripts
 │   ├── programs.nix             # fish, git, gh, tmux, starship, fastfetch, gpg, wlogout,
-│   │                              helix, firefox nightly, mpv (Anime4K), mangohud, browsers,
-│   │                              terminals (ghostty, rio), iamb
-│   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent
+│   │                              helix, firefox, mpv (Anime4K), mangohud, browsers,
+│   │                              terminals (ghostty, rio)
+│   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
+│   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
 │   ├── shell-common.nix         # bash, carapace, zoxide, direnv, nushell, tmux, fzf
-│   ├── sops.nix                 # iamb Matrix auto-login
 │   ├── stylix.nix               # Per-user theming targets
 │   ├── sway.nix                 # Sway config (keybindings, outputs, inputs, gaps, bars)
-│   ├── systemd.nix              # Tmux systemd user service
-│   ├── voxtype.nix              # Offline dictation daemon and transcript processing
+│   ├── terminal.nix             # defaultTerminal option
 │   ├── viewport.nix             # Viewport bootstrap config
+│   ├── voxtype.nix              # Offline dictation daemon and transcript processing
 │   ├── waybar.nix               # Base Waybar bar config
 │   └── xdg.nix                  # MIME apps
-├── pkgs/
-│   └── voxtype-plainify.nix     # Transcript filter: lowercase, no punctuation, no "um"
+├── pkgs/                        # Local derivations
+│   ├── agent-overview.nix       # tmux agent dashboard
+│   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
+│   ├── opencode-desktop-beta.nix
+│   ├── pinentry-auto.nix        # terminal-aware pinentry
+│   ├── ripwire.nix              # C++ codebase-map CLI + MCP server
+│   ├── sigmashake-desktop.nix
+│   ├── ssg.nix                  # sigmashake CLI
+│   ├── voxtype-plainify.nix     # transcript filter
+│   └── zvec-grep.nix            # hybrid workspace search + MCP server
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
 ```
@@ -101,7 +105,7 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 | Input | Source |
 |-------|--------|
 | `nixpkgs` | nixos-unstable |
-| `chaotic` | chaotic-cx/nyx (nyxpkgs-unstable) |
+| `chaotic` | chaotic-cx/nyx (nyxpkgs-unstable; vendors prebuilt Jovian) |
 | `home-manager` | nix-community/home-manager |
 | `disko` | nix-community/disko |
 | `lanzaboote` | nix-community/lanzaboote (Secure Boot) |
@@ -110,26 +114,26 @@ Personal NixOS configuration managing four machines: a desktop, a laptop, a Stea
 | `stylix` | danth/stylix |
 | `preservation` | nix-community/preservation |
 | `nix-index-database` | nix-community/nix-index-database |
-| `lsfg-vk-flake` | pabloaul/lsfg-vk-flake |
+| `lsfg-vk-flake` | pabloaul/lsfg-vk-flake (Steam Deck) |
 | `voxtype` | peteonrails/voxtype v0.7.5 |
-| `nixos-avf` | nix-community/nixos-avf |
-| `sops-pass` | codebam/sops-pass (codeberg) |
-| `viewport-smithay` | codebam/viewport-smithay (active compositor) |
-| `hermes-agent` | NousResearch/hermes-agent |
+| `sops-pass` | codebam/sops-pass |
+| `viewport` | codebam/viewport (compositor; default `servoshell` backend) |
 
 ## Key Features
 
 ### Root-on-TMPFS with Cleanup
-Every bare-metal host wipes `/` to a fresh subvolume on every boot using `cleanup-root`, a custom stage-1 systemd service supporting both btrfs and bcachefs. Old roots archived under `old_roots/` for 30 days. A `noCleanup` boot specialisation preserves the current root for troubleshooting.
+Every bare-metal host wipes `/` to a fresh subvolume on every boot using
+`cleanup-root`, a custom stage-1 systemd service supporting both btrfs and
+bcachefs. Old roots archived under `old_roots/` for 30 days. A `noCleanup` boot
+specialisation preserves the current root for troubleshooting.
 
 ### Immutable Users
-`mutableUsers = false`. `codebam` (uid 1000, all hosts) and `makano` (uid 1001, desktop) with declarative passwords, groups, SSH keys, and shell.
+`mutableUsers = false`. `codebam` (uid 1000, all hosts) and `makano` (uid 1001,
+desktop) with declarative passwords, groups, SSH keys, and shell.
 
 ### Lix
-Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`, `nix-fast-build`, and `colmena`.
-
-### GCP Builder
-Off by default (`services.gcp-builder.enable = false`). When enabled, `rebuild-switch` is local unless you pass `--gcp`, which spins up an ephemeral Spot VM (n2-standard-32).
+Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
+`nix-fast-build`, and `colmena`.
 
 ### Audio Pipeline (Desktop)
 - **Media ducker**: LSP sidechain compressor ducks media when game audio detected
@@ -139,29 +143,32 @@ Off by default (`services.gcp-builder.enable = false`). When enabled, `rebuild-s
 
 ### Services
 - **Media**: Lidarr, Prowlarr, Transmission, Navidrome behind nginx + ACME
-- **Search**: SearXNG on 127.0.0.1:8081 (JSON API for Hermes/Claude)
+- **Search**: SearXNG on 127.0.0.1:8081 (JSON API for agents)
+- **Cloudflare**: FlareSolverr container (loopback) for interstitial solving
 - **Local AI**: Ollama (loopback, AMD ROCm override)
 - **Networking**: Tailscale, IVPN, NetworkManager/iwd, systemd-resolved (DoT)
-- **Gaming**: Steam (extest, Gamescope, Proton GE/CachyOS); Steam firewall holes closed
+- **Gaming**: Steam (extest, Gamescope, Proton CachyOS); Steam firewall holes closed
 - **GPU**: OpenRGB
 - **Monitoring**: SMART disk monitoring
-- **Cockpit**: web console at `http://nixos-desktop.tail7d7a2.ts.net/cockpit`
-  (loopback bind, tailnet-only vhost), with podman + files plugins
+- **Cache**: `nix-serve-ng` on the desktop serves the tailnet (laptop/Deck pull
+  locally-built paths instead of compiling them)
 
 ### Desktop
-- **Viewport** (Smithay rewrite): Primary Wayland compositor
-- **Sway** (sway_git): Fallback under UWSM
-- **Waybar**: Transparent status bar with system stats, MPRIS controls, GPU telemetry
-- **Swaylock**, **Wlogout**: Screen lock and session management
+- **Viewport** (Smithay rewrite): primary Wayland compositor, `servoshell`
+  (Servo) backend
+- **Sway** (`sway_git`): fallback under UWSM
+- **Waybar**: transparent status bar with system stats, MPRIS controls, GPU telemetry
+- **Swaylock**, **Wlogout**: screen lock and session management
 - **ArRPC** + **Mprisence**: Discord Rich Presence
 
 ### Home Manager
 - **Shells**: fish, bash, nushell, tmux, starship, zoxide, direnv, fzf
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
-- **Browsers**: Firefox Nightly (Chaotic), Google Chrome, Ungoogled Chromium
-- **Terminals**: Ghostty (git), Rio
-- **Messaging**: iamb (Matrix, auto-login from SOPS secret)
-- **Dev**: gh, git (signed commits), claude-code, gcloud SDK
+- **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
+- **Terminals**: Ghostty, Rio
+- **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, with
+  zvec-grep and ripwire MCP servers
+- **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)
 
@@ -186,7 +193,4 @@ nix flake check
 
 # Rebuild
 nh os switch
-
-# Rebuild on a GCP Spot VM (requires services.gcp-builder.enable = true)
-rebuild-switch --gcp
 ```

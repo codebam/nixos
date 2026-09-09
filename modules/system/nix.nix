@@ -56,16 +56,11 @@
       # -- most visible on the chaotic `_git` rebuilds this host does for the
       # other two. Cap the inner width instead and let the job count do the
       # parallelism, which is the axis that actually has independent work.
-      max-jobs = "auto";
-      # mkDefault so a 32-core host (desktop, gcp-builder) can override
-      # without an eval conflict; 2 is the portable/laptop-safe floor.
+      # 8 jobs x 2 cores fills the 16 threads without oversubscribing them.
+      # mkDefault so a larger host can override.
+      max-jobs = lib.mkDefault 8;
       cores = lib.mkDefault 2;
-      extra-sandbox-paths = [ config.programs.ccache.cacheDir ];
       builders-use-substitutes = true;
-      # No GCS substituter. services.gcp-builder is off by default and no
-      # longer fills a bucket; add both the URL and its public key here if a
-      # reader is wanted again. A URL without the key rejects every narinfo
-      # as unsigned, which looks exactly like an empty cache.
     };
     gc = {
       automatic = false;

@@ -48,8 +48,8 @@ in
     };
   };
 
-  # All user units live here (was: systemd.nix for tmux, sops.nix for
-  # iamb-login) so there is one place to look for autostarted user services.
+  # All user units live here (was: systemd.nix) so there is one place to
+  # look for autostarted user services.
   systemd.user.services = {
     tmux = {
       Unit = {
@@ -71,44 +71,5 @@ in
       };
     };
 
-    iamb-login = {
-      Unit = {
-        Description = "Auto-login for iamb Matrix client";
-        ConditionPathExists = [
-          "/run/secrets/unredacted.org"
-          "!%h/.local/share/iamb/profiles/unredacted.org/session.json"
-        ];
-      };
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${
-          pkgs.writeShellApplication {
-            name = "iamb-login-service";
-            runtimeInputs = [
-              pkgs.curl
-              pkgs.gnugrep
-              pkgs.coreutils
-            ];
-            text = ''
-              set -euo pipefail
-              SECRET_PATH="/run/secrets/unredacted.org"
-              if [ -f "$SECRET_PATH" ]; then
-                PASSWORD=$(head -n 1 "$SECRET_PATH")
-                RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" \
-                  -d "{\"type\":\"m.login.password\",\"identifier\":{\"type\":\"m.id.user\",\"user\":\"codebam\"},\"password\":\"$PASSWORD\"}" \
-                  https://matrix.unredacted.org/_matrix/client/v3/login)
-                if echo "$RESPONSE" | grep -q "access_token"; then
-                  mkdir -p "$HOME/.local/share/iamb/profiles/unredacted.org"
-                  echo "$RESPONSE" > "$HOME/.local/share/iamb/profiles/unredacted.org/session.json"
-                fi
-              fi
-            '';
-          }
-        }/bin/iamb-login-service";
-      };
-      Install = {
-        WantedBy = [ "default.target" ];
-      };
-    };
   };
 }

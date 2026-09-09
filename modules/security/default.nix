@@ -48,8 +48,8 @@ _: {
       # kernel.apparmor_restrict_unprivileged_userns=1. That sysctl does not
       # exist on this kernel (it is an Ubuntu patch; CachyOS ships
       # kernel.unprivileged_userns_clone=1 instead), so every one of them was a
-      # no-op. Restricting userns here would also break rootless podman,
-      # distrobox and the bwrap-based agy-sandbox. Recover from git history if
+      # no-op. Restricting userns here would also break rootless podman and
+      # distrobox. Recover from git history if
       # the config ever moves to a kernel that has the knob.
     };
     rtkit.enable = true;

@@ -4,9 +4,6 @@
     nix-index = {
       enable = true;
     };
-    ccache = {
-      enable = true;
-    };
     uwsm = {
       enable = true;
       waylandCompositors = {

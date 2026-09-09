@@ -9,13 +9,9 @@
   options.unfreePackages = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [
-      "antigravity"
-      "antigravity-cli"
-      "antigravity-ide"
       "claude-code"
       "google-chrome"
       "google-chrome-unstable"
-      "google-cloud-sdk"
       "libretro-fbneo"
       "libretro-genesis-plus-gx"
       "libretro-mame2000"

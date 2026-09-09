@@ -20,10 +20,10 @@
 # Three hosts share one flake and one `modules/` tree, so nixos-laptop and
 # nixos-steamdeck build a closure that is largely identical to the one the
 # desktop has already built -- and where it differs, it differs in exactly the
-# packages nixpkgs' own cache does not have: the chaotic `_git` builds
-# (helix_git, mangohud_git, gamescope_git, firefox_nightly), the
-# viewport flake, and every local override in modules/system/nixpkgs.nix. Those are
-# what the laptop was compiling from source.
+# packages nixpkgs' own cache does not have: the `_git` builds (helix_git,
+# mangohud_git, gamescope_git, sway_git), the viewport flake, and every local
+# override in modules/system/nixpkgs.nix. Those are what the laptop was
+# compiling from source.
 #
 # nix-serve-ng rather than nix-serve: same interface, same options, a Haskell
 # rewrite that does not fork a `nix-store` process per narinfo request.

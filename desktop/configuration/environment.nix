@@ -21,18 +21,17 @@
   # rustc (1.0 GB) and a full gcc (264 MB) in every generation, for toolchains
   # only ever used inside a project. `nix develop` in this flake already
   # provides the Nix ones; anything else belongs in that project's own shell.
-  environment.systemPackages = with pkgs; [
-    awakened-poe-trade
+  environment.systemPackages = [
     # blender-hip
     # inputs.steel.packages.${pkgs.stdenv.hostPlatform.system}.default
     # inputs.lulu.packages.${pkgs.stdenv.hostPlatform.system}.default
     # The Smithay rewrite. `.default` follows whichever engine that flake
-    # recommends —
-    # `.cef` today. The alternative is naming a backend (`.wpe`, `.webkitgtk`,
-    # `.chromium`, `.cef`) and being held to it, which is what naming the old
-    # `.viewport` attribute did: it resolved to `.wpe` and quietly kept
-    # this system compiling WebKit after the default had moved away from it
-    # twice.
+    # recommends — `.servoshell` today, i.e. nixpkgs' prebuilt Servo started
+    # as a child process, which is what this host runs. The alternative is
+    # naming a backend (`.wpe`, `.webkitgtk`, `.chromium`, `.cef`,
+    # `.servoshell`) and being held to it, which is what naming the old
+    # `.viewport` attribute did: it resolved to `.wpe` and quietly kept this
+    # system compiling WebKit after the default had moved away from it twice.
     inputs.viewport.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }

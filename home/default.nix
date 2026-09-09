@@ -11,14 +11,12 @@ _:
     ./waybar.nix
     ./stylix.nix
     ./xdg.nix
-    # user services (swayidle, gpg-agent, tmux, iamb-login)
+    # user services (swayidle, gpg-agent, tmux)
     ./services.nix
     # apps / data
     ./home.nix
     ./programs.nix
     ./agents.nix
-    ./mopidy.nix
-    ./termsonic.nix
     ./voxtype.nix
   ];
 }

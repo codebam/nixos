@@ -43,10 +43,6 @@
       url = "github:pabloaul/lsfg-vk-flake/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixos-avf = {
-      url = "github:nix-community/nixos-avf";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     sops-pass = {
       url = "github:codebam/sops-pass";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -69,9 +65,11 @@
       inherit (inputs.chaotic.vendored) jovian;
       forAllSystems =
         functionProvidedToForAllSystems:
+        # Only the architectures this flake actually defines hosts for: every
+        # extra system here is another full nixpkgs evaluation for devShells,
+        # the formatter and checks.
         nixpkgs.lib.genAttrs [
           "x86_64-linux"
-          "aarch64-linux"
         ] (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
 
       # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
@@ -148,8 +146,8 @@
         pkgs:
         let
           inherit (pkgs.stdenv.hostPlatform) system;
-          # Not nixpkgs.hostPlatform: the avf host sets `system` directly and
-          # leaves that option undefined.
+          # Keep a check's build to hosts on the same system, so adding an
+          # aarch64 host later does not make the x86_64 pass try to build it.
           hostsFor = nixpkgs.lib.filterAttrs (
             _: cfg: cfg.pkgs.stdenv.hostPlatform.system == system
           ) inputs.self.nixosConfigurations;
@@ -222,15 +220,6 @@
             inputs.lsfg-vk-flake.nixosModules.default
             ./steamdeck/configuration
             { home-manager.users.codebam.imports = [ ./steamdeck/home.nix ]; }
-          ];
-        };
-
-        nixos-avf = inputs.nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          specialArgs = { inherit inputs; };
-          modules = [
-            inputs.nixos-avf.nixosModules.avf
-            ./avf/configuration.nix
           ];
         };
       };

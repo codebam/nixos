@@ -13,11 +13,6 @@ _: {
       ];
       directories = [
         {
-          directory = "/var/cache/ccache";
-          user = "root";
-          group = "nixbld";
-        }
-        {
           directory = "/etc/NetworkManager/system-connections";
         }
         {
@@ -146,9 +141,7 @@ _: {
             ".config/discord"
             ".config/discordcanary"
             ".config/discordptb"
-            ".config/in.cinny.app"
             ".local/share/TelegramDesktop"
-            ".local/share/bolt-launcher"
             ".local/share/zoxide"
             ".config/YouTube Music Desktop App"
             ".config/mnw"
@@ -177,21 +170,14 @@ _: {
               mode = "0700";
             }
             ".config/gcloud"
-            ".config/supersonic"
-            ".config/feishin"
             ".local/share/steel"
-            ".config/calcurse"
-            ".local/share/calcurse"
             ".config/retroarch"
             ".config/chromium"
             ".config/mozilla"
             ".config/google-chrome"
             ".config/google-chrome-unstable"
-            ".config/agy-sandbox"
             ".local/share/vkBasalt/shaders"
             ".local/share/kwalletd"
-            ".local/share/iamb"
-            ".cache/iamb"
             ".local/share/uv"
             ".local/bin"
             # SigmaShake Desktop: license, prefs, daemon state. Not generated

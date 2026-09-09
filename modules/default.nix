@@ -7,7 +7,6 @@
     ./system/default.nix
     ./system/environment.nix
     ./system/fonts.nix
-    ./system/gcp-builder.nix
     ./system/journald.nix
     ./system/networking.nix
     ./system/nix.nix

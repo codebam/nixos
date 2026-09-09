@@ -14,7 +14,6 @@
     # nothing else in this closure wants, for a tool used a few times a year.
     # `nix shell nixpkgs#android-studio` when it is actually needed.
     packages = with pkgs; [
-      bolt-launcher
       # Desktop app stays packaged (pkgs/sigmashake-desktop.nix) but is not
       # on PATH. Re-add `sigmashake-desktop` here to turn it back on.
       ssg

@@ -19,7 +19,6 @@ let
   # codebam.tplinkdns.com itself cannot be rescued this way -- it validates
   # against those same nameservers by definition.
   targets = [
-    "llm.codebam.ca"
     "music.codebam.ca"
   ];
 in
@@ -44,7 +43,7 @@ in
 
       # systemd reads the credential as root and hands it to the DynamicUser,
       # so the sops secret stays root-owned 0400 and there is no static account
-      # to chown to -- same arrangement as llm-proxy.nix and litellm.nix.
+      # to chown to.
       LoadCredential = [ "token:${config.sops.secrets.cloudflare-dns-token.path}" ];
 
       DynamicUser = true;

@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  osConfig ? { },
   ...
 }:
 
@@ -94,13 +93,6 @@ let
   # a default: it is cheap and long-context but a 27B model, so it is a
   # deliberate per-session pick, not the thing every task lands on.
   cfModel = "@cf/qwen/qwen3.8-27b";
-
-  # The litellm gateway from desktop/configuration/litellm.nix: qwen3.8 27B on
-  # the local card, transparently continued on OpenRouter's copy of the same
-  # model once a session outgrows the 160k the GPU can hold. One model id from
-  # opencode's side; the switch happens inside the proxy.
-  gatewayUrl = "http://127.0.0.1:4000/v1";
-  gatewayModel = "qwen3.8";
 
   # Qwen Cloud Token Plan, following the vendor's opencode recipe
   # (docs.qwencloud.com/developer-guides/clients-and-developer-tools/opencode):
@@ -248,49 +240,8 @@ let
     };
   };
 
-  # Only the desktop has the card and therefore the gateway; this same home
-  # config lands on the laptop and the steamdeck, where pointing the default
-  # model at a port nothing is listening on would break every session. Those
-  # hosts stay on the router.
-  hasGateway = osConfig.services.litellm.enable or false;
-
-  # Auto-compaction fires at `limit.input - compaction.reserved` -- opencode
-  # 1.18.18 only honours `compaction.reserved` when the model declares
-  # `limit.input`, and falls back to `limit.context - maxOutputTokens` when it
-  # does not. 160000 - 20000 lands the compaction at 140k, inside the local
-  # model's window.
-  compactionInput = 160000;
+  # Headroom opencode keeps before it auto-compacts; see `compaction` below.
   compactionReserved = 20000;
-
-  # The gateway is OpenAI-compatible and unknown to models.dev, so both the
-  # transport and the whole model entry are spelled out. The key is ignored --
-  # litellm is bound to loopback with no master_key -- but the ai-sdk client
-  # refuses to construct without one.
-  #
-  # The two `limit` numbers do different jobs. `context` is the fallback's
-  # window, so nothing here treats the local 160k as the ceiling; `input` is
-  # what the auto-compaction threshold is computed from (see `compaction`
-  # below), and it is set to the local model's real window.
-  gatewayProvider = lib.optionalAttrs hasGateway {
-    litellm = {
-      npm = "@ai-sdk/openai-compatible";
-      name = "LiteLLM (local qwen3.8, OpenRouter fallback)";
-      options = {
-        baseURL = gatewayUrl;
-        apiKey = "unused";
-      };
-      models.${gatewayModel} = {
-        name = "qwen3.8 27B (local, cloud past 145k)";
-        tool_call = true;
-        reasoning = true;
-        limit = {
-          context = 1000000;
-          input = compactionInput;
-          output = 32000;
-        };
-      };
-    };
-  };
 
   opencode = pkgs.symlinkJoin {
     name = "opencode-wrapped-${pkgs.opencode.version}";
@@ -742,17 +693,6 @@ in
             };
           };
 
-          # The gateway is OpenAI-compatible and unknown to models.dev, so both the
-          # transport and the whole model entry are spelled out here. The key is
-          # ignored -- litellm is bound to loopback with no master_key -- but the
-          # ai-sdk client refuses to construct without one.
-          #
-          # `limit.context` is deliberately the *fallback's* window, not the local
-          # 160k: it is what opencode counts against before it decides to compact,
-          # and compacting at 160k would defeat the point of having a 1M-token
-          # deployment waiting behind the proxy. Sessions now compact only when
-          # OpenRouter's copy is also full.
-
           # models.dev lists the router as non-reasoning, so opencode would send no
           # thinking parameters at all for it; `reasoning` here marks it capable and
           # `options.reasoning` sets the tier the underlying coder gets.
@@ -771,7 +711,6 @@ in
             };
           };
         }
-        // gatewayProvider
         // qwenProvider;
       };
 

@@ -138,8 +138,6 @@ in
       sesh
       lazygit
       nvtopPackages.amd
-      antigravity-cli
-      google-cloud-sdk
       # Discord Rich Presence server for vesktop (ArRPC); drop together
       # with vesktop if that ever goes.
       arrpc
@@ -148,52 +146,20 @@ in
       nixfmt
       nixd
       nodejs_latest
-      opentofu
       pwvucontrol
       playerctl
       rcm
       ripgrep
       slurp
       jq
-      supersonic
       weechat
       # Agent-facing hybrid workspace search (provides the `zg` command).
       zvec-grep
       # Deterministic codebase maps for agents (provides the `ripwire` CLI,
       # used directly and as an MCP server by home/agents.nix).
       ripwire
-      calcurse
-      high-tide
-      feishin
-      cinny-desktop
       vesktop
-      (pkgs.python3.withPackages (
-        python-pkgs: with python-pkgs; [
-          virtualenv
-          tkinter
-          pip
-          requests
-        ]
-      ))
-      (pkgs.writeShellScriptBin "agy-sandbox" ''
-        mkdir -p "$HOME/.config/agy-sandbox"
-
-        # 2. Execute the sandbox wrapper
-        exec ${pkgs.bubblewrap}/bin/bwrap \
-          --ro-bind /nix/store /nix/store \
-          --proc /proc \
-          --dev /dev \
-          --ro-bind /sys /sys \
-          --ro-bind /etc /etc \
-          --ro-bind /etc/ssl/certs /etc/ssl/certs \
-          --ro-bind /run/systemd/resolve /run/systemd/resolve \
-          --share-net \
-          --bind "$HOME/.config/agy-sandbox" "$HOME" \
-          --bind "$(pwd)" "$(pwd)" \
-          --uid "$(id -u)" \
-          --gid "$(id -g)" \
-          $(readlink -f $(which agy)) "$@"
-      '')
+      python3
     ];
 
     file = {
