@@ -12,7 +12,7 @@ let
   #
   # The cd is not a stylistic choice: rio 0.5.10 accepts --working-dir and then
   # starts the shell in $HOME anyway. Inherited cwd it does honour.
-  openFolder = pkgs.writeShellScript "rio-open-folder" ''
+  openFolder = pkgs.writeShellScript "term-open-folder" ''
     target=''${1:-$HOME}
     case "$target" in
       file://*)
@@ -29,8 +29,8 @@ in
     # gh replaces the symlink with a real file whenever it writes config.yml,
     # which otherwise aborts the next activation. See programs.gh in programs.nix.
     configFile."gh/config.yml".force = true;
-    desktopEntries.rio-folder = {
-      name = "Open Folder in Rio";
+    desktopEntries.term-folder = {
+      name = "Open Folder in Terminal";
       genericName = "Terminal";
       exec = "${openFolder} %u";
       icon = "utilities-terminal";
@@ -46,7 +46,7 @@ in
         "x-scheme-handler/http" = "chromium.desktop";
         "x-scheme-handler/https" = "chromium.desktop";
         "x-scheme-handler/about" = "chromium.desktop";
-        "inode/directory" = "rio-folder.desktop";
+        "inode/directory" = "term-folder.desktop";
       };
     };
   };
