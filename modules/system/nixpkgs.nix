@@ -86,6 +86,11 @@
           # derivation (useGlobalPkgs).
           opencode-cli = prev.callPackage ../../pkgs/opencode-cli.nix { };
 
+          # The beta desktop that pairs with that CLI and hosts the browser
+          # the agent's browser.* tools attach to. Only the AppImage exists
+          # upstream; see pkgs/opencode-desktop-beta.nix.
+          opencode-desktop-beta = prev.callPackage ../../pkgs/opencode-desktop-beta.nix { };
+
           # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
           # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
           # closure transitively by mpv. quickjs-ng runs the same extractor

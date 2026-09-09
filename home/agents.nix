@@ -316,6 +316,20 @@ let
     '';
   };
 
+  # The beta desktop is the build that pairs with opencode2 and hosts the
+  # integrated browser the agent's browser.* tools attach to; the stable
+  # nixpkgs package above does not. Wrapped with loadKey for the same reason:
+  # a .desktop launch inherits no shell environment, and it needs the same
+  # provider secrets.
+  opencode-desktop-beta = pkgs.symlinkJoin {
+    name = "opencode-desktop-beta-wrapped-${pkgs.opencode-desktop-beta.version}";
+    paths = [ pkgs.opencode-desktop-beta ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/opencode-desktop-beta --run '. ${loadKey}'
+    '';
+  };
+
   # The beta channel of the same agent (npm @opencode/cli, upstream command
   # `opencode2`), built from the registry binaries in pkgs/opencode-cli.nix.
   # Wrapped with loadKey like the stable one so both see the same provider
@@ -564,6 +578,7 @@ in
     packages = [
       opencode
       opencode-desktop
+      opencode-desktop-beta
       opencode2
       pi
     ];
@@ -721,8 +736,8 @@ in
               reasoning = true;
               tool_call = true;
               limit = {
-                context = 131072;
-                output = 8192;
+                context = 1000000;
+                output = 384000;
               };
             };
           };
