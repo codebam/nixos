@@ -136,7 +136,6 @@ _: {
             ".kimi-code"
             ".librewolf"
             ".firedragon"
-            ".password-store"
             ".local/state/wireplumber"
             ".local/state/mpv"
             ".config/mprisence"
