@@ -51,6 +51,13 @@ let
       export QWEN_TOKEN_PLAN_API_KEY
     fi
 
+    # DeepSeek direct API key for the deepseek provider in opencode.json.
+    deepseek_secret=/run/secrets/deepseek-api-key
+    if [ -r "$deepseek_secret" ]; then
+      DEEPSEEK_API_KEY=$(cat "$deepseek_secret")
+      export DEEPSEEK_API_KEY
+    fi
+
     # OpenCode Go. models.dev gives both `opencode` (Zen) and `opencode-go` the
     # same env entry -- OPENCODE_API_KEY -- so exporting it once makes the Go
     # models show up as opencode-go/<model-id> in the picker with no provider
@@ -700,6 +707,25 @@ in
         # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
         provider = {
           cloudflare-workers-ai.models.${cfModel} = { };
+
+          # DeepSeek direct API (OpenAI-compatible endpoint).
+          deepseek = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "DeepSeek";
+            options = {
+              baseURL = "https://api.deepseek.com/v1";
+              apiKey = "{env:DEEPSEEK_API_KEY}";
+            };
+            models."deepseek-v4.1-flash-expires-on-0910" = {
+              name = "DeepSeek V4.1 Flash";
+              reasoning = true;
+              tool_call = true;
+              limit = {
+                context = 131072;
+                output = 8192;
+              };
+            };
+          };
 
           # The gateway is OpenAI-compatible and unknown to models.dev, so both the
           # transport and the whole model entry are spelled out here. The key is

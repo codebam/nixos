@@ -57,6 +57,10 @@
         owner = "codebam";
         group = "users";
       };
+      deepseek-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       # OpenCode Go subscription key, exported as OPENCODE_API_KEY by the
       # wrapper in home/agents.nix. Its own secret rather than one more line in
       # hermes-env: that blob is also the EnvironmentFile of litellm and hermes,
