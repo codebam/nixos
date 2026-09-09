@@ -445,6 +445,19 @@ let
   ];
   # The installer's --mcp-tool-timeout default: 600s in ms.
   zgTimeoutMs = 600000;
+  # opencode 2.x takes an MCP timeout as an object. Its legacy scalar form only
+  # populates `catalog` (discovery) and `execution` (tool calls) -- the
+  # `startup` budget, the window for the initialize handshake, silently stays at
+  # opencode's 30s default. When `zg server --stdio` is slow to start or reuse
+  # the shared daemon, the handshake exceeds that window, the stdio transport
+  # closes, and opencode records "Connection closed" permanently because it
+  # does not retry a failed MCP server. Set `startup` explicitly so a cold or
+  # contended bootstrap is not cut off. opencode 1.x ignores the object form.
+  zgOpencodeTimeout = {
+    startup = 120000;
+    catalog = zgTimeoutMs;
+    execution = zgTimeoutMs;
+  };
 
   # The guidance block `zg install` writes, copied verbatim from its 0.2.1
   # opencode output and shared by both hosts: the tool names it cites are the
@@ -645,7 +658,7 @@ in
           # Resolved from the session PATH; zvec-grep is in home.packages.
           command = zgArgv;
           enabled = true;
-          timeout = zgTimeoutMs;
+          timeout = zgOpencodeTimeout;
         };
 
         # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
