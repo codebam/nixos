@@ -13,12 +13,12 @@ let
   variants = {
     "x86_64-linux" = {
       npmName = "linux-x64";
-      hash = "sha256-gPnAZ5SB8dtxMSxUaSQPAzHSJzPskG8f5up1UlbwcEo=";
-      baselineHash = "sha256-/5HAW9ENYAglMswBgKySIu8RhjydX8fqyxoOp3l4CNA=";
+      hash = "sha256-WxCtciL29EKqI+rBQRYq/J+Mq/AMXQJYMdB3aWPn4Xc=";
+      baselineHash = "sha256-gsXNLhsOBSoqXwtSrgXlEQkZ56LzfcttPj7x1ku2lmk=";
     };
     "aarch64-linux" = {
       npmName = "linux-arm64";
-      hash = "sha256-+4iqAgKFBdU4d4iwYOCV1VJTcG+k1nrdK+tVo+HfVPM=";
+      hash = "sha256-YgVUf1sdHRNowa0djyiHR2HQuqiQFX4ap8nxga8Wsjs=";
     };
   };
 
@@ -29,7 +29,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "opencode-cli";
-  version = "0.0.0-beta-19289";
+  version = "0.0.0-beta-19378";
 
   # The @opencode/cli npm wrapper (upstream command: `opencode2`) ships no
   # runnable code: bin/opencode2.exe is a stub and its postinstall copies the

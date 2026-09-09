@@ -16,16 +16,16 @@
 let
   inherit (stdenv.hostPlatform) system;
 
-  version = "0.0.0-beta-19296";
+  version = "0.0.0-beta-19378";
 
   variants = {
     "x86_64-linux" = {
       appimageName = "linux-x86_64";
-      hash = "sha256-4EtMiJW64nDFdpAccgM8lAL6LWL04sY6nPJF2TOuUMI=";
+      hash = "sha256-F9KSY+OW331Vni1hkIE3juA32E+rlkzYRkGZYx1esFc=";
     };
     "aarch64-linux" = {
       appimageName = "linux-arm64";
-      hash = "sha256-P7MLdFKUmO88QyYSNiyAFbYJf6VUH8msA3orI0jVqn8=";
+      hash = "sha256-e2Kr9kZD8jlb1m7xHsoOoJgGKjnQwZiEdmEOF49D9js=";
     };
   };
 
