@@ -117,6 +117,8 @@ _: {
             ".config/opencode"
             # Pi agent settings and plugins
             ".pi"
+            # deepseek harness settings and plugins
+            ".dsh"
             # `flatpak --user install` and the app data those apps write.
             # The system-wide half is /var/lib/flatpak above.
             ".local/share/flatpak"
