@@ -58,6 +58,22 @@ let
     esac
     exit 0
   '';
+
+  # `ivpn` is only a client for the daemon and works once the daemon has
+  # published its connection-info. A rebuild restarts ivpn-service and this
+  # unit at the same time, and `after` only guarantees the daemon's process was
+  # forked -- not that it is ready to answer -- so a single invocation races it
+  # and dies with "connection-info not exists". Retry the (idempotent) command
+  # until the daemon accepts it.
+  applyException = pkgs.writeShellScript "ivpn-tailscale-exception" ''
+    set -u
+    for _ in $(seq 60); do
+      ${pkgs.ivpn}/bin/ivpn firewall -exceptions 100.64.0.0/10 && exit 0
+      sleep 0.5
+    done
+    echo "ivpn daemon did not become ready; giving up" >&2
+    exit 1
+  '';
 in
 {
   # Sends tailscale's marked packets into ivpn's routing table for as long as
@@ -97,7 +113,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.ivpn}/bin/ivpn firewall -exceptions 100.64.0.0/10";
+      ExecStart = applyException;
     };
   };
 }
