@@ -76,6 +76,13 @@
           # llama.cpp, sharp) arrives as a prebuilt platform package.
           zvec-grep = prev.callPackage ../../pkgs/zvec-grep.nix { };
 
+          # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has
+          # no lockfile and an unpublished devDependencies block, so the
+          # derivation vendors a production lockfile and wraps the bin to
+          # start node with --expose-internals (its HMR plugin requires it).
+          # See pkgs/dsh.nix.
+          dsh = prev.callPackage ../../pkgs/dsh.nix { };
+
           # OpenCode's beta CLI from npm (@opencode/cli, command `opencode2`):
           # the derivation pins the registry's per-platform binary tarballs
           # directly. Overlay so home-manager and the system resolve one
