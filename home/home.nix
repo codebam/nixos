@@ -161,8 +161,6 @@ in
       # Deterministic codebase maps for agents (provides the `ripwire` CLI,
       # used directly and as an MCP server by home/agents.nix).
       ripwire
-      # DeepSeek Harness agent CLI (`dsh`), packaged in pkgs/dsh.nix.
-      dsh
       vesktop
       python3
     ];

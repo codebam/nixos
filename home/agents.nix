@@ -320,6 +320,23 @@ let
         --set PI_TELEMETRY 0
     '';
   };
+
+  # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadKey for
+  # the same reason as opencode and pi: its llm-pi-ai `opencode-go` route names
+  # the OPENCODE_API_KEY credential reference, and the credential store falls
+  # back to the launch environment, so exporting the key here is what makes the
+  # route authenticate without a secret in settings.yaml. dsh's own wrapper
+  # already adds --expose-internals for its HMR plugin; wrapProgram preserves
+  # that and only prepends the environment load.
+  dsh = pkgs.symlinkJoin {
+    name = "dsh-wrapped-${pkgs.dsh.version}";
+    paths = [ pkgs.dsh ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/dsh --run '. ${loadKey}'
+    '';
+  };
+
   piSettings = {
     defaultProvider = "qwen-token-plan-individual";
     defaultModel = "qwen3.8-flash";
@@ -531,6 +548,40 @@ let
       > "$settings.tmp"
     mv "$settings.tmp" "$settings"
   '';
+
+  # The OpenCode Go route for dsh's llm-pi-ai adapter. pi-ai ships the
+  # `opencode-go` provider catalog (endpoint, wire protocol, and model list all
+  # come from it), so the route only carries the credential reference; the
+  # secret stays in /run/secrets and `loadKey` above exports it. Keeping this a
+  # separate store file means the merge below can deep-merge one namespace
+  # without restating the rest of the document.
+  dshSettings = pkgs.writeText "dsh-settings-managed.yaml" ''
+    llm-pi-ai:
+      providers:
+        opencode-go:
+          displayName: OpenCode Go
+          apiKeyEnv: OPENCODE_API_KEY
+  '';
+
+  # settings.yaml is dsh's live user-overrides document: the Models page and the
+  # onboarding/permission toggles write it, and dsh hot-reloads external edits.
+  # So it cannot be a read-only store symlink any more than pi's settings.json
+  # can; merge the managed namespace into it instead, preserving every key dsh
+  # wrote. An unparseable document (a half-finished hand edit) is backed up
+  # rather than silently overwritten, then rebuilt from the managed keys.
+  dshSettingsMerge = pkgs.writeShellScript "dsh-settings-merge" ''
+    set -eu
+    settings="$HOME/.dsh/settings.yaml"
+    mkdir -p "$HOME/.dsh"
+    if [ -s "$settings" ] && ! ${pkgs.yq-go}/bin/yq -e '.' "$settings" >/dev/null 2>&1; then
+      cp "$settings" "$settings.invalid"
+      printf '{}\n' > "$settings"
+    fi
+    if [ ! -s "$settings" ]; then
+      printf '{}\n' > "$settings"
+    fi
+    ${pkgs.yq-go}/bin/yq -i ". * load(\"${dshSettings}\")" "$settings"
+  '';
 in
 {
   home = {
@@ -540,6 +591,7 @@ in
       opencode-desktop-beta
       opencode2
       pi
+      dsh
     ];
 
     # Pi's settings.json is mutable state — `/settings` and the model picker
@@ -548,6 +600,13 @@ in
     # handled its own config.yaml.
     activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       run ${piSettingsMerge}
+    '';
+
+    # dsh's settings.yaml is the same kind of live document (onboarding, chat
+    # prefs, permission preset, Models page), so it gets the same merge
+    # treatment: Nix owns only the llm-pi-ai OpenCode Go route.
+    activation.dshSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${dshSettingsMerge}
     '';
 
     # models.json, unlike settings.json, is user-authored config that pi only
