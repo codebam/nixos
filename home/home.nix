@@ -146,6 +146,9 @@ in
       nixfmt
       nixd
       nodejs_latest
+      # `dsh plugin` forwards to pnpm in the profile directory, so the
+      # package manager has to be on PATH for plugin installs.
+      pnpm
       pwvucontrol
       playerctl
       rcm
