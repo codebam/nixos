@@ -561,6 +561,38 @@ let
         opencode-go:
           displayName: OpenCode Go
           apiKeyEnv: OPENCODE_API_KEY
+        # DeepSeek V4.1 Flash (OpenCode model id `deepseek-flash`) is served by
+        # OpenCode Go but is not in pi-ai's bundled `opencode-go` catalog
+        # (0.84.4), and a hand-declared model cannot be appended to that route:
+        # its models speak three wire protocols, so `models` would have to
+        # replace the whole catalog and a route-level `api` would mislabel the
+        # anthropic/responses entries. A dedicated single-model route keeps the
+        # catalog route intact; the session-header plugin is told about its key
+        # in the profile patch. Metadata mirrors the catalog's deepseek-v4-flash
+        # sibling (context 1M, output 384k; models.dev lists the same for
+        # deepseek-flash), with dsh's own reasoningEfforts/compat shape.
+        opencode-go-deepseek:
+          displayName: OpenCode Go (DeepSeek)
+          apiKeyEnv: OPENCODE_API_KEY
+          api: openai-completions
+          baseURL: https://opencode.ai/zen/go/v1
+          models:
+            - id: deepseek-flash
+              name: DeepSeek V4.1 Flash
+              contextWindow: 1000000
+              maxTokens: 384000
+              input:
+                - text
+              reasoningEfforts:
+                low: low
+                high: high
+                max: max
+              compat:
+                supportsStore: false
+                supportsDeveloperRole: false
+                maxTokensField: max_tokens
+                requiresReasoningContentOnAssistantMessages: true
+                thinkingFormat: deepseek
   '';
 
   # settings.yaml is dsh's live user-overrides document: the Models page and the
