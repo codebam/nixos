@@ -573,11 +573,12 @@ let
     mv "$settings.tmp" "$settings"
   '';
 
-  # The OpenCode Go route for dsh's llm-pi-ai adapter. pi-ai ships the
-  # `opencode-go` provider catalog (endpoint, wire protocol, and model list all
-  # come from it), so the route only carries the credential reference; the
-  # secret stays in /run/secrets and `loadKey` above exports it. Keeping this a
-  # separate store file means the merge below can deep-merge one namespace
+  # The user-settings routes for dsh's llm-pi-ai adapter. pi-ai ships the
+  # `opencode-go`, `qwen-token-plan-individual`, and `openrouter` provider
+  # catalogs (endpoint, wire protocol, and model list all come from them), so
+  # those routes only carry the display label and credential reference; the
+  # secrets stay in /run/secrets and `loadKey` above exports them. Keeping this
+  # a separate store file means the merge below can deep-merge one namespace
   # without restating the rest of the document.
   dshSettings = pkgs.writeText "dsh-settings-managed.yaml" ''
     llm-pi-ai:
@@ -617,6 +618,33 @@ let
                 maxTokensField: max_tokens
                 requiresReasoningContentOnAssistantMessages: true
                 thinkingFormat: deepseek
+
+        # Qwen Cloud Token Plan. pi-ai ships this provider under its own
+        # catalog id, so the route carries only the label and the credential
+        # reference: endpoint (the compatible-mode one), wire protocol, and
+        # the Personal-Edition model set all come from pi-ai 0.85.1 the same
+        # way they do for pi. `loadKey` exports QWEN_TOKEN_PLAN_API_KEY from
+        # the same secret as QWEN_API_KEY, which is also the name pi-ai's own
+        # ambient discovery looks for.
+        qwen-token-plan-individual:
+          displayName: Qwen Cloud (Token Plan)
+          apiKeyEnv: QWEN_TOKEN_PLAN_API_KEY
+
+        # OpenRouter's full installed catalog (351 openai-completions plus 15
+        # anthropic-messages models at pi-ai 0.85.1), keyed from
+        # OPENROUTER_API_KEY, which `loadKey` lifts out of hermes-env.
+        #
+        # `openrouter/pareto-code` is deliberately not declared even though
+        # opencode and pi both select it: the Pareto router's price/capability
+        # floor travels in a request-body `plugins` entry, and dsh's pi-ai
+        # profile exposes no field that reaches the request body (only
+        # headers, compat switches, and the like). Without that plugin the
+        # router picks the strongest available coder -- the expensive end --
+        # so leaving it out is the safe default; the catalog's
+        # `openrouter/auto` remains available as an ordinary router.
+        openrouter:
+          displayName: OpenRouter
+          apiKeyEnv: OPENROUTER_API_KEY
   '';
 
   # settings.yaml is dsh's live user-overrides document: the Models page and the
