@@ -1,5 +1,6 @@
 {
   lib,
+  bashInteractive,
   buildNpmPackage,
   fetchNpmDeps,
   fetchzip,
@@ -64,7 +65,34 @@ buildNpmPackage (finalAttrs: {
   # --expose-internals, and its native fallback (node-addon-require-builtin)
   # cannot read V8 internals on Node >= 26. Start node with the flag HMR
   # checks for, which works on every supported Node line.
+  #
+  # The persistent-shell PTY backend (`dsh-terminal-bash`) defaults its bash
+  # executable to /bin/bash, which NixOS does not ship. Every shell call in a
+  # preset that mounts the persistent shell therefore dies as "PTY backend
+  # startup and cleanup both failed" (the fork execs a missing file, then the
+  # rollback's terminate reports its own failure), and the `minimal` preset's
+  # only built-in tool is that persistent shell. The one-shot executor already
+  # resolves `bash` from PATH, so name the store bash here too; `--replace-fail`
+  # keeps an upstream rename from silently restoring the broken default.
   postInstall = ''
+    terminal_bash="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-terminal-bash/lib/index.js"
+    chmod u+w "$terminal_bash"
+    substituteInPlace "$terminal_bash" \
+      --replace-fail 'const DEFAULT_BASH_SHELL = "/bin/bash";' \
+        "const DEFAULT_BASH_SHELL = \"${lib.getExe bashInteractive}\";"
+
+    # `minimal` also suppresses runtime context and fixes its persona to one
+    # line, so nothing tells the model where the session's workspace is. Its
+    # second tool is the zvec-grep index, whose `root` must be a daemon-visible
+    # absolute path, and a session with no cwd guesses roots (/workspace, /app,
+    # /home, ...) and reports the index missing even though one exists at the
+    # workspace. State the cwd the way `standard` does; drop this block to keep
+    # the preset's shipped training prompt byte-for-byte.
+    minimal="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-agent-presets/presets/minimal/agent.cordis.yml"
+    chmod u+w "$minimal"
+    awk '{ print } /^    prefix: You are a helpful software engineer assistant\.$/ { print "    suffix: Your working directory is {{cwd}}." }' "$minimal" > "$minimal.tmp"
+    mv "$minimal.tmp" "$minimal"
+
     rm -f "$out/bin/dsh"
     makeWrapper ${lib.getExe' nodejs "node"} "$out/bin/dsh" \
       --add-flags "--expose-internals $out/lib/node_modules/@deepseek-ai/dsh/lib/bin.js"
