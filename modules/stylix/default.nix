@@ -11,7 +11,10 @@
       gtk.enable = false;
       qt.enable = false;
     };
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa.yaml";
+    # Dragon, not wave: base00 is a hue-neutral near-black (#181616 instead
+    # of #1f1f28), so translucent terminal glass tints the synthwave wallpaper
+    # dark rather than blue-grey.
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa-dragon.yaml";
     # Synthwave mural generated for this desk. 5120x1440 exactly -- the two
     # 2560x1440 monitors joined -- because the shell paints one page across the
     # whole output layout and `fill` would crop and zoom a single-monitor

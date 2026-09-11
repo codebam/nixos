@@ -27,11 +27,6 @@
       # package = pkgs.ghostty_git;
       enableFishIntegration = true;
       settings = {
-        # Stylix pins the ghostty theme to kanagawa base00 (#1f1f28), a
-        # blue-grey that goes muddy behind 0.85-opacity glass over the
-        # synthwave wallpaper. Black is hue-neutral against any wallpaper;
-        # the rest of the palette still comes from the stylix theme.
-        background = "#000000";
         cursor-style = "block";
         shell-integration-features = "no-cursor";
         cursor-style-blink = false;

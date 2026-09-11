@@ -30,10 +30,10 @@ _:
 
     # One value for every enabled terminal target (ghostty, foot, kitty, rio):
     # stylix writes each one's own background-opacity from it. Viewport does
-    # not blur behind client surfaces, so this stops at 0.85 -- enough of the
-    # wallpaper shows through to read as glass, high enough that the stripes
-    # never sit in the text.
-    opacity.terminal = 0.85;
+    # not blur behind client surfaces. 0.75 is a step below the old 0.85 now
+    # that base00 is dragon's near-black: the extra wallpaper the transparency
+    # lets through is filtered by a much darker tint than kanagawa's blue-grey.
+    opacity.terminal = 0.75;
 
     fonts.sizes = {
       desktop = 14;
