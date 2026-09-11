@@ -28,6 +28,34 @@ let
       "${reshade-headers}/Shaders"
     ];
   };
+
+  # Shared by Claude Code's skill root (`~/.claude/skills`) and dsh's
+  # (`~/.dsh/skills`). Both take the same `<name>/SKILL.md` bundle shape, and
+  # dsh does NOT scan `.claude/skills` -- its provider reads
+  # `<repo>/.dsh/skills`, `<repo>/.agents/skills`, `~/.dsh/skills`, then
+  # `~/.agents/skills` -- so the same body is written to both roots rather
+  # than copied, which is what keeps them from drifting.
+  searxngSkill = ''
+    ---
+    name: searxng
+    description: Use when searching the web from this host. Query the local loopback SearXNG JSON API.
+    ---
+
+    Local SearXNG listens on `http://127.0.0.1:8081` (also `$SEARXNG_URL`).
+    Loopback only, JSON enabled.
+
+    ```bash
+    curl -sS --max-time 20 \
+      -G http://127.0.0.1:8081/search \
+      --data-urlencode "q=QUERY" \
+      --data-urlencode "format=json" \
+      | jq -r '.results[:8][] | [.title, .url] | @tsv'
+    ```
+
+    Then fetch the one or two URLs that answer the question. `format=json`
+    is required. If curl fails, `systemctl status searx` — do not fall
+    through to a public instance.
+  '';
 in
 {
   home = {
@@ -195,27 +223,12 @@ in
         .claude/
       '';
 
-      ".claude/skills/searxng/SKILL.md".text = ''
-        ---
-        name: searxng
-        description: Use when searching the web from this host. Query the local loopback SearXNG JSON API.
-        ---
+      ".claude/skills/searxng/SKILL.md".text = searxngSkill;
 
-        Local SearXNG listens on `http://127.0.0.1:8081` (also `$SEARXNG_URL`).
-        Loopback only, JSON enabled.
-
-        ```bash
-        curl -sS --max-time 20 \
-          -G http://127.0.0.1:8081/search \
-          --data-urlencode "q=QUERY" \
-          --data-urlencode "format=json" \
-          | jq -r '.results[:8][] | [.title, .url] | @tsv'
-        ```
-
-        Then fetch the one or two URLs that answer the question. `format=json`
-        is required. If curl fails, `systemctl status searx` — do not fall
-        through to a public instance.
-      '';
+      # The same skill for dsh, whose filesystem provider scans
+      # `~/.dsh/skills` (rank 400) but not Claude Code's root. Note dsh also
+      # watches these roots, so the skill appears without a restart.
+      ".dsh/skills/searxng/SKILL.md".text = searxngSkill;
     };
 
     stateVersion = "26.05";

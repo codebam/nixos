@@ -507,6 +507,22 @@ let
     - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
   '';
 
+  # dsh's mcp client names tools `mcp__<serverName>__<rawName>` where opencode
+  # and pi build `<serverName>_<rawName>`, so the shared block above is
+  # re-rendered with dsh's names instead of being copied and drifting. The
+  # routing rules themselves are host-independent.
+  zgGuidanceDsh =
+    builtins.replaceStrings
+      [
+        "zvec_grep_zvec_grep_search"
+        "zvec_grep_zvec_grep_rg"
+      ]
+      [
+        "mcp__${zgServerName}__zvec_grep_search"
+        "mcp__${zgServerName}__zvec_grep_rg"
+      ]
+      zgGuidance;
+
   # ripwire's use-when blurb, copied verbatim from the packaged binary's own
   # `ripwire wrap opencode` output (v0.3.8): the CLI-first protocol both
   # harnesses share, since both have a shell tool. Re-derive it the same way
@@ -643,61 +659,139 @@ in
 
     # models.json, unlike settings.json, is user-authored config that pi only
     # reads, so it can be a plain store symlink.
-    file.".pi/agent/models.json".text = builtins.toJSON piModels;
-
-    # pi's global context file (docs/usage.md: "Context Files"). pi is not one
-    # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
-    # cursor are -- so this is the shared guidance above plus a hand-written
-    # header for the one thing that differs: under the adapter the tools are
-    # behind the `mcp` proxy and lazy, so they are NOT in pi's tool list when a
-    # session starts, and the verbatim "when it is listed by the current host"
-    # would otherwise send pi straight to native rg.
     #
-    # `directTools = true` on the server entry would register them as ordinary
-    # pi tools and make this header unnecessary, at the cost of their schemas
-    # sitting in context every session -- the thing the adapter exists to avoid.
-    #
-    # Like models.json this is a file pi only reads, so a plain store symlink is
-    # right. If a hand-written ~/.pi/agent/AGENTS.md ever appears first,
-    # activation fails loudly rather than clobbering it: merge it in, or set
-    # `force = true`.
-    #
-    # Caveat: the adapter itself is ambient, not declared here -- it came from
-    # `pi install npm:pi-mcp-adapter` into ~/.pi/agent/npm, alongside the other
-    # extensions. Point a fresh machine at this config without installing it and
-    # pi is handed instructions for a tool it does not have.
-    file.".pi/agent/AGENTS.md".text = ''
-      <!-- ZVEC_GREP_START -->
-      ## zvec-grep is an MCP server here, not a tool list
+    # Nested rather than repeated top-level `file.` keys: statix's
+    # repeated-keys lint flags the flat form once the third entry lands, the
+    # same reason the opencode config below sits under one `xdg.configFile`.
+    file = {
+      ".pi/agent/models.json".text = builtins.toJSON piModels;
 
-      pi reaches zvec-grep through pi-mcp-adapter's single `mcp` proxy tool, and that server is lazy: none of its tools appear in the tool list at session start.
+      # pi's global context file (docs/usage.md: "Context Files"). pi is not one
+      # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
+      # cursor are -- so this is the shared guidance above plus a hand-written
+      # header for the one thing that differs: under the adapter the tools are
+      # behind the `mcp` proxy and lazy, so they are NOT in pi's tool list when a
+      # session starts, and the verbatim "when it is listed by the current host"
+      # would otherwise send pi straight to native rg.
+      #
+      # `directTools = true` on the server entry would register them as ordinary
+      # pi tools and make this header unnecessary, at the cost of their schemas
+      # sitting in context every session -- the thing the adapter exists to avoid.
+      #
+      # Like models.json this is a file pi only reads, so a plain store symlink is
+      # right. If a hand-written ~/.pi/agent/AGENTS.md ever appears first,
+      # activation fails loudly rather than clobbering it: merge it in, or set
+      # `force = true`.
+      #
+      # Caveat: the adapter itself is ambient, not declared here -- it came from
+      # `pi install npm:pi-mcp-adapter` into ~/.pi/agent/npm, alongside the other
+      # extensions. Point a fresh machine at this config without installing it and
+      # pi is handed instructions for a tool it does not have.
+      ".pi/agent/AGENTS.md".text = ''
+        <!-- ZVEC_GREP_START -->
+        ## zvec-grep is an MCP server here, not a tool list
 
-      - Discover: `mcp({ search: "zvec_grep" })` — "semantic search", "workspace grep" and "code index" find it too.
-      - Parameters: `mcp({ describe: "zvec_grep_zvec_grep_search" })`.
-      - Call: `mcp({ tool: "zvec_grep_zvec_grep_search", args: { root: "/absolute/path", query: "…" } })`. The prefixed name is the address; `args` is the server's own parameter object (`root` is required, absolute, daemon-visible).
-      - Several retrieval round trips in one turn: `mcpScript` with `tools.zvec_grep_zvec_grep_search(args)`.
-      - The first call connects and starts the stdio bootstrap, so judge availability after it rather than from the empty initial tool list. Where the rules below say "when it is listed by the current host", read that as "once `mcp({ search })` has returned it".
-      - `zvec_grep_rg` — the managed exact/regex route — is only exposed when the server runs with `--mcp-toolset full`. This config keeps the installer default (`agent` toolset, indexed search only), so exact lookups go to native Grep or `rg`, which makes the indexed route the one worth calling at all.
+        pi reaches zvec-grep through pi-mcp-adapter's single `mcp` proxy tool, and that server is lazy: none of its tools appear in the tool list at session start.
 
-      ${zgGuidance}
-      <!-- ZVEC_GREP_END -->
-      <!-- RIPWIRE_START -->
-      ## ripwire is a CLI first, MCP server second here
+        - Discover: `mcp({ search: "zvec_grep" })` — "semantic search", "workspace grep" and "code index" find it too.
+        - Parameters: `mcp({ describe: "zvec_grep_zvec_grep_search" })`.
+        - Call: `mcp({ tool: "zvec_grep_zvec_grep_search", args: { root: "/absolute/path", query: "…" } })`. The prefixed name is the address; `args` is the server's own parameter object (`root` is required, absolute, daemon-visible).
+        - Several retrieval round trips in one turn: `mcpScript` with `tools.zvec_grep_zvec_grep_search(args)`.
+        - The first call connects and starts the stdio bootstrap, so judge availability after it rather than from the empty initial tool list. Where the rules below say "when it is listed by the current host", read that as "once `mcp({ search })` has returned it".
+        - `zvec_grep_rg` — the managed exact/regex route — is only exposed when the server runs with `--mcp-toolset full`. This config keeps the installer default (`agent` toolset, indexed search only), so exact lookups go to native Grep or `rg`, which makes the indexed route the one worth calling at all.
 
-      ripwire is on PATH. Prefer the CLI forms in the block below via Bash —
-      they cost no context until invoked.
+        ${zgGuidance}
+        <!-- ZVEC_GREP_END -->
+        <!-- RIPWIRE_START -->
+        ## ripwire is a CLI first, MCP server second here
 
-      The MCP server (`ripwire --mcp`, registered in ~/.config/mcp/mcp.json)
-      is the warm-index alternative, reached through pi-mcp-adapter's single
-      `mcp` proxy tool exactly like zvec-grep above: `mcp({ search: "ripwire" })`
-      to discover, then `mcp({ tool: "ripwire_<verb>", args: { path: "/absolute/path", ... } })`
-      (verbs include `for`, `explore`, `impact`, `find_symbol`, `quality_delta`).
-      The first call connects and starts the stdio bootstrap, so judge
-      availability after it rather than from the empty initial tool list.
+        ripwire is on PATH. Prefer the CLI forms in the block below via Bash —
+        they cost no context until invoked.
 
-      ${ripwireGuidance}
-      <!-- RIPWIRE_END -->
-    '';
+        The MCP server (`ripwire --mcp`, registered in ~/.config/mcp/mcp.json)
+        is the warm-index alternative, reached through pi-mcp-adapter's single
+        `mcp` proxy tool exactly like zvec-grep above: `mcp({ search: "ripwire" })`
+        to discover, then `mcp({ tool: "ripwire_<verb>", args: { path: "/absolute/path", ... } })`
+        (verbs include `for`, `explore`, `impact`, `find_symbol`, `quality_delta`).
+        The first call connects and starts the stdio bootstrap, so judge
+        availability after it rather than from the empty initial tool list.
+
+        ${ripwireGuidance}
+        <!-- RIPWIRE_END -->
+      '';
+
+      # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`
+      # (plus the per-directory AGENTS.md/CLAUDE.md chain and the
+      # AGENTS.local.md/CLAUDE.local.md overlays under the project root). It does
+      # not look at ~/.claude/CLAUDE.md, ~/.pi/agent/AGENTS.md, or opencode's
+      # copy, so the shared tooling rules need a dsh copy; the zvec-grep block is
+      # the dsh-named rendering from above, and both MCP-backed tools are
+      # ordinary listed tools here rather than something behind a lazy proxy.
+      #
+      # The tooling rules also live in the hand-written ~/.claude/CLAUDE.md. That
+      # file stays hand-written because Claude Code's `/memory` can rewrite it,
+      # which a read-only store symlink would break; merge this binding in if it
+      # ever stops being edited there.
+      ".dsh/AGENTS.md".text = ''
+        # Tooling
+        * Nix tools via `, <tool>` (ephemeral run). No install requests for one-off use.
+        * Map code with `, repomix --include "<globs>"`; find symbols with `, ctags -x`. ! file-by-file exploration.
+        * Logs >50 lines: filter with `awk`/`sed`/`jq` before reading.
+        * Verify NixOS options with `, manix "<term>"`. ! guess option names.
+
+        <!-- ZVEC_GREP_START -->
+        ## zvec-grep is an MCP server here
+
+        Both zvec-grep routes are ordinary tools in the tool list, provided by the
+        `zvec_grep` MCP server declared in `$DSH_HOME/cordis.patch.yml`. The
+        indexed-search route is `mcp__zvec_grep__zvec_grep_search`; if
+        `mcp__zvec_grep__zvec_grep_rg` is absent from the list, the server is
+        running its default indexed-only toolset and exact lookups belong to the
+        native Grep tool or `rg` via bash, exactly as the rules below say.
+
+        ${zgGuidanceDsh}
+        <!-- ZVEC_GREP_END -->
+        <!-- RIPWIRE_START -->
+        ## ripwire is a CLI first, MCP server second here
+
+        ripwire is on PATH and dsh has a shell tool, so use the CLI forms below via
+        bash: they cost no context until invoked, and the MCP server that
+        opencode/pi register is not mounted in dsh.
+
+        ${ripwireGuidance}
+        <!-- RIPWIRE_END -->
+      '';
+
+      # dsh's user-global patch layer. Precedence is bundle layers, then the
+      # profile's own `cordis.patch.yml`, then this file, then `--patch`
+      # overlays, so rows here apply to every profile: web, headless, acp, sdk.
+      #
+      # zvec-grep's MCP server reuses the argv declared above for opencode and
+      # pi, but dsh's mcp client has no lazy proxy: every tool the server
+      # advertises sits in the tool list of every request. That is the price of
+      # the indexed-search route -- delete this row to fall back to the native
+      # grep/glob tools alone.
+      #
+      # Written as YAML text (the loader reads YAML, not JSON) with only the
+      # argv rendered from nix; `builtins.toJSON` is used for the args list
+      # because a JSON flow sequence is valid YAML.
+      #
+      # The row sits inside a top-level `insert` with no `id`: a patch entry
+      # with an `id` and no `insert` only overrides a row that already exists,
+      # so targeting `mcp-zvec-grep` directly warns "entry not found" and is
+      # skipped -- nothing in the bundle layers defines it yet.
+      ".dsh/cordis.patch.yml".text = ''
+        - insert:
+            - id: mcp-zvec-grep
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${zgServerName}
+                transport: stdio
+                command: ${builtins.head zgArgv}
+                args: ${builtins.toJSON (builtins.tail zgArgv)}
+                toolCallTimeoutMs: ${toString zgTimeoutMs}
+      '';
+    };
   };
 
   # Nested rather than three top-level `xdg.configFile.` keys: statix's
