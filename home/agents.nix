@@ -471,6 +471,14 @@ let
   # opencode2 beta-19378 and opencode 1.18.29.
   zgTimeoutMs = 600000;
 
+  # ripwire's MCP argv, shared by the DSH row below. The CLI-first guidance is
+  # still the recommended path; this is the warm-index alternative.
+  ripwireServerName = "ripwire";
+  ripwireArgv = [
+    "ripwire"
+    "--mcp"
+  ];
+
   # The guidance block `zg install` writes, copied verbatim from its 0.2.1
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
@@ -725,8 +733,8 @@ in
       # AGENTS.local.md/CLAUDE.local.md overlays under the project root). It does
       # not look at ~/.claude/CLAUDE.md, ~/.pi/agent/AGENTS.md, or opencode's
       # copy, so the shared tooling rules need a dsh copy; the zvec-grep block is
-      # the dsh-named rendering from above, and both MCP-backed tools are
-      # ordinary listed tools here rather than something behind a lazy proxy.
+      # the dsh-named rendering from above, and the MCP servers are ordinary
+      # listed tools here rather than something behind a lazy proxy.
       #
       # The tooling rules also live in the hand-written ~/.claude/CLAUDE.md. That
       # file stays hand-written because Claude Code's `/memory` can rewrite it,
@@ -754,9 +762,11 @@ in
         <!-- RIPWIRE_START -->
         ## ripwire is a CLI first, MCP server second here
 
-        ripwire is on PATH and dsh has a shell tool, so use the CLI forms below via
-        bash: they cost no context until invoked, and the MCP server that
-        opencode/pi register is not mounted in dsh.
+        ripwire is on PATH and dsh has a shell tool, so use the CLI forms below
+        via bash; they cost no context until invoked. The `ripwire` MCP server is
+        also mounted (`mcp__ripwire__<verb>`); like every MCP row in dsh, its
+        tools sit in the request context, so prefer the CLI unless the warm index
+        is worth that cost.
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
@@ -764,19 +774,20 @@ in
 
       # dsh's user-global patch layer. Precedence is bundle layers, then the
       # profile's own `cordis.patch.yml`, then this file, then `--patch`
-      # overlays, so rows here apply to every profile: web, headless, acp, sdk.
+      # overlays, so rows here apply to every profile: web, headless, acp, sdk,
+      # and the custom dsh-tui profile.
       #
-      # zvec-grep's MCP server reuses the argv declared above for opencode and
-      # pi, but dsh's mcp client has no lazy proxy: every tool the server
+      # zvec-grep and ripwire reuse the argv declared above for opencode and pi,
+      # but dsh's mcp client has no lazy proxy: every tool each server
       # advertises sits in the tool list of every request. That is the price of
-      # the indexed-search route -- delete this row to fall back to the native
-      # grep/glob tools alone.
+      # mounting them here -- delete a row to fall back to the native
+      # grep/glob tools and the ripwire CLI alone.
       #
       # Written as YAML text (the loader reads YAML, not JSON) with only the
       # argv rendered from nix; `builtins.toJSON` is used for the args list
       # because a JSON flow sequence is valid YAML.
       #
-      # The row sits inside a top-level `insert` with no `id`: a patch entry
+      # Each row sits inside a top-level `insert` with no `id`: a patch entry
       # with an `id` and no `insert` only overrides a row that already exists,
       # so targeting `mcp-zvec-grep` directly warns "entry not found" and is
       # skipped -- nothing in the bundle layers defines it yet.
@@ -790,6 +801,13 @@ in
                 command: ${builtins.head zgArgv}
                 args: ${builtins.toJSON (builtins.tail zgArgv)}
                 toolCallTimeoutMs: ${toString zgTimeoutMs}
+            - id: mcp-ripwire
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${ripwireServerName}
+                transport: stdio
+                command: ${builtins.head ripwireArgv}
+                args: ${builtins.toJSON (builtins.tail ripwireArgv)}
       '';
     };
   };
