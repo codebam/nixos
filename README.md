@@ -53,7 +53,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # kanagawa scheme, Papirus icons, capitaine cursor,
-│   │                              JetBrainsMono Nerd Font
+│   │                              JetBrainsMono Nerd Font, NixOS-artwork wallpaper
 │   ├── system/                  # boot, cleanup-root, env, fonts, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
 │   │                              streaming-mode, sysctl, systemd, time, xdg, zram

@@ -12,7 +12,11 @@
       qt.enable = false;
     };
     base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa.yaml";
-    image = ../../wallpaper.png;
+    # NixOS community artwork (NixOS/nixos-artwork,
+    # nixos-wallpaper-catppuccin-mocha), vendored so a rebuild never needs the
+    # network. 3840x2160; both monitors are 2560x1440. The old hand-made
+    # wallpaper.png stays in place to switch back to.
+    image = ../../wallpapers/nixos-wallpaper-catppuccin-mocha.png;
     # capitaine rather than bibata or phinger: bibata-cursors builds every
     # colour variant into one 338 MB output and there is no attribute for a
     # single theme, and phinger is 53 MB. This is ~10 MB for the same set of

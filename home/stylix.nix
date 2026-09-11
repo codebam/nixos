@@ -28,6 +28,13 @@ _:
       mangohud.enable = false;
     };
 
+    # One value for every enabled terminal target (ghostty, foot, kitty, rio):
+    # stylix writes each one's own background-opacity from it. Viewport does
+    # not blur behind client surfaces, so this stops at 0.85 -- enough of the
+    # wallpaper shows through to read as glass, high enough that the stripes
+    # never sit in the text.
+    opacity.terminal = 0.85;
+
     fonts.sizes = {
       desktop = 14;
       terminal = 14;
