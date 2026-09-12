@@ -1,4 +1,6 @@
 {
+  config,
+  osConfig,
   pkgs,
   lib,
   ...
@@ -334,6 +336,77 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/dsh --run '. ${loadKey}'
+    '';
+  };
+
+  # The web profile's persistent front door. dsh refuses --host 0.0.0.0, so
+  # the server itself stays on loopback; Tailscale Serve (see
+  # desktop/configuration/systemd.nix) owns the tailnet-facing TLS endpoint.
+  # 8443 rather than 443 because nginx already binds wildcard 80/443 here.
+  dshWebBackendPort = 3080;
+  dshWebProxyPort = 8443;
+
+  # dsh-web is a desktop concern: the matching Tailscale Serve unit lives in
+  # desktop/configuration/systemd.nix, and the helper only makes sense where
+  # that service runs.
+  isDesktop = osConfig.networking.hostName == "nixos-desktop";
+
+  # Tailscale Serve forwards the browser's original Host header, so dsh's
+  # browser-trust fence has to trust the MagicDNS authority. Resolve it at
+  # start instead of embedding <host>.<tailnet>.ts.net in this repo; Serve
+  # terminates TLS on dshWebProxyPort, so that is the exact authority the
+  # browser sends.
+  dshWebServe = pkgs.writeShellApplication {
+    name = "dsh-web-serve";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.tailscale
+    ];
+    text = ''
+      authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
+      exec ${dsh}/bin/dsh web \
+        --host 127.0.0.1 \
+        --port ${toString dshWebBackendPort} \
+        --no-open \
+        --trusted-host "$authority:${toString dshWebProxyPort}"
+    '';
+  };
+
+  # dsh only prints its loopback URL; the browser's first visit has to carry
+  # the per-process launch token to the Serve authority. The signed session
+  # cookie it mints persists across dsh restarts (the signing secret lives in
+  # ~/.dsh/.credentials.yaml), so this is a recovery path, not a daily command.
+  dshWebUrl = pkgs.writeShellApplication {
+    name = "dsh-web-url";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.systemd
+      pkgs.tailscale
+    ];
+    text = ''
+      authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
+      main_pid=$(systemctl --user show -p MainPID --value dsh-web.service)
+      if [ -z "$main_pid" ] || [ "$main_pid" = "0" ]; then
+        echo "dsh-web.service is not running" >&2
+        exit 1
+      fi
+
+      token=""
+      while IFS= read -r line; do
+        case "$line" in
+          "dsh web: http://127.0.0.1:${toString dshWebBackendPort}/?token="*)
+            token=''${line#*token=}
+            break
+            ;;
+        esac
+      done < <(journalctl --user "_PID=$main_pid" -b --no-pager -o cat)
+
+      if [ -z "$token" ]; then
+        echo "dsh-web.service has not announced its URL yet" >&2
+        exit 1
+      fi
+
+      printf 'https://%s:${toString dshWebProxyPort}/?token=%s\n' "$authority" "$token"
     '';
   };
 
@@ -676,7 +749,8 @@ in
       opencode2
       pi
       dsh
-    ];
+    ]
+    ++ lib.optionals isDesktop [ dshWebUrl ];
 
     # Pi's settings.json is mutable state — `/settings` and the model picker
     # write to it — so it cannot be a read-only store symlink like opencode's
@@ -1044,4 +1118,26 @@ in
     };
   };
 
+  # dsh-web is kept here rather than in home/services.nix because its
+  # ExecStart has to name the wrapped package defined above; it is gated to
+  # the desktop, which is where the matching Tailscale Serve unit exists.
+  systemd.user.services.dsh-web = lib.mkIf isDesktop {
+    Unit = {
+      Description = "DeepSeek Harness web UI";
+      # The service has to survive a boot where tailscaled is not ready to
+      # answer `tailscale status` yet; disable the default restart-rate limit.
+      StartLimitIntervalSec = 0;
+    };
+    Service = {
+      Type = "simple";
+      WorkingDirectory = config.home.homeDirectory;
+      ExecStart = lib.getExe dshWebServe;
+      Restart = "always";
+      RestartSec = 2;
+      TimeoutStopSec = 10;
+      StandardOutput = "journal";
+      StandardError = "journal";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 }

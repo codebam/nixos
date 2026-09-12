@@ -60,6 +60,33 @@
         };
       };
 
+      # dsh's web UI binds loopback by design (upstream refuses --host
+      # 0.0.0.0), and this unit is its only tailnet-facing door. 8443 keeps
+      # it off nginx's wildcard 80/443; the loopback backend is the user
+      # service in home/agents.nix. Tailscale Serve preserves the original
+      # Host header, which that unit's trusted-host fence reads from the
+      # node's current MagicDNS name at start.
+      tailscale-serve-dsh-web = {
+        description = "Expose the dsh web UI over Tailscale Serve";
+        after = [ "tailscaled.service" ];
+        requires = [ "tailscaled.service" ];
+        wantedBy = [ "multi-user.target" ];
+        unitConfig = {
+          # The same boot ordering: retry until tailscaled will accept the
+          # serve config instead of burning through the default start limit.
+          StartLimitIntervalSec = 0;
+        };
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          # tailscaled can be up before this boot's tailnet login is ready;
+          # retry instead of dropping the front door to a manual command.
+          Restart = "on-failure";
+          RestartSec = 5;
+          ExecStart = "${lib.getExe' config.services.tailscale.package "tailscale"} serve --bg --yes --https=8443 http://127.0.0.1:3080";
+        };
+      };
+
       wifi-performance = {
         description = "Disable Wi-Fi Power Save";
         wantedBy = [ "multi-user.target" ];
