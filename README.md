@@ -41,7 +41,7 @@ per-host overrides for hardware, networking, and services.
 
 ```
 /persistent/etc/nixos/
-├── flake.nix                    # Entry point: hosts, inputs, devShell
+├── flake.nix                    # Entry point: hosts, inputs, packages, devShell
 ├── flake.lock
 ├── modules/                     # Shared NixOS modules (every host)
 │   ├── default.nix
@@ -86,19 +86,54 @@ per-host overrides for hardware, networking, and services.
 │   ├── voxtype.nix              # Offline dictation daemon and transcript processing
 │   ├── waybar.nix               # Base Waybar bar config
 │   └── xdg.nix                  # MIME apps
-├── pkgs/                        # Local derivations
+├── pkgs/                        # Local derivations (also a standalone flake)
+│   ├── default.nix              # The one definition of every local derivation
+│   ├── flake.nix                # `nix run github:codebam/nixos?dir=pkgs#<name>`
+│   ├── unfree.nix               # Unfree names the hosts and package flake allow
 │   ├── agent-overview.nix       # tmux agent dashboard
+│   ├── dsh.nix                  # DeepSeek Harness CLI
 │   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
 │   ├── opencode-desktop-beta.nix
 │   ├── pinentry-auto.nix        # terminal-aware pinentry
+│   ├── polariumcode/            # Polarium Code desktop app (AppImage wrapper)
 │   ├── ripwire.nix              # C++ codebase-map CLI + MCP server
 │   ├── sigmashake-desktop.nix
 │   ├── ssg.nix                  # sigmashake CLI
-│   ├── voxtype-plainify.nix     # transcript filter
+│   ├── voxtype-plainify.nix     # transcript filter (a sed program, not a package)
 │   └── zvec-grep.nix            # hybrid workspace search + MCP server
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
 ```
+
+## Installing a single package
+
+Every derivation in `pkgs/` is defined once, in `pkgs/default.nix`, and exposed
+two ways, so one can be installed without adopting a host. Prefer the
+`?dir=pkgs` flake: its only input is nixpkgs, so it does **not** pull this
+repo's disko/lanzaboote/chaotic/... inputs for a single tool.
+
+```bash
+nix run   github:codebam/nixos?dir=pkgs#ripwire
+nix build github:codebam/nixos?dir=pkgs#dsh
+nix profile install github:codebam/nixos?dir=pkgs#zvec-grep
+```
+
+For a NixOS config or another flake, consume the overlay instead:
+
+```nix
+{
+  inputs.packages.url = "github:codebam/nixos?dir=pkgs";
+  # ...
+  nixpkgs.overlays = [ inputs.packages.overlays.default ];  # then pkgs.ripwire, ...
+}
+```
+
+The parent flake exposes the same set (`packages.<system>.<name>` and
+`overlays.default`), so `nix run github:codebam/nixos#ripwire` works too — it
+just evaluates the whole input graph. Unfree names are allowed through
+`pkgs/unfree.nix`, shared with the hosts, so `ssg`, `sigmashake-desktop` and
+`polariumcode` resolve without extra config. `voxtype-plainify` is not here: it
+is a sed program, not a derivation.
 
 ## Flake Inputs
 
@@ -190,6 +225,9 @@ nix fmt
 
 # Check all configurations (builds every host)
 nix flake check
+
+# Build a single local package
+nix build .#ripwire
 
 # Rebuild
 nh os switch

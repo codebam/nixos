@@ -56,6 +56,12 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Deterministic codebase maps for coding agents (CLI + MCP server)";
     homepage = "https://github.com/redhat-et/ripwire";
     license = lib.licenses.asl20;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     mainProgram = "ripwire";
     platforms = lib.platforms.unix;
   };

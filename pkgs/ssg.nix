@@ -35,6 +35,12 @@ stdenv.mkDerivation (finalAttrs: {
     description = "SigmaShake governance CLI for AI coding agents";
     homepage = "https://sigmashake.com";
     license = lib.licenses.unfree;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = [ "x86_64-linux" ];
     mainProgram = "ssg";

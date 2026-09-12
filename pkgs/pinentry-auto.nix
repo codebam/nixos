@@ -80,6 +80,14 @@ writeShellApplication {
 
   meta = {
     description = "pinentry-tty in a terminal window of its own, falling back to the calling tty";
+    license = lib.licenses.gpl3Plus;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
+    platforms = lib.platforms.unix;
     mainProgram = "pinentry-auto";
   };
 }

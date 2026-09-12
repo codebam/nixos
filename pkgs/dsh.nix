@@ -103,6 +103,12 @@ buildNpmPackage (finalAttrs: {
     homepage = "https://github.com/deepseek-ai/deepseek-harness";
     changelog = "https://github.com/deepseek-ai/deepseek-harness/releases";
     license = lib.licenses.mit;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     mainProgram = "dsh";
     # The closure installs prebuilt .node addons (node-pty, koffi,
     # node-addon-require-builtin) rather than compiling them.

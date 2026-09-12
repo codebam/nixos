@@ -31,15 +31,19 @@ broader file is dropped before a more specific one when the budget is hit.
 - `flake.nix` — inputs, devShell, formatter, `checks` (per-host toplevel +
   `lint`), and the three `nixosConfigurations`. Hosts share `./modules`.
 - `modules/{hardware,programs,security,services,stylix,system,users}` — system
-  modules shared by every host. `modules/system/nixpkgs.nix` holds overlays and
-  `callPackage`s the local derivations in `pkgs/`.
+  modules shared by every host. `modules/system/nixpkgs.nix` holds the host
+  overlays and imports `pkgs/default.nix` (the single definition of every
+  local derivation).
 - `<host>/configuration/` — per-host system config; `disko.nix` and
   `hardware-configuration.nix` next to it. `desktop-laptop/` is shared between
   desktop and laptop only, and is imported by both.
 - `home/` — one shared home-manager tree for `codebam` (imported in `flake.nix`).
   `home.nix` owns packages and user files; `agents.nix` owns the coding agents
   (opencode/opencode2, pi, dsh), their MCP servers, and their instruction files.
-- `pkgs/` — local derivations, wired in through `modules/system/nixpkgs.nix`.
+- `pkgs/` — local derivations, defined once in `pkgs/default.nix` and exposed
+  two ways: the parent flake's `packages` / `overlays.default` outputs, and a
+  standalone `pkgs/flake.nix` (`github:codebam/nixos?dir=pkgs`) whose only
+  input is nixpkgs. `pkgs/unfree.nix` is the allowlist shared with the hosts.
 - `secrets/` + `.sops.yaml` — SOPS secrets.
 
 A package or service belongs in the narrowest place that fits: host-specific in

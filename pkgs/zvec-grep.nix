@@ -41,6 +41,13 @@ buildNpmPackage (finalAttrs: {
     description = "Agent-friendly hybrid workspace search across code and non-code content";
     homepage = "https://github.com/zvec-ai/zvec-grep";
     license = lib.licenses.asl20;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
+    platforms = lib.platforms.linux;
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     mainProgram = "zg";
   };

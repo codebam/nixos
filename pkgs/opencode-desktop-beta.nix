@@ -64,6 +64,12 @@ appimageTools.wrapType2 {
     description = "OpenCode desktop client (beta channel; pairs with opencode2 and hosts the integrated browser)";
     homepage = "https://opencode.ai";
     license = lib.licenses.mit;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     mainProgram = "opencode-desktop-beta";
     platforms = [
       "x86_64-linux"

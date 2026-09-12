@@ -73,12 +73,12 @@
         ] (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
 
       # Unfree names the hosts permit, from the single shared list. The
-      # standalone `packages` output below needs the same predicate: two local
-      # derivations (ssg, sigmashake-desktop) are unfree, and `nix flake check`
-      # forces every package, so without it the output would refuse to even
-      # evaluate. The predicate is eval-only, so the store paths stay identical
-      # to the ones the hosts install.
-      unfreePackages = import ./unfree.nix;
+      # standalone `packages` output below needs the same predicate: three
+      # local derivations (ssg, sigmashake-desktop, polariumcode) are unfree,
+      # and `nix flake check` forces every package, so without it the output
+      # would refuse to even evaluate. The predicate is eval-only, so the store
+      # paths stay identical to the ones the hosts install.
+      unfreePackages = import ./pkgs/unfree.nix;
 
       # Like forAllSystems, but evaluating under that unfree predicate.
       forAllSystemsUnfree =

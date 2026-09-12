@@ -196,6 +196,12 @@ stdenv.mkDerivation {
     description = "Polarium Code desktop app, launched from the vendor's AppImage";
     homepage = "https://polarium.dev";
     license = lib.licenses.unfree;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     mainProgram = "polariumcode";
     platforms = [ "x86_64-linux" ];

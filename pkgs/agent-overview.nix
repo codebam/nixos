@@ -1,4 +1,5 @@
 {
+  lib,
   writeShellApplication,
   tmux,
   git,
@@ -291,6 +292,14 @@ writeShellApplication {
 
   meta = {
     description = "Status table of Claude Code agents running in tmux sessions";
+    license = lib.licenses.gpl3Plus;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
+    platforms = lib.platforms.unix;
     mainProgram = "agent-overview";
   };
 }

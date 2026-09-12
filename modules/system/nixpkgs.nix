@@ -10,7 +10,7 @@
   # to a public bucket.
   options.unfreePackages = lib.mkOption {
     type = lib.types.listOf lib.types.str;
-    default = import ../../unfree.nix;
+    default = import ../../pkgs/unfree.nix;
     description = "Unfree package names this system is allowed to build.";
   };
 

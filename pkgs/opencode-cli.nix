@@ -93,6 +93,12 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/anomalyco/opencode";
     changelog = "https://github.com/anomalyco/opencode/releases";
     license = lib.licenses.mit;
+    maintainers = [
+      {
+        name = "codebam";
+        github = "codebam";
+      }
+    ];
     mainProgram = "opencode2";
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = [
