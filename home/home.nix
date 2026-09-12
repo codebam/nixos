@@ -56,6 +56,24 @@ let
     is required. If curl fails, `systemctl status searx` — do not fall
     through to a public instance.
   '';
+  # Rotate the OLED wallpaper pool on the compositor's control socket; the
+  # reasoning (why the frames are dark, sparse and rotate) is in
+  # wallpapers/oled/README.md. The script and the pool are both wired in from
+  # the checkout, so the command works from any directory -- which also means a
+  # re-baked pool needs a rebuild before it reaches this copy. While iterating on
+  # wallpapers, `--pool /persistent/etc/nixos/wallpapers/oled/pool` reads the
+  # checkout instead.
+  #
+  # `viewport` is not a runtimeInput on purpose: what has to answer is the
+  # running compositor's own msg client, which the system profile puts on PATH.
+  # Pinning one here would be a second build of the thing being talked to.
+  oled-cycle = pkgs.writeShellApplication {
+    name = "oled-cycle";
+    runtimeInputs = [ pkgs.python3 ];
+    text = ''
+      exec python3 ${../wallpapers/oled/oled-cycle} --pool ${../wallpapers/oled/pool} "$@"
+    '';
+  };
 in
 {
   home = {
@@ -155,6 +173,11 @@ in
         runtimeInputs = [ curl ];
         text = "curl -X POST --data-binary @- https://paste.codebam.ca";
       })
+
+      # Rotates the wallpaper pool in wallpapers/oled/ (see its README); the
+      # frames are dark, and rotating them is what keeps any one region of an
+      # OLED from holding the light for hours.
+      oled-cycle
 
       # Bound to a tmux popup in home/shell-common.nix by store path; on PATH
       # as well, since the same table is worth having in a plain shell.
