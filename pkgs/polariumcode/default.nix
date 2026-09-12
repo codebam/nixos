@@ -102,7 +102,8 @@ stdenv.mkDerivation {
     # Extract once per content hash into the user cache. The build cannot do
     # this: the AppImage is not in the store, only on this machine.
     hash="$(sha256sum "$image" | cut -d' ' -f1)"
-    appdir="''${XDG_CACHE_HOME:-$HOME/.cache}/polariumcode/$hash"
+    cachedir="''${XDG_CACHE_HOME:-$HOME/.cache}/polariumcode"
+    appdir="$cachedir/$hash"
     if [ ! -x "$appdir/usr/bin/polariumcode-app" ]; then
       tmp="$appdir.tmp.$$"
       rm -rf "$tmp"
@@ -110,6 +111,30 @@ stdenv.mkDerivation {
       appimage-exec.sh -x "$tmp" "$image" >/dev/null
       rm -rf "$appdir"
       mv "$tmp" "$appdir"
+    fi
+
+    # The app opens its login URL with xdg-open. Whatever xdg-open launches --
+    # the browser, or the portal helper that launches it -- must NOT inherit
+    # the AppImage's private environment below: with the bundled Ubuntu
+    # libraries on LD_LIBRARY_PATH the browser dies before it starts
+    # ("libz.so.1: cannot open shared object file"), which is why sign-in never
+    # opened a tab. Put a shim first on PATH that drops those and calls the
+    # real opener. Resolve the real one now, before the shim dir is on PATH.
+    real_xdg_open="$(command -v xdg-open 2>/dev/null || true)"
+    if [ -n "$real_xdg_open" ]; then
+      mkdir -p "$cachedir/bin"
+      cat > "$cachedir/bin/xdg-open" <<SHIM
+    #!/bin/sh
+    # Hand the URL to the system opener with the AppImage's private environment
+    # removed, so the browser it starts is a normal, working browser.
+    unset LD_LIBRARY_PATH GIO_EXTRA_MODULES
+    unset GDK_PIXBUF_MODULE_FILE GTK_IM_MODULE_FILE GTK_PATH GTK_EXE_PREFIX GTK_DATA_PREFIX
+    unset GSETTINGS_SCHEMA_DIR GDK_BACKEND
+    unset APPDIR APPIMAGE OWD
+    exec "$real_xdg_open" "\$@"
+    SHIM
+      chmod +x "$cachedir/bin/xdg-open"
+      export PATH="$cachedir/bin:$PATH"
     fi
 
     # The AppImage's own AppRun forces GDK_BACKEND=x11 and puts the bundled
