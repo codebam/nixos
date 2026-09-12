@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""Rotate the OLED wallpaper pool through Viewport's control socket.
+
+Burn-in is a function of how much light a subpixel emits and for how long it
+emits it in the same *place*.  A single picture, however dark, holds its bright
+regions in exactly the same pixels for as long as it is up, so the fix is not a
+better picture -- it is that the picture does not stay.  This pushes a new frame
+from the pool on an interval, which is what upstream Viewport documents
+`config.wallpaper` for:
+
+    viewport msg -t config.wallpaper --path ...     # no config reload, no disk
+
+The order is built so that no two neighbours share a scene, because two frames
+of the same scene at different seeds put their light in much the same places.
+Nothing is written to disk: on restart it starts at a fresh point in the order,
+which is the same behaviour with none of the state.
+
+    oled-cycle                      # rotate every 30 minutes, forever
+    oled-cycle --once               # set the next one and exit (for a timer)
+    oled-cycle --dry-run --list     # show the rotation without touching anything
+"""
+
+import argparse
+import json
+import os
+import random
+import re
+import signal
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+EXTS = (".png", ".webp", ".jpg", ".jpeg")
+
+# A frame is only worth showing if it is one of ours; anything unrecognised is
+# still loadable, so a hand-placed picture in the pool is not refused.
+DURATION = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([smhd]?)\s*$", re.I)
+UNITS = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
+
+log = lambda *a: print(*a, file=sys.stderr, flush=True)
+
+
+def parse_duration(text):
+    m = DURATION.match(str(text))
+    if not m:
+        raise argparse.ArgumentTypeError("not a duration: %r (try 30s, 20m, 2h)" % text)
+    return float(m.group(1)) * UNITS[m.group(2).lower()]
+
+
+def parse_hours(text):
+    """`22:00-07:00` -> (start, end) in minutes past midnight, wrapping ok."""
+    m = re.match(r"^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$", text)
+    if not m:
+        raise argparse.ArgumentTypeError("not a window: %r (try 22:00-07:00)" % text)
+    h1, m1, h2, m2 = (int(x) for x in m.groups())
+    if h1 > 23 or h2 > 23 or m1 > 59 or m2 > 59:
+        raise argparse.ArgumentTypeError("not a time: %r" % text)
+    return h1 * 60 + m1, h2 * 60 + m2
+
+
+def in_window(a):
+    if not a:
+        return False
+    start, end = a
+    now = datetime.now().hour * 60 + datetime.now().minute
+    if start <= end:
+        return start <= now < end
+    return now >= start or now < end          # crosses midnight
+
+
+def load_pool(directory):
+    """Frames in the pool, with whatever the manifest knows about them."""
+    directory = Path(directory)
+    if not directory.is_dir():
+        raise SystemExit("oled-cycle: no pool at %s — run `bake.mjs pool` first" % directory)
+    meta = {}
+    try:
+        man = json.loads((directory / "manifest.json").read_text())
+        for f in man.get("frames", []):
+            meta[f["file"]] = f
+    except (OSError, ValueError, KeyError):
+        pass                                    # a pool without a manifest is fine
+    frames = []
+    for p in sorted(directory.iterdir()):
+        if p.suffix.lower() not in EXTS or p.name.startswith("."):
+            continue
+        m = meta.get(p.name, {})
+        frames.append({
+            "path": p,
+            # `NN-scene-palette` from the baker; anything else is a name.
+            "mode": (m.get("modeName") or (p.stem.split("-")[1] if "-" in p.stem else "?")),
+            "quiet": bool(m.get("quiet")) or p.stem.endswith("-quiet"),
+            "apl": (m.get("baked") or {}).get("apl"),
+        })
+    if not frames:
+        raise SystemExit("oled-cycle: %s has no pictures in it" % directory)
+    return frames
+
+
+def order(frames, rng, quiet_first=False):
+    """Interleave by scene so no two neighbours are the same one.
+
+    Round-robin over the groups rather than sorting: sorting by scene would
+    give long runs of one look, which is the thing being avoided, and a plain
+    shuffle leaves the odds of two of a kind next to each other high.
+    """
+    groups = {}
+    for f in frames:
+        if quiet_first and not f["quiet"]:
+            continue
+        groups.setdefault(f["mode"], []).append(f)
+    if not groups:
+        groups = {}
+        for f in frames:
+            groups.setdefault(f["mode"], []).append(f)
+    for g in groups.values():
+        rng.shuffle(g)
+    out, keys = [], list(groups)
+    while any(groups[k] for k in keys):
+        rng.shuffle(keys)
+        for k in keys:
+            if groups[k]:
+                out.append(groups[k].pop())
+    return out
+
+
+def comperr(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def viewport_socket(explicit=None):
+    """The control socket, by the same rule the compositor uses."""
+    if explicit:
+        return Path(explicit) if Path(explicit).exists() else None
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or "/run/user/%d" % os.getuid()
+    display = os.environ.get("WAYLAND_DISPLAY")
+    if display:
+        p = Path(runtime) / ("viewport-%s.sock" % display)
+        return p if p.exists() else None
+    # No WAYLAND_DISPLAY (a systemd unit without it, say). Prefer the socket
+    # that was touched most recently: that is the session actually running.
+    cands = sorted(Path(runtime).glob("viewport-*.sock"), key=lambda p: p.stat().st_mtime)
+    return cands[-1] if cands else None
+
+
+def main():
+    ap = argparse.ArgumentParser(description="rotate an OLED wallpaper pool on Viewport",
+                                 formatter_class=argparse.RawDescriptionHelpFormatter,
+                                 epilog=__doc__.split("    oled-cycle")[0])
+    ap.add_argument("--pool", default=str(HERE / "pool"), help="pool directory (default: %(default)s)")
+    ap.add_argument("--interval", type=parse_duration, default=parse_duration("30m"),
+                    help="time between frames (default: 30m)")
+    ap.add_argument("--once", action="store_true", help="set the next frame and exit")
+    ap.add_argument("--dry-run", action="store_true", help="print what would be set")
+    ap.add_argument("--list", action="store_true", help="print the rotation order and exit")
+    ap.add_argument("--start", type=int, default=None, help="index to start at (default: random)")
+    ap.add_argument("--seed", type=int, default=None, help="shuffle seed, for a repeatable order")
+    ap.add_argument("--command", default=None,
+                    help="set the wallpaper with this instead, {path} is substituted "
+                         "(e.g. 'swaybg -i {path}')")
+    ap.add_argument("--socket", default=None, help="viewport control socket")
+    ap.add_argument("--quiet-at", type=parse_hours, default=None, metavar="HH:MM-HH:MM",
+                    help="prefer the dim frames during this window, if the pool has any")
+    ap.add_argument("--quiet-only", action="store_true", help="only ever use the dim frames")
+    ap.add_argument("--verbose", "-v", action="store_true")
+    a = ap.parse_args()
+
+    rng = random.Random(a.seed)
+    frames = load_pool(a.pool)
+    quiet = sum(1 for f in frames if f["quiet"])
+    frames = order(frames, rng, quiet_first=a.quiet_only)
+    if not frames:
+        raise SystemExit("oled-cycle: nothing to rotate")
+
+    # A fresh starting point every launch: with no state file, this is what
+    # keeps a restart from replaying yesterday's sequence from the top.
+    i = rng.randrange(len(frames)) if a.start is None else a.start % len(frames)
+
+    if a.list:
+        for n, f in enumerate(frames):
+            mark = "->" if n == i else "  "
+            print("%s %-3d %-34s %-8s %s" % (mark, n, f["path"].name, f["mode"],
+                  ("%.1f%% drive" % (100*f["apl"])) if f["apl"] is not None else ""))
+        return 0
+
+    sock = viewport_socket(a.socket)
+    if a.command is None and sock is None and not a.dry_run:
+        # Not fatal on --once: the compositor may still be coming up, and a
+        # timer unit would rather try again than log a failure.  Without --once
+        # the loop waits for it below.
+        log("oled-cycle: no viewport control socket yet%s"
+            % ("  (WAYLAND_DISPLAY=%r)" % os.environ.get("WAYLAND_DISPLAY")
+               if not os.environ.get("WAYLAND_DISPLAY") else ""))
+
+    stop = {"now": False}
+
+    def bye(*_):
+        stop["now"] = True
+
+    signal.signal(signal.SIGTERM, bye)
+    signal.signal(signal.SIGINT, bye)
+
+    def night():
+        if a.quiet_only:
+            return True
+        if not in_window(a.quiet_at):
+            return False
+        return quiet > 0
+
+    def pick():
+        # During the window, cycle the dim frames on their own rather than
+        # re-ordering the whole pool: two sequences was one notion of "next"
+        # too many, and the quiet frames are the ones the window is asking for.
+        pool = frames
+        if night():
+            dim_frame = [f for f in frames if f["quiet"]]
+            if dim_frame:
+                pool = dim_frame
+        nonlocal i
+        f = pool[i % len(pool)]
+        i = (i + 1) % len(pool)
+        return f
+
+    def apply(f):
+        path = str(f["path"].resolve())
+        if a.command is not None:
+            cmd = a.command.format(path=path).split()
+        else:
+            # No --socket: the compositor's own client already resolves the
+            # socket the same way this script does, and falls back to the
+            # newest one when WAYLAND_DISPLAY is not set -- which is the case
+            # for a user unit that never imported the session environment.
+            cmd = ["viewport", "msg", "-t", "config.wallpaper", "--path", path]
+            if a.socket:
+                cmd += ["--socket", a.socket]
+        if a.dry_run:
+            print("would set %s  (%s)" % (path, " ".join(cmd)))
+            return True
+        if a.verbose:
+            log("oled-cycle: %s" % " ".join(cmd))
+        try:
+            r = comperr(cmd)
+        except FileNotFoundError as e:
+            log("oled-cycle: %s" % e)
+            return False
+        if r.returncode != 0:
+            # The refusal is on stderr and says why (no socket, missing file,
+            # unknown mode); pass it through rather than inventing a message.
+            log("oled-cycle: %s refused: %s" % (cmd[0], (r.stderr or r.stdout).strip()))
+            return False
+        if a.verbose:
+            log("oled-cycle: set %s" % f["path"].name)
+        return True
+
+    first = True
+    fails = 0
+    while not stop["now"]:
+        f = pick()
+        ok = apply(f)
+        if ok:
+            fails = 0
+            if a.once or a.dry_run:
+                return 0
+        else:
+            fails += 1
+            if a.once:
+                return 1
+            # Back off to a minute between tries rather than a full interval:
+            # the usual reason is a compositor that is not up yet.
+            if fails > 1 or not first:
+                time.sleep(min(60, 2 ** min(fails, 6)))
+                continue
+        first = False
+        # Sleep in slices so a SIGTERM lands promptly instead of after 30min.
+        deadline = time.monotonic() + a.interval
+        while not stop["now"] and time.monotonic() < deadline:
+            time.sleep(min(1.0, max(0.0, deadline - time.monotonic())))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except BrokenPipeError:
+        sys.exit(0)

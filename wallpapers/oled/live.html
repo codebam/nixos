@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>oled · live</title>
+<style>
+  :root { color-scheme: dark; }
+  html,body { margin:0; padding:0; height:100%; background:#000; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; }
+  #hud {
+    position:fixed; left:1.1rem; bottom:1.1rem; z-index:9;
+    font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:#c5c9c5; background:rgba(8,8,10,.62); border:1px solid rgba(197,201,197,.14);
+    border-radius:9px; padding:.7rem .85rem; max-width:min(34rem,92vw);
+    opacity:1; transition:opacity 1.4s ease; pointer-events:none; white-space:pre-wrap;
+  }
+  #hud.gone { opacity:0; }
+  #hud b { color:#c4b28a; font-weight:600; }
+  #err { position:fixed; inset:0; z-index:20; overflow:auto; display:none;
+         background:#0b0608; color:#c4746e; font:12px/1.5 ui-monospace,monospace; padding:1rem;
+         white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<pre id="err"></pre>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// oled wallpaper — one shader, used three ways.
+//
+//   1. live:  open this file; it animates forever, drifts its hue, and swaps
+//             scene every ?rotate= seconds.  This is the burn-in-safe mode.
+//   2. bake:  bake.mjs drives a headless browser to render stills at any size
+//             (window.__render), which is what the rotating pool is made of.
+//   3. verify: window.__verify re-reads the files that were written, so the
+//             claim "this is dark" is measured on the artifact, not the code.
+//
+// Burn-in is a function of how much light a subpixel emits, and for how long
+// it stands still.  So every rule here is one of those two:
+//
+//   * black is the ground, not dark grey: unlit OLED pixels do not age, and
+//     the flat-black areas are what makes the rest read as bright.
+//   * nothing is at full scale: u_peak caps luminance with a soft knee, so no
+//     large area ever runs at the panel's full drive.
+//   * no still, no hard edge: the scene is procedural and animated, so there
+//     is no logo, no bar, no window-shaped region held at one brightness.
+//   * the hue rotates: burn-in is per subpixel, so a wallpaper that is always
+//     green ages one subpixel faster than the others.
+//   * the whole field is offset on a Lissajous of two periods that never line
+//     up: content is unbounded procedurally, so shifting reveals nothing and
+//     needs no overscan.
+//   * the dither is a fixed screen-space pattern: dithering near-black kills
+//     banding, and a static pattern cannot shimmer.
+// ---------------------------------------------------------------------------
+
+const canvas = document.getElementById("c");
+const hud = document.getElementById("hud");
+const errEl = document.getElementById("err");
+
+const Q = new URLSearchParams(location.search);
+const arg = (k, d) => { const v = Q.get(k); return v === null ? d : v; };
+const num = (k, d) => { const v = parseFloat(arg(k, "")); return Number.isFinite(v) ? v : d; };
+
+// Palettes: 8 stops, dark to bright, in the order the shader ramps through.
+// `dragon` is Kanagawa Dragon's own accents on a near-black ground, so a
+// wallpaper stays coherent with the pinned base16 scheme; the low saturation is
+// also the friendliest thing for a subpixel that has to emit it every day.
+const PALETTES = {
+  dragon:    ["#060708","#0b1514","#16302c","#2c5347","#4f7c60","#84a487","#b7b490","#d8cfa8"],
+  orchid:    ["#07050c","#140d22","#2a1745","#4b2a72","#7a4f9e","#a292a3","#c9a6c4","#e8d5ea"],
+  ice:       ["#05080b","#0a141c","#14273a","#22475f","#3f7290","#6ea0bb","#a8c7d8","#dceaf2"],
+  ember:     ["#0a0605","#1c0d09","#3a1610","#6b2a1a","#a04a26","#c4746e","#d9a066","#f0d0a0"],
+  synthwave: ["#0b0616","#1b0b33","#3b1163","#7b2ff7","#ff2d95","#ff6b35","#f9c80e","#ffe8b0"],
+  mono:      ["#050505","#101010","#1f1f1f","#383838","#5c5c5c","#848484","#adadad","#d8d8d8"],
+};
+// One name per scene, in u_mode order. Kept here so the HUD, the cycler and
+// the bake manifest all agree on what mode 3 is.
+const MODES = ["silk","aurora","nebula","orbit","ripple","bands","whisper"];
+
+const FRAG = `#version 300 es
+precision highp float;
+out vec4 O;
+
+uniform vec2  u_res;
+uniform float u_time;
+uniform float u_seed;
+uniform vec2  u_shift;
+uniform float u_zoom;
+uniform int   u_mode;
+uniform int   u_mode2;
+uniform float u_mix;
+uniform vec3  u_pal[8];
+uniform float u_peak;
+uniform float u_hue;
+uniform int   u_oct;
+uniform float u_dither;
+uniform float u_gain;
+uniform int   u_ditherMode;
+
+#define PI 3.14159265359
+
+// ------------------------------------------------------------------ noise --
+float hash11(float p){ p = fract(p*0.1031); p *= p + 33.33; p *= p + p; return fract(p); }
+float hash21(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y)*p3.z); }
+vec2  hash22(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*vec3(0.1031,0.1030,0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz)*p3.zy); }
+
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  f = f*f*(3.0 - 2.0*f);
+  float a = hash21(i), b = hash21(i + vec2(1,0)), c = hash21(i + vec2(0,1)), d = hash21(i + vec2(1,1));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+
+// Rotation between octaves: without it the lattice shows as a grid on the
+// diagonal, which is exactly the kind of fixed structure a wallpaper should
+// not have.
+const mat2 ROT = mat2(0.80, 0.60, -0.60, 0.80);
+float fbm(vec2 p, int oct){
+  float s = 0.0, a = 0.5, n = 0.0;
+  for (int i = 0; i < 7; i++){
+    if (i >= oct) break;
+    s += a*vnoise(p); n += a;
+    p = ROT*p*2.03 + vec2(1.7, 9.2);
+    a *= 0.5;
+  }
+  return s/max(n, 1e-4);
+}
+
+// Palette ramp. Constant indices and a constant loop bound, so this compiles
+// on every ES 3.0 driver; the chained mix degenerates to a lerp of the two
+// neighbouring stops.
+vec3 pal(float t){
+  t = clamp(t, 0.0, 1.0)*7.0;
+  vec3 c = u_pal[0];
+  for (int i = 1; i < 8; i++){
+    float w = clamp(t - float(i) + 1.0, 0.0, 1.0);
+    w = w*w*(3.0 - 2.0*w);
+    c = mix(c, u_pal[i], w);
+  }
+  return c;
+}
+
+vec3 hueRotate(vec3 c, float a){
+  const mat3 toYIQ = mat3(0.299, 0.587, 0.114,  0.5959, -0.2746, -0.3213,  0.2115, -0.5227, 0.3112);
+  const mat3 toRGB = mat3(1.0, 0.956, 0.619,   1.0, -0.272, -0.647,     1.0, -1.106, 1.703);
+  vec3 y = toYIQ*c;
+  float ca = cos(a), sa = sin(a);
+  y = vec3(y.x, y.y*ca - y.z*sa, y.y*sa + y.z*ca);
+  return max(toRGB*y, vec3(0.0));
+}
+
+// -------------------------------------------------------------- structures --
+// Sparse point stars on three drifting parallax layers. Kept small and dim:
+// a bright point is a pixel that emits its maximum every frame, which is the
+// one shape a burn-in-averse wallpaper must not hold still.
+vec3 stars(vec2 p, float T){
+  vec3 c = vec3(0.0);
+  for (int i = 0; i < 3; i++){
+    float fi = float(i);
+    float sc = 20.0 + 24.0*fi;
+    vec2 q = p*sc + vec2(fi*37.1, fi*11.3) + vec2(T*(0.30 + 0.22*fi), 0.0);
+    vec2 id = floor(q), gv = fract(q) - 0.5;
+    vec2 h = hash22(id + fi*17.0);
+    float on = step(0.955 - 0.012*fi, h.x);
+    float d = length(gv - (h - 0.5)*0.6);
+    float s = on*exp(-d*d*140.0);
+    s *= 0.55 + 0.45*sin(T*1.7 + h.y*31.0);
+    c += vec3(s)*(0.55 + 0.45*hash11(id.x + h.y*7.0));
+  }
+  return c*0.5;
+}
+
+// -------------------------------------------------------------- the scenes --
+// p is centred on the screen with y in [-0.5, 0.5] and x scaled by aspect, so
+// a 32:9 field is p.x in about [-1.78, 1.78]. Everything below is written to
+// be continuous in x, so the same scene reads on one monitor or two joined.
+//
+// Every scene is built the same way: true black is the ground, and the light
+// is a *sparse* structure on top of it. A broad even wash lights the whole
+// panel at once, which is the one shape an OLED should never be asked to hold
+// for hours, however dim it is.
+
+vec3 m_silk(vec2 p, float T){
+  vec2 s = vec2(u_seed*13.7, u_seed*7.3);
+  vec2 q = vec2(fbm(p*1.35 + s + vec2(0.0, T*0.65), u_oct),
+                fbm(p*1.35 + s + vec2(5.2, 1.3) - vec2(T*0.45, 0.0), u_oct));
+  vec2 r = vec2(fbm(p*1.35 + 2.05*q + s + vec2(1.7, 9.2) + vec2(T*0.30, -T*0.18), u_oct),
+                fbm(p*1.35 + 2.05*q + s + vec2(8.3, 2.8) - vec2(T*0.22, T*0.26), u_oct));
+  float f = fbm(p*1.35 + 2.45*r + s*0.5, u_oct);
+  // The ridges are the only bright thing here. A steep ramp is what lets them
+  // reach the cap while the ground between them stays at zero.
+  float t = smoothstep(0.34, 0.86, f);
+  return pal(t)*pow(t, 1.25)*1.30;
+}
+
+vec3 m_aurora(vec2 p, float T){
+  vec3 c = stars(p, T*0.55);
+  float y = p.y;
+  for (int i = 0; i < 3; i++){
+    float fi = float(i);
+    // A curtain is a vertical band whose horizontal position is a noise
+    // function of height, which is what makes it snake rather than shear.
+    float cx = 0.40*fbm(vec2(y*1.15 + fi*13.7, T*0.5 + fi*3.0), min(u_oct, 4));
+    cx += 0.085*sin(y*3.1 + T*1.6 + fi*2.1);
+    float base = (fi - 1.0)*1.05;
+    float d = p.x - base - cx*1.7;
+    float core = exp(-d*d*13.0);
+    float halo = exp(-d*d*1.60);
+    // Striations: fine across x, slow down y — that is the vertical streak.
+    float st = 0.40 + 0.60*vnoise(vec2(p.x*17.0 + fi*9.0, y*2.4 - T*3.4));
+    float fade = 1.0 - smoothstep(-0.18, 0.44, y);
+    c += pal(0.50 + 0.18*fi + 0.10*p.x)*(core*0.90 + halo*0.17)*st*fade*(0.78 - 0.10*fi);
+  }
+  // A last, very soft wash so the top of the frame is not flat black.
+  c += pal(0.26)*(1.0 - smoothstep(-0.5, 0.16, p.y))*0.09;
+  return c;
+}
+
+vec3 m_nebula(vec2 p, float T){
+  vec2 s = vec2(u_seed*9.1, u_seed*4.7);
+  vec3 c = stars(p, T*0.5)*1.30;
+  float f = fbm(p*0.95 + s + vec2(T*0.10, -T*0.06), u_oct);
+  float g = fbm(p*2.30 + s*1.7 + 1.9*f + vec2(-T*0.16, T*0.10), u_oct);
+  float h = f*0.62 + g*0.48;
+  // Only the top of the field lights: clumps on black, not a haze. The lane is
+  // the same field subtracted, which is what gives a cloud an edge to read.
+  float cloud = smoothstep(0.55, 0.90, h);
+  float core  = smoothstep(0.72, 0.97, h);
+  float lane  = smoothstep(0.35, 0.85, fbm(p*1.7 + s + 3.3*g, min(u_oct, 4)));
+  c += pal(0.34 + 0.58*g)*cloud*0.60*(1.0 - 0.55*lane);
+  c += pal(0.62)*core*0.50;
+  return c;
+}
+
+vec3 m_orbit(vec2 p, float T){
+  float field = 0.0;
+  vec3 tint = vec3(0.0);
+  for (int i = 0; i < 7; i++){
+    float fi = float(i);
+    float a = T*(0.40 + 0.075*fi) + fi*0.897;
+    vec2 c = vec2(cos(a)*(0.60 + 0.26*sin(fi*2.3)), sin(a)*(0.22 + 0.10*cos(fi*1.7)));
+    // Spread across the width rather than stacked in the middle: two joined
+    // monitors should each get something to look at.
+    c.x += (fi - 3.0)*0.42 + 0.06*sin(T*0.5 + fi*1.7);
+    c.y += 0.05*sin(T*0.63 + fi);
+    float d2 = dot(p - c, p - c) + 5e-4;
+    float w = 0.020/d2;
+    field += w;
+    tint += pal(0.40 + 0.07*fi)*w;
+  }
+  float body = smoothstep(0.85, 2.60, field);
+  float glow = smoothstep(0.03, 1.10, field);
+  return (tint/max(field, 1e-4))*body*1.05 + pal(0.42)*glow*0.15;
+}
+
+vec3 m_ripple(vec2 p, float T){
+  float s = 0.0;
+  vec3 tint = vec3(0.0);
+  for (int i = 0; i < 4; i++){
+    float fi = float(i);
+    vec2 c = vec2(0.80*sin(T*(0.21 + 0.043*fi) + fi*2.0) + (fi - 1.5)*0.75,
+                  0.19*cos(T*(0.29 + 0.037*fi) + fi*1.3));
+    float d = length(p - c);
+    float att = exp(-d*1.55);
+    s += att*sin(d*15.0 - T*4.4 - fi*1.7);
+    tint += pal(0.44 + 0.09*fi)*att;
+  }
+  // Crests, not bands: the power is what makes the black between the rings
+  // actually black instead of a grey field with ripples in it.
+  float crest = pow(clamp(s*0.55 + 0.5, 0.0, 1.0), 4.0);
+  return tint*crest*1.50 + pal(0.60)*crest*0.12;
+}
+
+vec3 m_bands(vec2 p, float T){
+  vec2 s = vec2(u_seed*5.3, u_seed*11.1);
+  vec2 w = vec2(fbm(p*1.05 + s + vec2(T*0.18, 0.0), min(u_oct, 4)),
+                fbm(p*1.05 + s + vec2(3.7, -T*0.14), min(u_oct, 4)));
+  float x = p.x*1.05 + p.y*0.30 + 2.05*(w.x - 0.5) + 1.05*(w.y - 0.5);
+  float b1 = pow(clamp(sin(x*2.9 + T*0.42), 0.0, 1.0), 2.5);
+  float b2 = pow(clamp(sin(x*1.35 - T*0.28 + 1.1), 0.0, 1.0), 6.0);
+  return pal(0.30 + 0.46*b2 + 0.22*(w.x - 0.5) + 0.10)*(b1*0.80 + b2*0.95);
+}
+
+vec3 m_whisper(vec2 p, float T){
+  // The same silk field at a fraction of the drive: for a dark room, or a
+  // panel that already has hours on it. Almost nothing here can age.
+  return m_silk(p, T*0.7)*0.42 + pal(0.16)*0.03;
+}
+
+vec3 scene(int m, vec2 p, float T){
+  if (m == 1) return m_aurora(p, T);
+  if (m == 2) return m_nebula(p, T);
+  if (m == 3) return m_orbit(p, T);
+  if (m == 4) return m_ripple(p, T);
+  if (m == 5) return m_bands(p, T);
+  if (m == 6) return m_whisper(p, T);
+  return m_silk(p, T);
+}
+
+// --------------------------------------------------------------- the pass --
+// Two dithers, same job: put the quantisation threshold in a different place
+// for neighbouring pixels so a smooth ramp steps at different points instead
+// of banding. IGN is interleaved gradient noise -- smooth, so the eye reads
+// texture rather than cross-hatch, and it is what the live page wants. BAYER
+// is the classic ordered matrix: a fixed 8x8 tile, which is what a *stored*
+// file wants, because a repeating tile costs a lossless codec almost nothing
+// while per-pixel noise costs it megabytes.
+float ign(vec2 p){
+  return fract(52.9829189*fract(0.06711056*p.x + 0.00583715*p.y));
+}
+float bayer8(vec2 c){
+  ivec2 i = ivec2(mod(c, 8.0));
+  int v = 0;
+  for (int k = 0; k < 3; k++){
+    int bx = (i.x >> k) & 1;
+    int by = (i.y >> k) & 1;
+    v = v*4 + (((bx ^ by) << 1) | by);
+  }
+  return (float(v) + 0.5)/64.0;
+}
+float ditherAt(vec2 p){
+  return u_ditherMode == 1 ? bayer8(p) : ign(p);
+}
+
+void main(){
+  vec2 res = u_res;
+  // The burn-in offset. Content is procedural and unbounded, so translating it
+  // can never uncover an edge, and there is nothing to overscan.
+  vec2 fc = gl_FragCoord.xy - u_shift;
+  vec2 p = (fc - 0.5*res)/res.y;
+  p /= u_zoom;
+  float T = u_time;
+
+  vec3 c = scene(u_mode, p, T);
+  if (u_mix > 0.0) c = mix(c, scene(u_mode2, p, T), clamp(u_mix, 0.0, 1.0));
+  c *= u_gain;
+
+  // Black point. Everything below the shelf goes to zero, which is a pixel
+  // that is genuinely off: an OLED cell at 0.6/255 is still emitting every
+  // second of the day, and a screen of them is a screen with nothing left to
+  // give. Quadratic, so there is no edge where it bites.
+  c = (c*c)/max(c + 0.0035, 1e-6);
+
+  // Vignette: a touch of falloff so the frame has corners. Fixed in screen
+  // space on purpose — it is the one part that should not wander.
+  vec2 v = gl_FragCoord.xy/res - 0.5;
+  v.x *= res.x/res.y;
+  c *= mix(1.0, 0.70, smoothstep(0.42, 1.30, length(v)));
+
+  if (abs(u_hue) > 1e-4) c = hueRotate(c, u_hue);
+
+  // Chroma-preserving soft cap. This is the burn-in knob: u_peak is the
+  // largest fraction of full drive any pixel in the frame is allowed to
+  // reach. The knee scales all three channels by one factor, so luminance
+  // asymptotes to u_peak instead of clipping and shifting hue.
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float want = u_peak*(1.0 - exp(-l/max(u_peak, 1e-3)));
+  c *= (l > 1e-5) ? (want/l) : 1.0;
+
+  // Everything above is light, and light is linear. The panel is not: encode
+  // to sRGB here or the whole frame is displayed at roughly its square.
+  c = mix(c*12.92, 1.055*pow(max(c, 1e-6), vec3(1.0/2.4)) - 0.055,
+          step(0.0031308, c));
+
+  // Fixed-pattern dither, in the encoded domain where the bands are. Near-black
+  // gradients band badly on OLED and this is the cheapest honest fix: half an
+  // LSB of ordered noise, screen-space, so it cannot shimmer frame to frame.
+  c += (ditherAt(gl_FragCoord.xy) - 0.5)*u_dither/255.0;
+
+  O = vec4(clamp(c, 0.0, 1.0), 1.0);
+}`;
+
+const VERT = `#version 300 es
+void main(){
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p*2.0 - 1.0, 0.0, 1.0);
+}`;
+
+// ------------------------------------------------------------------ engine --
+let gl = null, prog = null, U = {}, compileError = "";
+function compile(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return { err: gl.getShaderInfoLog(s) };
+  return { s };
+}
+function fail(msg){ compileError = msg; errEl.style.display = "block"; errEl.textContent = msg; console.error(msg); }
+
+gl = canvas.getContext("webgl2", {
+  alpha: false, antialias: false, depth: false, stencil: false,
+  premultipliedAlpha: false,
+  preserveDrawingBuffer: arg("preserve", "0") === "1",
+  powerPreference: "high-performance",
+});
+if (!gl){
+  fail("webgl2 unavailable — this page needs WebGL2");
+} else {
+  const vs = compile(gl.VERTEX_SHADER, VERT);
+  const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+  if (vs.err || fs.err){ fail("shader compile failed:\n" + (vs.err || fs.err)); }
+  else {
+    prog = gl.createProgram();
+    gl.attachShader(prog, vs.s); gl.attachShader(prog, fs.s); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) fail("link failed:\n" + gl.getProgramInfoLog(prog));
+    else {
+      gl.useProgram(prog);
+      for (const n of ["u_res","u_time","u_seed","u_shift","u_zoom","u_mode","u_mode2","u_mix",
+                       "u_peak","u_hue","u_oct","u_dither","u_gain","u_ditherMode"])
+        U[n] = gl.getUniformLocation(prog, n);
+      U.u_pal = gl.getUniformLocation(prog, "u_pal[0]");
+    }
+  }
+}
+
+function hexToLinear(hex){
+  const n = parseInt(hex.slice(1), 16);
+  return [((n >> 16) & 255)/255, ((n >> 8) & 255)/255, (n & 255)/255].map(v =>
+    // sRGB -> linear for the ramp, so additive glows fall off the way light
+    // does rather than the way a hex table does.
+    v <= 0.04045 ? v/12.92 : Math.pow((v + 0.055)/1.055, 2.4));
+}
+function palArray(name){
+  const p = PALETTES[name] || PALETTES.dragon;
+  const out = new Float32Array(24);
+  p.forEach((h, i) => { const c = hexToLinear(h); out[i*3] = c[0]; out[i*3+1] = c[1]; out[i*3+2] = c[2]; });
+  return out;
+}
+
+// The draw. Everything the shader sees comes through here, so the baked still
+// and the live frame cannot drift apart.
+function draw(o){
+  if (!prog) return false;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform2f(U.u_res, canvas.width, canvas.height);
+  gl.uniform1f(U.u_time, o.t);
+  gl.uniform1f(U.u_seed, o.seed);
+  gl.uniform2f(U.u_shift, o.shiftX, o.shiftY);
+  gl.uniform1f(U.u_zoom, o.zoom);
+  gl.uniform1i(U.u_mode, o.mode);
+  gl.uniform1i(U.u_mode2, o.mode2);
+  gl.uniform1f(U.u_mix, o.mix);
+  gl.uniform3fv(U.u_pal, palArray(o.palette));
+  gl.uniform1f(U.u_peak, o.peak);
+  gl.uniform1f(U.u_hue, o.hue);
+  gl.uniform1i(U.u_oct, o.oct);
+  gl.uniform1f(U.u_dither, o.dither);
+  gl.uniform1f(U.u_gain, o.gain);
+  gl.uniform1i(U.u_ditherMode, o.ditherMode);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  return true;
+}
+
+function defaults(){
+  return {
+    t: 0, seed: 1, shiftX: 0, shiftY: 0, zoom: 1,
+    mode: 0, mode2: 0, mix: 0,
+    palette: arg("pal", "dragon"),
+    peak: Math.max(0.02, Math.min(1, num("peak", 0.55))),
+    hue: 0, oct: Math.round(num("oct", 5)), dither: num("dither", 1), gain: num("gain", 1),
+    ditherMode: arg("dithermode", "ign") === "bayer" ? 1 : 0,
+  };
+}
+function resize(){
+  const dpr = Math.max(1, Math.min(num("dpr", 1), 2));
+  canvas.width  = Math.round(innerWidth  * dpr);
+  canvas.height = Math.round(innerHeight * dpr);
+}
+resize();
+addEventListener("resize", resize);
+
+// ---------------------------------------------------------------- still API --
+// bake.mjs calls this. It renders exactly one frame and hands back the encoded
+// bytes plus the exposure numbers, so the caller can refuse a frame that came
+// out too bright to be honest about.
+// Luminance, twice, because the two answers mean different things.
+//
+//   sRGB  (max, over25) — what the wallpaper looks like. 0.5 here is mid grey
+//                         to the eye, and a frame with a large area over it
+//                         reads as a wash rather than as art.
+//   linear (apl, drive50) — the light actually emitted, which is what ages a
+//                         subpixel. sRGB 0.5 is linear 0.214: half grey is
+//                         one fifth of the drive, so a dark wallpaper is much
+//                         cheaper than its pixel values suggest.
+function measure(px, w, h){
+  let sumL = 0, sumS = 0, mxS = 0, mxL = 0, o25 = 0, o50 = 0, d50 = 0, n = 0;
+  const hist = new Array(16).fill(0);
+  for (let i = 0; i < px.length; i += 4){
+    const r = px[i]/255, g = px[i+1]/255, b = px[i+2]/255;
+    const s = 0.2126*r + 0.7152*g + 0.0722*b;
+    const lin = (v) => v <= 0.04045 ? v/12.92 : Math.pow((v + 0.055)/1.055, 2.4);
+    const l = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+    sumS += s; sumL += l; n++;
+    if (s > mxS) mxS = s;
+    if (l > mxL) mxL = l;
+    if (s > 0.25) o25++;
+    if (s > 0.50) o50++;
+    if (l > 0.50) d50++;
+    hist[Math.min(15, (s*16)|0)]++;
+  }
+  return {
+    w, h,
+    apl: sumL/n,               // mean linear drive
+    aplS: sumS/n,              // mean displayed value
+    max: mxS, maxL: mxL,
+    over25: o25/n, over50: o50/n,
+    drive50: d50/n,
+    hist: hist.map(v => +(v/n).toFixed(4)),
+  };
+}
+
+function stats(){
+  const w = canvas.width, h = canvas.height;
+  const px = new Uint8Array(w*h*4);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  return measure(px, w, h);
+}
+
+window.__meta = () => ({ modes: MODES, palettes: Object.keys(PALETTES), error: compileError, ready: !!prog });
+
+window.__render = function(opts){
+  if (!prog) return { error: compileError || "no program" };
+  const o = Object.assign(defaults(), opts);
+  if (opts.w && opts.h){ canvas.width = opts.w; canvas.height = opts.h; }
+  draw(o);
+  const e = gl.getError();
+  if (e) return { error: "gl error " + e };
+  const fmt = o.format || "image/webp";
+  const dataUrl = canvas.toDataURL(fmt, o.quality === undefined ? 0.93 : o.quality);
+  return { dataUrl, stats: stats(), mode: o.mode, seed: o.seed, t: o.t };
+};
+
+// Re-read what was written. An <img> of a file:// URL drawn to a 2D canvas
+// is the same decode path the shell will take, so this checks the artifact
+// rather than the shader that produced it.
+//
+// With `diff`, each file is also compared pixel by pixel against a fresh
+// render of the parameters that made it. That is the check that says whether
+// an encoder crushed the dither and left the dark end banded — a thing the
+// summary numbers cannot see, because banding is a shape and not an average.
+window.__verify = async function(items, opts){
+  opts = opts || {};
+  const out = [];
+  for (const it of items){
+    const r = { name: it.name };
+    try {
+      const img = await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i); i.onerror = () => rej(new Error("decode failed"));
+        i.src = it.url;
+      });
+      const cv = document.createElement("canvas");
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      const cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, 0, 0);
+      const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+      Object.assign(r, measure(d, cv.width, cv.height));
+
+      if (opts.diff && it.params && prog){
+        const p = Object.assign(defaults(), it.params);
+        canvas.width = cv.width; canvas.height = cv.height;
+        draw(p);
+        const ref = new Uint8Array(cv.width*cv.height*4);
+        gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, ref);
+        // readPixels is bottom-up and getImageData is top-down, so the rows
+        // have to be paired across the flip or this compares the frame with
+        // its own mirror — which agrees on every average and on nothing else.
+        const w = cv.width;
+        let worst = 0, sum = 0, over2 = 0, n = 0;
+        for (let y = 0; y < cv.height; y++){
+          const a = (cv.height - 1 - y)*w*4, b = y*w*4;
+          for (let x = 0; x < w*4; x += 4)
+            for (let k = 0; k < 3; k++){
+              const dd = Math.abs(ref[a + x + k] - d[b + x + k]);
+              if (dd > worst) worst = dd;
+              sum += dd; n++;
+              if (dd > 2) over2++;
+            }
+        }
+        r.maxDiff = worst/255;
+        r.meanDiff = sum/n/255;
+        r.over2 = over2/n;
+      }
+    } catch (e){ r.error = String(e && e.message || e); }
+    out.push(r);
+  }
+  return out;
+};
+
+// ------------------------------------------------------------------- player --
+(function(){
+  // Motion is the point, but not at the cost of the room: the offset is two
+  // incommensurate periods, so the pattern never repeats, and the hue walks a
+  // few degrees either way so no subpixel is the permanent favourite.
+  const SHIFT = 0.0075*Math.min(innerWidth, innerHeight);
+  const rot = num("rotate", 1500);           // seconds per scene, 0 = never
+  const fade = 12;                            // seconds of dissolve, 0 = cut
+  const speed = num("speed", 1);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.25 : 1;
+
+  let mode = Math.round(num("mode", 0)) % MODES.length;
+  let mode2 = mode, mix = 0, nextAt = rot > 0 ? rot : Infinity, since = 0;
+  let paused = false, dim = num("dim", 1), o = defaults();
+  o.mode = mode;
+
+  const hint = ()=>{ hud.textContent =
+    "oled wallpaper  ·  " + MODES[mode] + "  (" + (mode + 1) + "/" + MODES.length + ")  ·  " + o.palette + "\n" +
+    "space scene  ·  [ ] peak drive (" + Math.round(o.peak*100) + "%)  ·  h hide  ·  s save png  ·  p pause  ·  f fullscreen"; };
+  hint();
+  // The one piece of text on screen leaves for good after a few seconds: a
+  // wallpaper with a fixed label on it is the exact failure this is meant to
+  // avoid, even a dim one.
+  let t0 = setTimeout(() => hud.classList.add("gone"), 6000);
+  const wake = ()=>{ hint(); clearTimeout(t0); hud.classList.remove("gone");
+                     t0 = setTimeout(() => hud.classList.add("gone"), 6000); };
+
+  addEventListener("keydown", e => {
+    if (e.key === " "){ mode2 = mode; mode = (mode + 1) % MODES.length; mix = 0.0001; since = 0; wake(); }
+    else if (e.key === "["){ o.peak = Math.max(0.06, o.peak - 0.05); wake(); }
+    else if (e.key === "]"){ o.peak = Math.min(1.00, o.peak + 0.05); wake(); }
+    else if (e.key === "p"){ paused = !paused; wake(); }
+    else if (e.key === "h"){ hud.style.display = (hud.style.display === "none") ? "" : "none"; }
+    else if (e.key === "f"){ (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()); }
+    else if (e.key === "s"){
+      draw(o);
+      const a = document.createElement("a");
+      a.download = "oled-" + MODES[mode] + "-" + arg("pal", "dragon") + ".png";
+      a.href = canvas.toDataURL("image/png"); a.click();
+    }
+  });
+
+  let last = performance.now()/1000, clock = num("t", 7.5);
+  function frame(now){
+    const dtReal = Math.min(0.1, now/1000 - last); last = now/1000;
+    if (!paused){
+      clock += dtReal*speed*reduce;
+      since += dtReal*speed;
+    }
+    const s = clock;
+    o.t = s*1.0;
+    o.zoom = 1.0 + 0.012*Math.sin(s*2*Math.PI/187.0);
+    o.shiftX = SHIFT*Math.sin(2*Math.PI*s/173.0 + 0.7);
+    o.shiftY = SHIFT*Math.sin(2*Math.PI*s/311.0);
+    o.hue = 0.38*Math.sin(2*Math.PI*(s/431.0 + 0.13));
+    o.gain = dim;
+    if (rot > 0 && since > nextAt){
+      mode2 = mode;
+      mode = (mode + 1 + Math.floor(Math.random()*Math.max(1, MODES.length - 1))) % MODES.length;
+      if (mode === mode2) mode = (mode + 1) % MODES.length;
+      // A new palette with the new scene keeps the pool from collapsing onto
+      // one hue over a long session.
+      const names = Object.keys(PALETTES);
+      o.palette = names[Math.floor(Math.random()*names.length)];
+      since = 0; nextAt = rot; wake();
+    }
+    if (mix < 1 && mode2 !== mode){ mix = Math.min(1, mix + dtReal/Math.max(fade, 0.1)); }
+    // The shader mixes *towards* u_mode2, so a progress of 0 has to be handed
+    // over as a weight of 1: the dissolve starts on the outgoing scene and ends
+    // on the incoming one. Passing `mix` directly would brighten the old scene
+    // back over the new one and hold it there until the next rotation.
+    o.mode = mode; o.mode2 = mode2; o.mix = (mode2 === mode) ? 0 : 1.0 - mix;
+    draw(o);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
