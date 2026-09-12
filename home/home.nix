@@ -212,6 +212,12 @@ in
       # Deterministic codebase maps for agents (provides the `ripwire` CLI,
       # used directly and as an MCP server by home/agents.nix).
       ripwire
+      # Shared agent-memory knowledge graph. mcp-proxy bridges the stdio
+      # knowledge-graph server to loopback Streamable HTTP so a single writer
+      # serves every harness; both are wired by home/agents.nix's `agent-memory`
+      # user service and the per-harness MCP entries.
+      mcp-server-memory
+      mcp-proxy
       vesktop
       python3
     ];

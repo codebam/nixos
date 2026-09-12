@@ -119,6 +119,9 @@ _: {
             ".pi"
             # deepseek harness settings and plugins
             ".dsh"
+            # Shared agent-memory knowledge graph (the `agent-memory` user
+            # service owned by home/agents.nix): one JSONL file, machine-local.
+            ".local/share/agent-memory"
             # `flatpak --user install` and the app data those apps write.
             # The system-wide half is /var/lib/flatpak above.
             ".local/share/flatpak"

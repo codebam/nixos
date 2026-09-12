@@ -942,6 +942,23 @@ let
     "--mcp"
   ];
 
+  # Shared agent memory: the official knowledge-graph MCP server
+  # (`mcp-server-memory`) run once behind mcp-proxy as a systemd *user*
+  # service, so every harness reads and writes ONE JSONL graph instead of
+  # spawning its own copy. The reference server rewrites the whole file per
+  # write and takes no cross-process lock, so a single shared writer is the
+  # point -- do not register it per-session over stdio. The store lives on a
+  # preserved path (modules/system/preservation.nix); the port is loopback only.
+  #
+  # opencode names the tools `<server>_<tool>` and pi's adapter does the same
+  # with its default `toolPrefix` ("server"); dsh builds `mcp__<server>__<tool>`.
+  memoryServerName = "memory";
+  memoryPort = 7979;
+  memoryUrl = "http://127.0.0.1:${toString memoryPort}/mcp";
+  # ExecStart expands %h (the requester's home) to the real path below; the
+  # `-e` passthrough is what tells the child stdio server where its graph lives.
+  memoryFileSpec = "%h/.local/share/agent-memory/memory.jsonl";
+
   # The guidance block `zg install` writes, copied verbatim from its 0.2.1
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
@@ -1021,6 +1038,58 @@ let
     - Do NOT read a whole file to understand one symbol: `--expand=SYM` gives the body + callee sigs.
     - Do NOT fan reads across several files to learn one thing: `--pack-task="<task>"` is one call.
   '';
+
+  # Shared guidance for the agent-memory server, rendered with the tool names
+  # each host actually registers. dsh's `mcp__<server>__<tool>` names are one
+  # substitution away, mirroring zgGuidanceDsh.
+  memoryGuidance = ''
+    ## Agent memory (shared knowledge graph)
+
+    A `memory` MCP server holds a persistent entity/relation/observation
+    knowledge graph shared by every harness on this machine. Use it for durable
+    facts the user asks you to keep, and to recall earlier decisions,
+    preferences and project conventions.
+
+    Tools (names as this host registers them):
+    - `${memoryServerName}_search_nodes { query }` — find entities by name, type, or observation text.
+    - `${memoryServerName}_open_nodes { names }` — open named entities with their relations.
+    - `${memoryServerName}_read_graph` — the whole graph; use sparingly, it can be large.
+    - `${memoryServerName}_create_entities { entities: [{ name, entityType, observations }] }`
+    - `${memoryServerName}_create_relations { relations: [{ from, to, relationType }] }`
+    - `${memoryServerName}_add_observations { observations: [{ entityName, contents }] }`
+    - `${memoryServerName}_delete_entities` / `${memoryServerName}_delete_relations` / `${memoryServerName}_delete_observations`
+
+    Rules: store only durable, user-relevant facts — decisions, preferences,
+    conventions — not transient chatter. Search before writing, and prefer
+    `add_observations` on an existing entity over a near-duplicate one.
+    `search_nodes` is substring matching, not semantic, so try distinctive
+    terms and synonyms.
+  '';
+  memoryGuidanceDsh =
+    builtins.replaceStrings
+      [
+        "${memoryServerName}_search_nodes"
+        "${memoryServerName}_open_nodes"
+        "${memoryServerName}_read_graph"
+        "${memoryServerName}_create_entities"
+        "${memoryServerName}_create_relations"
+        "${memoryServerName}_add_observations"
+        "${memoryServerName}_delete_entities"
+        "${memoryServerName}_delete_relations"
+        "${memoryServerName}_delete_observations"
+      ]
+      [
+        "mcp__${memoryServerName}__search_nodes"
+        "mcp__${memoryServerName}__open_nodes"
+        "mcp__${memoryServerName}__read_graph"
+        "mcp__${memoryServerName}__create_entities"
+        "mcp__${memoryServerName}__create_relations"
+        "mcp__${memoryServerName}__add_observations"
+        "mcp__${memoryServerName}__delete_entities"
+        "mcp__${memoryServerName}__delete_relations"
+        "mcp__${memoryServerName}__delete_observations"
+      ]
+      memoryGuidance;
 
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
   # half-finished edit) left unparseable is rebuilt rather than aborting
@@ -1241,6 +1310,9 @@ in
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- MEMORY_START -->
+        ${memoryGuidance}
+        <!-- MEMORY_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`
@@ -1284,6 +1356,9 @@ in
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- MEMORY_START -->
+        ${memoryGuidanceDsh}
+        <!-- MEMORY_END -->
       '';
 
       # dsh's user-global patch layer. Precedence is bundle layers, then the
@@ -1322,6 +1397,12 @@ in
                 transport: stdio
                 command: ${builtins.head ripwireArgv}
                 args: ${builtins.toJSON (builtins.tail ripwireArgv)}
+            - id: mcp-memory
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${memoryServerName}
+                transport: streamable-http
+                url: ${memoryUrl}
       '';
 
       # The Minimal-Agents agent preset, authored in the user preset root
@@ -1509,35 +1590,53 @@ in
         autoupdate = false;
         share = "disabled";
 
-        # Declarative equivalent of `zg install --target opencode
-        # --mcp-transport stdio` from zvec-grep 0.2.1 (install.ts
-        # installOpenCodeIntegration). stdio means no daemon to keep up: each
-        # opencode session spawns `zg server --stdio`, which manages its own
-        # shared daemon. Re-derive both this and `zgGuidance` from the new package
-        # (run the installer with HOME pointed at a scratch dir) when bumping
-        # zvec-grep's version.
-        mcp.${zgServerName} = {
-          type = "local";
-          # Resolved from the session PATH; zvec-grep is in home.packages.
-          command = zgArgv;
-          enabled = true;
-          timeout = zgTimeoutMs;
-        };
+        # All three MCP servers live under one `mcp` key: statix's repeated-keys
+        # lint (W20) flags three sibling `mcp.<name>` assignments, the same
+        # reason `xdg.configFile` above is nested rather than flat.
+        mcp = {
+          # Declarative equivalent of `zg install --target opencode
+          # --mcp-transport stdio` from zvec-grep 0.2.1 (install.ts
+          # installOpenCodeIntegration). stdio means no daemon to keep up: each
+          # opencode session spawns `zg server --stdio`, which manages its own
+          # shared daemon. Re-derive both this and `zgGuidance` from the new
+          # package (run the installer with HOME pointed at a scratch dir) when
+          # bumping zvec-grep's version.
+          ${zgServerName} = {
+            type = "local";
+            # Resolved from the session PATH; zvec-grep is in home.packages.
+            command = zgArgv;
+            enabled = true;
+            timeout = zgTimeoutMs;
+          };
 
-        # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
-        # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
-        # each session spawns `ripwire --mcp`, which manages its own warm index
-        # cache. The CLI-first blurb in AGENTS.md below is the recommended path
-        # (zero context until invoked); this is the warm-index alternative.
-        # `command` is the whole argv here (opencode shape, top-level `mcp`).
-        mcp.ripwire = {
-          type = "local";
-          # Resolved from the session PATH; ripwire is in home.packages.
-          command = [
-            "ripwire"
-            "--mcp"
-          ];
-          enabled = true;
+          # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
+          # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
+          # each session spawns `ripwire --mcp`, which manages its own warm
+          # index cache. The CLI-first blurb in AGENTS.md below is the
+          # recommended path (zero context until invoked); this is the
+          # warm-index alternative. `command` is the whole argv here (opencode
+          # shape, top-level `mcp`).
+          ripwire = {
+            type = "local";
+            # Resolved from the session PATH; ripwire is in home.packages.
+            command = [
+              "ripwire"
+              "--mcp"
+            ];
+            enabled = true;
+          };
+
+          # Shared agent memory, served once over loopback by the `agent-memory`
+          # user service (systemd unit at the end of this file). Remote rather
+          # than one stdio server per session: the JSONL store has a single
+          # writer, and the whole fleet must share the same graph.
+          ${memoryServerName} = {
+            type = "remote";
+            url = memoryUrl;
+            enabled = true;
+            # The service is idle-cheap; this only guards a slow first connect.
+            timeout = 30000;
+          };
         };
 
         # Models picked from the TUI's model list (`/models`) live in opencode's
@@ -1603,6 +1702,9 @@ in
         <!-- RIPWIRE_START -->
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- MEMORY_START -->
+        ${memoryGuidance}
+        <!-- MEMORY_END -->
       '';
 
       # The same server in the host-agnostic format pi-mcp-adapter reads. The
@@ -1632,57 +1734,120 @@ in
       # `zgGuidance`, so that text is worth re-checking if the server name or the
       # adapter's `toolPrefix` setting ever changes.
       "mcp/mcp.json".text = builtins.toJSON {
-        mcpServers.${zgServerName} = {
-          command = builtins.head zgArgv;
-          args = builtins.tail zgArgv;
-          requestTimeoutMs = zgTimeoutMs;
+        # All three servers under one `mcpServers` key (statix W20; see the
+        # opencode block above).
+        mcpServers = {
+          ${zgServerName} = {
+            command = builtins.head zgArgv;
+            args = builtins.tail zgArgv;
+            requestTimeoutMs = zgTimeoutMs;
 
-          # The proxy's search is the only way pi ever sees these tools, so the
-          # keywords carry the words pi's header above promises. Keys are tool
-          # names or globs -- matched against both the original and the prefixed
-          # name -- and the values are never shown to the model, they only rank
-          # `mcp({ search })` results.
-          searchKeywords."*" = [
-            "workspace"
-            "codebase"
-            "code"
-            "semantic"
-            "similarity"
-            "index"
-            "grep"
-            "ripgrep"
-            "regex"
-            "search"
-          ];
-        };
+            # The proxy's search is the only way pi ever sees these tools, so the
+            # keywords carry the words pi's header above promises. Keys are tool
+            # names or globs -- matched against both the original and the prefixed
+            # name -- and the values are never shown to the model, they only rank
+            # `mcp({ search })` results.
+            searchKeywords."*" = [
+              "workspace"
+              "codebase"
+              "code"
+              "semantic"
+              "similarity"
+              "index"
+              "grep"
+              "ripgrep"
+              "regex"
+              "search"
+            ];
+          };
 
-        # The same server in the host-agnostic format pi-mcp-adapter reads:
-        # `command` is only the executable, argv goes to `args`. No timeout
-        # override: ripwire parses ~1s cold and answers warm in ~0.1s, so the
-        # adapter default is plenty, unlike zvec-grep's cold index builds.
-        #
-        # Tool names come out as `ripwire_<verb>` (server name prefix +
-        # upstream verb, e.g. `ripwire_for`, `ripwire_explore`), matching what
-        # pi's AGENTS.md header above promises.
-        mcpServers.ripwire = {
-          command = "ripwire";
-          args = [ "--mcp" ];
+          # The same server in the host-agnostic format pi-mcp-adapter reads:
+          # `command` is only the executable, argv goes to `args`. No timeout
+          # override: ripwire parses ~1s cold and answers warm in ~0.1s, so the
+          # adapter default is plenty, unlike zvec-grep's cold index builds.
+          #
+          # Tool names come out as `ripwire_<verb>` (server name prefix +
+          # upstream verb, e.g. `ripwire_for`, `ripwire_explore`), matching what
+          # pi's AGENTS.md header above promises.
+          ripwire = {
+            command = "ripwire";
+            args = [ "--mcp" ];
 
-          searchKeywords."*" = [
-            "codebase"
-            "map"
-            "callgraph"
-            "callers"
-            "impact"
-            "blast"
-            "radius"
-            "orient"
-            "explore"
-            "symbols"
-          ];
+            searchKeywords."*" = [
+              "codebase"
+              "map"
+              "callgraph"
+              "callers"
+              "impact"
+              "blast"
+              "radius"
+              "orient"
+              "explore"
+              "symbols"
+            ];
+          };
+
+          # Shared agent memory: the remote StreamableHTTP `agent-memory` service,
+          # reached through the adapter's lazy proxy like the others, so none of
+          # its schemas sit in context until `mcp({ search: "memory" })` is called.
+          # Tool names come out as `memory_<tool>` (server name + upstream name).
+          ${memoryServerName} = {
+            url = memoryUrl;
+            httpTransport = "streamable-http";
+            searchKeywords."*" = [
+              "memory"
+              "remember"
+              "recall"
+              "knowledge"
+              "graph"
+              "entity"
+              "entities"
+              "relation"
+              "relations"
+              "observation"
+              "fact"
+              "decision"
+            ];
+          };
         };
       };
     };
+  };
+
+  # The shared agent-memory server. One process owns the JSONL graph and
+  # exposes it over loopback Streamable HTTP (`/mcp`) and SSE (`/sse`); every
+  # harness registers it as a remote server, so writes never race. Runs on all
+  # three hosts (each keeps its own preserved store), not just the desktop.
+  systemd.user.services.agent-memory = {
+    Unit = {
+      Description = "Shared agent-memory knowledge-graph MCP server";
+      # Survive a slow start without tripping the default restart-rate limit.
+      StartLimitIntervalSec = 0;
+    };
+    Service = {
+      Type = "simple";
+      # The store directory must exist before the server opens its file; %h is
+      # expanded by systemd to the invoking user's home.
+      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.local/share/agent-memory";
+      ExecStart = lib.concatStringsSep " " [
+        "${pkgs.mcp-proxy}/bin/mcp-proxy"
+        "--host"
+        "127.0.0.1"
+        "--port"
+        (toString memoryPort)
+        "-e"
+        "MEMORY_FILE_PATH"
+        memoryFileSpec
+        "--"
+        "${pkgs.mcp-server-memory}/bin/mcp-server-memory"
+      ];
+      Restart = "always";
+      RestartSec = 2;
+      TimeoutStopSec = 10;
+      StandardOutput = "journal";
+      StandardError = "journal";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # dsh-web is kept here rather than in home/services.nix because its
