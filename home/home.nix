@@ -252,6 +252,12 @@ in
       # `~/.dsh/skills` (rank 400) but not Claude Code's root. Note dsh also
       # watches these roots, so the skill appears without a restart.
       ".dsh/skills/searxng/SKILL.md".text = searxngSkill;
+
+      # The music skill is long-form, so it lives as a repo markdown file
+      # instead of a Nix string; both roots point at the same source, for the
+      # same drift reason as searxng above.
+      ".claude/skills/suno-minimax-music/SKILL.md".source = ./skills/suno-minimax-music/SKILL.md;
+      ".dsh/skills/suno-minimax-music/SKILL.md".source = ./skills/suno-minimax-music/SKILL.md;
     };
 
     stateVersion = "26.05";
