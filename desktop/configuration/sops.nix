@@ -41,6 +41,12 @@ _:
         owner = "codebam";
         group = "users";
       };
+      # CrofAI API key for the CrofAI provider in opencode, pi, and dsh;
+      # home/agents.nix exports it as CROFAI_API_KEY from the wrappers.
+      crofai-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       searx-secret = { };
     };
   };

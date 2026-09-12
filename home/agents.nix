@@ -71,6 +71,15 @@ let
       OPENCODE_API_KEY=$(cat "$go_secret")
       export OPENCODE_API_KEY
     fi
+
+    # CrofAI's OpenAI-compatible gateway, used by the CrofAI provider in
+    # opencode.json, pi's models.json, and dsh's llm-pi-ai route below.
+    # Exported under the name CrofAI's own docs use so a plain shell works too.
+    crofai_secret=/run/secrets/crofai-api-key
+    if [ -r "$crofai_secret" ]; then
+      CROFAI_API_KEY=$(cat "$crofai_secret")
+      export CROFAI_API_KEY
+    fi
   '';
 
   # OpenRouter's Pareto Code Router picks a coder per request off the current
@@ -241,6 +250,372 @@ let
       };
     };
   };
+
+  # CrofAI's /v1/models catalog (live 2026-09-12), kept as one canonical list
+  # because all three harnesses need it and none can discover it: models.dev
+  # has no CrofAI provider and pi-ai ships no such catalog, so opencode, pi,
+  # and dsh's hand-declared llm-pi-ai route each project this list into their
+  # own shape. `reasoning` mirrors the API's reasoning_effort flag (the two
+  # greg-2-* models are the only ones without it); `vision` mirrors
+  # /pricing_api's vision_models -- deepseek-v4-flash-vision-exp is absent
+  # there and 400s when an image is sent with reasoning_effort, so it stays
+  # text-only here despite its id. cost is USD per million tokens; cacheRead is
+  # CrofAI's cache_prompt rate and CrofAI bills no separate cache-write rate.
+  crofModels = [
+    {
+      id = "deepseek-v4.1-flash";
+      name = "DeepSeek V4.1 Flash";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.10;
+        output = 0.50;
+        cacheRead = 0.003;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "deepseek-v4-pro-0813";
+      name = "DeepSeek V4 Pro 0813";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.35;
+        output = 0.80;
+        cacheRead = 0.01;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "deepseek-v4-flash-vision-exp";
+      name = "DeepSeek V4 Flash Vision (exp)";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.08;
+        output = 0.20;
+        cacheRead = 0.007;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "deepseek-v4-flash-0731";
+      name = "DeepSeek V4 Flash 0731";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.07;
+        output = 0.10;
+        cacheRead = 0.003;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "kimi-k3";
+      name = "Kimi K3";
+      context = 1000000;
+      output = 262144;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 2.00;
+        output = 8.00;
+        cacheRead = 0.25;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "kimi-k3-eco";
+      name = "Kimi K3 (Eco)";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 1.00;
+        output = 4.00;
+        cacheRead = 0.10;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "kimi-k2.7-code";
+      name = "Kimi K2.7 Code";
+      context = 262144;
+      output = 262144;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.55;
+        output = 2.25;
+        cacheRead = 0.05;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "kimi-k2.6";
+      name = "Kimi K2.6";
+      context = 262144;
+      output = 262144;
+      reasoning = true;
+      vision = true;
+      cost = {
+        input = 0.50;
+        output = 1.99;
+        cacheRead = 0.05;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "glm-5.3";
+      name = "GLM 5.3";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.40;
+        output = 1.40;
+        cacheRead = 0.06;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "glm-5.3-flash";
+      name = "GLM 5.3 Flash";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.07;
+        output = 0.22;
+        cacheRead = 0.01;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "glm-5.2";
+      name = "GLM 5.2";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.30;
+        output = 1.05;
+        cacheRead = 0.05;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "greg-2-ultra";
+      name = "Greg 2 Ultra";
+      context = 229376;
+      output = 229376;
+      reasoning = false;
+      vision = false;
+      cost = {
+        input = 3.00;
+        output = 10.00;
+        cacheRead = 0.50;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "greg-2-super";
+      name = "Greg 2 Super";
+      context = 229376;
+      output = 229376;
+      reasoning = false;
+      vision = false;
+      cost = {
+        input = 1.50;
+        output = 5.00;
+        cacheRead = 0.25;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "mimo-v2.5-pro";
+      name = "MiMo-V2.5-Pro";
+      context = 1000000;
+      output = 131072;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.40;
+        output = 0.80;
+        cacheRead = 0.003;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "gemma-4-31b-it";
+      name = "Gemma 4 31B";
+      context = 262144;
+      output = 262144;
+      reasoning = true;
+      vision = true;
+      cost = {
+        input = 0.10;
+        output = 0.30;
+        cacheRead = 0.02;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "qwen3.8-27b";
+      name = "Qwen3.8 27B";
+      context = 262144;
+      output = 262144;
+      reasoning = true;
+      vision = false;
+      cost = {
+        input = 0.09;
+        output = 0.30;
+        cacheRead = 0.01;
+        cacheWrite = 0;
+      };
+    }
+    {
+      id = "qwen3.5-9b";
+      name = "Qwen3.5 9B";
+      context = 262144;
+      output = 262144;
+      reasoning = true;
+      vision = true;
+      cost = {
+        input = 0.04;
+        output = 0.15;
+        cacheRead = 0.008;
+        cacheWrite = 0;
+      };
+    }
+  ];
+
+  # opencode's model shape. A model config with no models.dev entry defaults
+  # tool_call to true, so only reasoning and the vision attachment capability
+  # need stating; `modalities` is what drives the input capabilities in the TUI.
+  crofOpencodeModels = builtins.listToAttrs (
+    map (model: {
+      name = model.id;
+      value = {
+        inherit (model) name reasoning;
+        limit = {
+          inherit (model) context output;
+        };
+        cost = {
+          input = model.cost.input;
+          output = model.cost.output;
+          cache_read = model.cost.cacheRead;
+          cache_write = model.cost.cacheWrite;
+        };
+      }
+      // lib.optionalAttrs model.vision {
+        attachment = true;
+        modalities = {
+          input = [
+            "text"
+            "image"
+          ];
+          output = [ "text" ];
+        };
+      };
+    }) crofModels
+  );
+
+  crofOpencodeProvider = {
+    npm = "@ai-sdk/openai-compatible";
+    name = "CrofAI";
+    options = {
+      baseURL = "https://crof.ai/v1";
+      apiKey = "{env:CROFAI_API_KEY}";
+    };
+    models = crofOpencodeModels;
+  };
+
+  # pi's models.json shape. crofai is a new provider rather than an override of
+  # a built-in, so it names api and baseUrl itself. The compat block is not
+  # optional: pi's baseURL detection cannot recognise the endpoint and would
+  # otherwise send the `developer` role and `store`, which CrofAI does not take.
+  crofPiModels = map (
+    model:
+    {
+      inherit (model) id name reasoning;
+      input =
+        if model.vision then
+          [
+            "text"
+            "image"
+          ]
+        else
+          [ "text" ];
+      contextWindow = model.context;
+      maxTokens = model.output;
+      cost = {
+        input = model.cost.input;
+        output = model.cost.output;
+        cacheRead = model.cost.cacheRead;
+        cacheWrite = model.cost.cacheWrite;
+      };
+    }
+    // lib.optionalAttrs model.reasoning {
+      # CrofAI takes reasoning_effort low/medium/high/none only; hide pi's
+      # minimal/xhigh/max rather than letting them reach the wire.
+      thinkingLevelMap = {
+        off = "none";
+        minimal = null;
+        low = "low";
+        medium = "medium";
+        high = "high";
+        xhigh = null;
+        max = null;
+      };
+    }
+  ) crofModels;
+
+  # dsh's llm-pi-ai route needs the same catalog as YAML inside the managed
+  # settings fragment below. Emit one list entry per canonical model so the
+  # route definition itself stays readable, and let the route-level compat
+  # cover every model.
+  crofDshModelYaml =
+    model:
+    lib.concatStringsSep "\n" (
+      [
+        "        - id: ${model.id}"
+        "          name: ${model.name}"
+        "          contextWindow: ${toString model.context}"
+        "          maxTokens: ${toString model.output}"
+        "          input:"
+        "            - text"
+      ]
+      ++ lib.optional model.vision "            - image"
+      ++ (
+        if model.reasoning then
+          [
+            "          reasoningEfforts:"
+            "            off: none"
+            "            low: low"
+            "            medium: medium"
+            "            high: high"
+          ]
+        else
+          [ "          reasoningEfforts: false" ]
+      )
+    );
+
+  crofDshModelsYaml = lib.concatStringsSep "\n" (
+    [ "      models:" ] ++ map crofDshModelYaml crofModels
+  );
 
   # Headroom opencode keeps before it auto-compacts; see `compaction` below.
   compactionReserved = 20000;
@@ -470,6 +845,21 @@ let
           }
         ];
       };
+      # CrofAI (OpenAI-compatible gateway). Like Ollama this is a provider pi
+      # does not ship, so endpoint, protocol, and the full catalog live here.
+      crofai = {
+        api = "openai-completions";
+        apiKey = "$CROFAI_API_KEY";
+        baseUrl = "https://crof.ai/v1";
+        compat = {
+          supportsDeveloperRole = false;
+          supportsReasoningEffort = true;
+          supportsStore = false;
+          maxTokensField = "max_tokens";
+        };
+        models = crofPiModels;
+      };
+
       openrouter.models = [
         {
           id = codingModel;
@@ -724,6 +1114,23 @@ let
         openrouter:
           displayName: OpenRouter
           apiKeyEnv: OPENROUTER_API_KEY
+
+        # CrofAI (OpenAI-compatible gateway). Not a pi-ai catalog route, so
+        # this profile is the whole declaration: endpoint, protocol, and the
+        # same catalog the other two harnesses carry. The compat block mirrors
+        # pi's models.json: the baseURL says nothing, so without it pi-ai
+        # defaults to the `developer` role and `store`, which CrofAI refuses.
+        crofai:
+          displayName: CrofAI
+          apiKeyEnv: CROFAI_API_KEY
+          api: openai-completions
+          baseURL: https://crof.ai/v1
+          compat:
+            supportsStore: false
+            supportsDeveloperRole: false
+            supportsReasoningEffort: true
+            maxTokensField: max_tokens
+    ${crofDshModelsYaml}
   '';
 
   # settings.yaml is dsh's live user-overrides document: the Models page and the
@@ -1164,6 +1571,10 @@ in
               reasoning.effort = "medium";
             };
           };
+
+          # CrofAI's OpenAI-compatible endpoint. The catalog is not in
+          # models.dev, so the metadata travels with the provider.
+          CrofAI = crofOpencodeProvider;
         }
         // qwenProvider;
       };
