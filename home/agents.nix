@@ -1258,7 +1258,6 @@ in
       ".dsh/AGENTS.md".text = ''
         # Tooling
         * Nix tools via `, <tool>` (ephemeral run). No install requests for one-off use.
-        * Map code with `, repomix --include "<globs>"`; find symbols with `, ctags -x`. ! file-by-file exploration.
         * Logs >50 lines: filter with `awk`/`sed`/`jq` before reading.
         * Verify NixOS options with `, manix "<term>"`. ! guess option names.
 
@@ -1343,11 +1342,11 @@ in
       # resolve it. See the composition's own header for the rest.
       ".dsh/.agent-presets/minimal-agents/agent.cordis.yml".text = ''
         # The `minimal-agents` agent preset: the shipped `minimal` composition plus the
-        # subagent delegation tools, and nothing else.
+        # subagent delegation tools and local skills, and nothing else.
         #
         # The persona block is `minimal`'s verbatim (fixed prompt, complete: true, no
         # runtime context), so identity/Web/tool-guidance sections still cannot add
-        # prompt text here, and the persistent shell is still the only built-in tool.
+        # prompt text here, and the persistent shell is still the only built-in shell.
         # `suffix` states the working directory for the same reason pkgs/dsh.nix adds it
         # to the shipped `minimal`: complete: true suppresses the runtime-context snapshot.
         #
@@ -1452,11 +1451,27 @@ in
                 provider: fork
                 toolName: subagent_fork
                 backgroundMode: one-shot
+
+        # Skills: the Web surface disables the host-level `skill-filesystem` and
+        # `tool-skill` rows and leaves local discovery to each agent preset (see
+        # @deepseek-ai/dsh-web-app's patch), so `minimal` alone composes an empty
+        # catalog -- no `/` suggestions in the composer and no model-facing
+        # `skill` tool. These two rows restore the shipped `standard` preset's
+        # arrangement: the filesystem provider contributes `~/.dsh/skills` and
+        # the project roots to this agent's registry scope, and `tool-skill`
+        # renders the catalog and loader (and owns the `/name` gesture boundary).
+        # The skill registry itself stays host-level and shared; these rows only
+        # add this preset's provider and consumer.
+        - id: skill-filesystem
+          name: '@deepseek-ai/dsh-skill-filesystem'
+
+        - id: tool-skill
+          name: '@deepseek-ai/dsh-tool-skill'
       '';
 
       ".dsh/.agent-presets/minimal-agents/preset.yml".text = ''
         name: Minimal-Agents
-        description: Minimal's fixed persona and persistent shell, plus the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents) and nothing else.
+        description: Minimal's fixed persona and persistent shell, plus local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
         order: 6
       '';
     };

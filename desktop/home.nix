@@ -17,6 +17,8 @@
       # Desktop app stays packaged (pkgs/sigmashake-desktop.nix) but is not
       # on PATH. Re-add `sigmashake-desktop` here to turn it back on.
       ssg
+      # Launches the vendor AppImage kept at ~/Downloads (pkgs/polariumcode).
+      polariumcode
     ];
   };
 

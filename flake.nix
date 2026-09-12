@@ -72,6 +72,31 @@
           "x86_64-linux"
         ] (system: functionProvidedToForAllSystems nixpkgs.legacyPackages.${system});
 
+      # Unfree names the hosts permit, from the single shared list. The
+      # standalone `packages` output below needs the same predicate: two local
+      # derivations (ssg, sigmashake-desktop) are unfree, and `nix flake check`
+      # forces every package, so without it the output would refuse to even
+      # evaluate. The predicate is eval-only, so the store paths stay identical
+      # to the ones the hosts install.
+      unfreePackages = import ./unfree.nix;
+
+      # Like forAllSystems, but evaluating under that unfree predicate.
+      forAllSystemsUnfree =
+        functionProvidedToForAllSystems:
+        nixpkgs.lib.genAttrs
+          [
+            "x86_64-linux"
+          ]
+          (
+            system:
+            functionProvidedToForAllSystems (
+              import nixpkgs {
+                inherit system;
+                config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) unfreePackages;
+              }
+            )
+          );
+
       # Helper function to define standard NixOS systems (Desktop, Laptop, Steamdeck)
       mkNixosSystem =
         {
@@ -122,6 +147,20 @@
 
     in
     {
+      # Each local derivation on its own, so anyone can install one without
+      # adopting a host:
+      #   nix run   github:codebam/nixos#ripwire
+      #   nix build github:codebam/nixos#dsh
+      #   nix profile install github:codebam/nixos#zvec-grep
+      # `voxtype-plainify` is not here: it is a sed program, not a package
+      # (see pkgs/default.nix).
+      packages = forAllSystemsUnfree (pkgs: import ./pkgs { inherit pkgs; });
+
+      # For a NixOS config or another flake that wants the same definitions as
+      # `pkgs.<name>`:
+      #   nixpkgs.overlays = [ inputs.nixos.overlays.default ];
+      overlays.default = final: _prev: import ./pkgs { pkgs = final; };
+
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           buildInputs = with pkgs; [
