@@ -666,9 +666,14 @@ let
         # replace the whole catalog and a route-level `api` would mislabel the
         # anthropic/responses entries. A dedicated single-model route keeps the
         # catalog route intact; the session-header plugin is told about its key
-        # in the profile patch. Metadata mirrors the catalog's deepseek-v4-flash
-        # sibling (context 1M, output 384k; models.dev lists the same for
-        # deepseek-flash), with dsh's own reasoningEfforts/compat shape.
+        # in the profile patch. models.dev carries no `deepseek-flash` entry,
+        # only the text-only deepseek-v4-flash and the vision
+        # deepseek-v4.1-flash / deepseek-v4-flash-vision-exp pair, so an
+        # undeclared route would default to text-only and refuse image
+        # attachments. The endpoint accepts images for this id, so `input`
+        # declares both modalities; the rest mirrors the deepseek-v4-flash
+        # sibling (context 1M, output 384k) with dsh's own
+        # reasoningEfforts/compat shape.
         opencode-go-deepseek:
           displayName: OpenCode Go (DeepSeek)
           apiKeyEnv: OPENCODE_API_KEY
@@ -681,6 +686,7 @@ let
               maxTokens: 384000
               input:
                 - text
+                - image
               reasoningEfforts:
                 low: low
                 high: high
@@ -910,6 +916,141 @@ in
                 transport: stdio
                 command: ${builtins.head ripwireArgv}
                 args: ${builtins.toJSON (builtins.tail ripwireArgv)}
+      '';
+
+      # The Minimal-Agents agent preset, authored in the user preset root
+      # `$DSH_HOME/.agent-presets` beside `liangshen` rather than patched into the
+      # shipped root from pkgs/dsh.nix. The roster scans the shipped presets
+      # first and this root last (`includeUserRoot`), the directory name is the
+      # preset id (so it must be lowercase), and `preset.yml` supplies the
+      # display name -- the TUI therefore offers it as "Minimal-Agents" in
+      # `/preset` and the choice is per session, not a change of the default.
+      #
+      # Composition: the shipped `minimal` preset's persona and persistent-shell
+      # rows verbatim (same one-line prompt, `complete: true` so no other prompt
+      # section can add text, no runtime context, bash as the only built-in
+      # tool), plus dsh-base's delegation rows. `tool-workflow` and `tool-ralph`
+      # are deliberately absent: this is "minimal + agents", not minimal plus the
+      # workflow engine. The subagents registry and the spawn/fork backends stay
+      # in the host composition; these rows only contribute the tools that
+      # resolve it. See the composition's own header for the rest.
+      ".dsh/.agent-presets/minimal-agents/agent.cordis.yml".text = ''
+        # The `minimal-agents` agent preset: the shipped `minimal` composition plus the
+        # subagent delegation tools, and nothing else.
+        #
+        # The persona block is `minimal`'s verbatim (fixed prompt, complete: true, no
+        # runtime context), so identity/Web/tool-guidance sections still cannot add
+        # prompt text here, and the persistent shell is still the only built-in tool.
+        # `suffix` states the working directory for the same reason pkgs/dsh.nix adds it
+        # to the shipped `minimal`: complete: true suppresses the runtime-context snapshot.
+        #
+        # The delegation rows mirror the dsh-base bundle's four, minus `tool-workflow`
+        # and `tool-ralph`: "agents" means spawning and steering subagents, not the
+        # workflow engine. A spawned child inherits this preset by joining the parent's
+        # standing composition (AgentPresets.composeFrom), so a delegated agent gets the
+        # same shell and this same toolset; `maxDepth` is left at its package default.
+        #
+        # The `subagents` registry and its spawn/fork backends live in the HOST
+        # composition (dsh-base, where the dsh-tui bundle patch leaves them enabled
+        # while disabling the host-level tool rows). These rows therefore register the
+        # delegation TOOLS only and must NOT be isolated: their `subagents` inject has
+        # to resolve that host registry. That is why this group has no `isolate` block,
+        # unlike `persistent-shell` below, whose PTY registry is agent-owned.
+
+        - id: persona
+          name: '@deepseek-ai/dsh-persona'
+          config:
+            prefix: You are a helpful software engineer assistant.
+            suffix: Your working directory is {{cwd}}.
+            complete: true
+            includeRuntimeContext: false
+
+        # The PTY registry is an agent-owned service, so it lives in an entry-local
+        # realm. The backend still consumes the host sandbox policy and subprocess
+        # implementation, while the tool registers into this agent's scoped catalog.
+        # Exactly one shell stack mounts per host: the bash stack gates off win32 and
+        # its pwsh twin gates off POSIX, mirroring the one-shot shell rows.
+        - id: persistent-shell
+          name: cordis:group
+          group: true
+          isolate:
+            terminals: true
+          config:
+            - id: pty
+              name: '@deepseek-ai/dsh-terminal'
+
+            - id: terminal-bash
+              name: '@deepseek-ai/dsh-terminal-bash'
+              disabled: !!js process.platform === 'win32'
+              config:
+                timeoutMs: 300000
+
+            - id: persistent-bash
+              name: '@deepseek-ai/dsh-tool-bash-persistent'
+              disabled: !!js process.platform === 'win32'
+              config:
+                timeoutMs: 300000
+                description: |-
+                  Run commands in a bash shell
+                  * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+                  * Network access depends on the task environment. Prefer configured mirrors/proxies when they are available.
+                  * State is persistent across command calls and discussions with the user.
+                  * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+                  * Please avoid commands that may produce a very large amount of output.
+                  * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+            - id: terminal-pwsh
+              name: '@deepseek-ai/dsh-terminal-bash'
+              disabled: !!js process.platform !== 'win32'
+              config:
+                shellDialect: pwsh
+                timeoutMs: 300000
+
+            - id: persistent-pwsh
+              name: '@deepseek-ai/dsh-tool-pwsh-persistent'
+              disabled: !!js process.platform !== 'win32'
+              config:
+                timeoutMs: 300000
+                description: |-
+                  Run commands in a PowerShell shell
+                  * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+                  * You don't have access to the internet via this tool.
+                  * State is persistent across command calls and discussions with the user.
+                  * Use native Windows paths (C:\...) and $env:NAME variables; this is PowerShell, not bash.
+                  * Please avoid commands that may produce a very large amount of output.
+                  * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
+
+        # Continuous delegation: the spawn/fork tools plus the control API over
+        # continuable children (`send_message`/`interrupt_agent` and `list_agents`).
+        - id: delegation
+          name: cordis:group
+          group: true
+          config:
+            - id: tool-subagent-control
+              name: '@deepseek-ai/dsh-tool-subagent-control'
+
+            - id: tool-subagent-list-agents
+              name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+
+            - id: tool-subagent
+              name: '@deepseek-ai/dsh-tool-subagent'
+              config:
+                provider: spawn
+                toolName: subagent
+                backgroundMode: continuable
+
+            - id: tool-subagent-fork
+              name: '@deepseek-ai/dsh-tool-subagent'
+              config:
+                provider: fork
+                toolName: subagent_fork
+                backgroundMode: one-shot
+      '';
+
+      ".dsh/.agent-presets/minimal-agents/preset.yml".text = ''
+        name: Minimal-Agents
+        description: Minimal's fixed persona and persistent shell, plus the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents) and nothing else.
+        order: 6
       '';
     };
   };
