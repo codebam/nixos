@@ -1359,9 +1359,24 @@ in
       # ever stops being edited there.
       ".dsh/AGENTS.md".text = ''
         # Tooling
-        * Nix tools via `, <tool>` (ephemeral run). No install requests for one-off use.
-        * Logs >50 lines: filter with `awk`/`sed`/`jq` before reading.
-        * Verify NixOS options with `, manix "<term>"`. ! guess option names.
+        * Ephemeral Nix tools: prefer `nix shell nixpkgs#<pkg>… -c <cmd>` or `nix run nixpkgs#<pkg> -- …` when
+          the package is known; use `, <cmd>` only as the binary-name fallback. No install requests for
+          one-offs; never `nix profile install` / `nix-env -i` — declared tools belong in the flake/module.
+        * Find before running: `nix-locate -w -t x 'bin/<cmd>'` (or `, -p <cmd>`) maps a command to its package;
+          `nh search packages --json "<term>"` and `nh search options --json "<term>"` query the live
+          search.nixos.org index; `, manix --source nixos-options "<term>"` searches offline. Prefer
+          `nix eval --json` / `nix repl` over parsing human output.
+        * Verify NixOS options, never guess: `nixos-option -F .#<host> [-r] <option.path>` evaluates this
+          flake's real option tree; `nix develop` provides `nil`/`nixd` completions.
+        * NixOS changes are declarative: `git add` new files first (flakes ignore untracked files); secrets go
+          through SOPS, never into the store or git; verify with `nh os build .#<host>` (or
+          `nixos-rebuild build --flake .#<host>`), `nix build .#checks.x86_64-linux.lint`, `nix flake check`
+          when broad, and `nix fmt`. Build and report; activation is the human's call — never
+          `switch`/`boot`/`test`, and no rollback, GC, or imperative profile/channel writes unless the user
+          explicitly asks.
+        * Build/log forensics: `nh`/`nom` tree output; `nix-tree`, `nix why-depends`, `nix path-info` for
+          closures; `nvd diff` for generation changes. Filter logs >50 lines with `awk`/`sed`/`jq`/`rg`
+          before reading.
 
         <!-- ZVEC_GREP_START -->
         ## zvec-grep is an MCP server here
