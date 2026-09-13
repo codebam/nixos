@@ -1118,6 +1118,36 @@ let
         opencode-go:
           displayName: OpenCode Go
           apiKeyEnv: OPENCODE_API_KEY
+        # Local Ollama. pi-ai ships no catalog for it, so this route is the
+        # whole declaration: protocol, endpoint, and model list. There is no
+        # apiKeyEnv on purpose -- Ollama ignores auth, and the Authorization
+        # header is the documented placeholder that keeps pi-ai's
+        # OpenAI-compatible client from refusing a keyless local route (the
+        # credential store stays out of it, and Models-page discovery sends the
+        # same header). Metadata mirrors pi's ~/.pi/agent/models.json entry: the
+        # 160k tag less headroom, pi's 16K default output cap, vision input,
+        # and only the thinking levels this family exposes. `off: none` because
+        # Ollama spells "no thinking" as reasoning_effort none, where omitting
+        # the field means think.
+        ollama:
+          displayName: Ollama
+          api: openai-completions
+          baseURL: http://127.0.0.1:11434/v1
+          headers:
+            Authorization: Bearer ollama
+          reasoning: high
+          models:
+            - id: qwen3.8:160k
+              name: Qwen3.8 27B (160k)
+              contextWindow: 153600
+              maxTokens: 16384
+              input:
+                - text
+                - image
+              reasoningEfforts:
+                off: none
+                high: high
+                max: max
         # DeepSeek V4.1 Flash (OpenCode model id `deepseek-flash`) is served by
         # OpenCode Go but is not in pi-ai's bundled `opencode-go` catalog
         # (0.84.4), and a hand-declared model cannot be appended to that route:
