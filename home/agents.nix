@@ -1345,9 +1345,11 @@ in
         <!-- MEMORY_END -->
       '';
 
-      # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`
-      # (plus the per-directory AGENTS.md/CLAUDE.md chain and the
-      # AGENTS.local.md/CLAUDE.local.md overlays under the project root). It does
+      # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
+      # through `@deepseek-ai/dsh-agent-instructions` (plus the per-directory
+      # AGENTS.md/CLAUDE.md chain and the AGENTS.local.md/CLAUDE.local.md overlays
+      # under the project root). The web profile disables the host row and makes
+      # each preset opt in, which minimal-agents does below. It does
       # not look at ~/.claude/CLAUDE.md, ~/.pi/agent/AGENTS.md, or opencode's
       # copy, so the shared tooling rules need a dsh copy; the zvec-grep block is
       # the dsh-named rendering from above, and the MCP servers are ordinary
@@ -1461,14 +1463,15 @@ in
       # Composition: the shipped `minimal` preset's persona and persistent-shell
       # rows verbatim (same one-line prompt, `complete: true` so no other prompt
       # section can add text, no runtime context, bash as the only built-in
-      # tool), plus dsh-base's delegation rows. `tool-workflow` and `tool-ralph`
+      # tool), plus dsh-base's delegation rows and the agent-instructions row that
+      # the web profile makes each preset opt into. `tool-workflow` and `tool-ralph`
       # are deliberately absent: this is "minimal + agents", not minimal plus the
       # workflow engine. The subagents registry and the spawn/fork backends stay
       # in the host composition; these rows only contribute the tools that
       # resolve it. See the composition's own header for the rest.
       ".dsh/.agent-presets/minimal-agents/agent.cordis.yml".text = ''
-        # The `minimal-agents` agent preset: the shipped `minimal` composition plus the
-        # subagent delegation tools and local skills, and nothing else.
+        # The `minimal-agents` agent preset: the shipped `minimal` composition plus
+        # workspace instructions, the subagent delegation tools, and local skills.
         #
         # The persona block is `minimal`'s verbatim (fixed prompt, complete: true, no
         # runtime context), so identity/Web/tool-guidance sections still cannot add
@@ -1496,6 +1499,17 @@ in
             suffix: Your working directory is {{cwd}}.
             complete: true
             includeRuntimeContext: false
+
+        # dsh-web disables dsh-base's host-level agent-instructions row and makes
+        # each preset opt in (standard does). minimal does not, so without this row
+        # a minimal-agents session never receives `$DSH_HOME/AGENTS.md` or the repo
+        # `AGENTS.md` chain -- not as a system prompt and not as a system-reminder.
+        # The persona's `complete: true` only suppresses system-prompt sections; this
+        # plugin injects workspace context as a separate user-message baseline.
+        - id: agent-instructions
+          name: '@deepseek-ai/dsh-agent-instructions'
+          config:
+            maxBytes: 65536
 
         # The PTY registry is an agent-owned service, so it lives in an entry-local
         # realm. The backend still consumes the host sandbox policy and subprocess
@@ -1597,7 +1611,7 @@ in
 
       ".dsh/.agent-presets/minimal-agents/preset.yml".text = ''
         name: Minimal-Agents
-        description: Minimal's fixed persona and persistent shell, plus local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
+        description: Minimal's fixed persona and persistent shell, plus workspace instructions (AGENTS.md/CLAUDE.md), local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
         order: 6
       '';
     };
