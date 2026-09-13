@@ -1039,6 +1039,57 @@ let
     - Do NOT fan reads across several files to learn one thing: `--pack-task="<task>"` is one call.
   '';
 
+  # The upstream package embeds a thin discovery stub at
+  # `$out/skills/agent-browser/SKILL.md`; each harness's skill loader only needs
+  # a copy under its own root. The one line that does not hold on NixOS is the
+  # install command -- there is nothing to install: the CLI is already on PATH
+  # via home.packages and Chrome/Chromium comes from home/programs.nix.
+  # Replacing that line keeps the package's own name, description, and trigger
+  # list version-matched, instead of carrying a parallel hand-written stub that
+  # would drift when agent-browser is bumped.
+  agentBrowserSkill =
+    builtins.replaceStrings
+      [ "Install: `npm i -g agent-browser && agent-browser install`" ]
+      [
+        "Installed by this flake: `agent-browser` is on PATH and Chrome/Chromium is already in the profile. Do not run `npm install -g`, `agent-browser install`, or any nix profile installer; run `agent-browser doctor --json` and report the output if the browser looks missing."
+      ]
+      (builtins.readFile "${pkgs.agent-browser}/skills/agent-browser/SKILL.md");
+
+  # Always-loaded companion to that stub. The skill body is only fetched when
+  # the agent loads the skill, so the no-install rule and the snapshot-refresh
+  # loop belong in every harness's global instruction file too. The text is the
+  # same for dsh, opencode, and pi: agent-browser is a CLI and all three have a
+  # shell tool, so there is no harness-specific naming or proxy layer to explain.
+  agentBrowserGuidance = ''
+    ## Browser automation (agent-browser)
+
+    `agent-browser` is on PATH from this flake and Chrome is already installed;
+    do NOT run `npm install -g`, `agent-browser install`, or any nix profile
+    installer. The `agent-browser` skill is a discovery stub: before the first
+    browser command, load `agent-browser skills get core --full` for the
+    version-matched workflow, command reference, and troubleshooting.
+    `agent-browser skills list` shows the specialized skills (electron, slack,
+    dogfood, webmcp-gen, ...).
+
+    Core loop:
+    1. `agent-browser open <url>` — launch and navigate; the daemon keeps the
+       session (tabs, cookies, login state) alive between calls.
+    2. `agent-browser snapshot -i` — accessibility tree with cheap `@eN` refs.
+    3. `agent-browser click @e1` / `fill @e2 "text"` / `get text @e1` /
+       `screenshot /abs/path.png`.
+    4. Re-run `snapshot -i` after every page change; refs are not stable across
+       navigations or DOM updates.
+
+    `agent-browser read <url>` fetches agent-readable text without launching
+    Chrome, so prefer it for static/docs pages; reach for the full browser when
+    the task needs interaction, login state, or screenshots. Add `--json` when
+    parsing output, chain commands with `&&` in one shell call, and run
+    `agent-browser close` (or `close --all`) when finished so the daemon does
+    not linger. If something looks broken, `agent-browser doctor --json`
+    reports Chrome, daemon, and config state; report its output instead of
+    installing anything.
+  '';
+
   # Shared guidance for the agent-memory server, rendered with the tool names
   # each host actually registers. dsh's `mcp__<server>__<tool>` names are one
   # substitution away, mirroring zgGuidanceDsh.
@@ -1288,6 +1339,12 @@ in
     file = {
       ".pi/agent/models.json".text = builtins.toJSON piModels;
 
+      # The same version-matched discovery stub for the two non-opencode roots:
+      # pi scans `~/.pi/agent/skills` and dsh scans `~/.dsh/skills`. opencode's
+      # copy lives under xdg.configFile below.
+      ".pi/agent/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
+      ".dsh/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
+
       # pi's global context file (docs/usage.md: "Context Files"). pi is not one
       # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
       # cursor are -- so this is the shared guidance above plus a hand-written
@@ -1340,6 +1397,9 @@ in
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- AGENT_BROWSER_START -->
+        ${agentBrowserGuidance}
+        <!-- AGENT_BROWSER_END -->
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
@@ -1403,6 +1463,9 @@ in
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- AGENT_BROWSER_START -->
+        ${agentBrowserGuidance}
+        <!-- AGENT_BROWSER_END -->
         <!-- MEMORY_START -->
         ${memoryGuidanceDsh}
         <!-- MEMORY_END -->
@@ -1761,10 +1824,18 @@ in
         <!-- RIPWIRE_START -->
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
+        <!-- AGENT_BROWSER_START -->
+        ${agentBrowserGuidance}
+        <!-- AGENT_BROWSER_END -->
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
       '';
+
+      # opencode's documented global skill root, under the config directory
+      # the stable and beta CLIs share. A copy here makes the setup independent
+      # of opencode's `~/.claude/skills` auto-discovery fallback.
+      "opencode/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
 
       # The same server in the host-agnostic format pi-mcp-adapter reads. The
       # adapter is already installed (npm:pi-mcp-adapter in ~/.pi/agent/npm) and

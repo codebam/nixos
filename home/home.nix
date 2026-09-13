@@ -212,6 +212,11 @@ in
       # Deterministic codebase maps for agents (provides the `ripwire` CLI,
       # used directly and as an MCP server by home/agents.nix).
       ripwire
+      # Headless browser automation CLI for agents. home/agents.nix installs
+      # the package's own version-matched SKILL.md discovery stub under dsh,
+      # opencode, and pi and puts the Nix-specific no-install rules in their
+      # instruction files.
+      agent-browser
       # Shared agent-memory knowledge graph. mcp-proxy bridges the stdio
       # knowledge-graph server to loopback Streamable HTTP so a single writer
       # serves every harness; both are wired by home/agents.nix's `agent-memory`
