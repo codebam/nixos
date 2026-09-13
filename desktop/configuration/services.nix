@@ -63,6 +63,12 @@ in
   };
 
   services = {
+    # The shared module defines scx off after the scx_lavd 1.1.3
+    # runnable-task-stall regression; the overlay in modules/system/nixpkgs.nix
+    # pins a main snapshot that carries the upstream fix. mkForce is needed
+    # because that shared definition is plain false, not a default.
+    scx.enable = lib.mkForce true;
+
     # Every admin UI below binds loopback and is reached only through nginx.
     #
     # openFirewall = false was never the control it looked like: these used to

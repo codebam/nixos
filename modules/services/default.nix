@@ -3,14 +3,15 @@
   imports = [ ./smartd.nix ];
 
   services = {
-    # Off: scx_lavd 1.1.3 on kernel 7.2.0 does not dispatch tasks that are
-    # migration-disabled and affine to a single CPU onto that CPU, which then
-    # sits in idle_sched_class while the task waits out the 21s RCU stall
-    # timeout and the kernel ejects the scheduler. 103 ejections in one
-    # 3-hour boot, with the machine otherwise near idle (load 3, PSI cpu
-    # 1.1%). Firefox took the worst of it, having threads in migrate-disabled
-    # BPF hooks -- systemd's restrict_filesystems on openat, sd_fw_egress on
-    # sendmsg -- more or less constantly. EEVDF instead until a newer scx.
+    # Off: scx_lavd 1.1.3 regressed on kernel 7.2 -- a task that is
+    # migration-disabled and affine to a single CPU is never dispatched onto
+    # that CPU, so it waits out the 21s RCU stall timeout in idle_sched_class
+    # and the kernel ejects the scheduler (103 ejections in one 3-hour boot;
+    # Firefox threads in systemd's migrate-disabled BPF hooks took the worst
+    # of it). Upstream fixed this after the 1.1.3 tag in 6d31ddd8973, but
+    # nixpkgs reverted to 1.1.2 instead, so the overlay in
+    # modules/system/nixpkgs.nix pins a main snapshot that carries the fix.
+    # Desktop opts in with mkForce below; leave the other hosts on EEVDF.
     scx = {
       enable = false;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md

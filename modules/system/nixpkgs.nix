@@ -54,6 +54,51 @@
                   --prefix PATH : ${lib.makeBinPath [ prev.wmenu ]}
               '';
             });
+
+            # scx_lavd 1.1.3 regressed on kernel 7.2 and nixpkgs reverted to
+            # 1.1.2; the fix (upstream 6d31ddd8973) only exists on main. Pin
+            # a main snapshot that carries it by commit, not branch, so this
+            # rebuilds identically. importCargoLock reads the matching
+            # Cargo.lock instead of a cargoHash, so the 1.1.3 git tag's hash
+            # cannot silently drift onto a different dependency set.
+            scx =
+              let
+                rustscheds = prev.scx.rustscheds.overrideAttrs (old: {
+                  version = "1.1.3-unstable-2026-09-11";
+                  src = prev.fetchFromGitHub {
+                    owner = "sched-ext";
+                    repo = "scx";
+                    rev = "8b2479571c0768310510c061960d2c40cb64d160";
+                    hash = "sha256-/bRCnsZ0d56WuIcBNrXmpykS8CoLqkjeKJgekIpbTgQ=";
+                  };
+                  cargoDeps = prev.rustPlatform.importCargoLock {
+                    lockFileContents = builtins.readFile (
+                      builtins.fetchurl {
+                        url = "https://raw.githubusercontent.com/sched-ext/scx/8b2479571c0768310510c061960d2c40cb64d160/Cargo.lock";
+                        sha256 = "127bd3d568cdeb31ea660d811bb1f2f3617aad9bb60d889cc71c0f4486d95816";
+                      }
+                    );
+                  };
+                  # Only the desktop's scheduler is shipped, so there is no
+                  # reason to compile the other twenty-odd workspace bins on
+                  # every nixpkgs bump.
+                  env = (old.env or { }) // {
+                    cargoBuildFlags = "--package scx_lavd";
+                  };
+                  postInstall = "";
+                  passthru = (old.passthru or { }) // {
+                    schedulers = [ "scx_lavd" ];
+                  };
+                  __intentionallyOverridingVersion = true;
+                });
+                base = prev.scx // {
+                  inherit rustscheds;
+                };
+              in
+              base
+              // {
+                full = prev.scx.full.override { scx = base; };
+              };
           }
         )
       ];
