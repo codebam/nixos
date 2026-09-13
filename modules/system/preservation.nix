@@ -146,6 +146,7 @@ _: {
             ".config/discord"
             ".config/discordcanary"
             ".config/discordptb"
+            ".config/polariumcode"
             ".local/share/TelegramDesktop"
             ".local/share/zoxide"
             ".config/YouTube Music Desktop App"
