@@ -726,6 +726,41 @@ let
   # that service runs.
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
 
+  # dsh ships @deepseek-ai/dsh-hooks-claude-code, a bridge that runs Claude
+  # Code command hooks on its own tool interception seams. Forcing SSG's .rules
+  # therefore needs no bespoke dsh plugin: point the bridge at a Claude-format
+  # hook config whose PreToolUse hook calls `ssg hook eval`. The hook exits 2
+  # with the reason on stderr, which the bridge maps to a denied tool call.
+  # Only PreToolUse is wired -- it is the veto seam; SSG's Claude Code install
+  # also adds SessionStart/Stop/PostToolUse telemetry hooks, which are optional
+  # here and would otherwise run against dsh's own event stream. `hook eval`
+  # accepts dsh's lowercase tool names (bash/read/write/edit) and its payloads.
+  ssgHooks = builtins.toJSON {
+    hooks.PreToolUse = [
+      {
+        matcher = "";
+        hooks = [
+          {
+            type = "command";
+            command = "${lib.getExe pkgs.ssg} hook eval";
+          }
+        ];
+      }
+    ];
+  };
+
+  # The same insert, in the global dsh patch layer. dsh resolves the bare
+  # specifier from its own installed closure, so the bridge is shipped, not
+  # authored: no new plugin package is needed. Gated with the rest of the SSG
+  # wiring because pkgs.ssg is only installed on the desktop.
+  dshSsgHookPatch = lib.optionalString isDesktop ''
+    - insert:
+        - id: ssg-hooks-claude-code
+          name: '@deepseek-ai/dsh-hooks-claude-code'
+          config:
+            configPath: ${config.home.homeDirectory}/.dsh/ssg-hooks.json
+  '';
+
   # Tailscale Serve forwards the browser's original Host header, so dsh's
   # browser-trust fence has to trust the MagicDNS authority. Resolve it at
   # start instead of embedding <host>.<tailnet>.ts.net in this repo; Serve
@@ -1513,7 +1548,8 @@ in
                 serverName: ${memoryServerName}
                 transport: streamable-http
                 url: ${memoryUrl}
-      '';
+      ''
+      + dshSsgHookPatch;
 
       # The Minimal-Agents agent preset, authored in the user preset root
       # `$DSH_HOME/.agent-presets` beside `liangshen` rather than patched into the
@@ -1677,6 +1713,9 @@ in
         description: Minimal's fixed persona and persistent shell, plus workspace instructions (AGENTS.md/CLAUDE.md), local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
         order: 6
       '';
+    }
+    // lib.optionalAttrs isDesktop {
+      ".dsh/ssg-hooks.json".text = ssgHooks;
     };
   };
 
@@ -1948,58 +1987,91 @@ in
   # exposes it over loopback Streamable HTTP (`/mcp`) and SSE (`/sse`); every
   # harness registers it as a remote server, so writes never race. Runs on all
   # three hosts (each keeps its own preserved store), not just the desktop.
-  systemd.user.services.agent-memory = {
-    Unit = {
-      Description = "Shared agent-memory knowledge-graph MCP server";
-      # Survive a slow start without tripping the default restart-rate limit.
-      StartLimitIntervalSec = 0;
+  systemd.user.services = {
+    agent-memory = {
+      Unit = {
+        Description = "Shared agent-memory knowledge-graph MCP server";
+        # Survive a slow start without tripping the default restart-rate limit.
+        StartLimitIntervalSec = 0;
+      };
+      Service = {
+        Type = "simple";
+        # The store directory must exist before the server opens its file; %h is
+        # expanded by systemd to the invoking user's home.
+        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.local/share/agent-memory";
+        ExecStart = lib.concatStringsSep " " [
+          "${pkgs.mcp-proxy}/bin/mcp-proxy"
+          "--host"
+          "127.0.0.1"
+          "--port"
+          (toString memoryPort)
+          "-e"
+          "MEMORY_FILE_PATH"
+          memoryFileSpec
+          "--"
+          "${pkgs.mcp-server-memory}/bin/mcp-server-memory"
+        ];
+        Restart = "always";
+        RestartSec = 2;
+        TimeoutStopSec = 10;
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
-    Service = {
-      Type = "simple";
-      # The store directory must exist before the server opens its file; %h is
-      # expanded by systemd to the invoking user's home.
-      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.local/share/agent-memory";
-      ExecStart = lib.concatStringsSep " " [
-        "${pkgs.mcp-proxy}/bin/mcp-proxy"
-        "--host"
-        "127.0.0.1"
-        "--port"
-        (toString memoryPort)
-        "-e"
-        "MEMORY_FILE_PATH"
-        memoryFileSpec
-        "--"
-        "${pkgs.mcp-server-memory}/bin/mcp-server-memory"
-      ];
-      Restart = "always";
-      RestartSec = 2;
-      TimeoutStopSec = 10;
-      StandardOutput = "journal";
-      StandardError = "journal";
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
 
-  # dsh-web is kept here rather than in home/services.nix because its
-  # ExecStart has to name the wrapped package defined above; it is gated to
-  # the desktop, which is where the matching Tailscale Serve unit exists.
-  systemd.user.services.dsh-web = lib.mkIf isDesktop {
-    Unit = {
-      Description = "DeepSeek Harness web UI";
-      # The service has to survive a boot where tailscaled is not ready to
-      # answer `tailscale status` yet; disable the default restart-rate limit.
-      StartLimitIntervalSec = 0;
+    # dsh-web is kept here rather than in home/services.nix because its
+    # ExecStart has to name the wrapped package defined above; it is gated to
+    # the desktop, which is where the matching Tailscale Serve unit exists.
+    dsh-web = lib.mkIf isDesktop {
+      Unit = {
+        Description = "DeepSeek Harness web UI";
+        # The service has to survive a boot where tailscaled is not ready to
+        # answer `tailscale status` yet; disable the default restart-rate limit.
+        StartLimitIntervalSec = 0;
+      };
+      Service = {
+        Type = "simple";
+        WorkingDirectory = config.home.homeDirectory;
+        ExecStart = lib.getExe dshWebServe;
+        Restart = "always";
+        RestartSec = 2;
+        TimeoutStopSec = 10;
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
-    Service = {
-      Type = "simple";
-      WorkingDirectory = config.home.homeDirectory;
-      ExecStart = lib.getExe dshWebServe;
-      Restart = "always";
-      RestartSec = 2;
-      TimeoutStopSec = 10;
-      StandardOutput = "journal";
-      StandardError = "journal";
+
+    # A healthy daemon still needs healthy rules: SSG's installed hub rules use
+    # bounded repeats (e.g. {80,}) that overflow the pure-Go engine's NFA
+    # capacity and FAIL-SECURE, matching every write. The live ~/.sigmashake
+    # rules and their rules.db rows were chunked below that bound; re-check
+    # `ssg rules native-compat ~/.sigmashake/rules/fs.rules` after any hub
+    # rules update before trusting the PreToolUse gate.
+    #
+    # SigmaShake's eval daemon. The PreToolUse hook calls `ssg hook eval` on
+    # every dsh tool call; direct evaluation works without the daemon, but the
+    # daemon keeps rule state hot and owns the dashboard/approval channel and
+    # audit stream. `ssg autostart` writes this same unit imperatively; declaring
+    # it here keeps ExecStart tied to pkgs.ssg and the flake instead of to
+    # whatever path the last `ssg update` happened to install. Gated to the
+    # desktop for the same reason pkgs.ssg is installed only there.
+    sigmashake-daemon = lib.mkIf isDesktop {
+      Unit = {
+        Description = "SigmaShake governance eval daemon";
+        After = [ "network.target" ];
+      };
+      Service = {
+        Type = "simple";
+        WorkingDirectory = config.home.homeDirectory;
+        ExecStart = "${lib.getExe pkgs.ssg} daemon";
+        Restart = "on-failure";
+        RestartSec = 10;
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
-    Install.WantedBy = [ "default.target" ];
   };
 }
