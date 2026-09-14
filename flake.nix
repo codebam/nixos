@@ -221,6 +221,29 @@
                 statix check .
                 touch $out
               '';
+
+          # Keep the language profiles in step with the nono version this
+          # flake pins: a schema or group-name change should fail the check
+          # instead of surfacing on the next sandboxed run.
+          nono-profiles =
+            let
+              profiles = import ./home/nono-profiles.nix;
+              files = pkgs.linkFarm "nono-profiles" (
+                nixpkgs.lib.mapAttrsToList (name: profile: {
+                  name = "${name}.json";
+                  path = pkgs.writeText "nono-profile-${name}.json" (builtins.toJSON profile);
+                }) profiles
+              );
+            in
+            pkgs.runCommand "nono-profiles-check" { nativeBuildInputs = [ pkgs.nono ]; } ''
+              export XDG_CONFIG_HOME="$TMPDIR/nono-config"
+              mkdir -p "$XDG_CONFIG_HOME/nono/profiles"
+              cp ${files}/*.json "$XDG_CONFIG_HOME/nono/profiles/"
+              for profile in ${nixpkgs.lib.escapeShellArgs (nixpkgs.lib.attrNames profiles)}; do
+                nono profile validate "$XDG_CONFIG_HOME/nono/profiles/$profile.json"
+              done
+              touch $out
+            '';
         }
       );
 
