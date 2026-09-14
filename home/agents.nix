@@ -770,6 +770,18 @@ let
         "~/.local/share/pnpm"
         "~/.config/gh"
         "~/.gnupg"
+        # dsh-nono (home/dsh-nono-plugin.mjs): a nested `nono run --profile
+        # <name>` launched by a dsh session writes its audit ledger, session
+        # records, and PTY-proxy target here. The language profiles deny this
+        # path to the confined child, so project code still cannot tamper with
+        # the trail.
+        #
+        # Literal, not $XDG_STATE_HOME: the launcher relocates the OUTER nono's
+        # own XDG_STATE_HOME (see dshSandboxed below) so this grant cannot
+        # overlap nono's protected state root, and the profile's
+        # environment.set_vars restores the normal root for the harness and the
+        # nested nono.
+        "~/.local/state/nono"
       ];
       read = [
         "/etc/nix"
@@ -780,6 +792,11 @@ let
         "/nix/var/nix/daemon-socket"
         "/run/pcscd"
         "/run/user/1000/gnupg"
+        # dsh-nono: the nested nono resolves `--profile <name>`, and the
+        # `/nono` command lists profiles, from the user profile directory.
+        # Read-only is deliberate: a sandboxed process must not be able to
+        # rewrite the rules it runs under.
+        "$XDG_CONFIG_HOME/nono"
       ];
       allow_file = [
         # openpty(3) opens /dev/ptmx; without it dsh's own bash tool fails
@@ -818,8 +835,66 @@ let
       signal_mode = "isolated";
       ipc_mode = "shared_memory_only";
     };
+    environment.set_vars = {
+      # dsh-nono: the launcher exports the private outer-nono state root into
+      # this process's environment; the harness and every nested
+      # `nono run --profile <name>` must see the user's normal root again, or
+      # the nested nono would keep its state inside the outer nono's protected
+      # root and the outer sandbox could not grant it.
+      XDG_STATE_HOME = "~/.local/state";
+    };
     workdir.access = "readwrite";
   };
+
+  # The interactive dsh surfaces (the TUI profile and the web front door) get
+  # their platform sandbox provider swapped for the nono-backed one defined in
+  # home/dsh-nono-plugin.mjs. `sandbox-local` is disabled and the plugin is
+  # inserted in its place; every confined shell (the persistent PTY bash and
+  # the one-shot bash executor) then spawns `nono run --profile <profile>`
+  # inside the harness sandbox. `/nono <profile>` switches the profile per
+  # session; `/nono off` returns the session to danger-full-access.
+  #
+  # These patch files used to be hand-written under ~/.dsh; the session-header
+  # row below is the one row they carried, preserved verbatim so both surfaces
+  # keep attaching x-opencode-session to the hand-declared route. The plugin
+  # module itself is installed by the home.activation entry below rather than
+  # as a home.file symlink: Node resolves an imported module through its
+  # symlink target, and a store-path module cannot resolve the profile-level
+  # @deepseek-ai/* module fallback.
+  dshProfilePatch = ''
+    # Your patch layer for this dsh profile, applied after every bundle layer:
+    # a top-level YAML array of loader patch entries (id-targeted config
+    # overrides, disables, and insert lists; `!!js` expressions allowed).
+    #
+    # Managed by home-manager now (home/agents.nix owns the nono sandbox
+    # provider); make changes in the flake, not under ~/.dsh.
+
+    # `opencode-go-deepseek` is a hand-declared pi-ai route, not one of the
+    # catalog ids dsh-opencode-session defaults to (opencode/opencode-go), so the
+    # plugin has to be told about it or it attaches no x-opencode-session header
+    # and OpenCode Go answers 400 MissingSessionID.
+    - id: opencode-go-session-header
+      config:
+        providers:
+          - opencode
+          - opencode-go
+          - opencode-go-deepseek
+
+    # dsh-nono: nono enforces the selected profile for every confined shell.
+    # `defaultProfile` is the profile a fresh session starts with (dev-base is
+    # the shared, project-scoped language sandbox); `/nono <name>` overrides it
+    # per session.
+    - id: sandbox
+      disabled: true
+
+    - insert:
+        - id: nono-sandbox
+          name: ${config.home.homeDirectory}/.dsh/profiles/nono/index.mjs
+          config:
+            nonoPath: ${lib.getExe pkgs.nono}
+            envPath: ${pkgs.coreutils}/bin/env
+            defaultProfile: dev-base
+  '';
 
   # Credentials that must be prepared outside the sandbox because the keyring
   # and gpg-agent live in the user session, not inside Landlock: gh's keyring
@@ -876,6 +951,13 @@ let
           exit 2
           ;;
       esac
+      # The outer nono's own audit/session state lives under a private root so
+      # that it cannot overlap ~/.local/state/nono, the state root the sandboxed
+      # harness grants to the per-command nested nono (and never overlaps its
+      # own protected root, which nono refuses). The dsh profile's
+      # environment.set_vars puts XDG_STATE_HOME back for the harness and
+      # everything below it.
+      export XDG_STATE_HOME="$HOME/.local/state/nono-launcher"
       exec ${lib.getExe pkgs.nono} run --silent --profile dsh --allow-cwd -- ${lib.getExe pkgs.dsh} "$@"
     '';
   };
@@ -902,6 +984,9 @@ let
       # shellcheck source=/dev/null
       . ${credentialEnv}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
+      # Same outer-nono state relocation as dshSandboxed; the dsh profile
+      # restores the harness's normal XDG_STATE_HOME.
+      export XDG_STATE_HOME="$HOME/.local/state/nono-launcher"
       exec ${lib.getExe pkgs.nono} run --silent --profile dsh -- ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
         --port ${toString dshWebBackendPort} \
@@ -1481,20 +1566,37 @@ in
       dshWebUrl
     ];
 
-    # Pi's settings.json is mutable state — `/settings` and the model picker
-    # write to it — so it cannot be a read-only store symlink like opencode's
-    # config. Merge instead, nix keys winning, the same way the hermes module
-    # handled its own config.yaml.
-    activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${piSettingsMerge}
-    '';
+    # Nested rather than three top-level `activation.` keys: statix's
+    # repeated-keys lint flags the flat form once the third entry lands.
+    activation = {
+      # Pi's settings.json is mutable state — `/settings` and the model picker
+      # write to it — so it cannot be a read-only store symlink like opencode's
+      # config. Merge instead, nix keys winning, the same way the hermes module
+      # handled its own config.yaml.
+      piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${piSettingsMerge}
+      '';
 
-    # dsh's settings.yaml is the same kind of live document (onboarding, chat
-    # prefs, permission preset, Models page), so it gets the same merge
-    # treatment: Nix owns only the llm-pi-ai OpenCode Go route.
-    activation.dshSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${dshSettingsMerge}
-    '';
+      # dsh's settings.yaml is the same kind of live document (onboarding, chat
+      # prefs, permission preset, Models page), so it gets the same merge
+      # treatment: Nix owns only the llm-pi-ai OpenCode Go route.
+      dshSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${dshSettingsMerge}
+      '';
+
+      # The dsh-nono plugin module. Copied rather than symlinked on purpose:
+      # Node resolves an imported module through its symlink target, so a
+      # store-path module would not see $DSH_HOME/profiles/node_modules and
+      # could not import the @deepseek-ai/* packages the plugin extends. The
+      # directory sits beside the profiles so that fallback resolves from the
+      # real file path.
+      dshNono = lib.mkIf isDesktop (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run mkdir -p "$HOME/.dsh/profiles/nono"
+          run install -m 0644 ${./dsh-nono-plugin.mjs} "$HOME/.dsh/profiles/nono/index.mjs"
+        ''
+      );
+    };
 
     # models.json, unlike settings.json, is user-authored config that pi only
     # reads, so it can be a plain store symlink.
@@ -1854,6 +1956,13 @@ in
       ".local/share/pnpm/.keep".text = "";
       ".npm/.keep".text = "";
       ".zvec-grep/.keep".text = "";
+
+      # dsh-nono: both interactive surfaces replace the platform sandbox
+      # provider with the nono-backed plugin. Managing these files here means
+      # `dsh plugin` and the TUI no longer own their patch layer; make changes
+      # in dshProfilePatch above.
+      ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
+      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
     };
   };
 

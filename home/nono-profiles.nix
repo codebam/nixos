@@ -111,6 +111,30 @@ in
 {
   "dev-base" = base;
 
+  # dsh's read-only sandbox mode has no per-invocation nono equivalent: a
+  # profile either grants a path or it does not. The dsh-nono provider maps
+  # read-only calls to this profile instead of the session's selected language
+  # profile, so plan mode still cannot write through the shell: Nix store
+  # toolchains and the cwd are readable, the project/caches are not writable,
+  # and credentials stay denied. /tmp stays writable because system_write_linux
+  # also carries the /dev sinks (including /dev/null) read-only mode needs.
+  "dsh-readonly" = {
+    extends = "linux-host-compat";
+    meta = {
+      name = "dsh-readonly";
+      description = "DeepSeek Harness read-only mode: project reads and Nix toolchains, project/cache writes denied";
+    };
+    groups = {
+      include = [
+        "nix_runtime"
+        "git_config"
+      ];
+      exclude = [ "linux_runtime_state" ];
+    };
+    workdir.access = "read";
+    network.block = false;
+  };
+
   nix =
     mkLang "dev-base" "nix" "Nix/flake development: daemon and Nix caches, project-scoped writes"
       {
