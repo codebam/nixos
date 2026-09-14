@@ -730,12 +730,20 @@ let
   # capability sandbox. The profile is deliberately narrow: dsh and its child
   # processes may write the system flake, the two usual project roots, dsh's
   # own state/caches, and the zvec-grep config. Required nono deny groups keep
-  # ~/.ssh, ~/.gnupg, ~/.aws, browser data, shell configs and histories out of
-  # reach, and /run/secrets is denied because loadKey exports the API keys
+  # cloud provider credentials, browser data and shell configs/histories out
+  # of reach; /run/secrets stays denied because loadKey exports the API keys
   # before the sandbox starts. `linux_runtime_state` (read of all of /run) is
   # excluded so that /run/secrets deny is enforceable under Landlock; the
   # narrower /run paths dsh needs come from nix_runtime and
   # system_read_linux_core.
+  #
+  # The exceptions below are intentional: git push needs the SSH config/keys
+  # and the gpg-agent SSH socket, gh needs its config (the token itself is
+  # exported as GH_TOKEN by credentialEnv below), GPG commit signing needs
+  # ~/.gnupg plus the gpg-agent sockets, SOPS needs the YubiKey age plugin to
+  # reach pcscd, and npm/pnpm auth lives in ~/.npmrc. Those paths are
+  # developer credentials; a compromised agent can read them. Keep that
+  # trade-off in mind before widening anything else.
   nonoDshProfile = {
     extends = "linux-host-compat";
     meta = {
@@ -760,13 +768,31 @@ let
         "~/.zvec-grep"
         "~/.npm"
         "~/.local/share/pnpm"
+        "~/.config/gh"
+        "~/.gnupg"
       ];
       read = [
         "/etc/nix"
+        "/etc/gnupg"
         "~/.config/nix"
+        "~/.config/sops"
+        "~/.ssh"
         "/nix/var/nix/daemon-socket"
+        "/run/pcscd"
+        "/run/user/1000/gnupg"
       ];
-      unix_socket = [ "/nix/var/nix/daemon-socket/socket" ];
+      allow_file = [ "~/.npmrc" ];
+      write_file = [ "~/.ssh/known_hosts" ];
+      bypass_protection = [
+        "~/.ssh"
+        "~/.gnupg"
+        "~/.npmrc"
+      ];
+      unix_socket = [
+        "/nix/var/nix/daemon-socket/socket"
+        "/run/pcscd/pcscd.comm"
+      ];
+      unix_socket_dir = [ "/run/user/1000/gnupg" ];
       deny = [
         "~/.sigmashake"
         "~/.claude"
@@ -790,6 +816,33 @@ let
     workdir.access = "readwrite";
   };
 
+  # Credentials that must be prepared outside the sandbox because the keyring
+  # and gpg-agent live in the user session, not inside Landlock: gh's keyring
+  # token becomes GH_TOKEN (so the sandboxed gh never needs DBus/keyring),
+  # SOPS is pointed at the YubiKey age identity plugin, SSH falls back to the
+  # gpg-agent SSH socket when the login environment did not export one, and
+  # GPG gets a real TTY for pinentry when there is one.
+  credentialEnv = pkgs.writeShellScript "agent-credential-env" ''
+    if [ -z "''${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
+      GH_TOKEN=$(gh auth token 2>/dev/null || true)
+      if [ -n "$GH_TOKEN" ]; then export GH_TOKEN; fi
+    fi
+    export SOPS_AGE_KEY_CMD='age-plugin-yubikey -i'
+    if [ -z "''${SSH_AUTH_SOCK:-}" ]; then
+      for candidate in "/run/user/$(id -u)/gnupg/S.gpg-agent.ssh" "$HOME/.gnupg/S.gpg-agent.ssh"; do
+        if [ -S "$candidate" ]; then
+          SSH_AUTH_SOCK=$candidate
+          export SSH_AUTH_SOCK
+          break
+        fi
+      done
+    fi
+    if [ -t 0 ] && [ -z "''${GPG_TTY:-}" ]; then
+      GPG_TTY=$(tty 2>/dev/null || true)
+      if [ -n "$GPG_TTY" ]; then export GPG_TTY; fi
+    fi
+  '';
+
   # Desktop-only dsh command: source the API keys outside the sandbox, then
   # run the upstream binary under nono. `--allow-cwd` makes the launch
   # directory the writable workspace, which is the intended project-level
@@ -797,11 +850,16 @@ let
   # agent most of the home directory.
   dshSandboxed = pkgs.writeShellApplication {
     name = "dsh";
-    runtimeInputs = [ pkgs.coreutils ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gh
+    ];
     text = ''
       set -eu
       # shellcheck source=/dev/null
       . ${loadKey}
+      # shellcheck source=/dev/null
+      . ${credentialEnv}
       case "$PWD" in
         "$HOME")
           echo "dsh: refusing to start in \$HOME; cd into a project directory first" >&2
@@ -828,6 +886,7 @@ let
     name = "dsh-web-serve";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gh
       pkgs.jq
       pkgs.tailscale
     ];
@@ -835,6 +894,8 @@ let
       set -eu
       # shellcheck source=/dev/null
       . ${loadKey}
+      # shellcheck source=/dev/null
+      . ${credentialEnv}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
       exec ${lib.getExe pkgs.nono} run --silent --profile dsh -- ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
