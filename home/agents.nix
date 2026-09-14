@@ -726,40 +726,98 @@ let
   # that service runs.
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
 
-  # dsh ships @deepseek-ai/dsh-hooks-claude-code, a bridge that runs Claude
-  # Code command hooks on its own tool interception seams. Forcing SSG's .rules
-  # therefore needs no bespoke dsh plugin: point the bridge at a Claude-format
-  # hook config whose PreToolUse hook calls `ssg hook eval`. The hook exits 2
-  # with the reason on stderr, which the bridge maps to a denied tool call.
-  # Only PreToolUse is wired -- it is the veto seam; SSG's Claude Code install
-  # also adds SessionStart/Stop/PostToolUse telemetry hooks, which are optional
-  # here and would otherwise run against dsh's own event stream. `hook eval`
-  # accepts dsh's lowercase tool names (bash/read/write/edit) and its payloads.
-  ssgHooks = builtins.toJSON {
-    hooks.PreToolUse = [
-      {
-        matcher = "";
-        hooks = [
-          {
-            type = "command";
-            command = "${lib.getExe pkgs.ssg} hook eval";
-          }
-        ];
-      }
-    ];
+  # DeepSeek Harness under nono: an Apache-2.0, kernel-enforced Landlock
+  # capability sandbox. The profile is deliberately narrow: dsh and its child
+  # processes may write the system flake, the two usual project roots, dsh's
+  # own state/caches, and the zvec-grep config. Required nono deny groups keep
+  # ~/.ssh, ~/.gnupg, ~/.aws, browser data, shell configs and histories out of
+  # reach, and /run/secrets is denied because loadKey exports the API keys
+  # before the sandbox starts. `linux_runtime_state` (read of all of /run) is
+  # excluded so that /run/secrets deny is enforceable under Landlock; the
+  # narrower /run paths dsh needs come from nix_runtime and
+  # system_read_linux_core.
+  nonoDshProfile = {
+    extends = "linux-host-compat";
+    meta = {
+      name = "dsh";
+      description = "DeepSeek Harness in a nono Landlock capability sandbox";
+    };
+    groups = {
+      include = [
+        "nix_runtime"
+        "node_runtime"
+        "git_config"
+        "user_caches_linux"
+      ];
+      exclude = [ "linux_runtime_state" ];
+    };
+    filesystem = {
+      allow = [
+        "/persistent/etc/nixos"
+        "~/Documents"
+        "~/Downloads"
+        "~/.dsh"
+        "~/.zvec-grep"
+        "~/.npm"
+        "~/.local/share/pnpm"
+      ];
+      read = [
+        "/etc/nix"
+        "~/.config/nix"
+        "/nix/var/nix/daemon-socket"
+      ];
+      unix_socket = [ "/nix/var/nix/daemon-socket/socket" ];
+      deny = [
+        "~/.sigmashake"
+        "~/.claude"
+        "~/.pi"
+        "/run/secrets"
+      ];
+    };
+    network = {
+      block = false;
+      # 3080 is dsh web; 7999 is the shared zvec-grep daemon that starts
+      # inside the sandbox on first use.
+      listen_port = [
+        3080
+        7999
+      ];
+    };
+    security = {
+      signal_mode = "isolated";
+      ipc_mode = "shared_memory_only";
+    };
+    workdir.access = "readwrite";
   };
 
-  # The same insert, in the global dsh patch layer. dsh resolves the bare
-  # specifier from its own installed closure, so the bridge is shipped, not
-  # authored: no new plugin package is needed. Gated with the rest of the SSG
-  # wiring because pkgs.ssg is only installed on the desktop.
-  dshSsgHookPatch = lib.optionalString isDesktop ''
-    - insert:
-        - id: ssg-hooks-claude-code
-          name: '@deepseek-ai/dsh-hooks-claude-code'
-          config:
-            configPath: ${config.home.homeDirectory}/.dsh/ssg-hooks.json
-  '';
+  # Desktop-only dsh command: source the API keys outside the sandbox, then
+  # run the upstream binary under nono. `--allow-cwd` makes the launch
+  # directory the writable workspace, which is the intended project-level
+  # containment; starting from $HOME is refused because that would hand the
+  # agent most of the home directory.
+  dshSandboxed = pkgs.writeShellApplication {
+    name = "dsh";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -eu
+      # shellcheck source=/dev/null
+      . ${loadKey}
+      case "$PWD" in
+        "$HOME")
+          echo "dsh: refusing to start in \$HOME; cd into a project directory first" >&2
+          exit 2
+          ;;
+        "$HOME"/* | /persistent/* | /tmp | /tmp/*) ;;
+        *)
+          echo "dsh: refusing unsupported workspace $PWD; start under \$HOME, /persistent, or /tmp" >&2
+          exit 2
+          ;;
+      esac
+      exec ${lib.getExe pkgs.nono} run --silent --profile dsh --allow-cwd -- ${lib.getExe pkgs.dsh} "$@"
+    '';
+  };
+
+  dshInstalled = if isDesktop then dshSandboxed else dsh;
 
   # Tailscale Serve forwards the browser's original Host header, so dsh's
   # browser-trust fence has to trust the MagicDNS authority. Resolve it at
@@ -769,12 +827,16 @@ let
   dshWebServe = pkgs.writeShellApplication {
     name = "dsh-web-serve";
     runtimeInputs = [
+      pkgs.coreutils
       pkgs.jq
       pkgs.tailscale
     ];
     text = ''
+      set -eu
+      # shellcheck source=/dev/null
+      . ${loadKey}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
-      exec ${dsh}/bin/dsh web \
+      exec ${lib.getExe pkgs.nono} run --silent --profile dsh -- ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
         --port ${toString dshWebBackendPort} \
         --no-open \
@@ -1346,9 +1408,12 @@ in
       opencode-desktop-beta
       opencode2
       pi
-      dsh
+      dshInstalled
     ]
-    ++ lib.optionals isDesktop [ dshWebUrl ];
+    ++ lib.optionals isDesktop [
+      pkgs.nono
+      dshWebUrl
+    ];
 
     # Pi's settings.json is mutable state — `/settings` and the model picker
     # write to it — so it cannot be a read-only store symlink like opencode's
@@ -1548,8 +1613,7 @@ in
                 serverName: ${memoryServerName}
                 transport: streamable-http
                 url: ${memoryUrl}
-      ''
-      + dshSsgHookPatch;
+      '';
 
       # The Minimal-Agents agent preset, authored in the user preset root
       # `$DSH_HOME/.agent-presets` beside `liangshen` rather than patched into the
@@ -1715,7 +1779,15 @@ in
       '';
     }
     // lib.optionalAttrs isDesktop {
-      ".dsh/ssg-hooks.json".text = ssgHooks;
+      # nono reads this profile by name (XDG config root for the user).
+      ".config/nono/profiles/dsh.json".text = builtins.toJSON nonoDshProfile;
+      # `workdir.access = readwrite` plus the wrapper's --allow-cwd writes
+      # here; the directory has to exist when Landlock is applied (a grant on
+      # a missing path is dropped), so home-manager creates the state dirs dsh
+      # is granted.
+      ".local/share/pnpm/.keep".text = "";
+      ".npm/.keep".text = "";
+      ".zvec-grep/.keep".text = "";
     };
   };
 
@@ -2032,7 +2104,13 @@ in
       };
       Service = {
         Type = "simple";
-        WorkingDirectory = config.home.homeDirectory;
+        # dsh is sandboxed; run from a directory the profile grants so the
+        # service has a valid CWD without granting all of $HOME.
+        WorkingDirectory = "${config.home.homeDirectory}/.dsh";
+        # A previous unsandboxed dsh may have left the shared zvec-grep daemon
+        # on 7999; stop it so the sandboxed daemon owns the port and its
+        # filesystem view is the sandboxed one.
+        ExecStartPre = "-${lib.getExe' pkgs.zvec-grep "zg"} server off";
         ExecStart = lib.getExe dshWebServe;
         Restart = "always";
         RestartSec = 2;
@@ -2043,35 +2121,5 @@ in
       Install.WantedBy = [ "default.target" ];
     };
 
-    # A healthy daemon still needs healthy rules: SSG's installed hub rules use
-    # bounded repeats (e.g. {80,}) that overflow the pure-Go engine's NFA
-    # capacity and FAIL-SECURE, matching every write. The live ~/.sigmashake
-    # rules and their rules.db rows were chunked below that bound; re-check
-    # `ssg rules native-compat ~/.sigmashake/rules/fs.rules` after any hub
-    # rules update before trusting the PreToolUse gate.
-    #
-    # SigmaShake's eval daemon. The PreToolUse hook calls `ssg hook eval` on
-    # every dsh tool call; direct evaluation works without the daemon, but the
-    # daemon keeps rule state hot and owns the dashboard/approval channel and
-    # audit stream. `ssg autostart` writes this same unit imperatively; declaring
-    # it here keeps ExecStart tied to pkgs.ssg and the flake instead of to
-    # whatever path the last `ssg update` happened to install. Gated to the
-    # desktop for the same reason pkgs.ssg is installed only there.
-    sigmashake-daemon = lib.mkIf isDesktop {
-      Unit = {
-        Description = "SigmaShake governance eval daemon";
-        After = [ "network.target" ];
-      };
-      Service = {
-        Type = "simple";
-        WorkingDirectory = config.home.homeDirectory;
-        ExecStart = "${lib.getExe pkgs.ssg} daemon";
-        Restart = "on-failure";
-        RestartSec = 10;
-        StandardOutput = "journal";
-        StandardError = "journal";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
   };
 }

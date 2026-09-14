@@ -14,9 +14,9 @@
     # nothing else in this closure wants, for a tool used a few times a year.
     # `nix shell nixpkgs#android-studio` when it is actually needed.
     packages = with pkgs; [
-      # Desktop app stays packaged (pkgs/sigmashake-desktop.nix) but is not
-      # on PATH. Re-add `sigmashake-desktop` here to turn it back on.
-      ssg
+      # SigmaShake's desktop app and CLI stay packaged
+      # (pkgs/sigmashake-desktop.nix, pkgs/ssg.nix) but are not on PATH:
+      # dsh is sandboxed with nono now. Re-add either here to use it.
       # Launches the vendor AppImage kept at ~/Downloads (pkgs/polariumcode).
       polariumcode
     ];
