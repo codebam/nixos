@@ -999,6 +999,11 @@ let
   # the per-process launch token to the Serve authority. The signed session
   # cookie it mints persists across dsh restarts (the signing secret lives in
   # ~/.dsh/.credentials.yaml), so this is a recovery path, not a daily command.
+  #
+  # The service's MainPID is the nono supervisor; the URL line is emitted by
+  # the dsh process inside it. Select the current systemd invocation instead
+  # of filtering on the supervisor PID so the token still resolves now that
+  # the sandbox wrapper owns MainPID.
   dshWebUrl = pkgs.writeShellApplication {
     name = "dsh-web-url";
     runtimeInputs = [
@@ -1013,6 +1018,11 @@ let
         echo "dsh-web.service is not running" >&2
         exit 1
       fi
+      invocation_id=$(systemctl --user show -p InvocationID --value dsh-web.service)
+      if [ -z "$invocation_id" ]; then
+        echo "dsh-web.service has not announced its URL yet" >&2
+        exit 1
+      fi
 
       token=""
       while IFS= read -r line; do
@@ -1022,7 +1032,7 @@ let
             break
             ;;
         esac
-      done < <(journalctl --user "_PID=$main_pid" -b --no-pager -o cat)
+      done < <(journalctl --user -u dsh-web.service "_SYSTEMD_INVOCATION_ID=$invocation_id" -b --no-pager -o cat)
 
       if [ -z "$token" ]; then
         echo "dsh-web.service has not announced its URL yet" >&2
