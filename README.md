@@ -77,6 +77,8 @@ per-host overrides for hardware, networking, and services.
 │   │                              helix, firefox, mpv (Anime4K), mangohud, browsers,
 │   │                              terminals (ghostty, rio)
 │   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
+│   ├── opensandbox.nix          # rootless-podman OpenSandbox server, osb/MCP wrappers
+│   ├── opensandbox-work.nix     # pinned per-work-type sandbox images + osb-work helper
 │   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
 │   ├── shell-common.nix         # bash, carapace, zoxide, direnv, nushell, tmux, fzf
 │   ├── stylix.nix               # Per-user theming targets
@@ -94,6 +96,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── dsh.nix                  # DeepSeek Harness CLI
 │   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
 │   ├── opencode-desktop-beta.nix
+│   ├── opensandbox-{sdk,cli,mcp}.nix  # OpenSandbox Python SDK, osb CLI, MCP server
 │   ├── pinentry-auto.nix        # terminal-aware pinentry
 │   ├── polariumcode/            # Polarium Code desktop app (AppImage wrapper)
 │   ├── ripwire.nix              # C++ codebase-map CLI + MCP server
@@ -202,7 +205,10 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
 - **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, with
-  zvec-grep and ripwire MCP servers
+  zvec-grep, ripwire and OpenSandbox MCP servers
+- **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
+  images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
+  steel, shell, browser, code); replaces the old nono Landlock profiles
 - **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)

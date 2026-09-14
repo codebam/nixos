@@ -726,178 +726,65 @@ let
   # that service runs.
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
 
-  # DeepSeek Harness under nono: an Apache-2.0, kernel-enforced Landlock
-  # capability sandbox. The profile is deliberately narrow: dsh and its child
-  # processes may write the system flake, the two usual project roots, dsh's
-  # own state/caches, and the zvec-grep config. Required nono deny groups keep
-  # cloud provider credentials, browser data and shell configs/histories out
-  # of reach; /run/secrets stays denied because loadKey exports the API keys
-  # before the sandbox starts. `linux_runtime_state` (read of all of /run) is
-  # excluded so that /run/secrets deny is enforceable under Landlock; the
-  # narrower /run paths dsh needs come from nix_runtime and
-  # system_read_linux_core.
-  #
-  # The exceptions below are intentional: git push needs the SSH config/keys
-  # and the gpg-agent SSH socket, gh needs its config (the token itself is
-  # exported as GH_TOKEN by credentialEnv below), GPG commit signing needs
-  # ~/.gnupg plus the gpg-agent sockets, SOPS needs the YubiKey age plugin to
-  # reach pcscd, and npm/pnpm auth lives in ~/.npmrc. Those paths are
-  # developer credentials; a compromised agent can read them. Keep that
-  # trade-off in mind before widening anything else.
-  nonoDshProfile = {
-    extends = "linux-host-compat";
-    meta = {
-      name = "dsh";
-      description = "DeepSeek Harness in a nono Landlock capability sandbox";
-    };
-    groups = {
-      include = [
-        "nix_runtime"
-        "node_runtime"
-        "git_config"
-        "user_caches_linux"
-      ];
-      exclude = [ "linux_runtime_state" ];
-    };
-    filesystem = {
-      allow = [
-        "/persistent/etc/nixos"
-        "~/Documents"
-        "~/Downloads"
-        "~/.dsh"
-        "~/.zvec-grep"
-        "~/.npm"
-        "~/.local/share/pnpm"
-        "~/.config/gh"
-        "~/.gnupg"
-        # dsh-nono (home/dsh-nono-plugin.mjs): a nested `nono run --profile
-        # <name>` launched by a dsh session writes its audit ledger, session
-        # records, and PTY-proxy target here. The language profiles deny this
-        # path to the confined child, so project code still cannot tamper with
-        # the trail.
-        #
-        # Literal, not $XDG_STATE_HOME: the launcher relocates the OUTER nono's
-        # own XDG_STATE_HOME (see dshSandboxed below) so this grant cannot
-        # overlap nono's protected state root, and the profile's
-        # environment.set_vars restores the normal root for the harness and the
-        # nested nono.
-        "~/.local/state/nono"
-      ];
-      read = [
-        "/etc/nix"
-        "/etc/gnupg"
-        "~/.config/nix"
-        "~/.config/sops"
-        "~/.ssh"
-        "/nix/var/nix/daemon-socket"
-        "/run/pcscd"
-        "/run/user/1000/gnupg"
-        # dsh-nono: the nested nono resolves `--profile <name>`, and the
-        # `/nono` command lists profiles, from the user profile directory.
-        # Read-only is deliberate: a sandboxed process must not be able to
-        # rewrite the rules it runs under.
-        "$XDG_CONFIG_HOME/nono"
-      ];
-      allow_file = [
-        # openpty(3) opens /dev/ptmx; without it dsh's own bash tool fails
-        # inside the sandbox with forkpty(3): out of pty devices.
-        "/dev/ptmx"
-        "~/.npmrc"
-      ];
-      write_file = [ "~/.ssh/known_hosts" ];
-      bypass_protection = [
-        "~/.ssh"
-        "~/.gnupg"
-        "~/.npmrc"
-      ];
-      unix_socket = [
-        "/nix/var/nix/daemon-socket/socket"
-        "/run/pcscd/pcscd.comm"
-      ];
-      unix_socket_dir = [ "/run/user/1000/gnupg" ];
-      deny = [
-        "~/.sigmashake"
-        "~/.claude"
-        "~/.pi"
-        "/run/secrets"
-      ];
-    };
-    network = {
-      block = false;
-      # 3080 is dsh web; 7999 is the shared zvec-grep daemon that starts
-      # inside the sandbox on first use.
-      listen_port = [
-        3080
-        7999
-      ];
-    };
-    security = {
-      signal_mode = "isolated";
-      ipc_mode = "shared_memory_only";
-    };
-    environment.set_vars = {
-      # dsh-nono: the launcher exports the private outer-nono state root into
-      # this process's environment; the harness and every nested
-      # `nono run --profile <name>` must see the user's normal root again, or
-      # the nested nono would keep its state inside the outer nono's protected
-      # root and the outer sandbox could not grant it.
-      XDG_STATE_HOME = "~/.local/state";
-    };
-    workdir.access = "readwrite";
-  };
+  # The OpenSandbox user service, osb wrappers, and the dsh container world
+  # only exist where rootless podman does (desktop and laptop).
+  podmanEnabled = osConfig.virtualisation.podman.enable or false;
 
-  # The interactive dsh surfaces (the TUI profile and the web front door) get
-  # their platform sandbox provider swapped for the nono-backed one defined in
-  # home/dsh-nono-plugin.mjs. `sandbox-local` is disabled and the plugin is
-  # inserted in its place; every confined shell (the persistent PTY bash and
-  # the one-shot bash executor) then spawns `nono run --profile <profile>`
-  # inside the harness sandbox. `/nono <profile>` switches the profile per
-  # session; `/nono off` returns the session to danger-full-access.
+  # Both interactive dsh surfaces keep the one hand-written patch row they
+  # carried before the sandbox providers changed: the hand-declared
+  # `opencode-go-deepseek` route must be named or dsh attaches no
+  # x-opencode-session header and OpenCode Go answers 400.
   #
-  # These patch files used to be hand-written under ~/.dsh; the session-header
-  # row below is the one row they carried, preserved verbatim so both surfaces
-  # keep attaching x-opencode-session to the hand-declared route. The plugin
-  # module itself is installed by the home.activation entry below rather than
-  # as a home.file symlink: Node resolves an imported module through its
-  # symlink target, and a store-path module cannot resolve the profile-level
-  # @deepseek-ai/* module fallback.
+  # On podman hosts the patch below also swaps the execution world:
+  # @codebam/dsh-opensandbox (copied into $DSH_HOME by the activation) registers
+  # ctx.subprocess and ctx.sandbox, so the two local rows are disabled and the
+  # stock bash, terminal, and fs-search plugins run in OpenSandbox containers.
+  # Hosts without podman keep the built-in bwrap/Landlock sandbox rows.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
     # overrides, disables, and insert lists; `!!js` expressions allowed).
     #
-    # Managed by home-manager now (home/agents.nix owns the nono sandbox
-    # provider); make changes in the flake, not under ~/.dsh.
+    # Managed by home-manager (home/agents.nix); make changes in the flake,
+    # not under ~/.dsh.
 
     # `opencode-go-deepseek` is a hand-declared pi-ai route, not one of the
-    # catalog ids dsh-opencode-session defaults to (opencode/opencode-go), so the
-    # plugin has to be told about it or it attaches no x-opencode-session header
-    # and OpenCode Go answers 400 MissingSessionID.
+    # catalog ids dsh-opencode-session defaults to (opencode/opencode-go), so
+    # the plugin has to be told about it or it attaches no x-opencode-session
+    # header and OpenCode Go answers 400 MissingSessionID.
     - id: opencode-go-session-header
       config:
         providers:
           - opencode
           - opencode-go
           - opencode-go-deepseek
+  ''
+  + lib.optionalString podmanEnabled ''
+    # dsh-opensandbox: replace the host execution world with OpenSandbox
+    # containers. The plugin registers ctx.subprocess and ctx.sandbox, so both
+    # local rows are disabled; the stock bash, terminal, and search tools then
+    # run over the container world unchanged. `apiKeyFile` is the per-boot key
+    # home/opensandbox.nix generates under the user runtime dir; the plugin
+    # reads it lazily, so login ordering with the server does not matter.
+    - id: subprocess
+      disabled: true
 
-    # dsh-nono: nono enforces the selected profile for every confined shell.
-    # `defaultProfile` is the profile a fresh session starts with (dev-base is
-    # the shared, project-scoped language sandbox); `/nono <name>` overrides it
-    # per session.
     - id: sandbox
       disabled: true
 
     - insert:
-        - id: nono-sandbox
-          name: ${config.home.homeDirectory}/.dsh/profiles/nono/index.mjs
+        - id: opensandbox-world
+          name: ${config.home.homeDirectory}/.dsh/profiles/opensandbox/index.mjs
           config:
-            nonoPath: ${lib.getExe pkgs.nono}
-            envPath: ${pkgs.coreutils}/bin/env
-            defaultProfile: dev-base
+            apiKeyFile: /run/user/1000/opensandbox/api-key
+            domain: 127.0.0.1:8090
+            image: docker.io/library/debian@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
+            requestTimeoutMs: 900000
+            timeoutSeconds: 43200
   '';
 
-  # Credentials that must be prepared outside the sandbox because the keyring
-  # and gpg-agent live in the user session, not inside Landlock: gh's keyring
+  # Credentials that must be prepared outside the confined shell because the
+  # keyring and gpg-agent live in the user session: gh's keyring
   # token becomes GH_TOKEN (so the sandboxed gh never needs DBus/keyring),
   # SOPS is pointed at the YubiKey age identity plugin, SSH falls back to the
   # gpg-agent SSH socket when the login environment did not export one, and
@@ -923,11 +810,12 @@ let
     fi
   '';
 
-  # Desktop-only dsh command: source the API keys outside the sandbox, then
-  # run the upstream binary under nono. `--allow-cwd` makes the launch
-  # directory the writable workspace, which is the intended project-level
-  # containment; starting from $HOME is refused because that would hand the
-  # agent most of the home directory.
+  # Desktop-only dsh command: source the API keys outside the harness, then
+  # run the upstream binary. dsh's own sandbox-local backend confines every
+  # shell command it spawns to the launch workspace; the separate OpenSandbox
+  # service (home/opensandbox.nix) is the container boundary for per-work-type
+  # projects. Starting in $HOME is still refused: it would make the whole home
+  # directory the writable workspace.
   dshSandboxed = pkgs.writeShellApplication {
     name = "dsh";
     runtimeInputs = [
@@ -951,14 +839,7 @@ let
           exit 2
           ;;
       esac
-      # The outer nono's own audit/session state lives under a private root so
-      # that it cannot overlap ~/.local/state/nono, the state root the sandboxed
-      # harness grants to the per-command nested nono (and never overlaps its
-      # own protected root, which nono refuses). The dsh profile's
-      # environment.set_vars puts XDG_STATE_HOME back for the harness and
-      # everything below it.
-      export XDG_STATE_HOME="$HOME/.local/state/nono-launcher"
-      exec ${lib.getExe pkgs.nono} run --silent --profile dsh --allow-cwd -- ${lib.getExe pkgs.dsh} "$@"
+      exec ${lib.getExe pkgs.dsh} "$@"
     '';
   };
 
@@ -984,10 +865,7 @@ let
       # shellcheck source=/dev/null
       . ${credentialEnv}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
-      # Same outer-nono state relocation as dshSandboxed; the dsh profile
-      # restores the harness's normal XDG_STATE_HOME.
-      export XDG_STATE_HOME="$HOME/.local/state/nono-launcher"
-      exec ${lib.getExe pkgs.nono} run --silent --profile dsh -- ${lib.getExe pkgs.dsh} web \
+      exec ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
         --port ${toString dshWebBackendPort} \
         --no-open \
@@ -1000,10 +878,9 @@ let
   # cookie it mints persists across dsh restarts (the signing secret lives in
   # ~/.dsh/.credentials.yaml), so this is a recovery path, not a daily command.
   #
-  # The service's MainPID is the nono supervisor; the URL line is emitted by
-  # the dsh process inside it. Select the current systemd invocation instead
-  # of filtering on the supervisor PID so the token still resolves now that
-  # the sandbox wrapper owns MainPID.
+  # The URL line is emitted by the dsh process itself; select the current
+  # systemd invocation instead of filtering on MainPID so the token still
+  # resolves across restarts and wrapper changes.
   dshWebUrl = pkgs.writeShellApplication {
     name = "dsh-web-url";
     runtimeInputs = [
@@ -1411,6 +1288,34 @@ let
       ]
       memoryGuidance;
 
+  # Shared by all three harnesses: OpenSandbox is reached through the same
+  # `osb`/`osb-work` wrappers regardless of which MCP client is mounted.
+  opensandboxGuidance = ''
+    ## OpenSandbox work sandboxes
+
+    On hosts with the local server (desktop and laptop), dsh's own one-shot
+    bash tool and persistent shell already run inside OpenSandbox containers
+    via the `@codebam/dsh-opensandbox` plugin; the session workspace is
+    bind-mounted at its host path. `osb-work` remains the explicit
+    per-work-type sandbox front end, and the only path on hosts without the
+    local server.
+
+    `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
+    c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
+    current project bind-mounted at `/workspace`:
+
+    - `osb-work start <type>` — create it and remember the sandbox id;
+    - `osb-work exec <type> -- <cmd...>` — run a command in it from `/workspace`;
+    - `osb-work stop <type>` — delete it;
+    - `osb-work run <type> -- <cmd...>` — one-shot create/run/delete.
+
+    Use `osb` directly for lifecycle flags the helper does not cover, and the
+    `opensandbox` MCP tools where they are mounted. Prefer a sandbox over the
+    host shell for untrusted dependencies, generated code, package installs,
+    or anything that would touch files outside the project; the host `$HOME`
+    and the rest of the user session are outside it.
+  '';
+
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
   # half-finished edit) left unparseable is rebuilt rather than aborting
   # activation.
@@ -1594,7 +1499,6 @@ in
       dshInstalled
     ]
     ++ lib.optionals isDesktop [
-      pkgs.nono
       dshWebUrl
     ];
 
@@ -1616,16 +1520,30 @@ in
         run ${dshSettingsMerge}
       '';
 
-      # The dsh-nono plugin module. Copied rather than symlinked on purpose:
-      # Node resolves an imported module through its symlink target, so a
-      # store-path module would not see $DSH_HOME/profiles/node_modules and
-      # could not import the @deepseek-ai/* packages the plugin extends. The
-      # directory sits beside the profiles so that fallback resolves from the
-      # real file path.
-      dshNono = lib.mkIf isDesktop (
+      # One-shot cleanup after dropping the nono provider: the old activation
+      # copied this module into $DSH_HOME, which home-manager does not manage
+      # and therefore does not remove when the provider goes away.
+      dshNonoCleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/nono/index.mjs"
+        run ${pkgs.coreutils}/bin/rmdir "$HOME/.dsh/profiles/nono" 2>/dev/null || true
+      '';
+
+      # The @codebam/dsh-opensandbox checkout lives outside this repo, in
+      # ~/Documents/git, so it stays independently publishable to npm. Copy it
+      # into $DSH_HOME rather than symlinking: Node resolves a module through
+      # its symlink target, so a symlinked module would look for
+      # @deepseek-ai/* next to the checkout instead of the profile's
+      # node_modules. The source checkout failing to exist is a hard error
+      # because dshProfilePatch above names the installed path.
+      dshOpenSandbox = lib.mkIf podmanEnabled (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          run mkdir -p "$HOME/.dsh/profiles/nono"
-          run install -m 0644 ${./dsh-nono-plugin.mjs} "$HOME/.dsh/profiles/nono/index.mjs"
+          run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/opensandbox"
+          run ${pkgs.coreutils}/bin/cp -f "$HOME/Documents/git/dsh-opensandbox/index.mjs" "$HOME/.dsh/profiles/opensandbox/index.mjs"
+          run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox/src"
+          run ${pkgs.coreutils}/bin/cp -r "$HOME/Documents/git/dsh-opensandbox/src" "$HOME/.dsh/profiles/opensandbox/src"
+          run ${pkgs.coreutils}/bin/cp -f "$HOME/Documents/git/dsh-opensandbox/package.json" "$HOME/.dsh/profiles/opensandbox/package.json"
+          run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/opensandbox/node_modules"
+          run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/opensandbox/node_modules"
         ''
       );
     };
@@ -1703,6 +1621,9 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
+        <!-- OPENSANDBOX_START -->
+        ${opensandboxGuidance}
+        <!-- OPENSANDBOX_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
@@ -1769,6 +1690,9 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidanceDsh}
         <!-- MEMORY_END -->
+        <!-- OPENSANDBOX_START -->
+        ${opensandboxGuidance}
+        <!-- OPENSANDBOX_END -->
       '';
 
       # dsh's user-global patch layer. Precedence is bundle layers, then the
@@ -1813,6 +1737,18 @@ in
                 serverName: ${memoryServerName}
                 transport: streamable-http
                 url: ${memoryUrl}
+            # dsh has no lazy MCP proxy: every schema this server advertises
+            # sits in every request. Keep the row while sandbox work is being
+            # delegated; remove it and use `osb`/`osb-work` from bash when the
+            # ~19 extra tool schemas cost more context than the platform saves.
+            - id: mcp-opensandbox
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: opensandbox
+                transport: stdio
+                command: opensandbox-mcp
+                args: ["--request-timeout-seconds", "900"]
+                toolCallTimeoutMs: 960000
       '';
 
       # The Minimal-Agents agent preset, authored in the user preset root
@@ -1979,20 +1915,17 @@ in
       '';
     }
     // lib.optionalAttrs isDesktop {
-      # nono reads this profile by name (XDG config root for the user).
-      ".config/nono/profiles/dsh.json".text = builtins.toJSON nonoDshProfile;
-      # `workdir.access = readwrite` plus the wrapper's --allow-cwd writes
-      # here; the directory has to exist when Landlock is applied (a grant on
-      # a missing path is dropped), so home-manager creates the state dirs dsh
-      # is granted.
+      # Package caches and the zvec-grep daemon state root are created eagerly
+      # so a first sandboxed command cannot race directory creation.
       ".local/share/pnpm/.keep".text = "";
       ".npm/.keep".text = "";
       ".zvec-grep/.keep".text = "";
-
-      # dsh-nono: both interactive surfaces replace the platform sandbox
-      # provider with the nono-backed plugin. Managing these files here means
-      # `dsh plugin` and the TUI no longer own their patch layer; make changes
-      # in dshProfilePatch above.
+    }
+    // lib.optionalAttrs podmanEnabled {
+      # Both interactive dsh surfaces get the same profile patch; managing the
+      # files here means `dsh plugin` and the TUI no longer own that layer.
+      # podmanEnabled, not isDesktop: the OpenSandbox world replacement in
+      # dshProfilePatch needs the local server, i.e. desktop and laptop.
       ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
       ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
     };
@@ -2076,6 +2009,22 @@ in
             enabled = true;
             # The service is idle-cheap; this only guards a slow first connect.
             timeout = 30000;
+          };
+
+          # OpenSandbox sandbox lifecycle/command/file tools. Sandbox creation
+          # may pull a multi-GB image, so allow a long tool call; the MCP
+          # server's own HTTP timeout is raised in its args for the same reason.
+          opensandbox = {
+            type = "local";
+            # Resolved from the session PATH; the wrapper is in home.packages
+            # and injects the per-boot API key (home/opensandbox.nix).
+            command = [
+              "opensandbox-mcp"
+              "--request-timeout-seconds"
+              "900"
+            ];
+            enabled = true;
+            timeout = 960000;
           };
         };
 
@@ -2178,6 +2127,9 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
+        <!-- OPENSANDBOX_START -->
+        ${opensandboxGuidance}
+        <!-- OPENSANDBOX_END -->
       '';
 
       # opencode's documented global skill root, under the config directory
@@ -2287,6 +2239,33 @@ in
               "decision"
             ];
           };
+
+          # OpenSandbox: the local rootless-podman sandbox platform. A sandbox
+          # create can pull a multi-GB image, so keep both the HTTP request and
+          # the adapter's tool-call timeout long. Lazy by default, so only the
+          # proxy tool is in context until `mcp({ search: "sandbox" })`.
+          opensandbox = {
+            command = "opensandbox-mcp";
+            args = [
+              "--request-timeout-seconds"
+              "900"
+            ];
+            requestTimeoutMs = 960000;
+            searchKeywords."*" = [
+              "sandbox"
+              "container"
+              "podman"
+              "isolated"
+              "isolate"
+              "execute"
+              "execution"
+              "code"
+              "shell"
+              "install"
+              "untrusted"
+              "work"
+            ];
+          };
         };
       };
     };
@@ -2341,13 +2320,11 @@ in
       };
       Service = {
         Type = "simple";
-        # dsh is sandboxed; run from a directory the profile grants so the
-        # service has a valid CWD without granting all of $HOME.
-        WorkingDirectory = "${config.home.homeDirectory}/.dsh";
-        # A previous unsandboxed dsh may have left the shared zvec-grep daemon
-        # on 7999; stop it so the sandboxed daemon owns the port and its
-        # filesystem view is the sandboxed one.
-        ExecStartPre = "-${lib.getExe' pkgs.zvec-grep "zg"} server off";
+        # dsh's built-in sandbox-local uses process.cwd() as the
+        # workspace-write root. The web front door exists to work on this
+        # flake, so root it there; other project directories belong in
+        # `osb-work` containers, not in this host shell.
+        WorkingDirectory = "/persistent/etc/nixos";
         ExecStart = lib.getExe dshWebServe;
         Restart = "always";
         RestartSec = 2;

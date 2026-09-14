@@ -11,6 +11,11 @@
 # `voxtype-plainify.nix` is deliberately absent: it is not a derivation, it
 # returns the sed program string that home/voxtype.nix wraps itself.
 { pkgs }:
+let
+  # The SDK is a sibling of the CLI/MCP attrs below, not a nixpkgs package;
+  # bind it once so all three resolve to the same derivation.
+  opensandbox = pkgs.callPackage ./opensandbox-sdk.nix { };
+in
 {
   # Home-manager both installs this and names it in a tmux popup binding.
   agent-overview = pkgs.callPackage ./agent-overview.nix { };
@@ -39,6 +44,14 @@
   # tag's package-lock.json and skips install scripts; every native dependency
   # (zvec, onnxruntime, ripgrep, llama.cpp, sharp) arrives prebuilt.
   zvec-grep = pkgs.callPackage ./zvec-grep.nix { };
+
+  # OpenSandbox Python SDK, CLI (`osb`), and MCP server. Pinned to the PyPI
+  # releases the sandbox server image supports; see home/opensandbox.nix for
+  # the server runtime and home/opensandbox-work.nix for the work-type
+  # catalog and `osb-work` helper.
+  inherit opensandbox;
+  opensandbox-cli = pkgs.callPackage ./opensandbox-cli.nix { inherit opensandbox; };
+  opensandbox-mcp = pkgs.callPackage ./opensandbox-mcp.nix { inherit opensandbox; };
 
   # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has no
   # lockfile and an unpublished devDependencies block, so the derivation

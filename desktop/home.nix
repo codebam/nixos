@@ -16,7 +16,8 @@
     packages = with pkgs; [
       # SigmaShake's desktop app and CLI stay packaged
       # (pkgs/sigmashake-desktop.nix, pkgs/ssg.nix) but are not on PATH:
-      # dsh is sandboxed with nono now. Re-add either here to use it.
+      # dsh's built-in sandbox and the OpenSandbox containers are the working
+      # boundaries now. Re-add either here to use it.
       # Launches the vendor AppImage kept at ~/Downloads (pkgs/polariumcode).
       polariumcode
     ];

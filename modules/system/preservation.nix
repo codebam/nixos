@@ -114,6 +114,10 @@ _: {
             # history, and mutable global plugin/config state.
             ".local/share/opencode"
             ".local/state/opencode"
+            # OpenSandbox server metadata (SQLite + snapshot records). The
+            # CLI/MCP wrappers and `osb-work` recover sandbox state from here
+            # after the root wipe; podman's own storage is preserved below.
+            ".local/state/opensandbox"
             ".config/opencode"
             # Pi agent settings and plugins
             ".pi"
