@@ -781,7 +781,12 @@ let
         "/run/pcscd"
         "/run/user/1000/gnupg"
       ];
-      allow_file = [ "~/.npmrc" ];
+      allow_file = [
+        # openpty(3) opens /dev/ptmx; without it dsh's own bash tool fails
+        # inside the sandbox with forkpty(3): out of pty devices.
+        "/dev/ptmx"
+        "~/.npmrc"
+      ];
       write_file = [ "~/.ssh/known_hosts" ];
       bypass_protection = [
         "~/.ssh"
