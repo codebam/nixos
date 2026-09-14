@@ -40,6 +40,19 @@ in
     # networking.timeServers here too was two sources for one truth.
     hostName = "nixos-desktop";
 
+    # IVPN's connect-time DNS chain drops port 53 to everything but its own
+    # pushed resolver, before the 100.64.0.0/10 user exception that lets
+    # ordinary tailnet traffic through (see
+    # desktop-laptop/configuration/tailscale-ivpn.nix). MagicDNS therefore
+    # cannot resolve local *.ts.net names while IVPN is connected, which makes
+    # the dsh web URL fail in Chromium with ERR_NAME_NOT_RESOLVED even though
+    # Tailscale Serve is healthy. Pin this host's own MagicDNS name to its
+    # stable Tailscale address so /etc/hosts answers before DNS; the CGNAT
+    # range already passes the IVPN killswitch, so only resolution was missing.
+    hosts = {
+      "100.101.46.50" = [ "nixos-desktop.tail7d7a2.ts.net" ];
+    };
+
     # Marks inbound connections to published ports so replies leave via the WAN
     # interface instead of the VPN default route. Desktop-only: it names this
     # host's interfaces, so it was dead weight on the laptop and Steam Deck.

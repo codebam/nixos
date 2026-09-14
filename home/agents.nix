@@ -1101,6 +1101,17 @@ let
             ];
             reasoning = true;
           }
+          {
+            _launch = true;
+            contextWindow = 153600; # same 160k tag, same headroom
+            id = "orcarouter/Qwen3.8-27B-Uncensored:160k";
+            input = [
+              "text"
+              "image"
+            ];
+            name = "Qwen3.8 27B Uncensored (160k)";
+            reasoning = true;
+          }
         ];
       };
       # CrofAI (OpenAI-compatible gateway). Like Ollama this is a provider pi
@@ -1433,7 +1444,7 @@ let
         # header is the documented placeholder that keeps pi-ai's
         # OpenAI-compatible client from refusing a keyless local route (the
         # credential store stays out of it, and Models-page discovery sends the
-        # same header). Metadata mirrors pi's ~/.pi/agent/models.json entry: the
+        # same header). Metadata mirrors pi's ~/.pi/agent/models.json entries: the
         # 160k tag less headroom, pi's 16K default output cap, vision input,
         # and only the thinking levels this family exposes. `off: none` because
         # Ollama spells "no thinking" as reasoning_effort none, where omitting
@@ -1448,6 +1459,17 @@ let
           models:
             - id: qwen3.8:160k
               name: Qwen3.8 27B (160k)
+              contextWindow: 153600
+              maxTokens: 16384
+              input:
+                - text
+                - image
+              reasoningEfforts:
+                off: none
+                high: high
+                max: max
+            - id: orcarouter/Qwen3.8-27B-Uncensored:160k
+              name: Qwen3.8 27B Uncensored (160k)
               contextWindow: 153600
               maxTokens: 16384
               input:
@@ -2065,6 +2087,36 @@ in
         # comes from models.dev, and the endpoint is built from
         # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
         provider = {
+          # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
+          # local `ollama`, so the endpoint and the local tag are declared here.
+          # The served window mirrors the pi/dsh entries: 153600 of the tag's
+          # 163840, leaving room for output and the 20k compaction reserve.
+          # opencode2 reads this same config directory.
+          ollama = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "Ollama (local)";
+            options = {
+              baseURL = "http://127.0.0.1:11434/v1";
+              apiKey = "ollama"; # Ollama ignores it; the SDK wants a value
+            };
+            models."orcarouter/Qwen3.8-27B-Uncensored:160k" = {
+              name = "Qwen3.8 27B Uncensored (160k)";
+              attachment = true;
+              reasoning = true;
+              tool_call = true;
+              limit = {
+                context = 153600;
+                output = 16384;
+              };
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+            };
+          };
           cloudflare-workers-ai.models.${cfModel} = { };
 
           # DeepSeek direct API (OpenAI-compatible endpoint).
