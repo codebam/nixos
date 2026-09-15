@@ -800,8 +800,10 @@ let
             #     talks to the host daemon, so `nix build` / `nixos-rebuild
             #     build` work and the store stays host-owned. Without the
             #     socket a read-only /nix/store cannot add paths.
-            #   /nix/var/nix/profiles + /run/current-system  what nh and
-            #     nixos-rebuild read about the running system.
+            #   /nix/var/nix/profiles  what nh and nixos-rebuild read about
+            #     the running system. (`/run/current-system` is deliberately
+            #     absent: the plugin resolves symlinks, so it would arrive as a
+            #     redundant path already visible through /nix/store.)
             #   .config/git, .config/dsh-sandbox, .gnupg, /run/user/1000/gnupg
             #     git identity and YubiKey-backed commit signing and SSH push;
             #     the private keys never enter the sandbox, only the agent
@@ -811,7 +813,6 @@ let
               - /etc/nix
               - /nix/var/nix/daemon-socket
               - /nix/var/nix/profiles
-              - /run/current-system
               - ${config.home.homeDirectory}/.config/git
               - ${config.home.homeDirectory}/.config/dsh-sandbox
               - ${config.home.homeDirectory}/.gnupg
