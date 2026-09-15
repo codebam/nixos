@@ -1654,19 +1654,20 @@ in
         run ${pkgs.coreutils}/bin/rmdir "$HOME/.dsh/profiles/nono" 2>/dev/null || true
       '';
 
-      # The @codebam/dsh-opensandbox checkout lives outside this repo, in
-      # ~/Documents/git, so it stays independently publishable to npm. Copy it
-      # into $DSH_HOME rather than symlinking: Node resolves a module through
-      # its symlink target, so a symlinked module would look for
-      # @deepseek-ai/* next to the checkout instead of the profile's
-      # node_modules. Only runs when dshContainerWorld is enabled above.
+      # @codebam/dsh-opensandbox is published from its own repository, pinned
+      # in pkgs/dsh-opensandbox.nix so a reaped sandbox is revalidated rather
+      # than left with a dead execd endpoint. Copy it into $DSH_HOME rather
+      # than symlinking: Node resolves a module through its symlink target, so
+      # a symlinked module would look for @deepseek-ai/* next to the store
+      # directory instead of the profile's node_modules. Only runs when
+      # dshContainerWorld is enabled above.
       dshOpenSandbox = lib.mkIf (podmanEnabled && dshContainerWorld) (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/opensandbox"
-          run ${pkgs.coreutils}/bin/cp -f "$HOME/Documents/git/dsh-opensandbox/index.mjs" "$HOME/.dsh/profiles/opensandbox/index.mjs"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/index.mjs "$HOME/.dsh/profiles/opensandbox/index.mjs"
           run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox/src"
-          run ${pkgs.coreutils}/bin/cp -r "$HOME/Documents/git/dsh-opensandbox/src" "$HOME/.dsh/profiles/opensandbox/src"
-          run ${pkgs.coreutils}/bin/cp -f "$HOME/Documents/git/dsh-opensandbox/package.json" "$HOME/.dsh/profiles/opensandbox/package.json"
+          run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/src "$HOME/.dsh/profiles/opensandbox/src"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/package.json "$HOME/.dsh/profiles/opensandbox/package.json"
           run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/opensandbox/node_modules"
           run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/opensandbox/node_modules"
         ''
@@ -2510,6 +2511,11 @@ in
         # flake, so root it there; other project directories belong in
         # `osb-work` containers, not in this host shell.
         WorkingDirectory = "/persistent/etc/nixos";
+        # Name the pinned plugin revision in the unit text so changing it
+        # restarts this long-lived web process during activation. Without the
+        # marker, an activation that only rewrites the copied module would
+        # leave the old plugin in memory until the next boot.
+        Environment = [ "DSH_OPENSANDBOX_PLUGIN=${pkgs.dsh-opensandbox}" ];
         ExecStart = lib.getExe dshWebServe;
         Restart = "always";
         RestartSec = 2;

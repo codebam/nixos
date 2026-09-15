@@ -59,6 +59,13 @@ in
   # --expose-internals (its HMR plugin requires it). See pkgs/dsh.nix.
   dsh = pkgs.callPackage ./dsh.nix { };
 
+  # dsh's OpenSandbox execution-world plugin. It lives in its own repository so
+  # it stays independently publishable to npm; this host pins the revision that
+  # revalidates a reaped sandbox instead of leaving commands on its dead execd
+  # endpoint. home/agents.nix copies it into $DSH_HOME next to the profile's
+  # node_modules.
+  dsh-opensandbox = pkgs.callPackage ./dsh-opensandbox.nix { };
+
   # OpenCode's beta CLI from npm (@opencode/cli, command `opencode2`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };

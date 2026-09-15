@@ -94,6 +94,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── unfree.nix               # Unfree names the hosts and package flake allow
 │   ├── agent-overview.nix       # tmux agent dashboard
 │   ├── dsh.nix                  # DeepSeek Harness CLI
+│   ├── dsh-opensandbox.nix      # dsh's OpenSandbox container-world plugin
 │   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
 │   ├── opencode-desktop-beta.nix
 │   ├── opensandbox-{sdk,cli,mcp}.nix  # OpenSandbox Python SDK, osb CLI, MCP server
