@@ -137,7 +137,7 @@ in
       recommendedTlsSettings = true;
       virtualHosts =
         let
-          # Both public names serve navidrome and nothing else.
+          # The public name serves navidrome and nothing else.
           publicNavidrome = {
             forceSSL = true;
             enableACME = true;
@@ -161,7 +161,6 @@ in
             locations."/".return = "444";
           };
 
-          "codebam.tplinkdns.com" = publicNavidrome;
           "music.codebam.ca" = publicNavidrome;
 
           # Tailnet only. The admin UIs live here, on this host's MagicDNS
