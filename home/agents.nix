@@ -1287,6 +1287,38 @@ let
       ]
       (builtins.readFile "${pkgs.agent-browser}/skills/agent-browser/SKILL.md");
 
+  # Cloudflare's security-audit skill (MIT) is a directory bundle: SKILL.md
+  # plus domain companions, the report schema, and zero-dependency node
+  # validators. It cannot be reproduced from a Nix string the way the
+  # agent-browser stub above is, and `npx skills add` would put an unpinned
+  # copy outside the flake that the next install silently replaces. Pin the
+  # upstream commit instead and bump rev and hash together:
+  #
+  #   nix-prefetch-url --unpack --type sha256 \
+  #     https://github.com/cloudflare/security-audit-skill/archive/<rev>.tar.gz
+  #   nix-hash --to-sri --type sha256 <hash>
+  #
+  # The body only loads on a matching request -- an explicit audit or pen
+  # test runs the six-phase workflow, a security question stays
+  # guidance-only -- so the catalog entry adds description text, not the
+  # ~5k-line bundle, to every session.
+  securityAuditSrc = pkgs.fetchFromGitHub {
+    owner = "cloudflare";
+    repo = "security-audit-skill";
+    rev = "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8";
+    hash = "sha256-oVVACjotkHvllQGxEP8yWaEt4c3GxT0d909TUM5P3NM=";
+  };
+
+  # Copy the bundle out of the fetched tree instead of linking
+  # ${securityAuditSrc}/skills/security-audit directly: upstream's MIT
+  # LICENSE sits at the repo root, outside the skill directory, and the
+  # installed copy should carry the notice with it.
+  securityAuditSkill = pkgs.runCommand "security-audit-skill" { } ''
+    mkdir -p $out
+    cp -r --no-preserve=mode ${securityAuditSrc}/skills/security-audit/. $out/
+    cp ${securityAuditSrc}/LICENSE $out/LICENSE
+  '';
+
   # Always-loaded companion to that stub. The skill body is only fetched when
   # the agent loads the skill, so the no-install rule and the snapshot-refresh
   # loop belong in every harness's global instruction file too. The text is the
@@ -1655,6 +1687,11 @@ in
       # copy lives under xdg.configFile below.
       ".pi/agent/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
       ".dsh/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
+
+      # Cloudflare's security-audit bundle in dsh's user skill root
+      # (`~/.dsh/skills`, rank 400). The target is a symlink to the bundle;
+      # dsh's provider follows symlinked entries when it scans.
+      ".dsh/skills/security-audit".source = securityAuditSkill;
 
       # Files the dsh container world reads through its read-only mounts
       # (see dshProfilePatch below).
@@ -2279,6 +2316,11 @@ in
       # the stable and beta CLIs share. A copy here makes the setup independent
       # of opencode's `~/.claude/skills` auto-discovery fallback.
       "opencode/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
+
+      # The same for opencode2, which shares this config directory with the
+      # stable CLI: it scans both `skill/` and `skills/` under a config root
+      # and follows the directory symlink.
+      "opencode/skills/security-audit".source = securityAuditSkill;
 
       # The same server in the host-agnostic format pi-mcp-adapter reads. The
       # adapter is already installed (npm:pi-mcp-adapter in ~/.pi/agent/npm) and
