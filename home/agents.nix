@@ -730,16 +730,25 @@ let
   # only exist where rootless podman does (desktop and laptop).
   podmanEnabled = osConfig.virtualisation.podman.enable or false;
 
+  # The @codebam/dsh-opensandbox world replacement is off by default. The
+  # pinned OpenSandbox server image cannot carry the execd WebSocket upgrade
+  # through its published-port proxy (`timed out during opening handshake`),
+  # and its server-side close path then crashes on a websockets API mismatch,
+  # so dsh's persistent-shell tool hangs on every command. The plugin itself
+  # is built and tested over the HTTP executor; flip this on once upstream
+  # fixes the proxy and it will wire itself back in.
+  dshContainerWorld = false;
+
   # Both interactive dsh surfaces keep the one hand-written patch row they
   # carried before the sandbox providers changed: the hand-declared
   # `opencode-go-deepseek` route must be named or dsh attaches no
   # x-opencode-session header and OpenCode Go answers 400.
   #
-  # On podman hosts the patch below also swaps the execution world:
-  # @codebam/dsh-opensandbox (copied into $DSH_HOME by the activation) registers
-  # ctx.subprocess and ctx.sandbox, so the two local rows are disabled and the
-  # stock bash, terminal, and fs-search plugins run in OpenSandbox containers.
-  # Hosts without podman keep the built-in bwrap/Landlock sandbox rows.
+  # dshContainerWorld (off by default, see above) also swaps the execution
+  # world: @codebam/dsh-opensandbox registers ctx.subprocess and ctx.sandbox,
+  # so the two local rows are disabled and the stock bash, terminal, and
+  # fs-search plugins would run in OpenSandbox containers. While it is off,
+  # every host keeps the built-in bwrap/Landlock sandbox rows.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
@@ -759,7 +768,7 @@ let
           - opencode-go
           - opencode-go-deepseek
   ''
-  + lib.optionalString podmanEnabled ''
+  + lib.optionalString dshContainerWorld ''
     # dsh-opensandbox: replace the host execution world with OpenSandbox
     # containers. The plugin registers ctx.subprocess and ctx.sandbox, so both
     # local rows are disabled; the stock bash, terminal, and search tools then
@@ -1293,12 +1302,12 @@ let
   opensandboxGuidance = ''
     ## OpenSandbox work sandboxes
 
-    On hosts with the local server (desktop and laptop), dsh's own one-shot
-    bash tool and persistent shell already run inside OpenSandbox containers
-    via the `@codebam/dsh-opensandbox` plugin; the session workspace is
-    bind-mounted at its host path. `osb-work` remains the explicit
-    per-work-type sandbox front end, and the only path on hosts without the
-    local server.
+    `osb-work` is the explicit per-work-type sandbox front end on every host
+    with the local server (desktop and laptop), and the only path on hosts
+    without one. dsh currently runs its stock built-in bwrap/Landlock sandbox:
+    its container-world plugin is packaged but disabled because the pinned
+    OpenSandbox server image cannot proxy the execd WebSocket upgrade
+    (published-port handshake timeout, then a server-side websockets crash).
 
     `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
     c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
@@ -1533,9 +1542,8 @@ in
       # into $DSH_HOME rather than symlinking: Node resolves a module through
       # its symlink target, so a symlinked module would look for
       # @deepseek-ai/* next to the checkout instead of the profile's
-      # node_modules. The source checkout failing to exist is a hard error
-      # because dshProfilePatch above names the installed path.
-      dshOpenSandbox = lib.mkIf podmanEnabled (
+      # node_modules. Only runs when dshContainerWorld is enabled above.
+      dshOpenSandbox = lib.mkIf (podmanEnabled && dshContainerWorld) (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/opensandbox"
           run ${pkgs.coreutils}/bin/cp -f "$HOME/Documents/git/dsh-opensandbox/index.mjs" "$HOME/.dsh/profiles/opensandbox/index.mjs"
@@ -1924,8 +1932,8 @@ in
     // lib.optionalAttrs podmanEnabled {
       # Both interactive dsh surfaces get the same profile patch; managing the
       # files here means `dsh plugin` and the TUI no longer own that layer.
-      # podmanEnabled, not isDesktop: the OpenSandbox world replacement in
-      # dshProfilePatch needs the local server, i.e. desktop and laptop.
+      # podmanEnabled, not isDesktop: these hosts are where the OpenSandbox
+      # service exists, so dshContainerWorld can be flipped on there.
       ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
       ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
     };
