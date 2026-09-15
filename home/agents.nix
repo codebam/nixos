@@ -1306,12 +1306,13 @@ let
     `osb-work` is the explicit per-work-type sandbox front end on every host
     with the local server (desktop and laptop), and the only path on hosts
     without one. On those hosts dsh's own execution world is containerized too
-    (the @codebam/dsh-opensandbox profile row), so its bash, terminal and
+    (the @codebam/dsh-opensandbox profile row): its bash, terminal and
     fs-search tools already run inside a sandbox with the project bind-mounted
-    at the same absolute path; reach for `osb-work` when a task wants a
-    *specific* toolchain image (python, rust, browser, ...) rather than the
-    general-purpose one. Hosts without podman (steamdeck) keep dsh's built-in
-    bwrap/Landlock sandbox.
+    at the same absolute path. That container cannot reach the local
+    OpenSandbox API -- the server is loopback-only and its key lives in the
+    host runtime dir -- so `osb-work` belongs to the host-side harnesses and to
+    a host terminal, not to a dsh session's own shell. Hosts without podman
+    (steamdeck) keep dsh's built-in bwrap/Landlock sandbox.
 
     `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
     c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
