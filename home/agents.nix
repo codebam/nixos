@@ -1873,6 +1873,30 @@ in
                   * Please avoid commands that may produce a very large amount of output.
                   * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
 
+        # Compaction: `/compact` and automatic history compaction are
+        # agent-plane choices, so a preset that omits this group has neither.
+        # The isolate realm keeps this preset's compaction instance private,
+        # like persistent-shell above.
+        - id: compaction
+          name: cordis:group
+          group: true
+          isolate:
+            compaction: true
+            toolResultPruner: true
+          config:
+            - id: compaction-basic
+              name: '@deepseek-ai/dsh-compaction-basic'
+
+            - id: command-compact
+              name: '@deepseek-ai/dsh-command-compact'
+
+            - id: tool-result-pruner
+              name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+              config:
+                thresholdChars: 8192
+                headChars: 4096
+                tailChars: 1024
+
         # Continuous delegation: the spawn/fork tools plus the control API over
         # continuable children (`send_message`/`interrupt_agent` and `list_agents`).
         - id: delegation
