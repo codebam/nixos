@@ -819,11 +819,17 @@ let
               - /run/user/1000/gnupg
 
             # GIT_CONFIG_GLOBAL is the sandbox git config (the real one plus
-            # the gpg/ssh helpers); the cert file replaces the host's
-            # /etc/ssl/certs/ca-bundle.crt, which a Debian image does not have.
+            # the gpg/ssh helpers). The certificate entries are all the same
+            # store bundle under the four names the tools use: the Debian image
+            # ships no system CA store, so without them `gh` (Go), curl and git
+            # over HTTPS fail with "certificate signed by unknown authority"
+            # even though the token is valid.
             env:
               GIT_CONFIG_GLOBAL: ${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig
               NIX_SSL_CERT_FILE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+              SSL_CERT_FILE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+              GIT_SSL_CAINFO: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+              CURL_CA_BUNDLE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
 
             # Host-prepared credentials, so `git push` and `gh` work inside the
             # sandbox exactly as they do outside it. Unset names are skipped.
