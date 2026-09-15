@@ -791,6 +791,44 @@ let
             image: docker.io/library/debian@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
             requestTimeoutMs: 900000
             timeoutSeconds: 43200
+
+            # What makes the container a usable workspace rather than only a
+            # boundary. Everything here is read-only, and each entry is a
+            # deliberate grant:
+            #
+            #   /etc/nix + /nix/var/nix/daemon-socket  the container's nix
+            #     talks to the host daemon, so `nix build` / `nixos-rebuild
+            #     build` work and the store stays host-owned. Without the
+            #     socket a read-only /nix/store cannot add paths.
+            #   /nix/var/nix/profiles + /run/current-system  what nh and
+            #     nixos-rebuild read about the running system.
+            #   .config/git, .config/dsh-sandbox, .gnupg, /run/user/1000/gnupg
+            #     git identity and YubiKey-backed commit signing and SSH push;
+            #     the private keys never enter the sandbox, only the agent
+            #     sockets and the keyring the wrapper copies (dshSandboxGpg).
+            extraReadOnlyMounts:
+              - /nix/store
+              - /etc/nix
+              - /nix/var/nix/daemon-socket
+              - /nix/var/nix/profiles
+              - /run/current-system
+              - ${config.home.homeDirectory}/.config/git
+              - ${config.home.homeDirectory}/.config/dsh-sandbox
+              - ${config.home.homeDirectory}/.gnupg
+              - /run/user/1000/gnupg
+
+            # GIT_CONFIG_GLOBAL is the sandbox git config (the real one plus
+            # the gpg/ssh helpers); the cert file replaces the host's
+            # /etc/ssl/certs/ca-bundle.crt, which a Debian image does not have.
+            env:
+              GIT_CONFIG_GLOBAL: ${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig
+              NIX_SSL_CERT_FILE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+
+            # Host-prepared credentials, so `git push` and `gh` work inside the
+            # sandbox exactly as they do outside it. Unset names are skipped.
+            forwardEnv:
+              - SSH_AUTH_SOCK
+              - GH_TOKEN
   '';
 
   # Credentials that must be prepared outside the confined shell because the
@@ -819,6 +857,37 @@ let
       if [ -n "$GPG_TTY" ]; then export GPG_TTY; fi
     fi
   '';
+
+  # The dsh container world mounts the host keyring read-only -- a sandbox must
+  # not be able to edit it -- but gpg will not sign without creating lock files
+  # in its homedir (verified: "failed to create temporary file ... Permission
+  # denied", then "no default secret key"). This wrapper gives it a writable
+  # copy inside the container on first use and links the agent socket in, so the
+  # private key itself never leaves the YubiKey. The sandbox git config below
+  # points gpg.program here.
+  dshSandboxGpg = pkgs.writeShellApplication {
+    name = "dsh-sandbox-gpg";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnupg
+    ];
+    text = ''
+      set -eu
+      source_home=''${DSH_SANDBOX_GNUPGHOME:-/home/codebam/.gnupg}
+      agent_dir=''${DSH_SANDBOX_GPG_AGENT_DIR:-/run/user/1000/gnupg}
+      work=''${TMPDIR:-/tmp}/dsh-sandbox-gnupg
+      if [ ! -d "$work" ]; then
+        mkdir -p "$work"
+        chmod 700 "$work"
+        cp -a "$source_home/." "$work/" 2>/dev/null || true
+        for socket in S.gpg-agent S.gpg-agent.ssh S.gpg-agent.extra S.gpg-agent.browser; do
+          if [ -S "$agent_dir/$socket" ]; then ln -sfn "$agent_dir/$socket" "$work/$socket"; fi
+        done
+      fi
+      export GNUPGHOME="$work"
+      exec gpg "$@"
+    '';
+  };
 
   # Desktop-only dsh command: source the API keys outside the harness, then
   # run the upstream binary. dsh's own sandbox-local backend confines every
@@ -1311,8 +1380,12 @@ let
     at the same absolute path. That container cannot reach the local
     OpenSandbox API -- the server is loopback-only and its key lives in the
     host runtime dir -- so `osb-work` belongs to the host-side harnesses and to
-    a host terminal, not to a dsh session's own shell. Hosts without podman
-    (steamdeck) keep dsh's built-in bwrap/Landlock sandbox.
+    a host terminal, not to a dsh session's own shell. That container does have
+    the host store, the Nix daemon socket and the git/GPG agent mounts, so
+    `nix build`, `nixos-rebuild build`, signed `git commit` and `git push` all
+    work from a dsh session; activating a system generation is still the
+    human's call. Hosts without podman (steamdeck) keep dsh's built-in
+    bwrap/Landlock sandbox.
 
     `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
     c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
@@ -1575,6 +1648,32 @@ in
       # copy lives under xdg.configFile below.
       ".pi/agent/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
       ".dsh/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
+
+      # Files the dsh container world reads through its read-only mounts
+      # (see dshProfilePatch below).
+      #
+      # The git config `include`s the real one -- identity, signing key and
+      # credential helpers stay authoritative in one place -- and adds the two
+      # programs the read-only mounts cannot run as-is: gpg needs a writable
+      # homedir (dshSandboxGpg above), and ssh needs a known_hosts that is not
+      # ~/.ssh, which holds an unencrypted private key that a read-only mount
+      # would still hand to every sandbox.
+      ".config/dsh-sandbox/gitconfig".text = ''
+        [include]
+        	path = ${config.home.homeDirectory}/.config/git/config
+        [gpg]
+        	program = ${dshSandboxGpg}/bin/dsh-sandbox-gpg
+        [core]
+        	sshCommand = ssh -o UserKnownHostsFile=${config.home.homeDirectory}/.config/dsh-sandbox/known_hosts
+      '';
+
+      # GitHub's published host keys (https://api.github.com/meta). Public data,
+      # kept separate from ~/.ssh for the reason above.
+      ".config/dsh-sandbox/known_hosts".text = ''
+        github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+        github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+        github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+      '';
 
       # pi's global context file (docs/usage.md: "Context Files"). pi is not one
       # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
