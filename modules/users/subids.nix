@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   # userborn (services.userborn.enable) replaces the perl update-users-groups
   # path, and it knows nothing about subUidRanges/subGidRanges -- it just leaves

@@ -213,7 +213,7 @@
               # Only the .nix files, plus statix.toml which statix reads for
               # its ignore list. `${./.}` would be the whole worktree, so the
               # check rebuilt whenever wallpaper.png or the README changed --
-              # neither of which statix or deadnix ever looks at.
+              # neither of which statix, deadnix or nixfmt ever looks at.
               inherit (nixpkgs.lib) fileset;
               src = fileset.toSource {
                 root = ./.;
@@ -228,12 +228,17 @@
                 nativeBuildInputs = [
                   pkgs.statix
                   pkgs.deadnix
+                  pkgs.nixfmt
                 ];
               }
               ''
                 cd ${src}
                 deadnix --fail .
                 statix check .
+                # nixfmt-tree is the flake formatter; nixfmt --check is that
+                # formatter's read-only mode, so `nix fmt` cannot drift from
+                # what this check accepts.
+                find . -name '*.nix' -print0 | xargs -0 nixfmt --check
                 touch $out
               '';
 
