@@ -40,6 +40,45 @@ let
   # configured here; switch this value if you need them.
   sandboxNetwork = "opensandbox";
 
+  # All OpenSandbox containers share this user slice, and its MemoryMax keeps
+  # the whole platform below 80% of host RAM. The lifecycle server container
+  # joins through --cgroup-parent in ExecStart and the sandboxes it creates
+  # join through the sitecustomize patch below; see the comment on
+  # serverSitecustomize for why both sides are needed.
+  containerSlice = "opensandbox.slice";
+  containerMemoryMax = "80%";
+  containerMemoryHigh = "70%";
+  containerMemorySwapMax = "2G";
+  containerCpuQuota = "800%";
+  containerCpuWeight = 50;
+  containerTasksMax = 16384;
+  containerIoWeight = 50;
+
+  # Per-sandbox resource defaults and maxima, applied inside the server by the
+  # sitecustomize patch. These are byte/nano-CPU values because that is what
+  # the Docker API takes; the SDK's own defaults are cpu=1/memory=2Gi, so the
+  # defaults here only matter for raw API clients and the maxima stop a single
+  # sandbox from consuming the whole 80% slice. dsh requests cpu=4/memory=8Gi,
+  # which stays below both maxima.
+  sandboxDefaultCpuNano = 1000000000;
+  sandboxDefaultMemoryBytes = 2147483648;
+  sandboxMaxCpuNano = 8000000000;
+  sandboxMaxMemoryBytes = 17179869184;
+  sandboxMaxGpu = 1;
+
+  # Host paths that are always mounted read-only regardless of what a create
+  # request asks for: they are either immutable inputs (/nix/store), host
+  # control sockets, or credentials. Workspaces and /persistent stay writable.
+  sandboxReadonlyHostPaths = [
+    "/nix/store"
+    "/etc/nix"
+    "/nix/var/nix"
+    "/run/user/1000/gnupg"
+    "/home/codebam/.gnupg"
+    "/home/codebam/.config/git"
+    "/home/codebam/.config/dsh-sandbox"
+  ];
+
   # The server config holds the API key, so it is generated under the user's
   # runtime dir (tmpfs, mode 0600) on every boot rather than stored in the Nix
   # store or SOPS. The CLI/MCP wrappers read the same file.
@@ -71,6 +110,16 @@ let
         printf '%s\n' 'host = "127.0.0.1"'
         printf '%s\n' "port = ${toString serverPort}"
         printf '%s\n' "api_key = \"$key\""
+        # A requested TTL may not exceed 24h; osb-work defaults to 8h and dsh
+        # to 12h. A request with no timeout gets the SDK default (10m), but an
+        # explicit `timeout = null` (osb --timeout none) still means manual
+        # cleanup and bypasses this cap.
+        printf '%s\n' 'max_sandbox_timeout_seconds = 86400'
+        # Local single-user backpressure settings; upstream defaults are 1024
+        # concurrent connections / 200 thread-pool workers / 2048 backlog.
+        printf '%s\n' 'limit_concurrency = 128'
+        printf '%s\n' 'thread_pool_size = 64'
+        printf '%s\n' 'backlog = 256'
         printf '\n'
         printf '%s\n' '[proxy]'
         printf '%s\n' '# Sandboxes live on a rootless bridge network the server cannot route to,'
@@ -113,30 +162,79 @@ let
     '';
   };
 
-  # Podman's archive API cannot consume the trailing record padding Python's
-  # stdlib tarfile writes. It reads tar's two EOF blocks and exits while the
-  # server is still writing the rest of the 10 KiB record, so
-  # `PUT /containers/{id}/archive` intermittently -- and with other sandboxes
-  # running, reliably -- answers 500 "passing bulk input to subprocess:
-  # write |1: broken pipe". The lifecycle server surfaces that as
-  # SANDBOX_EXECD_DISTRIBUTION_FAILED, so every new sandbox create fails while
-  # already-running sandboxes keep working. This sitecustomize trims each
-  # put_archive body back to the second EOF block, which is exactly what a
-  # 512-byte-record tar emits; testcontainers ships the same fix as
-  # blockFactor=1 (testcontainers-dotnet#1683 / #1684).
-  serverTarPadFix = pkgs.writeTextDir "sitecustomize.py" ''
-    """Trim tar record padding before docker-py sends an archive to Podman.
+  # Fixes the pinned server image cannot carry itself, applied outside it
+  # rather than by rebuilding the image:
+  #
+  # 1. Podman's archive API cannot consume the trailing record padding Python's
+  #    stdlib tarfile writes. It reads tar's two EOF blocks and exits while the
+  #    server is still writing the rest of the 10 KiB record, so
+  #    `PUT /containers/{id}/archive` intermittently -- and with other sandboxes
+  #    running, reliably -- answers 500 "passing bulk input to subprocess:
+  #    write |1: broken pipe". The lifecycle server surfaces that as
+  #    SANDBOX_EXECD_DISTRIBUTION_FAILED, so every new sandbox create fails
+  #    while already-running sandboxes keep working. The patch trims each
+  #    put_archive body back to the second EOF block, which is exactly what a
+  #    512-byte-record tar emits; testcontainers ships the same fix as
+  #    blockFactor=1 (testcontainers-dotnet#1683 / #1684).
+  #
+  # 2. Every OpenSandbox container must live inside one memory cgroup: for
+  #    containerSlice, containerMemoryMax caps the lot -- the lifecycle server
+  #    and every sandbox it creates. Rootless podman puts containers under the
+  #    nested default `user.slice`, not under podman.service, and neither
+  #    containers.conf nor the lifecycle API has a server-wide cgroup-parent
+  #    setting. The only lever is each create request's HostConfig.CgroupParent,
+  #    so the patch adds it there; ExecStart passes the same parent for the
+  #    server container itself.
+  #
+  # 3. Per-sandbox guardrails: raw API clients can omit or overstate
+  #    resourceLimits, ask for the bwrap isolation extension, or request a
+  #    Windows profile. The patch fills in conservative CPU/memory defaults,
+  #    clamps a single sandbox below the maxima passed in the environment, and
+  #    rejects the two optional profiles unless explicitly enabled.
+  #
+  # 4. Sensitive host paths (/nix/store, /etc/nix, /nix/var/nix, agent
+  #    sockets/keyrings) are forced read-only, so a request cannot turn those
+  #    allowlisted mounts writable just by omitting the readOnly flag.
+  serverSitecustomize = pkgs.writeTextDir "sitecustomize.py" ''
+    """Apply OpenSandbox server guardrails at interpreter startup.
 
-    The OpenSandbox Docker runtime builds archives with the stdlib tarfile
-    default record size (10 KiB). Podman's archive handler exits at the two
-    zero EOF blocks, so any padding written afterwards breaks the HTTP pipe
-    with a 500 and the sandbox create fails. Rewriting each body to end at
-    that EOF marker is byte-for-byte what tarfile emits with a 512-byte
-    record. Archives with any other shape are passed through untouched.
+    The pinned server image is used unchanged; everything here is a targeted
+    runtime patch: Podman tar-record trimming, cgroup-parent injection,
+    per-sandbox resource defaults/clamps, sensitive-mount read-only enforcement,
+    and rejection of Windows/bwrap-isolation requests unless enabled.
     """
+
+    import os
+    import sys
 
     _BLOCK = 512
     _ZERO = bytes(_BLOCK)
+    _CGROUP_PARENT = "${containerSlice}"
+
+
+    def _env_int(name, default):
+        try:
+            return int(os.environ.get(name, ""))
+        except ValueError:
+            return default
+
+
+    _DEFAULT_CPU_NANO = _env_int("OPENSANDBOX_DEFAULT_SANDBOX_CPU_NANO", 1000000000)
+    _DEFAULT_MEMORY = _env_int("OPENSANDBOX_DEFAULT_SANDBOX_MEMORY_BYTES", 2147483648)
+    _MAX_CPU_NANO = _env_int("OPENSANDBOX_MAX_SANDBOX_CPU_NANO", 8000000000)
+    _MAX_MEMORY = _env_int("OPENSANDBOX_MAX_SANDBOX_MEMORY_BYTES", 17179869184)
+    _MAX_GPU = _env_int("OPENSANDBOX_MAX_SANDBOX_GPU", 1)
+    _READONLY_HOST_PATHS = [
+        os.path.realpath(path)
+        for path in os.environ.get("OPENSANDBOX_READONLY_HOST_PATHS", "").split(":")
+        if path
+    ]
+    _ALLOW_ISOLATION_EXTENSION = (
+        os.environ.get("OPENSANDBOX_ALLOW_ISOLATION_EXTENSION", "0") == "1"
+    )
+    _ALLOW_WINDOWS_PROFILE = (
+        os.environ.get("OPENSANDBOX_ALLOW_WINDOWS_PROFILE", "0") == "1"
+    )
 
 
     def _logical_end(archive):
@@ -216,7 +314,180 @@ let
             )
 
 
+    def _install_cgroup_parent():
+        try:
+            from docker.api.container import ContainerApiMixin
+        except Exception:
+            return
+
+        original = getattr(ContainerApiMixin, "create_container", None)
+        if original is None or getattr(original, "_opensandbox_cgroup_parent", False):
+            return
+
+        def create_container(self, *args, **kwargs):
+            # OpenSandbox always passes host_config by keyword; leave calls that
+            # do not carry one alone rather than inventing a host config.
+            host_config = kwargs.get("host_config")
+            if isinstance(host_config, dict):
+                host_config.setdefault("CgroupParent", _CGROUP_PARENT)
+            return original(self, *args, **kwargs)
+
+        create_container._opensandbox_cgroup_parent = True
+        ContainerApiMixin.create_container = create_container
+        import sys
+
+        print(
+            "opensandbox-cgroup-parent: confining containers to " + _CGROUP_PARENT,
+            file=sys.stderr,
+        )
+
+
+    def _install_resource_limits():
+        try:
+            from opensandbox_server.services.docker.container_ops import DockerContainerOpsMixin
+        except Exception:
+            return
+
+        original = getattr(DockerContainerOpsMixin, "_resolve_resource_limits", None)
+        if original is None or getattr(original, "_opensandbox_resource_limits", False):
+            return
+
+        def resolve_resource_limits(self, request):
+            mem_limit, nano_cpus, gpu_count = original(self, request)
+            clamped = []
+
+            if mem_limit is None or mem_limit <= 0:
+                mem_limit = _DEFAULT_MEMORY
+            elif _MAX_MEMORY > 0 and mem_limit > _MAX_MEMORY:
+                mem_limit = _MAX_MEMORY
+                clamped.append("memory")
+
+            if nano_cpus is None or nano_cpus <= 0:
+                nano_cpus = _DEFAULT_CPU_NANO
+            elif _MAX_CPU_NANO > 0 and nano_cpus > _MAX_CPU_NANO:
+                nano_cpus = _MAX_CPU_NANO
+                clamped.append("cpu")
+
+            if gpu_count is not None and _MAX_GPU >= 0 and gpu_count > _MAX_GPU:
+                gpu_count = _MAX_GPU
+                clamped.append("gpu")
+
+            if clamped:
+                import sys
+
+                print(
+                    "opensandbox-resource-limit: clamped "
+                    + ", ".join(clamped)
+                    + " for one sandbox",
+                    file=sys.stderr,
+                )
+            return mem_limit, nano_cpus, gpu_count
+
+        resolve_resource_limits._opensandbox_resource_limits = True
+        DockerContainerOpsMixin._resolve_resource_limits = resolve_resource_limits
+        print(
+            "opensandbox-resource-limit: per-sandbox defaults and maxima installed",
+            file=sys.stderr,
+        )
+
+
+    def _install_volume_guard():
+        try:
+            from opensandbox_server.services.docker.volumes import DockerVolumesMixin
+        except Exception:
+            return
+
+        original = getattr(DockerVolumesMixin, "_build_volume_binds", None)
+        if original is None or getattr(original, "_opensandbox_volume_guard", False):
+            return
+
+        def host_is_sensitive(path):
+            try:
+                resolved = os.path.realpath(path)
+            except Exception:
+                return False
+            for prefix in _READONLY_HOST_PATHS:
+                if resolved == prefix or resolved.startswith(prefix + os.sep):
+                    return True
+            return False
+
+        def build_volume_binds(self, volumes, pvc_inspect_cache=None):
+            binds = original(self, volumes, pvc_inspect_cache)
+            guarded = []
+            for bind in binds:
+                parts = bind.rsplit(":", 2)
+                if (
+                    len(parts) == 3
+                    and os.path.isabs(parts[0])
+                    and host_is_sensitive(parts[0])
+                ):
+                    options = [part for part in parts[2].split(",") if part]
+                    options = ["ro" if part == "rw" else part for part in options]
+                    if "ro" not in options:
+                        options.append("ro")
+                    bind = ":".join([parts[0], parts[1], ",".join(options)])
+                guarded.append(bind)
+            return guarded
+
+        build_volume_binds._opensandbox_volume_guard = True
+        DockerVolumesMixin._build_volume_binds = build_volume_binds
+        print(
+            "opensandbox-volume-guard: sensitive host paths are read-only",
+            file=sys.stderr,
+        )
+
+
+    def _install_provision_guards():
+        try:
+            from opensandbox_server.services.docker.docker_service import DockerSandboxService
+        except Exception:
+            return
+
+        original = getattr(DockerSandboxService, "_provision_sandbox", None)
+        if original is None or getattr(original, "_opensandbox_provision_guards", False):
+            return
+
+        def provision_sandbox(self, *args, **kwargs):
+            request = kwargs.get("request")
+            if request is None and len(args) > 1:
+                request = args[1]
+
+            if request is not None:
+                platform = getattr(request, "platform", None)
+                if (
+                    not _ALLOW_WINDOWS_PROFILE
+                    and getattr(platform, "os", None) == "windows"
+                ):
+                    raise ValueError(
+                        "Windows-profile sandboxes are disabled on this host; "
+                        "set OPENSANDBOX_ALLOW_WINDOWS_PROFILE=1 to allow them."
+                    )
+
+                extensions = getattr(request, "extensions", None) or {}
+                if (
+                    not _ALLOW_ISOLATION_EXTENSION
+                    and extensions.get("bootstrap.execd.isolation") == "enable"
+                ):
+                    raise ValueError(
+                        "The bwrap isolation extension is disabled on this host; "
+                        "set OPENSANDBOX_ALLOW_ISOLATION_EXTENSION=1 to allow it."
+                    )
+
+            return original(self, *args, **kwargs)
+
+        provision_sandbox._opensandbox_provision_guards = True
+        DockerSandboxService._provision_sandbox = provision_sandbox
+        print(
+            "opensandbox-provision-guard: Windows and bwrap-isolation requests are disabled",
+            file=sys.stderr,
+        )
+
+
     _install()
+    _install_cgroup_parent()
+    _install_resource_limits()
+    _install_volume_guard()
+    _install_provision_guards()
   '';
 
   networkEnsure = pkgs.writeShellApplication {
@@ -290,47 +561,129 @@ in
   # and laptop (desktop-laptop/configuration/virtualisation.nix); the Steam
   # Deck has neither podman nor the service, and the wrappers there still fall
   # back to OPEN_SANDBOX_DOMAIN/a config file for a remote server.
-  systemd.user.services = lib.mkIf podmanEnabled {
-    opensandbox-server = {
-      Unit = {
-        Description = "OpenSandbox sandbox lifecycle server (rootless podman)";
-        After = [ "podman.socket" ];
-        Requires = [ "podman.socket" ];
-        # Pulling the server image can exceed the default 90s start limit on a
-        # cold cache; don't let systemd kill a healthy pull.
-        StartLimitIntervalSec = 0;
+  # Bound the rootless podman logs as well as OpenSandbox's slice: Podman's
+  # default k8s-file driver has no per-container size limit, so a chatty
+  # sandbox could otherwise grow ~/.local/share/containers without bound.
+  # Home Manager's podman module owns ~/.config/containers/containers.conf, so
+  # this merges the cap into that generated file (rootless podman only).
+  services.podman.settings.containers = lib.mkIf podmanEnabled {
+    containers.log_size_max = 16777216;
+  };
+
+  systemd.user = {
+    slices = lib.mkIf podmanEnabled {
+      opensandbox = {
+        Unit.Description = "OpenSandbox CPU/memory/process budget";
+        Slice = {
+          CPUAccounting = true;
+          IOAccounting = true;
+          MemoryAccounting = true;
+          MemoryHigh = containerMemoryHigh;
+          MemoryMax = containerMemoryMax;
+          MemorySwapMax = containerMemorySwapMax;
+          CPUQuota = containerCpuQuota;
+          CPUWeight = containerCpuWeight;
+          TasksMax = containerTasksMax;
+          IOWeight = containerIoWeight;
+        };
+        # Starting the slice with the user manager is not required for it to be
+        # used (a container scope pulls it in), but it keeps the budget in place
+        # before the first sandbox.
+        Install.WantedBy = [ "default.target" ];
       };
-      Service = {
-        Type = "simple";
-        ExecStartPre = [
-          (lib.getExe serverPrepare)
-          (lib.getExe networkEnsure)
-        ];
-        ExecStart = lib.concatStringsSep " " [
-          "${pkgs.podman}/bin/podman run"
-          "--rm"
-          "--replace"
-          "--name opensandbox-server"
-          "--network=host"
-          "--env SANDBOX_CONFIG_PATH=/etc/opensandbox/config.toml"
-          "--env DOCKER_HOST=unix:///var/run/docker.sock"
-          "--volume %t/podman/podman.sock:/var/run/docker.sock"
-          "--volume ${configPath}:/etc/opensandbox/config.toml:ro"
-          "--volume %h/.local/state/opensandbox:/root/.opensandbox"
-          # See serverTarPadFix: without it Podman rejects the padded tar
-          # uploads and no new sandbox can be created.
-          "--env PYTHONPATH=/opt/opensandbox-tar-pad-fix"
-          "--volume ${serverTarPadFix}:/opt/opensandbox-tar-pad-fix:ro"
-          serverImage
-        ];
-        Restart = "on-failure";
-        RestartSec = 5;
-        TimeoutStartSec = 600;
-        TimeoutStopSec = 60;
-        StandardOutput = "journal";
-        StandardError = "journal";
+    };
+
+    timers = lib.mkIf podmanEnabled {
+      opensandbox-image-prune = {
+        Unit.Description = "Monthly reclaim of the rootless podman image cache";
+        Timer = {
+          # Only unused images older than 30 days are removed; images backing a
+          # stopped-but-existing sandbox container are kept, and removed
+          # work-type images are re-pulled on next use.
+          OnCalendar = "monthly";
+          Persistent = true;
+          RandomizedDelaySec = "1h";
+        };
+        Install.WantedBy = [ "timers.target" ];
       };
-      Install.WantedBy = [ "default.target" ];
+    };
+
+    services = lib.mkIf podmanEnabled {
+      opensandbox-image-prune = {
+        Unit = {
+          Description = "Prune unused rootless podman images older than 30 days";
+          # Nothing to prune before the first rootless container storage exists.
+          ConditionPathExists = "%h/.local/share/containers";
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.podman}/bin/podman image prune -a -f --filter until=720h";
+        };
+      };
+
+      opensandbox-server = {
+        Unit = {
+          Description = "OpenSandbox sandbox lifecycle server (rootless podman)";
+          # Requiring the slice ensures its MemoryMax is active before podman
+          # starts the server container; depending only on the per-create
+          # CgroupParent would let systemd synthesize an unlimited implicit
+          # slice if the configured unit were ever missing.
+          After = [
+            "podman.socket"
+            containerSlice
+          ];
+          Requires = [
+            "podman.socket"
+            containerSlice
+          ];
+          # Pulling the server image can exceed the default 90s start limit on a
+          # cold cache; don't let systemd kill a healthy pull.
+          StartLimitIntervalSec = 0;
+        };
+        Service = {
+          Type = "simple";
+          ExecStartPre = [
+            (lib.getExe serverPrepare)
+            (lib.getExe networkEnsure)
+          ];
+          ExecStart = lib.concatStringsSep " " [
+            "${pkgs.podman}/bin/podman run"
+            "--rm"
+            "--replace"
+            "--name opensandbox-server"
+            "--network=host"
+            "--cgroup-parent=${containerSlice}"
+            "--env SANDBOX_CONFIG_PATH=/etc/opensandbox/config.toml"
+            "--env DOCKER_HOST=unix:///var/run/docker.sock"
+            "--volume %t/podman/podman.sock:/var/run/docker.sock"
+            "--volume ${configPath}:/etc/opensandbox/config.toml:ro"
+            "--volume %h/.local/state/opensandbox:/root/.opensandbox"
+            # See serverSitecustomize: the tar trim keeps sandbox creation from
+            # failing on padded uploads, the cgroup-parent patch keeps every
+            # container it creates inside the shared resource slice, and the
+            # remaining patches apply per-sandbox resource defaults/clamps,
+            # read-only sensitive mounts, and Windows/bwrap guardrails.
+            "--env PYTHONPATH=/opt/opensandbox-sitecustomize"
+            "--volume ${serverSitecustomize}:/opt/opensandbox-sitecustomize:ro"
+            "--env OPENSANDBOX_DEFAULT_SANDBOX_CPU_NANO=${toString sandboxDefaultCpuNano}"
+            "--env OPENSANDBOX_DEFAULT_SANDBOX_MEMORY_BYTES=${toString sandboxDefaultMemoryBytes}"
+            "--env OPENSANDBOX_MAX_SANDBOX_CPU_NANO=${toString sandboxMaxCpuNano}"
+            "--env OPENSANDBOX_MAX_SANDBOX_MEMORY_BYTES=${toString sandboxMaxMemoryBytes}"
+            "--env OPENSANDBOX_MAX_SANDBOX_GPU=${toString sandboxMaxGpu}"
+            "--env OPENSANDBOX_READONLY_HOST_PATHS=${lib.concatStringsSep ":" sandboxReadonlyHostPaths}"
+            "--env OPENSANDBOX_ALLOW_ISOLATION_EXTENSION=0"
+            "--env OPENSANDBOX_ALLOW_WINDOWS_PROFILE=0"
+            serverImage
+          ];
+          Restart = "on-failure";
+          RestartSec = 5;
+          TimeoutStartSec = 600;
+          TimeoutStopSec = 60;
+          StandardOutput = "journal";
+          StandardError = "journal";
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
     };
   };
 }
