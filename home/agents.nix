@@ -105,6 +105,47 @@ let
   # deliberate per-session pick, not the thing every task lands on.
   cfModel = "@cf/qwen/qwen3.8-27b";
 
+  # Union Alpha, the free stealth model OpenCode and OpenRouter both carry for
+  # a limited time. OpenCode's own gateway serves it as `union-alpha`;
+  # OpenRouter serves the same weights as `stealth/union-alpha`. The routes
+  # differ beyond the id: the OpenCode copy reports reasoning support, while
+  # OpenRouter's copy advertises no reasoning parameter. Shared metadata:
+  # 262144 context, 131072 output, text+image input, $0.
+  #
+  # OpenCode discovers both from models.dev, but the declarations in
+  # opencode.json below pin the free metadata so a stale catalog cache cannot
+  # drop the model. pi-ai 0.85.1's bundled opencode-go and OpenRouter catalogs
+  # predate it, so pi gets hand-declared upserts in models.json. Only the Go
+  # route is declared for pi: OpenCode's Zen free tier answers raw API calls
+  # with MissingSessionID and is usable only inside the OpenCode client, while
+  # the exported OPENCODE_API_KEY authenticates the Go route from any harness.
+  unionAlpha = {
+    opencodeId = "union-alpha";
+    openrouterId = "stealth/union-alpha";
+    contextWindow = 262144;
+    maxTokens = 131072;
+  };
+
+  # The opencode.json model shape shared by both OpenCode provider ids
+  # (`opencode` Zen and `opencode-go`): models.dev gives them the same entry.
+  unionAlphaOpencodeModel = {
+    name = "Union Alpha Free";
+    reasoning = true;
+    tool_call = true;
+    attachment = true;
+    limit = {
+      context = unionAlpha.contextWindow;
+      output = unionAlpha.maxTokens;
+    };
+    modalities = {
+      input = [
+        "text"
+        "image"
+      ];
+      output = [ "text" ];
+    };
+  };
+
   # Qwen Cloud Token Plan, following the vendor's opencode recipe
   # (docs.qwencloud.com/developer-guides/clients-and-developer-tools/opencode):
   # the Anthropic Messages endpoint rather than the OpenAI-compatible one.
@@ -1219,6 +1260,44 @@ let
             thinkingFormat = "openrouter";
           };
           samplingParams.plugins = paretoPlugin;
+        }
+        # OpenRouter's copy of Union Alpha. It is free and multimodal, but its
+        # supported-parameters list has no reasoning field, so no thinking
+        # capability is declared; the compat block mirrors the built-in
+        # OpenRouter entries so the system prompt travels as `system`.
+        {
+          id = unionAlpha.openrouterId;
+          name = "Union Alpha";
+          api = "openai-completions";
+          input = [
+            "text"
+            "image"
+          ];
+          inherit (unionAlpha) contextWindow maxTokens;
+          compat = {
+            supportsDeveloperRole = false;
+            thinkingFormat = "openrouter";
+          };
+        }
+      ];
+
+      # pi-ai 0.85.1's bundled opencode-go catalog predates Union Alpha, so the
+      # free model is upserted by id. `api` also selects the catalog's
+      # anthropic-messages baseUrl (https://opencode.ai/zen/go) as the inherited
+      # endpoint. The Zen copy is deliberately absent: its free tier only
+      # answers requests carrying the OpenCode client's session, which pi does
+      # not send.
+      "opencode-go".models = [
+        {
+          id = unionAlpha.opencodeId;
+          name = "Union Alpha Free";
+          api = "anthropic-messages";
+          reasoning = true;
+          input = [
+            "text"
+            "image"
+          ];
+          inherit (unionAlpha) contextWindow maxTokens;
         }
       ];
       "qwen-token-plan-individual".models = [
@@ -2508,6 +2587,14 @@ in
           };
           cloudflare-workers-ai.models.${cfModel} = { };
 
+          # Union Alpha Free. models.dev already carries it for both OpenCode
+          # provider ids; the explicit declarations pin the free metadata so a
+          # stale catalog cache cannot drop the model. The Zen row below is the
+          # client-gated free tier, the Go row the one the exported
+          # OPENCODE_API_KEY authenticates; loadKey above explains the split.
+          opencode.models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+          "opencode-go".models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+
           # DeepSeek direct API (OpenAI-compatible endpoint).
           deepseek = {
             npm = "@ai-sdk/openai-compatible";
@@ -2542,6 +2629,29 @@ in
             options = {
               plugins = paretoPlugin;
               reasoning.effort = "medium";
+            };
+          };
+
+          # OpenRouter's copy of the same free stealth model. Vision and tool
+          # calls come from models.dev; `reasoning = false` is pinned because
+          # the model's advertised parameters omit reasoning (unlike the
+          # OpenCode copy above), and a truthy value would only make opencode
+          # expose a thinking picker for a capability the endpoint lacks.
+          openrouter.models.${unionAlpha.openrouterId} = {
+            name = "Union Alpha";
+            reasoning = false;
+            tool_call = true;
+            attachment = true;
+            limit = {
+              context = unionAlpha.contextWindow;
+              output = unionAlpha.maxTokens;
+            };
+            modalities = {
+              input = [
+                "text"
+                "image"
+              ];
+              output = [ "text" ];
             };
           };
 
