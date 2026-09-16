@@ -869,9 +869,17 @@ let
   # not be able to edit it -- but gpg will not sign without creating lock files
   # in its homedir (verified: "failed to create temporary file ... Permission
   # denied", then "no default secret key"). This wrapper gives it a writable
-  # copy inside the container on first use and links the agent socket in, so the
-  # private key itself never leaves the YubiKey. The sandbox git config below
-  # points gpg.program here.
+  # copy inside the container and points every agent socket at the host user's
+  # gpg-agent, so the private key itself never leaves the YubiKey. The sandbox
+  # git config below points gpg.program here.
+  #
+  # GnuPG 2.1+ does not talk to $GNUPGHOME/S.gpg-agent for a custom homedir; it
+  # asks gpgconf for $XDG_RUNTIME_DIR/gnupg/d.<hash>/S.gpg-agent. Linking only
+  # the homedir paths left that runtime path empty, so gpg autostarted a local
+  # sandbox agent whose scdaemon cannot see USB -- and every signed commit
+  # failed through it ("Not confirmed"). Re-link both paths on every call, and
+  # pass --no-autostart so a missing host agent fails loudly instead of silently
+  # falling back to an agent without the card.
   dshSandboxGpg = pkgs.writeShellApplication {
     name = "dsh-sandbox-gpg";
     runtimeInputs = [
@@ -880,6 +888,7 @@ let
     ];
     text = ''
       set -eu
+      umask 077
       source_home=''${DSH_SANDBOX_GNUPGHOME:-/home/codebam/.gnupg}
       agent_dir=''${DSH_SANDBOX_GPG_AGENT_DIR:-/run/user/1000/gnupg}
       work=''${TMPDIR:-/tmp}/dsh-sandbox-gnupg
@@ -887,12 +896,28 @@ let
         mkdir -p "$work"
         chmod 700 "$work"
         cp -a "$source_home/." "$work/" 2>/dev/null || true
-        for socket in S.gpg-agent S.gpg-agent.ssh S.gpg-agent.extra S.gpg-agent.browser; do
-          if [ -S "$agent_dir/$socket" ]; then ln -sfn "$agent_dir/$socket" "$work/$socket"; fi
-        done
       fi
+
+      link_socket() {
+        if [ -S "$agent_dir/$1" ] && [ -n "$2" ]; then
+          mkdir -p "$(dirname "$2")"
+          chmod 700 "$(dirname "$2")"
+          ln -sfn "$agent_dir/$1" "$2"
+        fi
+      }
+
+      # Legacy homedir paths (older clients); harmless on GnuPG 2.4.
+      link_socket S.gpg-agent "$work/S.gpg-agent"
+      link_socket S.gpg-agent.ssh "$work/S.gpg-agent.ssh"
+
+      # What GnuPG 2.1+ actually connects to for this custom homedir.
+      runtime_socket=$(GNUPGHOME="$work" gpgconf --list-dirs agent-socket)
+      runtime_ssh_socket=$(GNUPGHOME="$work" gpgconf --list-dirs agent-ssh-socket)
+      link_socket S.gpg-agent "$runtime_socket"
+      link_socket S.gpg-agent.ssh "$runtime_ssh_socket"
+
       export GNUPGHOME="$work"
-      exec gpg "$@"
+      exec gpg --no-autostart "$@"
     '';
   };
 
