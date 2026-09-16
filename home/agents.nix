@@ -1690,8 +1690,15 @@ in
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/opensandbox"
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/index.mjs "$HOME/.dsh/profiles/opensandbox/index.mjs"
+          # cp -r copies the store source directory's 0555 mode onto the
+          # destination, so a tree copied by an earlier activation cannot be
+          # unlinked by this user on the next one ("rm: ... Permission
+          # denied", failing the whole switch). Repair the old tree before
+          # replacing it and leave the new one writable.
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/opensandbox/src" 2>/dev/null || true
           run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox/src"
           run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/src "$HOME/.dsh/profiles/opensandbox/src"
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/opensandbox/src"
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/package.json "$HOME/.dsh/profiles/opensandbox/package.json"
           run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/opensandbox/node_modules"
           run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/opensandbox/node_modules"
