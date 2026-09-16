@@ -220,7 +220,9 @@ in
       # Shared agent-memory knowledge graph. mcp-proxy bridges the stdio
       # knowledge-graph server to loopback Streamable HTTP so a single writer
       # serves every harness; both are wired by home/agents.nix's `agent-memory`
-      # user service and the per-harness MCP entries.
+      # user service and the per-harness MCP entries. The proxy runs that HTTP
+      # transport stateless (no Mcp-Session-Id), which the harnesses' MCP
+      # clients negotiate transparently.
       mcp-server-memory
       mcp-proxy
       vesktop

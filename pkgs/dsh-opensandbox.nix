@@ -20,6 +20,14 @@ stdenvNoCC.mkDerivation {
     hash = "sha256-6c+TGowy5MjGvPofVp7uH2hwmqXfmOXlNd9U3nJLowQ=";
   };
 
+  # dsh 0.1.6 changed the provider seams this plugin implements: confine
+  # became cancellable-async, SubprocessRuntime gained terminalEnvironment,
+  # SubprocessTerminalHandle gained resize and terminalType, and a missing
+  # executable must throw SubprocessExecutableNotFoundError so the new Web
+  # terminal's shell discovery can skip absent candidates. Drop this patch
+  # when upstream main carries the same changes and bump rev instead.
+  patches = [ ./dsh-opensandbox-dsh016.patch ];
+
   nativeBuildInputs = [ nodejs ];
 
   # The published files are the ESM sources; there is no build step.

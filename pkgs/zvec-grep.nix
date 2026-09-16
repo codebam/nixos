@@ -7,26 +7,26 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "zvec-grep";
-  version = "0.2.1";
+  version = "0.2.2";
 
   # The published tarball ships a prebuilt dist/ but no package-lock.json,
   # so grab the lockfile the upstream tag has and copy it in via postPatch
   # (buildNpmPackage forwards the patch hooks to fetchNpmDeps as well).
   src = fetchzip {
     url = "https://registry.npmjs.org/@zvec/zvec-grep/-/zvec-grep-${finalAttrs.version}.tgz";
-    hash = "sha256-Z4aPTvNbjt+U4I6AykKlLi54y0js0fewciD+BRoe6Sg=";
+    hash = "sha256-5hrG61Cidl3f1dZttivV2bMqML93QvDTL8pTWPt+Sas=";
   };
 
   packageLock = fetchurl {
     url = "https://raw.githubusercontent.com/zvec-ai/zvec-grep/v${finalAttrs.version}/package-lock.json";
-    hash = "sha256-n4cC+0MAi51msVYB9Iep2TZkK0GXD4pqBHASYmkDviQ=";
+    hash = "sha256-zyeTfdI2gQAPdg6zNJ45VGH9FtltkWrP7owm693Uxtk=";
   };
 
   postPatch = ''
     cp ${finalAttrs.packageLock} package-lock.json
   '';
 
-  npmDepsHash = "sha256-pc04qzhnYaS0xpQAYwN6HEG8oPEqoBIBMVKC1OZ0L+8=";
+  npmDepsHash = "sha256-ykSQ5aTt/pgow6GIJAZ6Vo8MqasrLhtKAagHcQgdI4s=";
 
   # dist/ is already compiled; npm run build would need the TS sources.
   dontNpmBuild = true;

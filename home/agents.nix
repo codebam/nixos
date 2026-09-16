@@ -111,15 +111,17 @@ let
   # The provider id stays `qwen` so existing `qwen/<model>` selections and
   # session history resolve unchanged.
   #
-  # The model set is exactly what the plan key serves (GET /models on the
-  # compatible-mode endpoint): the eight chat models of the Personal Edition.
-  # The key also lists wan2.7-image{,-pro} and qwen-audio-3.0-*, but those
-  # answer neither chat-completions nor messages requests (image-generation,
-  # TTS, and realtime APIs respectively), so they have no place in either
-  # harness. Limits are the documented 983616-token window and per-model
-  # output caps; thinking is pinned the way the recipe pins it (effort for
-  # the 3.8 pair, a fixed 8192-token budget for 3.7/3.6/glm, default-on for
-  # the deepseek pair).
+  # The model set below is the Personal Edition chat models these harnesses
+  # use. QwenCloud's supported-model table (token-plan/personal) also lists
+  # image/video/audio models (wan2.7-image{,-pro}, qwen-image-3.0-pro,
+  # qwen-audio-3.0-*), but those answer neither chat-completions nor messages
+  # requests (image-generation, TTS, and realtime APIs respectively), so they
+  # have no place in either harness. deepseek-v4.1-flash was added 2026-09-13;
+  # pi-ai 0.85.1's bundled catalog predates it, so the pi and dsh catalogs
+  # below declare it by hand too. Limits use the 983616-token chat window and
+  # per-model output caps; thinking is pinned the way the recipe pins it
+  # (effort for the 3.8 pair, a fixed 8192-token budget for 3.7/3.6/glm,
+  # default-on for the deepseek pair).
   qwenProvider = {
     qwen = {
       npm = "@ai-sdk/anthropic";
@@ -245,6 +247,22 @@ let
           limit = {
             context = 983616;
             output = 384000;
+          };
+        };
+        "deepseek-v4.1-flash" = {
+          name = "DeepSeek V4.1 Flash";
+          reasoning = true;
+          tool_call = true;
+          limit = {
+            context = 983616;
+            output = 384000;
+          };
+          modalities = {
+            input = [
+              "text"
+              "image"
+            ];
+            output = [ "text" ];
           };
         };
       };
@@ -1090,11 +1108,14 @@ let
   # The Qwen side needs no provider of its own: pi ships
   # `qwen-token-plan-individual`, the narrow Personal-Edition catalog on the
   # same compatible-mode endpoint, keyed from QWEN_TOKEN_PLAN_API_KEY (which
-  # the wrapper above exports from the same secret as QWEN_API_KEY). Two
-  # catalog inaccuracies remain because pi ships a fixed list:
+  # the wrapper above exports from the same secret as QWEN_API_KEY). The
+  # custom entries below upsert by id because pi ships a fixed list:
   #   - qwen3.8-flash is served by the subscription but missing from the
-  #     individual catalog, so it is upserted below with the metadata pi's
-  #     broader qwen-token-plan catalog carries for it.
+  #     individual catalog, so it is added with the metadata pi's broader
+  #     qwen-token-plan catalog carries for it.
+  #   - deepseek-v4.1-flash (QwenCloud release 2026-09-13) postdates the
+  #     bundled catalog, so it is declared here rather than waiting for a
+  #     pi-ai bump.
   #   - deepseek-v4-pro-0813 is in the catalog but not the subscription;
   #     models.json cannot remove built-in models, so it stays listed and
   #     simply errors if selected.
@@ -1190,6 +1211,33 @@ let
             max = "max";
           };
         }
+        {
+          id = "deepseek-v4.1-flash";
+          name = "DeepSeek V4.1 Flash";
+          api = "openai-completions";
+          reasoning = true;
+          input = [
+            "text"
+            "image"
+          ];
+          contextWindow = 1000000;
+          maxTokens = 384000;
+          compat = {
+            thinkingFormat = "qwen";
+            supportsDeveloperRole = false;
+            supportsStore = false;
+            supportsReasoningEffort = true;
+          };
+          thinkingLevelMap = {
+            off = null;
+            minimal = null;
+            low = null;
+            medium = null;
+            high = "high";
+            xhigh = null;
+            max = "max";
+          };
+        }
       ];
     };
   };
@@ -1246,7 +1294,7 @@ let
   # `-e` passthrough is what tells the child stdio server where its graph lives.
   memoryFileSpec = "%h/.local/share/agent-memory/memory.jsonl";
 
-  # The guidance block `zg install` writes, copied verbatim from its 0.2.1
+  # The guidance block `zg install` writes, copied verbatim from its 0.2.2
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
   # adapter's default `toolPrefix` ("server") builds the identical string.
@@ -1610,16 +1658,50 @@ let
                 requiresReasoningContentOnAssistantMessages: true
                 thinkingFormat: deepseek
 
-        # Qwen Cloud Token Plan. pi-ai ships this provider under its own
-        # catalog id, so the route carries only the label and the credential
-        # reference: endpoint (the compatible-mode one), wire protocol, and
-        # the Personal-Edition model set all come from pi-ai 0.85.1 the same
-        # way they do for pi. `loadKey` exports QWEN_TOKEN_PLAN_API_KEY from
-        # the same secret as QWEN_API_KEY, which is also the name pi-ai's own
-        # ambient discovery looks for.
+        # Qwen Cloud Token Plan. The endpoint, wire protocol, and
+        # Personal-Edition catalog come from pi-ai's
+        # qwen-token-plan-individual provider, keyed from
+        # QWEN_TOKEN_PLAN_API_KEY (which `loadKey` exports from the same
+        # secret as QWEN_API_KEY, the name pi-ai's ambient discovery looks
+        # for).
+        #
+        # pi-ai 0.85.1's bundled catalog predates deepseek-v4.1-flash
+        # (QwenCloud release 2026-09-13), and llm-pi-ai has no upsert: a
+        # `models` list replaces the route's catalog, so the installed ids
+        # are restated bare (each defaults from its catalog entry) and only
+        # the new model carries its own metadata.
         qwen-token-plan-individual:
           displayName: Qwen Cloud (Token Plan)
           apiKeyEnv: QWEN_TOKEN_PLAN_API_KEY
+          models:
+            - id: qwen3.8-max
+            - id: qwen3.8-flash
+            - id: qwen3.7-max
+            - id: qwen3.7-plus
+            - id: qwen3.6-flash
+            - id: glm-5.2
+            - id: deepseek-v4-pro
+            - id: deepseek-v4-pro-0813
+            - id: deepseek-v4-flash-0731
+            - id: deepseek-v4.1-flash
+              name: DeepSeek V4.1 Flash
+              contextWindow: 1000000
+              maxTokens: 384000
+              input:
+                - text
+                - image
+              # Omit off: dsh's reasoningEfforts key means selectable;
+              # absent resolves to thinkingLevelMap.off = null (unsupported),
+              # matching pi-ai's deepseek catalog, while an explicit empty
+              # off: would declare off selectable and send nothing.
+              reasoningEfforts:
+                high: high
+                max: max
+              compat:
+                thinkingFormat: qwen
+                supportsDeveloperRole: false
+                supportsStore: false
+                supportsReasoningEffort: true
 
         # OpenRouter's full installed catalog (351 openai-completions plus 15
         # anthropic-messages models at pi-ai 0.85.1), keyed from
@@ -1934,6 +2016,15 @@ in
       # mounting them here -- delete a row to fall back to the native
       # grep/glob tools and the ripwire CLI alone.
       #
+      # Protocol era: dsh 0.1.6's MCP SDK v2 negotiates the 2026-07-28
+      # stateless protocol when the server offers it and falls back to the
+      # 2025-era initialize handshake otherwise. zvec-grep ships on
+      # @modelcontextprotocol/server 2.0.0, so its stdio row already speaks
+      # the modern stateless protocol, and the memory URL is served stateless
+      # by mcp-proxy (see the agent-memory unit below). ripwire 0.3.8 and
+      # opensandbox-mcp 0.1.1 are still 2025-era servers with no upstream
+      # stateless mode; the SDK's legacy fallback carries them until one ships.
+      #
       # Written as YAML text (the loader reads YAML, not JSON) with only the
       # argv rendered from nix; `builtins.toJSON` is used for the args list
       # because a JSON flow sequence is valid YAML.
@@ -2223,7 +2314,7 @@ in
         # reason `xdg.configFile` above is nested rather than flat.
         mcp = {
           # Declarative equivalent of `zg install --target opencode
-          # --mcp-transport stdio` from zvec-grep 0.2.1 (install.ts
+          # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
           # installOpenCodeIntegration). stdio means no daemon to keep up: each
           # opencode session spawns `zg server --stdio`, which manages its own
           # shared daemon. Re-derive both this and `zgGuidance` from the new
@@ -2535,6 +2626,15 @@ in
   # exposes it over loopback Streamable HTTP (`/mcp`) and SSE (`/sse`); every
   # harness registers it as a remote server, so writes never race. Runs on all
   # three hosts (each keeps its own preserved store), not just the desktop.
+  #
+  # The HTTP transport runs stateless (`--stateless`): each request is served
+  # on its own transport with no Mcp-Session-Id, so dsh's MCP SDK v2 client
+  # (and any other spec-conformant client) can talk to it without holding a
+  # session. The stdio backend below is untouched -- one persistent
+  # `mcp-server-memory` process is still the single writer for the JSONL graph;
+  # only the client-facing sessions go away. Do not drop this: the proxy
+  # default is a stateful session per client, which is pure state a restart
+  # throws away.
   systemd.user.services = {
     agent-memory = {
       Unit = {
@@ -2553,6 +2653,7 @@ in
           "127.0.0.1"
           "--port"
           (toString memoryPort)
+          "--stateless"
           "-e"
           "MEMORY_FILE_PATH"
           memoryFileSpec
