@@ -1,6 +1,9 @@
 cache/
 .direnv/
 .antigravitycli/
+.claude/
+.pi/
+nono/
 result
 result-*
 .zvec-grep/

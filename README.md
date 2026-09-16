@@ -53,7 +53,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # kanagawa scheme, Papirus icons, capitaine cursor,
-│   │                              JetBrainsMono Nerd Font, NixOS-artwork wallpaper
+│   │                              JetBrainsMono Nerd Font, synthwave wallpaper
 │   ├── system/                  # boot, cleanup-root, env, fonts, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
 │   │                              streaming-mode, sysctl, systemd, time, xdg, zram
@@ -105,6 +105,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── ssg.nix                  # sigmashake CLI
 │   ├── voxtype-plainify.nix     # transcript filter (a sed program, not a package)
 │   └── zvec-grep.nix            # hybrid workspace search + MCP server
+├── scripts/                     # manual desktop tools, see scripts/README.md
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
 ```

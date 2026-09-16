@@ -212,7 +212,7 @@
             let
               # Only the .nix files, plus statix.toml which statix reads for
               # its ignore list. `${./.}` would be the whole worktree, so the
-              # check rebuilt whenever wallpaper.png or the README changed --
+              # check rebuilt whenever a wallpaper or the README changed --
               # neither of which statix, deadnix or nixfmt ever looks at.
               inherit (nixpkgs.lib) fileset;
               src = fileset.toSource {
