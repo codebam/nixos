@@ -66,6 +66,13 @@ in
   # node_modules.
   dsh-opensandbox = pkgs.callPackage ./dsh-opensandbox.nix { };
 
+  # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell
+  # provider (bash-sandbox in the OpenSandbox world), so the stock bash tool
+  # and execution world stay mounted; home/agents.nix copies it into $DSH_HOME
+  # next to the profile's node_modules. Pinned in its own repository so it
+  # stays independently publishable to npm.
+  dsh-tool-nu = pkgs.callPackage ./dsh-tool-nu.nix { };
+
   # OpenCode's beta CLI from npm (@opencode/cli, command `opencode2`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };

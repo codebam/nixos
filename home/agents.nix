@@ -870,6 +870,20 @@ let
             forwardEnv:
               - SSH_AUTH_SOCK
               - GH_TOKEN
+  ''
+  + lib.optionalString dshContainerWorld ''
+    # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
+    # consumes the mounted ctx.shell provider, so do NOT disable or replace
+    # bash-sandbox / tool-bash; the stock bash tool and world are unchanged.
+    # Works in the OpenSandbox world and in a dsh-no-opensandbox session,
+    # because both leave a bash executor mounted as ctx.shell.
+    - insert:
+        - id: tool-nu
+          name: ${config.home.homeDirectory}/.dsh/profiles/tool-nu/index.mjs
+          disabled: !!js process.platform === 'win32'
+          config:
+            executable: ${pkgs.nushell}/bin/nu
+            enableRunInBackground: true
   '';
 
   # Credentials that must be prepared outside the confined shell because the
@@ -1823,6 +1837,30 @@ in
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/package.json "$HOME/.dsh/profiles/opensandbox/package.json"
           run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/opensandbox/node_modules"
           run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/opensandbox/node_modules"
+        ''
+      );
+
+      # @codebam/dsh-tool-nu is published from its own repository, pinned in
+      # pkgs/dsh-tool-nu.nix. Copy it into $DSH_HOME rather than symlinking:
+      # Node resolves a module through its symlink target, so a symlinked
+      # module would look for @deepseek-ai/* next to the store directory
+      # instead of the profile's node_modules. Same podman gate as the
+      # dshOpenSandbox block: only hosts whose dsh profiles carry the patch
+      # file get the plugin.
+      dshToolNu = lib.mkIf (podmanEnabled && dshContainerWorld) (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/tool-nu"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/index.mjs "$HOME/.dsh/profiles/tool-nu/index.mjs"
+          # cp -r copies the store source directory's 0555 mode onto the
+          # destination, so repair an older copied tree before replacing it
+          # (same reason as the dshOpenSandbox block).
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/tool-nu/src" 2>/dev/null || true
+          run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/tool-nu/src"
+          run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/src "$HOME/.dsh/profiles/tool-nu/src"
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/tool-nu/src"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/package.json "$HOME/.dsh/profiles/tool-nu/package.json"
+          run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/tool-nu/node_modules"
+          run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/tool-nu/node_modules"
         ''
       );
     };

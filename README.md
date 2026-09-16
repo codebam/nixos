@@ -95,6 +95,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── agent-overview.nix       # tmux agent dashboard
 │   ├── dsh.nix                  # DeepSeek Harness CLI
 │   ├── dsh-opensandbox.nix      # dsh's OpenSandbox container-world plugin
+│   ├── dsh-tool-nu.nix          # dsh's Nushell (`nu`) tool plugin
 │   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
 │   ├── opencode-desktop-beta.nix
 │   ├── opensandbox-{sdk,cli,mcp}.nix  # OpenSandbox Python SDK, osb CLI, MCP server
