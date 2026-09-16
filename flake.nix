@@ -3,7 +3,17 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+    # Follow the host nixpkgs/home-manager instead of letting chaotic resolve
+    # its own: otherwise the lock carries a second nixpkgs (a release tarball
+    # node) and a second home-manager, which doubles evaluation and can skew
+    # chaotic's packages against the host's nixpkgs.
+    chaotic = {
+      url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -49,7 +59,12 @@
     };
     viewport = {
       url = "github:codebam/viewport";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        # viewport declares its own rust-overlay; root already carries one for
+        # lanzaboote, so follow it rather than locking a second copy.
+        rust-overlay.follows = "rust-overlay";
+      };
     };
     # Pinned to v0.7.5 (update deliberately: whisper model behavior
     # and CLI flags shift between releases; bump + re-test dictation).
