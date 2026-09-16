@@ -106,10 +106,13 @@ let
   # OpenCode discovers both from models.dev, but the declarations in
   # opencode.json below pin the free metadata so a stale catalog cache cannot
   # drop the model. pi-ai 0.85.1's bundled opencode-go and OpenRouter catalogs
-  # predate it, so pi gets hand-declared upserts in models.json. Only the Go
-  # route is declared for pi: OpenCode's Zen free tier answers raw API calls
-  # with MissingSessionID and is usable only inside the OpenCode client, while
-  # the exported OPENCODE_API_KEY authenticates the Go route from any harness.
+  # predate it, so pi gets hand-declared upserts in models.json and dsh gets
+  # dedicated llm-pi-ai routes in settings.yaml, where a `models` list on the
+  # shared catalog routes would replace their whole mixed-protocol catalogs.
+  # The OpenCode Zen copy is not declared for pi or dsh: its free tier answers
+  # raw API calls with MissingSessionID and is usable only inside the OpenCode
+  # client, while the exported OPENCODE_API_KEY authenticates the Go route from
+  # any harness.
   unionAlpha = {
     opencodeId = "union-alpha";
     openrouterId = "stealth/union-alpha";
@@ -801,9 +804,9 @@ let
   dshNoOpenSandboxJs = "Boolean(process.env.${dshNoOpenSandboxEnv})";
 
   # Both interactive dsh surfaces keep the one hand-written patch row they
-  # carried before the sandbox providers changed: the hand-declared
-  # `opencode-go-deepseek` route must be named or dsh attaches no
-  # x-opencode-session header and OpenCode Go answers 400.
+  # carried before the sandbox providers changed: the hand-declared OpenCode Go
+  # routes (`opencode-go-deepseek`, `opencode-go-union-alpha`) must be named or
+  # dsh attaches no x-opencode-session header and OpenCode Go answers 400.
   #
   # dshContainerWorld (see above) also swaps the execution world:
   # @codebam/dsh-opensandbox registers ctx.subprocess and ctx.sandbox, so the
@@ -819,16 +822,18 @@ let
     # Managed by home-manager (home/agents.nix); make changes in the flake,
     # not under ~/.dsh.
 
-    # `opencode-go-deepseek` is a hand-declared pi-ai route, not one of the
-    # catalog ids dsh-opencode-session defaults to (opencode/opencode-go), so
-    # the plugin has to be told about it or it attaches no x-opencode-session
-    # header and OpenCode Go answers 400 MissingSessionID.
+    # `opencode-go-deepseek` and `opencode-go-union-alpha` are hand-declared
+    # pi-ai routes, not the catalog ids dsh-opencode-session defaults to
+    # (opencode/opencode-go), so the plugin has to be told about them or it
+    # attaches no x-opencode-session header and OpenCode Go answers 400
+    # MissingSessionID.
     - id: opencode-go-session-header
       config:
         providers:
           - opencode
           - opencode-go
           - opencode-go-deepseek
+          - opencode-go-union-alpha
   ''
   + lib.optionalString dshContainerWorld ''
     # dsh-opensandbox: replace the host execution world with OpenSandbox
@@ -1780,6 +1785,40 @@ let
                 requiresReasoningContentOnAssistantMessages: true
                 thinkingFormat: deepseek
 
+        # Union Alpha Free is served by OpenCode Go but missing from pi-ai
+        # 0.85.1's bundled catalog. The opencode-go route's catalog speaks
+        # three wire protocols, so appending this anthropic-messages model
+        # through a `models` list would replace the whole catalog; the
+        # dedicated route is the same workaround opencode-go-deepseek uses.
+        # pi-ai's anthropic-messages client appends /v1/messages to the
+        # built-in catalog's baseURL. The route name must be listed in the
+        # opencode-go-session-header plugin below, or OpenCode Go answers 400
+        # MissingSessionID. models.dev reports reasoning with no advertised
+        # effort options, so the offered levels mirror pi-ai's default for the
+        # Go catalog's other anthropic models; off stays valueless because not
+        # thinking is the absence of the thinking parameter, and minimal maps
+        # onto low so an adaptive-thinking endpoint never sees an invalid
+        # effort spelling.
+        opencode-go-union-alpha:
+          displayName: OpenCode Go (Union Alpha)
+          apiKeyEnv: OPENCODE_API_KEY
+          api: anthropic-messages
+          baseURL: https://opencode.ai/zen/go
+          models:
+            - id: union-alpha
+              name: Union Alpha Free
+              contextWindow: 262144
+              maxTokens: 131072
+              input:
+                - text
+                - image
+              reasoningEfforts:
+                off:
+                minimal: low
+                low: low
+                medium: medium
+                high: high
+
         # Qwen Cloud Token Plan. The endpoint, wire protocol, and
         # Personal-Edition catalog come from pi-ai's
         # qwen-token-plan-individual provider, keyed from
@@ -1841,6 +1880,30 @@ let
         openrouter:
           displayName: OpenRouter
           apiKeyEnv: OPENROUTER_API_KEY
+
+        # Union Alpha on OpenRouter. pi-ai 0.85.1's installed catalog predates
+        # it, and neither way of extending that route works: a `models` list
+        # would replace all 366 catalog entries, and `modelOverrides` refuses
+        # an id the catalog does not describe. The dedicated route is the same
+        # workaround as above. pi-ai detects openrouter.ai from the baseURL, so
+        # the wire compatibility (developer role, thinking format, usage
+        # streaming) needs no compat block. OpenRouter's copy advertises no
+        # reasoning parameter, unlike the OpenCode Go route, so it is declared
+        # non-reasoning.
+        openrouter-union-alpha:
+          displayName: OpenRouter (Union Alpha)
+          apiKeyEnv: OPENROUTER_API_KEY
+          api: openai-completions
+          baseURL: https://openrouter.ai/api/v1
+          models:
+            - id: stealth/union-alpha
+              name: Union Alpha
+              contextWindow: 262144
+              maxTokens: 131072
+              input:
+                - text
+                - image
+              reasoningEfforts: false
 
         # CrofAI (OpenAI-compatible gateway). Not a pi-ai catalog route, so
         # this profile is the whole declaration: endpoint, protocol, and the
