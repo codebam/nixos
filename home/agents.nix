@@ -7,40 +7,31 @@
 }:
 
 let
-  # Both harnesses read OPENROUTER_API_KEY from the environment. The key
-  # already exists on this host inside the `hermes-env` sops secret, so it is
-  # mounted a second time as `opencode-env` (same yaml key, owned by codebam)
-  # rather than duplicated in secrets.yaml — one key, one place to rotate it.
-  #
-  # Only the names below are lifted out: hermes-env also carries chat-gateway
-  # tokens that have no business in an interactive shell's environment.
-  #
-  # CLOUDFLARE_* are what opencode wants for the `cloudflare-workers-ai`
-  # provider (account id goes into the endpoint path, the token into the auth
-  # header). They live in the same hermes-env blob rather than a secret of
-  # their own so that a missing value is a no-op instead of an activation
-  # failure: add them with `sudo sops secrets/secrets.yaml`, as extra lines
-  # inside the hermes-env value —
-  #
-  #   CLOUDFLARE_ACCOUNT_ID=<32-hex account id>
-  #   CLOUDFLARE_API_KEY=<Workers AI API token>
-  #
-  # Until then the vars are simply unset and only the Cloudflare models are
-  # unusable. Note the blob is also hermes' EnvironmentFile, so the agent
-  # service sees these too.
-  envNames = [
-    "OPENROUTER_API_KEY"
-    "CLOUDFLARE_ACCOUNT_ID"
-    "CLOUDFLARE_API_KEY"
-  ];
+  # The per-agent credentials live as individual sops keys
+  # (desktop/configuration/sops.nix). Each wrapper below runs this script at
+  # launch; it exports only the names in secretVars, so unrelated tokens in
+  # /run/secrets never reach an interactive shell. sops.templates."hermes-env"
+  # reconstructs the same set as a file for the Hermes agent itself, so the
+  # deleted hand-maintained blob stays a generated artifact.
+  secretVars = {
+    OPENROUTER_API_KEY = "openrouter-api-key";
+    CONTEXT7_API_KEY = "context7-api-key";
+    CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
+    CLOUDFLARE_API_KEY = "cloudflare-api-key";
+  };
+  secretVarPairs = lib.concatStringsSep " " (
+    lib.mapAttrsToList (name: secret: "${name}:${secret}") secretVars
+  );
   loadKey = pkgs.writeShellScript "agent-load-env" ''
-    secret=/run/secrets/opencode-env
-    if [ -r "$secret" ]; then
-      for name in ${lib.concatStringsSep " " envNames}; do
-        value=$(${pkgs.gnused}/bin/sed -n "s/^$name=//p" "$secret" | tr -d '"' | head -n1)
+    for pair in ${secretVarPairs}; do
+      name=''${pair%%:*}
+      secret=''${pair#*:}
+      file=/run/secrets/$secret
+      if [ -r "$file" ]; then
+        value=$(cat "$file")
         if [ -n "$value" ]; then export "$name=$value"; fi
-      done
-    fi
+      fi
+    done
 
     qwen_secret=/run/secrets/qwen-api-key
     if [ -r "$qwen_secret" ]; then
@@ -1836,7 +1827,8 @@ let
 
         # OpenRouter's full installed catalog (351 openai-completions plus 15
         # anthropic-messages models at pi-ai 0.85.1), keyed from
-        # OPENROUTER_API_KEY, which `loadKey` lifts out of hermes-env.
+        # OPENROUTER_API_KEY, which `loadKey` exports from the
+        # `openrouter-api-key` sops secret.
         #
         # `openrouter/pareto-code` is deliberately not declared even though
         # opencode and pi both select it: the Pareto router's price/capability

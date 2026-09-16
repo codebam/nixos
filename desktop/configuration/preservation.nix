@@ -14,6 +14,11 @@ _:
             # reproducible from the flake; re-downloading on every boot is
             # wasteful.
             ".zvec-grep"
+            # Per-user Hermes state installed by home/hermes.nix: API login,
+            # sessions, memories, and skills. None of it is reproducible from
+            # the flake, and the per-user module uses ~/.hermes rather than
+            # the retired service's /var/lib/hermes.
+            ".hermes"
           ];
         };
         makano = {

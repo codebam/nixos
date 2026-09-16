@@ -72,6 +72,13 @@
       url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Hermes Agent. Pinned to the last revision this config built against
+    # (b0c4e9e's lock): bump it deliberately and rebuild, since upstream
+    # changes the package and its module together.
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent/66bb77cbf95614760d12445218a8e5af18e0b0a1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -147,6 +154,7 @@
                 extraSpecialArgs = { inherit inputs; };
                 users.codebam = {
                   imports = [
+                    inputs.hermes-agent.homeManagerModules.default
                     ./home
                   ];
                 };

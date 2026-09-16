@@ -17,6 +17,7 @@ _:
     ./home.nix
     ./programs.nix
     ./agents.nix
+    ./hermes.nix
     ./opensandbox.nix
     ./voxtype.nix
   ];
