@@ -1,4 +1,11 @@
 _: {
+  # Remote `nixos-rebuild --elevate=run0` runs `systemd-run --uid=0` inside
+  # an SSH session, where polkit has no TTY to prompt on. The supported
+  # alternative is the target-architecture `polkit-stdin-agent`; ship it in
+  # every toplevel (and enable polkit/run0 support) so a deploying host can
+  # use `--ask-elevate-password` against a target that predates this change.
+  system.tools.nixos-rebuild.enableRun0Elevation = true;
+
   security = {
     acme = {
       acceptTerms = true;
@@ -11,12 +18,16 @@ _: {
       enable = true;
       extraConfig = ''
         // Allow members of the wheel group to execute any action without a
-        // prompt, but only from a local, currently-active session. Without the
-        // local/active guard this also covered SSH sessions, so anyone who got
-        // a shell as a wheel user had passwordless root for every polkit
-        // action. Remote sessions still work -- they just have to authenticate.
+        // prompt, but only from a session attached to a local seat. Requiring
+        // `subject.seat` (not just `local && active`) keeps passwordless
+        // elevation to real TTY/graphical sessions: SSH sessions and
+        // user@1000.service's manager session have no seat, so they must
+        // authenticate (`--ask-elevate-password` covers remote deploys).
         polkit.addRule(function(action, subject) {
-            if (subject.isInGroup("wheel") && subject.local && subject.active) {
+            if (subject.isInGroup("wheel") &&
+                subject.local &&
+                subject.active &&
+                subject.seat) {
                 return polkit.Result.YES;
             }
         });
