@@ -1165,6 +1165,17 @@ let
             name = "Qwen3.8 27B Uncensored (160k)";
             reasoning = true;
           }
+          {
+            _launch = true;
+            contextWindow = 251904; # 262k tag less 10k, same headroom rule as :160k
+            id = "qwen3.8-cyber-iq4xs:262k";
+            input = [
+              "text"
+              "image"
+            ];
+            name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
+            reasoning = true;
+          }
         ];
       };
       # CrofAI (OpenAI-compatible gateway). Like Ollama this is a provider pi
@@ -1598,11 +1609,11 @@ let
         # header is the documented placeholder that keeps pi-ai's
         # OpenAI-compatible client from refusing a keyless local route (the
         # credential store stays out of it, and Models-page discovery sends the
-        # same header). Metadata mirrors pi's ~/.pi/agent/models.json entries: the
-        # 160k tag less headroom, pi's 16K default output cap, vision input,
-        # and only the thinking levels this family exposes. `off: none` because
-        # Ollama spells "no thinking" as reasoning_effort none, where omitting
-        # the field means think.
+        # same header). Metadata mirrors pi's ~/.pi/agent/models.json entries:
+        # each tag's max less 10k headroom (160k -> 153600, 262k -> 251904),
+        # pi's 16K default output cap, vision input, and only the thinking
+        # levels this family exposes. `off: none` because Ollama spells "no
+        # thinking" as reasoning_effort none, where omitting the field means think.
         ollama:
           displayName: Ollama
           api: openai-completions
@@ -1625,6 +1636,17 @@ let
             - id: orcarouter/Qwen3.8-27B-Uncensored:160k
               name: Qwen3.8 27B Uncensored (160k)
               contextWindow: 153600
+              maxTokens: 16384
+              input:
+                - text
+                - image
+              reasoningEfforts:
+                off: none
+                high: high
+                max: max
+            - id: qwen3.8-cyber-iq4xs:262k
+              name: Qwen3.8 27B Cyber IQ4_XS (262k)
+              contextWindow: 251904
               maxTokens: 16384
               input:
                 - text
@@ -2422,8 +2444,9 @@ in
         provider = {
           # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
           # local `ollama`, so the endpoint and the local tag are declared here.
-          # The served window mirrors the pi/dsh entries: 153600 of the tag's
-          # 163840, leaving room for output and the 20k compaction reserve.
+          # The served windows mirror the pi/dsh entries: 153600 of the 160k
+          # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
+          # output and the 20k compaction reserve.
           # opencode2 reads this same config directory.
           ollama = {
             npm = "@ai-sdk/openai-compatible";
@@ -2439,6 +2462,23 @@ in
               tool_call = true;
               limit = {
                 context = 153600;
+                output = 16384;
+              };
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+            };
+            models."qwen3.8-cyber-iq4xs:262k" = {
+              name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
+              attachment = true;
+              reasoning = true;
+              tool_call = true;
+              limit = {
+                context = 251904;
                 output = 16384;
               };
               modalities = {
