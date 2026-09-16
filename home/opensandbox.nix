@@ -113,6 +113,112 @@ let
     '';
   };
 
+  # Podman's archive API cannot consume the trailing record padding Python's
+  # stdlib tarfile writes. It reads tar's two EOF blocks and exits while the
+  # server is still writing the rest of the 10 KiB record, so
+  # `PUT /containers/{id}/archive` intermittently -- and with other sandboxes
+  # running, reliably -- answers 500 "passing bulk input to subprocess:
+  # write |1: broken pipe". The lifecycle server surfaces that as
+  # SANDBOX_EXECD_DISTRIBUTION_FAILED, so every new sandbox create fails while
+  # already-running sandboxes keep working. This sitecustomize trims each
+  # put_archive body back to the second EOF block, which is exactly what a
+  # 512-byte-record tar emits; testcontainers ships the same fix as
+  # blockFactor=1 (testcontainers-dotnet#1683 / #1684).
+  serverTarPadFix = pkgs.writeTextDir "sitecustomize.py" ''
+    """Trim tar record padding before docker-py sends an archive to Podman.
+
+    The OpenSandbox Docker runtime builds archives with the stdlib tarfile
+    default record size (10 KiB). Podman's archive handler exits at the two
+    zero EOF blocks, so any padding written afterwards breaks the HTTP pipe
+    with a 500 and the sandbox create fails. Rewriting each body to end at
+    that EOF marker is byte-for-byte what tarfile emits with a 512-byte
+    record. Archives with any other shape are passed through untouched.
+    """
+
+    _BLOCK = 512
+    _ZERO = bytes(_BLOCK)
+
+
+    def _logical_end(archive):
+        pos = 0
+        total = len(archive)
+        while pos + _BLOCK <= total:
+            if archive[pos:pos + _BLOCK] == _ZERO:
+                if archive[pos + _BLOCK:pos + 2 * _BLOCK] == _ZERO:
+                    return pos + 2 * _BLOCK
+                return None
+            field = archive[pos + 124:pos + 136].split(b"\0", 1)[0].strip()
+            try:
+                size = int(field or b"0", 8)
+            except ValueError:
+                return None
+            pos += _BLOCK + ((size + _BLOCK - 1) // _BLOCK) * _BLOCK
+        return None
+
+
+    def _trim(data):
+        archive = bytes(data)
+        end = _logical_end(archive)
+        if end is None or end >= len(archive) or archive[end:].strip(b"\0"):
+            return data
+        return archive[:end]
+
+
+    def _wrap(original, high_level):
+        # A factory, not an inline closure: both branches would otherwise share
+        # one late-bound `original` and the api wrapper would end up calling the
+        # model method (four positional arguments).
+        if high_level:
+
+            def put_archive(self, path, data=None):
+                if data is None:
+                    return original(self, path)
+                return original(self, path, _trim(data))
+
+        else:
+
+            def put_archive(self, container, path, data):
+                return original(self, container, path, _trim(data))
+
+        put_archive._opensandbox_tar_trim = True
+        return put_archive
+
+
+    def _install():
+        patched = []
+        try:
+            from docker.api.container import ContainerApiMixin
+        except Exception:
+            ContainerApiMixin = None
+        try:
+            from docker.models.containers import Container
+        except Exception:
+            Container = None
+
+        if ContainerApiMixin is not None:
+            original = getattr(ContainerApiMixin, "put_archive", None)
+            if original is not None and not getattr(original, "_opensandbox_tar_trim", False):
+                ContainerApiMixin.put_archive = _wrap(original, False)
+                patched.append("api")
+
+        if Container is not None:
+            original = getattr(Container, "put_archive", None)
+            if original is not None and not getattr(original, "_opensandbox_tar_trim", False):
+                Container.put_archive = _wrap(original, True)
+                patched.append("model")
+
+        if patched:
+            import sys
+
+            print(
+                "opensandbox-tar-pad-fix: trimming put_archive to the tar EOF marker",
+                file=sys.stderr,
+            )
+
+
+    _install()
+  '';
+
   networkEnsure = pkgs.writeShellApplication {
     name = "opensandbox-network";
     runtimeInputs = [ pkgs.podman ];
@@ -211,6 +317,10 @@ in
           "--volume %t/podman/podman.sock:/var/run/docker.sock"
           "--volume ${configPath}:/etc/opensandbox/config.toml:ro"
           "--volume %h/.local/state/opensandbox:/root/.opensandbox"
+          # See serverTarPadFix: without it Podman rejects the padded tar
+          # uploads and no new sandbox can be created.
+          "--env PYTHONPATH=/opt/opensandbox-tar-pad-fix"
+          "--volume ${serverTarPadFix}:/opt/opensandbox-tar-pad-fix:ro"
           serverImage
         ];
         Restart = "on-failure";
