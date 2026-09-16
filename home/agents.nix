@@ -1175,6 +1175,18 @@ let
             ];
             name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
             reasoning = true;
+            # This tag's chat template takes low/medium/xhigh only (xhigh is
+            # its default) and 500s on off/minimal/high, unlike the base
+            # qwen3.8 tags' off/high/max, so clamp pi's top levels onto xhigh.
+            thinkingLevelMap = {
+              off = null;
+              minimal = null;
+              low = "low";
+              medium = "medium";
+              high = "xhigh";
+              xhigh = "xhigh";
+              max = "xhigh";
+            };
           }
         ];
       };
@@ -1611,9 +1623,10 @@ let
         # credential store stays out of it, and Models-page discovery sends the
         # same header). Metadata mirrors pi's ~/.pi/agent/models.json entries:
         # each tag's max less 10k headroom (160k -> 153600, 262k -> 251904),
-        # pi's 16K default output cap, vision input, and only the thinking
-        # levels this family exposes. `off: none` because Ollama spells "no
-        # thinking" as reasoning_effort none, where omitting the field means think.
+        # pi's 16K default output cap, and vision input. Thinking levels follow
+        # each tag's own chat template: the base qwen3.8 tags expose off/high/
+        # max (`off: none` is how Ollama spells "no thinking" there -- omitting
+        # the field means think), while the cyber tag exposes low/medium/xhigh.
         ollama:
           displayName: Ollama
           api: openai-completions
@@ -1651,10 +1664,13 @@ let
               input:
                 - text
                 - image
+              # This tag's template takes low/medium/xhigh only (xhigh is its
+              # default) and 500s on the base tags' off/high/max, so declare
+              # the three it accepts rather than reusing their map.
               reasoningEfforts:
-                off: none
-                high: high
-                max: max
+                low: low
+                medium: medium
+                xhigh: xhigh
         # DeepSeek V4.1 Flash (OpenCode model id `deepseek-flash`) is served by
         # OpenCode Go but is not in pi-ai's bundled `opencode-go` catalog
         # (0.84.4), and a hand-declared model cannot be appended to that route:
