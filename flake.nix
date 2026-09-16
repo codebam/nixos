@@ -66,10 +66,10 @@
         rust-overlay.follows = "rust-overlay";
       };
     };
-    # Pinned to v0.7.5 (update deliberately: whisper model behavior
+    # Pinned to v1.0.1 (update deliberately: whisper model behavior
     # and CLI flags shift between releases; bump + re-test dictation).
     voxtype = {
-      url = "github:peteonrails/voxtype/v0.7.5";
+      url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
