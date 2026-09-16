@@ -236,6 +236,21 @@
                 statix check .
                 touch $out
               '';
+
+          # pkgs/ is a standalone flake with its own lock, but its comment and
+          # the README promise that a package builds identically from either
+          # flake. Same nixpkgs revision is what makes that true; fail the
+          # moment the two locks drift instead of letting the promise rot.
+          lock-sync = pkgs.runCommand "lock-sync" { nativeBuildInputs = [ pkgs.jq ]; } ''
+            root=$(jq -r '.nodes.root.inputs.nixpkgs as $n | .nodes[$n].locked.rev' ${./flake.lock})
+            standalone=$(jq -r '.nodes.root.inputs.nixpkgs as $n | .nodes[$n].locked.rev' ${./pkgs/flake.lock})
+            if [ "$root" != "$standalone" ]; then
+              echo "pkgs/flake.lock nixpkgs $standalone != parent flake.lock $root" >&2
+              echo "sync it with: (cd pkgs && nix flake update --reference-lock-file ../flake.lock)" >&2
+              exit 1
+            fi
+            touch $out
+          '';
         }
       );
 

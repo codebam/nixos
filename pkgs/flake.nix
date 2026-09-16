@@ -4,8 +4,9 @@
   # The only input, deliberately. `nix run github:codebam/nixos?dir=pkgs#<name>`
   # must not drag in the parent flake's disko/lanzaboote/chaotic/... graph just
   # to build one tool, and it must stay pointable-at without cloning. The lock
-  # pins the same nixpkgs revision as ../flake.lock, so a package is identical
-  # whether it comes from here or from the parent flake's overlay.
+  # is kept on the same nixpkgs revision as ../flake.lock (the parent's
+  # lock-sync check enforces it), so a package is identical whether it comes
+  # from here or from the parent flake's overlay.
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
   outputs =
