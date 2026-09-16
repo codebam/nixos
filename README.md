@@ -209,7 +209,9 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   zvec-grep, ripwire and OpenSandbox MCP servers
 - **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
   images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
-  steel, shell, browser, code); replaces the old nono Landlock profiles
+  steel, shell, browser, code); replaces the old nono Landlock profiles. A dsh
+  session can opt out per process with `dsh-no-opensandbox` (or
+  `DSH_NO_OPENSANDBOX=1 dsh ...`) when the local server is unhealthy.
 - **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)

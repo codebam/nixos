@@ -740,6 +740,16 @@ let
   # PTY command I/O, and the model-facing bash tool's one-shot collect path.
   dshContainerWorld = true;
 
+  # Per-process escape hatch for the row swap below. dsh treats every DSH_*
+  # name as bootstrap-only, so a repository's .env cannot set it -- it has to
+  # come from the launching environment. Any non-empty value boots dsh on the
+  # built-in bwrap/Landlock world for that process and suppresses the
+  # opensandbox MCP row; unset or empty keeps the OpenSandbox world. The
+  # `dsh-no-opensandbox` wrapper is the one-command form.
+  dshNoOpenSandboxEnv = "DSH_NO_OPENSANDBOX";
+  dshUseOpenSandboxJs = "!process.env.${dshNoOpenSandboxEnv}";
+  dshNoOpenSandboxJs = "Boolean(process.env.${dshNoOpenSandboxEnv})";
+
   # Both interactive dsh surfaces keep the one hand-written patch row they
   # carried before the sandbox providers changed: the hand-declared
   # `opencode-go-deepseek` route must be named or dsh attaches no
@@ -748,8 +758,9 @@ let
   # dshContainerWorld (see above) also swaps the execution world:
   # @codebam/dsh-opensandbox registers ctx.subprocess and ctx.sandbox, so the
   # two local rows are disabled and the stock bash, terminal, and fs-search
-  # plugins run in OpenSandbox containers. While it is off, every host keeps
-  # the built-in bwrap/Landlock sandbox rows.
+  # plugins run in OpenSandbox containers. While it is off -- or a process sets
+  # DSH_NO_OPENSANDBOX, see below -- every host keeps the built-in
+  # bwrap/Landlock sandbox rows.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
@@ -776,15 +787,20 @@ let
     # run over the container world unchanged. `apiKeyFile` is the per-boot key
     # home/opensandbox.nix generates under the user runtime dir; the plugin
     # reads it lazily, so login ordering with the server does not matter.
+    #
+    # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips these three
+    # load-time expressions: the local rows come back and the plugin row is
+    # skipped for that process.
     - id: subprocess
-      disabled: true
+      disabled: !!js "${dshUseOpenSandboxJs}"
 
     - id: sandbox
-      disabled: true
+      disabled: !!js "${dshUseOpenSandboxJs}"
 
     - insert:
         - id: opensandbox-world
           name: ${config.home.homeDirectory}/.dsh/profiles/opensandbox/index.mjs
+          disabled: !!js "${dshNoOpenSandboxJs}"
           config:
             apiKeyFile: /run/user/1000/opensandbox/api-key
             domain: 127.0.0.1:8090
@@ -955,6 +971,20 @@ let
   };
 
   dshInstalled = if isDesktop then dshSandboxed else dsh;
+
+  # One-command form of the DSH_NO_OPENSANDBOX escape hatch, installed only
+  # where the OpenSandbox world exists. It just exports the launch variable;
+  # the profile patch above does the switching, so every dsh subcommand (`web`,
+  # `--profile`, `plugin`) keeps its normal argv. The result is still a
+  # sandbox -- dsh's built-in bwrap/Landlock world, not the host shell.
+  dshNoOpenSandbox = pkgs.writeShellApplication {
+    name = "dsh-no-opensandbox";
+    text = ''
+      set -eu
+      export ${dshNoOpenSandboxEnv}=1
+      exec ${lib.getExe' dshInstalled "dsh"} "$@"
+    '';
+  };
 
   # Tailscale Serve forwards the browser's original Host header, so dsh's
   # browser-trust fence has to trust the MagicDNS authority. Resolve it at
@@ -1439,9 +1469,10 @@ let
     `osb-work` is the explicit per-work-type sandbox front end on every host
     with the local server (desktop and laptop), and the only path on hosts
     without one. On those hosts dsh's own execution world is containerized too
-    (the @codebam/dsh-opensandbox profile row): its bash, terminal and
-    fs-search tools already run inside a sandbox with the project bind-mounted
-    at the same absolute path. That container cannot reach the local
+    (the @codebam/dsh-opensandbox profile row; `dsh-no-opensandbox` is the
+    per-session fallback described below): its bash, terminal and fs-search
+    tools already run inside a sandbox with the project bind-mounted at the
+    same absolute path. That container cannot reach the local
     OpenSandbox API -- the server is loopback-only and its key lives in the
     host runtime dir -- so `osb-work` belongs to the host-side harnesses and to
     a host terminal, not to a dsh session's own shell. That container does have
@@ -1450,6 +1481,11 @@ let
     work from a dsh session; activating a system generation is still the
     human's call. Hosts without podman (steamdeck) keep dsh's built-in
     bwrap/Landlock sandbox.
+
+    dsh never falls back by itself if the local server is unhealthy. For one
+    session on the built-in world, run `dsh-no-opensandbox` (it exports
+    `DSH_NO_OPENSANDBOX=1`, which also drops the opensandbox MCP row); plain
+    `dsh` keeps the OpenSandbox world.
 
     `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
     c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
@@ -1651,6 +1687,9 @@ in
     ]
     ++ lib.optionals isDesktop [
       dshWebUrl
+    ]
+    ++ lib.optionals (podmanEnabled && dshContainerWorld) [
+      dshNoOpenSandbox
     ];
 
     # Nested rather than three top-level `activation.` keys: statix's
@@ -1930,8 +1969,11 @@ in
             # sits in every request. Keep the row while sandbox work is being
             # delegated; remove it and use `osb`/`osb-work` from bash when the
             # ~19 extra tool schemas cost more context than the platform saves.
+            # DSH_NO_OPENSANDBOX drops it for a fallback session, where the
+            # container world it drives is not mounted anyway.
             - id: mcp-opensandbox
               name: '@deepseek-ai/dsh-mcp-client'
+              disabled: !!js "${dshNoOpenSandboxJs}"
               config:
                 serverName: opensandbox
                 transport: stdio
