@@ -14,6 +14,10 @@
       "--border"
       "--inline-info"
     ];
+    # fzf and Atuin both bind Ctrl-R; Atuin is meant to own it for this user.
+    # Clearing fzf's widget makes that explicit instead of leaving the winner
+    # to module ordering (and stops Home Manager warning about the clash).
+    fzf.historyWidget.command = "";
 
     google-chrome = {
       enable = true;
@@ -644,6 +648,12 @@
           error_symbol = "[\\$](bold red)";
         };
       };
+    };
+    # History search for nushell (enabled in shell-common.nix); this activates
+    # Atuin for codebam only, not for makano, who imports shell-common.nix.
+    atuin = {
+      enable = true;
+      enableNushellIntegration = true;
     };
     fd = {
       enable = true;

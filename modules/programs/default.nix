@@ -17,6 +17,10 @@
     fish = {
       enable = true;
     };
+    # Paired with users.users.codebam.shell = pkgs.nushell.
+    nushell = {
+      enable = true;
+    };
     nix-index-database.comma.enable = true;
     nix-ld.enable = true;
     wireshark = {
@@ -37,4 +41,9 @@
     sway.enable = true;
     dconf.enable = true;
   };
+
+  # programs.nushell does not add itself to /etc/shells the way the fish
+  # and bash modules do; without this the login shell configured in
+  # modules/users/default.nix is not listed there.
+  environment.shells = [ pkgs.nushell ];
 }

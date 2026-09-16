@@ -202,7 +202,7 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **ArRPC** + **Mprisence**: Discord Rich Presence
 
 ### Home Manager
-- **Shells**: fish, bash, nushell, tmux, starship, zoxide, direnv, fzf
+- **Shells**: nushell (default login shell), atuin, fish, bash, tmux, starship, zoxide, direnv, fzf
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio

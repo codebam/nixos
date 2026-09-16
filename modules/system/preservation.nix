@@ -168,6 +168,12 @@ _: {
             ".config/obs-studio"
             ".config/heroic"
             ".config/nushell"
+            # Atuin config is user-editable and only written when missing;
+            # the data directory holds the history DB and the key/session
+            # that make synced history readable. Both are lost on a root
+            # wipe unless preserved.
+            ".config/atuin"
+            ".local/share/atuin"
             ".config/qmk"
             ".cache/nix-index"
             ".config/github-copilot"
