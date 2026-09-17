@@ -20,10 +20,11 @@ in
     enable = true;
     environmentFiles = [ osConfig.sops.templates."hermes-env".path ];
 
-    # The gateway shares this HERMES_HOME. env's TELEGRAM_BOT_TOKEN turns the
-    # Telegram platform on by itself; with no allowlist configured the first
-    # DM gets a pairing code, approved once with
-    # `hermes pairing approve telegram <code>`.
+    # The gateway shares this HERMES_HOME. TELEGRAM_BOT_TOKEN turns the
+    # Telegram platform on by itself; TELEGRAM_ALLOWED_USERS then pins the
+    # only account the bot answers to. The user ID is not a credential, so it
+    # goes through `environment` rather than the sops env file.
+    environment.TELEGRAM_ALLOWED_USERS = "69148517";
     gateway.enable = true;
 
     # Pin the startup route. home/agents.nix declares the token-plan
@@ -38,10 +39,9 @@ in
         provider = "openrouter";
       };
       openrouter.min_coding_score = 0.65;
-      # No numeric Telegram allow-list is pinned in the flake (there is no
-      # secret for one). Unknown DMs ask for pairing instead of being silently
-      # dropped, so the owner can approve themselves from the CLI.
-      unauthorized_dm_behavior = "pair";
+      # The allowlist above is the whole access policy: do not let unknown DMs
+      # fall back into the pairing flow.
+      unauthorized_dm_behavior = "ignore";
       # "." is Hermes' placeholder for the launch directory; the module would
       # otherwise write its workingDirectory default into config.yaml.
       terminal.cwd = ".";
