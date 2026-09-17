@@ -11,8 +11,9 @@ let
   # (desktop/configuration/sops.nix). Each wrapper below runs this script at
   # launch; it exports only the names in secretVars, so unrelated tokens in
   # /run/secrets never reach an interactive shell. sops.templates."hermes-env"
-  # reconstructs the same set as a file for the Hermes agent itself, so the
-  # deleted hand-maintained blob stays a generated artifact.
+  # reassembles the base set plus the token-plan keys Hermes needs, as a file
+  # for the Hermes agent itself, so the deleted hand-maintained blob stays a
+  # generated artifact.
   secretVars = {
     OPENROUTER_API_KEY = "openrouter-api-key";
     CONTEXT7_API_KEY = "context7-api-key";
@@ -1923,6 +1924,64 @@ let
     ${crofDshModelsYaml}
   '';
 
+  # Hermes' token-plan providers. The upstream module ships built-in catalogs
+  # for OpenCode Go and DeepSeek, which the extended hermes-env template in
+  # desktop/configuration/sops.nix unlocks with OPENCODE_GO_API_KEY /
+  # DEEPSEEK_API_KEY; home/hermes.nix keeps OpenRouter pinned as the startup
+  # default. The two plans below have no Hermes catalog or point at the wrong
+  # endpoint out of the box:
+  #
+  #   - Qwen Cloud's Token Plan speaks Anthropic Messages (the vendor's
+  #     opencode recipe), while Hermes' built-in `alibaba` provider speaks
+  #     OpenAI-compatible DashScope; declare the vendor endpoint directly.
+  #   - CrofAI is an OpenAI-compatible gateway absent from models.dev, with
+  #     its catalog already carried in crofModels above.
+  #
+  # Model metadata is projected from the same qwenProvider/crofModels shapes
+  # the other harnesses use, so the plan lists cannot drift between agents.
+  hermesProviderModels = {
+    qwen-token-plan = lib.mapAttrs (_: model: {
+      context_length = model.limit.context;
+      supports_reasoning = model.reasoning or false;
+      supports_tools = model.tool_call or false;
+      supports_vision = builtins.elem "image" (model.modalities.input or [ ]);
+    }) qwenProvider.qwen.models;
+
+    crofai = builtins.listToAttrs (
+      map (model: {
+        name = model.id;
+        value = {
+          context_length = model.context;
+          supports_reasoning = model.reasoning;
+          supports_vision = model.vision;
+        };
+      }) crofModels
+    );
+  };
+
+  hermesProviders = {
+    qwen-token-plan = {
+      name = "Qwen Cloud (Token Plan)";
+      api = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1";
+      key_env = "QWEN_TOKEN_PLAN_API_KEY";
+      transport = "anthropic_messages";
+      # This gateway has no Anthropic /v1/models surface, so the picker uses
+      # the declared list instead of probing it.
+      discover_models = false;
+      models = hermesProviderModels.qwen-token-plan;
+    };
+
+    crofai = {
+      name = "CrofAI";
+      api = "https://crof.ai/v1";
+      key_env = "CROFAI_API_KEY";
+      transport = "chat_completions";
+      # Same reason as Qwen: crofModels is the maintained catalog.
+      discover_models = false;
+      models = hermesProviderModels.crofai;
+    };
+  };
+
   # settings.yaml is dsh's live user-overrides document: the Models page and the
   # onboarding/permission toggles write it, and dsh hot-reloads external edits.
   # So it cannot be a read-only store symlink any more than pi's settings.json
@@ -2486,6 +2545,10 @@ in
       ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
     };
   };
+
+  # Hermes' plan providers, merged into the settings home/hermes.nix owns;
+  # the upstream module deep-merges `settings` across modules by design.
+  services.hermes-agent.settings.providers = hermesProviders;
 
   # Nested rather than three top-level `xdg.configFile.` keys: statix's
   # repeated-keys lint flags the flat form once the third entry lands, and all
