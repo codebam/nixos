@@ -15,6 +15,7 @@
     ./programs.nix
     ./services.nix
     ./system.nix
+    ./auto-upgrade.nix
     ./systemd.nix
     ./users.nix
   ];

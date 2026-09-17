@@ -64,7 +64,8 @@ per-host overrides for hardware, networking, and services.
 │                                  VPN-bypass, services (Lidarr/Prowlarr/Transmission/
 │                                  Navidrome/Ollama/OpenRGB/nginx/SearXNG/FlareSolverr),
 │                                  audio routing (media ducker, DeepFilterNet), SOPS
-│                                  secrets, GPU OC, makano user, nix-serve (tailnet cache)
+│                                  secrets, GPU OC, makano user, nix-serve (tailnet cache),
+│                                  daily flake update + kernel/firmware reboot notice
 ├── desktop-laptop/              # Shared: Podman, IVPN, OBS Studio
 ├── laptop/
 │   └── configuration/           # cleanupRoot (bcachefs), power-profiles-daemon, thermald

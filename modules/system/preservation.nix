@@ -38,6 +38,10 @@ _: {
         "/var/lib/bluetooth"
         "/var/lib/iwd"
         "/var/lib/nixos"
+        # The daily system.autoUpgrade timer is Persistent=true and stores its
+        # last-trigger stamp here; the root wipe would otherwise make a boot
+        # after the scheduled time forget the missed run until the next day.
+        "/var/lib/systemd/timers"
         # Root is wiped at boot, so without this every `flatpak install` --
         # runtimes, apps, and the flathub remote itself -- is undone by the
         # next reboot. The per-user half is under codebam below.

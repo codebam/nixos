@@ -5,6 +5,55 @@
   ...
 }:
 
+let
+  # Best-effort desktop notification for the marker written by
+  # desktop/configuration/auto-upgrade.nix. Runs from a user timer rather than
+  # a PathExists= unit: systemd restarts a path-triggered service immediately
+  # whenever it exits while the path still exists (systemd.path(5)), which
+  # would repeat the notification. The timer instead compares the marker body
+  # with a per-session state file, so each still-pending marker is announced
+  # once and a failed send is retried on the next tick.
+  rebootNotify = pkgs.writeShellApplication {
+    name = "nixos-reboot-notify";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.libnotify
+    ];
+    text = ''
+      marker=/run/nixos-upgrade/reboot-required
+      runtime="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      state="$runtime/nixos-reboot-notified"
+
+      if [ ! -r "$marker" ]; then
+        rm -f "$state"
+        exit 0
+      fi
+
+      body="$(cat "$marker" 2>/dev/null || true)"
+      [ -n "$body" ] || body="Kernel or firmware updates were installed. Reboot to use them."
+
+      # Already announced this exact marker. A rewritten marker with the same
+      # text keeps the same state, while a send that failed (Viewport not on
+      # the bus yet) leaves the state unwritten and is retried next tick.
+      if [ -r "$state" ] && [ "$(cat "$state" 2>/dev/null || true)" = "$body" ]; then
+        exit 0
+      fi
+
+      notification_args=(
+        --app-name "NixOS Upgrade"
+        --urgency=critical
+        --expire-time=0
+        --icon=system-reboot
+        "Reboot required"
+      )
+
+      # A failed send writes no state, so the next tick retries it.
+      if notify-send "''${notification_args[@]}" "$body"; then
+        printf '%s\n' "$body" > "$state"
+      fi
+    '';
+  };
+in
 {
 
   programs.voxtype.package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
@@ -91,28 +140,53 @@
     };
   };
 
-  systemd = {
-    user = {
-      services = {
-        # Login only. Resume is handled by the openrgb-resume system unit in
-        # desktop/configuration/systemd.nix -- there is no user-manager
-        # suspend.target to bind to from here.
-        openrgb-apply = {
-          Unit = {
-            Description = "Apply OpenRGB settings on login";
-            After = [
-              "default.target"
-            ];
-          };
-          Service = {
-            Type = "oneshot";
-            ExecStart = "${lib.getExe pkgs.openrgb} -p default.orp";
-          };
-          Install = {
-            WantedBy = [
-              "default.target"
-            ];
-          };
+  systemd.user = {
+    # The system-side counterpoint lives in desktop/configuration/auto-upgrade.nix.
+    # OnStartupSec covers the marker that was already there when the user
+    # manager started (the overnight-update case); OnUnitActiveSec keeps
+    # checking while logged in.
+    timers.nixos-reboot-required = {
+      Unit = {
+        Description = "Check for a NixOS kernel or firmware reboot marker";
+      };
+      Timer = {
+        OnStartupSec = "30s";
+        OnUnitActiveSec = "1min";
+      };
+      Install = {
+        WantedBy = [ "timers.target" ];
+      };
+    };
+
+    services = {
+      # Login only. Resume is handled by the openrgb-resume system unit in
+      # desktop/configuration/systemd.nix -- there is no user-manager
+      # suspend.target to bind to from here.
+      openrgb-apply = {
+        Unit = {
+          Description = "Apply OpenRGB settings on login";
+          After = [
+            "default.target"
+          ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${lib.getExe pkgs.openrgb} -p default.orp";
+        };
+        Install = {
+          WantedBy = [
+            "default.target"
+          ];
+        };
+      };
+
+      nixos-reboot-required = {
+        Unit = {
+          Description = "Notify that a NixOS update is waiting for a reboot";
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = lib.getExe rebootNotify;
         };
       };
     };

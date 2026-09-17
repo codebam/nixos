@@ -146,8 +146,6 @@
           echo "high" > "$GPU_CARD/device/power_dpm_force_performance_level"
         '';
       };
-      # No nixos-upgrade override: system.autoUpgrade.enable is false, so the
-      # preStart `nix flake update` that used to sit here never ran.
     };
   };
 }
