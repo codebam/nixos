@@ -30,14 +30,30 @@ in
     # Pin the startup route. home/agents.nix declares the token-plan
     # providers for explicit /model picks; this keeps a mutable `hermes model`
     # selection or an upstream default from silently changing what every turn
-    # lands on. The Pareto floor matches the opencode/pi/dsh config in
-    # home/agents.nix.
+    # lands on. deepseek-flash is the direct DeepSeek API's current model name
+    # for DeepSeek-V4.1-Flash.
     settings = {
       model = {
-        base_url = "https://openrouter.ai/api/v1";
-        default = "openrouter/pareto-code";
-        provider = "openrouter";
+        # Empty base_url clears the OpenRouter URL persisted by the previous
+        # default so the built-in deepseek endpoint wins.
+        base_url = "";
+        default = "deepseek-flash";
+        provider = "deepseek";
       };
+      # Hermes' static DeepSeek catalog only knows the legacy
+      # deepseek-v4-flash alias, so pin the metadata DeepSeek documents for
+      # the current deepseek-flash id.
+      model_overrides = {
+        "deepseek"."deepseek-flash" = {
+          context_window = 1000000;
+          max_output_tokens = 384000;
+          supports_tools = true;
+          supports_vision = true;
+          supports_reasoning = true;
+        };
+      };
+      # Kept for a switch back to OpenRouter: same Pareto floor as
+      # opencode/pi/dsh.
       openrouter.min_coding_score = 0.65;
       # The allowlist above is the whole access policy: do not let unknown DMs
       # fall back into the pairing flow.
