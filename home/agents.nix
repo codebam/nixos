@@ -842,6 +842,21 @@ let
     GIT_CONFIG_GLOBAL = "${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig";
   };
 
+  # Host roots under which dsh sessions may open a project. `workspaceRoot`
+  # (the dsh process cwd) is always allowed; these add the dsh-web project
+  # picker roots. Only the exact session root becomes a bind mount, so a
+  # sibling project is visible to harness discovery at most, never a workdir
+  # mount.
+  dshWorkspaceParents = [
+    "${config.home.homeDirectory}/Documents/git"
+    "/persistent"
+    "/tmp"
+  ];
+  # The dsh plugin's ctx.fs fence and the OpenSandbox server-side bind guard
+  # must name the same credential/control paths; keep them on one definition.
+  dshProtectedHostPaths =
+    (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
+
   # Both interactive dsh surfaces keep the one hand-written patch row they
   # carried before the sandbox providers changed: the hand-declared OpenCode Go
   # routes (`opencode-go-deepseek`, `opencode-go-union-alpha`) must be named or
@@ -927,6 +942,8 @@ let
               : ${builtins.toJSON dshStrictReadOnlyMounts}
             extraWritableMounts: []
             trustedReadPaths: ${builtins.toJSON dshTrustedReadPaths}
+            workspaceParents: ${builtins.toJSON dshWorkspaceParents}
+            protectedPaths: ${builtins.toJSON dshProtectedHostPaths}
             allowDynamicMounts: true
             provideFilesystem: true
 
@@ -1672,10 +1689,13 @@ let
 
     In dsh sessions, the @codebam/dsh-opensandbox world runs bash, terminal,
     fs-search, and the file tools inside an OpenSandbox container with the
-    project mounted at the same absolute path. The default mount table is the
-    project plus `/nix/store` read-only: no host daemon socket, no credential
-    mount, no forwarded `GH_TOKEN`/`SSH_AUTH_SOCK`, and no arbitrary host
-    read. A human can scope one extra host directory with
+    session's workspace project mounted at the same absolute path. The default
+    mount table is that workspace plus `/nix/store` read-only: no host daemon
+    socket, no credential mount, no forwarded
+    `GH_TOKEN`/`SSH_AUTH_SOCK`, and no arbitrary host read. Web sessions may
+    open any project under the configured workspace parents; a directory
+    outside them fails until a human adds it. A human can scope one extra host
+    directory with
     `/directory-add <absolute-path> [ro|rw]` (read-only by default); the
     mount lasts for that dsh process. Reviewed host work that genuinely needs
     builds or credentials is a separate human-launched session:

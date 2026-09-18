@@ -10,6 +10,7 @@
 # user namespace, so a compromised lifecycle server cannot become root on the
 # host; rootful podman (the flaresolverr pattern) would hand it that.
 {
+  config,
   lib,
   pkgs,
   osConfig,
@@ -71,20 +72,10 @@ let
   # credentials. The same list doubles as the server-side ancestor guard: a
   # bind whose source directory *contains* one of these paths is rejected
   # outright, so the old `workdir=/home/codebam` bypass cannot mount the whole
-  # home directory around the read-only guard.
-  sandboxReadonlyHostPaths = [
-    "/nix/store"
-    "/etc/nix"
-    "/nix/var/nix"
-    "/run/user/1000/gnupg"
-    "/home/codebam/.gnupg"
-    "/home/codebam/.ssh"
-    "/home/codebam/.dsh"
-    "/home/codebam/.config/git"
-    "/home/codebam/.config/gh"
-    "/home/codebam/.config/sops"
-    "/home/codebam/.config/dsh-sandbox"
-  ];
+  # home directory around the read-only guard. Defined once in
+  # opensandbox-paths.nix because the dsh plugin's ctx.fs fence consumes it too.
+  sandboxReadonlyHostPaths =
+    (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
 
   # The server config holds the API key, so it is generated under the user's
   # runtime dir (tmpfs, mode 0600) on every boot rather than stored in the Nix
