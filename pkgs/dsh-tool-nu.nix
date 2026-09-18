@@ -15,7 +15,7 @@ stdenvNoCC.mkDerivation {
   # (nix-prefetch-url --unpack, converted to SRI) and was precomputed from the
   # pushed v0.1.0 tag. This plugin has
   # no dsh-version patch: it uses only the stable ctx.shell request/render
-  # surface that dsh 0.1.6-alpha.1 exposes.
+  # surface that dsh 0.1.6-alpha.2 exposes.
   src = fetchFromGitHub {
     owner = "codebam";
     repo = "dsh-tool-nu";

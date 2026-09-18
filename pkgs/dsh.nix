@@ -31,11 +31,11 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "dsh";
-  version = "0.1.6-alpha.1";
+  version = "0.1.6-alpha.2";
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${finalAttrs.version}.tgz";
-    hash = "sha256-Jjf/ynZL2j/IaOa0ToHhE8kQE1x4XGxCCuhtoIvwAeM=";
+    hash = "sha256-djggrZi7XOFePm331Njhw22UEAMc6fkkdPldfID/RRY=";
   };
 
   # buildNpmPackage forwards postPatch to fetchNpmDeps but not nativeBuildInputs,
@@ -46,7 +46,7 @@ buildNpmPackage (finalAttrs: {
     inherit (finalAttrs) src;
     nativeBuildInputs = [ nodejs ];
     postPatch = patchManifest;
-    hash = "sha256-qAlIccAJG/FEMRL1JWtjZQ/MvyIeWORFDWo8+pQ5Xk4=";
+    hash = "sha256-p4uALt5vuWnFnnJnNAmPDW10DEGnfbjEC1BhQ9CyLDE=";
   };
 
   postPatch = patchManifest;
@@ -61,10 +61,13 @@ buildNpmPackage (finalAttrs: {
   nativeBuildInputs = [ makeWrapper ];
 
   # The web profile sets `patchReload: live`, which makes the launcher mount
-  # cordis-plugin-hmr. HMR reaches Node's internal ESM loader through
-  # --expose-internals, and its native fallback (node-addon-require-builtin)
-  # cannot read V8 internals on Node >= 26. Start node with the flag HMR
-  # checks for, which works on every supported Node line.
+  # alpha.2's @deepseek-ai/dsh-hmr. HMR reaches Node's internal ESM loader
+  # through --expose-internals; alpha.2's profile resolution (PluginPackages)
+  # reaches the same modules through node-addon-require-builtin, and that
+  # addon cannot read V8 internals on Node >= 26 or against Nix's Node builds.
+  # Start node with the flag HMR checks for, and read those internals through
+  # createRequire in dsh-app-boot instead of the addon -- the exposed-internals
+  # require path works on every supported Node line.
   #
   # The persistent-shell PTY backend (`dsh-terminal-bash`) defaults its bash
   # executable to /bin/bash, which NixOS does not ship. Every shell call in a
@@ -75,6 +78,23 @@ buildNpmPackage (finalAttrs: {
   # resolves `bash` from PATH, so name the store bash here too; `--replace-fail`
   # keeps an upstream rename from silently restoring the broken default.
   postInstall = ''
+    # dsh-app-boot and its worker bootstrap only need require-builtin for the
+    # loader's internal modules; --expose-internals exposes those through
+    # createRequire too, so replace the dependency on the native helper in both
+    # before making either available. Worker build banners inherit execArgv, so
+    # the flag is present there as well.
+    for app_boot in \
+      "$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js" \
+      "$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/worker/profile-resolution-bootstrap.js"
+    do
+      chmod u+w "$app_boot"
+      substituteInPlace "$app_boot" \
+        --replace-fail 'createRequire(import.meta.url)("node-addon-require-builtin")' \
+          'createRequire(import.meta.url)' \
+        --replace-fail 'addon.requireBuiltin(' \
+          'addon('
+    done
+
     terminal_bash="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-terminal-bash/lib/index.js"
     chmod u+w "$terminal_bash"
     substituteInPlace "$terminal_bash" \
