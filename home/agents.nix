@@ -797,12 +797,50 @@ let
   # Per-process escape hatch for the row swap below. dsh treats every DSH_*
   # name as bootstrap-only, so a repository's .env cannot set it -- it has to
   # come from the launching environment. Any non-empty value boots dsh on the
-  # built-in bwrap/Landlock world for that process and suppresses the
-  # opensandbox MCP row; unset or empty keeps the OpenSandbox world. The
-  # `dsh-no-opensandbox` wrapper is the one-command form.
+  # built-in bwrap/Landlock world for that process; unset or empty keeps the
+  # OpenSandbox world. The `dsh-no-opensandbox` wrapper is the one-command
+  # form. This fallback is deliberately outside the hardened mount boundary.
   dshNoOpenSandboxEnv = "DSH_NO_OPENSANDBOX";
   dshUseOpenSandboxJs = "!process.env.${dshNoOpenSandboxEnv}";
   dshNoOpenSandboxJs = "Boolean(process.env.${dshNoOpenSandboxEnv})";
+
+  # The default dsh OpenSandbox world is the untrusted-agent tier: /nix/store
+  # read-only for toolchain binaries, no host daemon, no credential mounts,
+  # and no forwarded GH_TOKEN/SSH_AUTH_SOCK. A human launches
+  # `dsh-host-access` when a reviewed task genuinely needs those host
+  # bridges; the profile patch reads this variable at load time and widens
+  # only the explicit mount/env grants. The filesystem fence and the mount
+  # table stay in force in both tiers.
+  dshHostAccessEnv = "DSH_OPEN_SANDBOX_HOST_ACCESS";
+  dshHostAccessJs = "process.env.${dshHostAccessEnv} === '1'";
+  dshStrictReadOnlyMounts = [ "/nix/store" ];
+  dshHostAccessReadOnlyMounts = dshStrictReadOnlyMounts ++ [
+    "/etc/nix"
+    "/nix/var/nix/daemon-socket"
+    "/nix/var/nix/profiles"
+    "${config.home.homeDirectory}/.config/git"
+    "${config.home.homeDirectory}/.config/dsh-sandbox"
+    "${config.home.homeDirectory}/.gnupg"
+    "/run/user/1000/gnupg"
+  ];
+  # Harness-owned reads ctx.fs needs even though they are not sandbox mounts:
+  # user skills and the user-global AGENTS.md. Keep this list narrow.
+  dshTrustedReadPaths = [
+    "${config.home.homeDirectory}/.dsh/AGENTS.md"
+    "${config.home.homeDirectory}/.dsh/skills"
+    "${config.home.homeDirectory}/.agents/skills"
+  ];
+  # The Debian image ships no system CA store. These four names are read by
+  # curl, git, Go, and nix's TLS stack respectively.
+  dshCaEnv = {
+    NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    GIT_SSL_CAINFO = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  };
+  dshHostAccessEnvVars = dshCaEnv // {
+    GIT_CONFIG_GLOBAL = "${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig";
+  };
 
   # Both interactive dsh surfaces keep the one hand-written patch row they
   # carried before the sandbox providers changed: the hand-declared OpenCode Go
@@ -810,11 +848,12 @@ let
   # dsh attaches no x-opencode-session header and OpenCode Go answers 400.
   #
   # dshContainerWorld (see above) also swaps the execution world:
-  # @codebam/dsh-opensandbox registers ctx.subprocess and ctx.sandbox, so the
-  # two local rows are disabled and the stock bash, terminal, and fs-search
-  # plugins run in OpenSandbox containers. While it is off -- or a process sets
+  # @codebam/dsh-opensandbox registers ctx.subprocess, ctx.sandbox, and
+  # ctx.fs, so the two local providers and dsh's host-fs provider are
+  # disabled and the stock bash, terminal, search, and file tools run over
+  # the OpenSandbox mount table. While it is off -- or a process sets
   # DSH_NO_OPENSANDBOX, see below -- every host keeps the built-in
-  # bwrap/Landlock sandbox rows.
+  # bwrap/Landlock sandbox rows and the host-fs provider.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
@@ -837,20 +876,34 @@ let
           - opencode-go-union-alpha
   ''
   + lib.optionalString dshContainerWorld ''
-    # dsh-opensandbox: replace the host execution world with OpenSandbox
-    # containers. The plugin registers ctx.subprocess and ctx.sandbox, so both
-    # local rows are disabled; the stock bash, terminal, and search tools then
-    # run over the container world unchanged. `apiKeyFile` is the per-boot key
-    # home/opensandbox.nix generates under the user runtime dir; the plugin
-    # reads it lazily, so login ordering with the server does not matter.
+    # dsh-opensandbox: replace the host execution world with
+    # OpenSandbox containers. The plugin registers ctx.subprocess,
+    # ctx.sandbox, and ctx.fs, so both local providers and dsh's host-fs
+    # provider are disabled; the stock bash, terminal, search, and file tools
+    # then run over the container world and its mount table. `apiKeyFile` is
+    # the per-boot key home/opensandbox.nix generates under the user runtime
+    # dir; the plugin reads it lazily, so login ordering does not matter.
     #
-    # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips these three
-    # load-time expressions: the local rows come back and the plugin row is
-    # skipped for that process.
+    # The default configuration is the untrusted-agent tier: /nix/store is
+    # visible read-only for toolchain binaries, and no host credentials,
+    # daemon socket, or arbitrary host path is. A human runs
+    # `dsh-host-access` for reviewed work that needs those host bridges; it
+    # is a separate command and never the default.
+    #
+    # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips these
+    # load-time expressions: the local rows come back, dsh's host fs provider
+    # stays mounted, and the plugin row is skipped for that process.
     - id: subprocess
       disabled: !!js "${dshUseOpenSandboxJs}"
 
     - id: sandbox
+      disabled: !!js "${dshUseOpenSandboxJs}"
+
+    # dsh's shipped fs backend fences writes but deliberately leaves reads
+    # unconfined (the host filesystem is normally the execution world). The
+    # plugin's ctx.fs replaces it with the same mount table the container
+    # uses.
+    - id: fs-sandbox
       disabled: !!js "${dshUseOpenSandboxJs}"
 
     - insert:
@@ -864,50 +917,34 @@ let
             requestTimeoutMs: 900000
             timeoutSeconds: 43200
 
-            # What makes the container a usable workspace rather than only a
-            # boundary. Everything here is read-only, and each entry is a
-            # deliberate grant:
-            #
-            #   /etc/nix + /nix/var/nix/daemon-socket  the container's nix
-            #     talks to the host daemon, so `nix build` / `nixos-rebuild
-            #     build` work and the store stays host-owned. Without the
-            #     socket a read-only /nix/store cannot add paths.
-            #   /nix/var/nix/profiles  what nh and nixos-rebuild read about
-            #     the running system. (`/run/current-system` is deliberately
-            #     absent: the plugin resolves symlinks, so it would arrive as a
-            #     redundant path already visible through /nix/store.)
-            #   .config/git, .config/dsh-sandbox, .gnupg, /run/user/1000/gnupg
-            #     git identity and YubiKey-backed commit signing and SSH push;
-            #     the private keys never enter the sandbox, only the agent
-            #     sockets and the keyring the wrapper copies (dshSandboxGpg).
-            extraReadOnlyMounts:
-              - /nix/store
-              - /etc/nix
-              - /nix/var/nix/daemon-socket
-              - /nix/var/nix/profiles
-              - ${config.home.homeDirectory}/.config/git
-              - ${config.home.homeDirectory}/.config/dsh-sandbox
-              - ${config.home.homeDirectory}/.gnupg
-              - /run/user/1000/gnupg
+            # Only the mount table, env, and forwarded names change between
+            # the default tier and an explicit `dsh-host-access` launch; the
+            # filesystem fence and dynamic-mount commands stay the same.
+            # Block scalars keep the JSON colons out of YAML parsing.
+            extraReadOnlyMounts: !!js >-
+              ${dshHostAccessJs}
+              ? ${builtins.toJSON dshHostAccessReadOnlyMounts}
+              : ${builtins.toJSON dshStrictReadOnlyMounts}
+            extraWritableMounts: []
+            trustedReadPaths: ${builtins.toJSON dshTrustedReadPaths}
+            allowDynamicMounts: true
+            provideFilesystem: true
 
-            # GIT_CONFIG_GLOBAL is the sandbox git config (the real one plus
-            # the gpg/ssh helpers). The certificate entries are all the same
-            # store bundle under the four names the tools use: the Debian image
-            # ships no system CA store, so without them `gh` (Go), curl and git
-            # over HTTPS fail with "certificate signed by unknown authority"
-            # even though the token is valid.
-            env:
-              GIT_CONFIG_GLOBAL: ${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig
-              NIX_SSL_CERT_FILE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-              SSL_CERT_FILE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-              GIT_SSL_CAINFO: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-              CURL_CA_BUNDLE: ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+            # Host-access adds GIT_CONFIG_GLOBAL for the sandbox git config;
+            # the default tier carries only the CA bundle names every network
+            # tool needs.
+            env: !!js >-
+              ${dshHostAccessJs}
+              ? ${builtins.toJSON dshHostAccessEnvVars}
+              : ${builtins.toJSON dshCaEnv}
 
-            # Host-prepared credentials, so `git push` and `gh` work inside the
-            # sandbox exactly as they do outside it. Unset names are skipped.
-            forwardEnv:
-              - SSH_AUTH_SOCK
-              - GH_TOKEN
+            # Host-prepared credentials, only in the host-access tier; unset
+            # names are skipped rather than blanked. The default tier forwards
+            # nothing.
+            forwardEnv: !!js >-
+              ${dshHostAccessJs}
+              ? ["SSH_AUTH_SOCK", "GH_TOKEN"]
+              : []
   ''
   + lib.optionalString dshContainerWorld ''
     # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
@@ -924,12 +961,11 @@ let
             enableRunInBackground: true
   '';
 
-  # Credentials that must be prepared outside the confined shell because the
-  # keyring and gpg-agent live in the user session: gh's keyring
-  # token becomes GH_TOKEN (so the sandboxed gh never needs DBus/keyring),
-  # SOPS is pointed at the YubiKey age identity plugin, SSH falls back to the
-  # gpg-agent SSH socket when the login environment did not export one, and
-  # GPG gets a real TTY for pinentry when there is one.
+  # Host credentials prepared only for `dsh-host-access`, never for the
+  # default dsh session: gh's keyring token becomes GH_TOKEN, SOPS is pointed
+  # at the YubiKey age identity plugin, SSH falls back to the gpg-agent SSH
+  # socket when the login environment did not export one, and GPG gets a real
+  # TTY for pinentry when there is one.
   credentialEnv = pkgs.writeShellScript "agent-credential-env" ''
     if [ -z "''${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
       GH_TOKEN=$(gh auth token 2>/dev/null || true)
@@ -951,7 +987,7 @@ let
     fi
   '';
 
-  # The dsh container world mounts the host keyring read-only -- a sandbox must
+  # The host-access tier mounts the host keyring read-only -- a sandbox must
   # not be able to edit it -- but gpg will not sign without creating lock files
   # in its homedir (verified: "failed to create temporary file ... Permission
   # denied", then "no default secret key"). This wrapper gives it a writable
@@ -1007,12 +1043,12 @@ let
     '';
   };
 
-  # Desktop-only dsh command: source the API keys outside the harness, then
-  # run the upstream binary. dsh's own sandbox-local backend confines every
-  # shell command it spawns to the launch workspace; the separate OpenSandbox
-  # service (home/opensandbox.nix) is the container boundary for per-work-type
-  # projects. Starting in $HOME is still refused: it would make the whole home
-  # directory the writable workspace.
+  # Desktop-only dsh command: source the model API keys outside the harness,
+  # then run the upstream binary. Host credentials are deliberately NOT loaded
+  # here: the default session is the untrusted-agent tier and the OpenSandbox
+  # profile forwards nothing. Use `dsh-host-access` when reviewed work really
+  # needs the host daemon or credentials. Starting in $HOME is still refused:
+  # it would make the whole home directory the writable workspace.
   dshSandboxed = pkgs.writeShellApplication {
     name = "dsh";
     runtimeInputs = [
@@ -1023,8 +1059,6 @@ let
       set -eu
       # shellcheck source=/dev/null
       . ${loadKey}
-      # shellcheck source=/dev/null
-      . ${credentialEnv}
       case "$PWD" in
         "$HOME")
           echo "dsh: refusing to start in \$HOME; cd into a project directory first" >&2
@@ -1056,6 +1090,29 @@ let
     '';
   };
 
+  # Explicit human-launched elevated tier. It restores the host Nix daemon
+  # socket, the git/GPG agent mounts, and the forwarded GH_TOKEN/SSH_AUTH_SOCK
+  # for reviewed build/push work. The OpenSandbox mount fence and ctx.fs fence
+  # still apply, so this widens only the host bridges the profile patch names;
+  # it does not restore the old unconfined host fs reads.
+  dshHostAccess = pkgs.writeShellApplication {
+    name = "dsh-host-access";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gh
+    ];
+    text = ''
+      set -eu
+      # shellcheck source=/dev/null
+      . ${loadKey}
+      # shellcheck source=/dev/null
+      . ${credentialEnv}
+      export ${dshHostAccessEnv}=1
+      echo "dsh-host-access: host Nix daemon and agent credentials are inside this sandbox session" >&2
+      exec ${lib.getExe' dshInstalled "dsh"} "$@"
+    '';
+  };
+
   # Tailscale Serve forwards the browser's original Host header, so dsh's
   # browser-trust fence has to trust the MagicDNS authority. Resolve it at
   # start instead of embedding <host>.<tailnet>.ts.net in this repo; Serve
@@ -1073,8 +1130,6 @@ let
       set -eu
       # shellcheck source=/dev/null
       . ${loadKey}
-      # shellcheck source=/dev/null
-      . ${credentialEnv}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
       exec ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
@@ -1382,14 +1437,6 @@ let
   # opencode2 beta-19378 and opencode 1.18.29.
   zgTimeoutMs = 600000;
 
-  # ripwire's MCP argv, shared by the DSH row below. The CLI-first guidance is
-  # still the recommended path; this is the warm-index alternative.
-  ripwireServerName = "ripwire";
-  ripwireArgv = [
-    "ripwire"
-    "--mcp"
-  ];
-
   # Shared agent memory: the official knowledge-graph MCP server
   # (`mcp-server-memory`) run once behind mcp-proxy as a systemd *user*
   # service, so every harness reads and writes ONE JSONL graph instead of
@@ -1443,21 +1490,10 @@ let
     - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
   '';
 
-  # dsh's mcp client names tools `mcp__<serverName>__<rawName>` where opencode
-  # and pi build `<serverName>_<rawName>`, so the shared block above is
-  # re-rendered with dsh's names instead of being copied and drifting. The
-  # routing rules themselves are host-independent.
-  zgGuidanceDsh =
-    builtins.replaceStrings
-      [
-        "zvec_grep_zvec_grep_search"
-        "zvec_grep_zvec_grep_rg"
-      ]
-      [
-        "mcp__${zgServerName}__zvec_grep_search"
-        "mcp__${zgServerName}__zvec_grep_rg"
-      ]
-      zgGuidance;
+  # The dsh OpenSandbox tier deliberately does not mount the zvec-grep MCP
+  # server: it runs as the host user and accepts arbitrary absolute roots. The
+  # sandbox's native Grep/`rg` paths stay inside the mount table, so dsh gets
+  # its own short routing note rather than the mcp-name-rendered block above.
 
   # ripwire's use-when blurb, copied verbatim from the packaged binary's own
   # `ripwire wrap opencode` output (v0.3.8): the CLI-first protocol both
@@ -1572,7 +1608,7 @@ let
 
   # Shared guidance for the agent-memory server, rendered with the tool names
   # each host actually registers. dsh's `mcp__<server>__<tool>` names are one
-  # substitution away, mirroring zgGuidanceDsh.
+  # substitution away.
   memoryGuidance = ''
     ## Agent memory (shared knowledge graph)
 
@@ -1622,31 +1658,34 @@ let
       ]
       memoryGuidance;
 
-  # Shared by all three harnesses: OpenSandbox is reached through the same
-  # `osb`/`osb-work` wrappers regardless of which MCP client is mounted.
+  # Shared by all three harnesses. dsh's own container world and the
+  # host-side `osb-work` tool are different execution worlds; this guidance
+  # states the default boundary and the two explicit human escape hatches.
   opensandboxGuidance = ''
     ## OpenSandbox work sandboxes
 
     `osb-work` is the explicit per-work-type sandbox front end on every host
     with the local server (desktop and laptop), and the only path on hosts
-    without one. On those hosts dsh's own execution world is containerized too
-    (the @codebam/dsh-opensandbox profile row; `dsh-no-opensandbox` is the
-    per-session fallback described below): its bash, terminal and fs-search
-    tools already run inside a sandbox with the project bind-mounted at the
-    same absolute path. That container cannot reach the local
-    OpenSandbox API -- the server is loopback-only and its key lives in the
-    host runtime dir -- so `osb-work` belongs to the host-side harnesses and to
-    a host terminal, not to a dsh session's own shell. That container does have
-    the host store, the Nix daemon socket and the git/GPG agent mounts, so
-    `nix build`, `nixos-rebuild build`, signed `git commit` and `git push` all
-    work from a dsh session; activating a system generation is still the
-    human's call. Hosts without podman (steamdeck) keep dsh's built-in
-    bwrap/Landlock sandbox.
+    without one. It is a host-side command: the local OpenSandbox API is
+    loopback-only and its key lives in the host runtime dir, so it belongs to
+    host harnesses and a host terminal, not to a dsh session's own shell.
+
+    In dsh sessions, the @codebam/dsh-opensandbox world runs bash, terminal,
+    fs-search, and the file tools inside an OpenSandbox container with the
+    project mounted at the same absolute path. The default mount table is the
+    project plus `/nix/store` read-only: no host daemon socket, no credential
+    mount, no forwarded `GH_TOKEN`/`SSH_AUTH_SOCK`, and no arbitrary host
+    read. A human can scope one extra host directory with
+    `/directory-add <absolute-path> [ro|rw]` (read-only by default); the
+    mount lasts for that dsh process. Reviewed host work that genuinely needs
+    builds or credentials is a separate human-launched session:
+    `dsh-host-access`. Never ask a user to run either command for a path or
+    credential you were not explicitly asked to use.
 
     dsh never falls back by itself if the local server is unhealthy. For one
-    session on the built-in world, run `dsh-no-opensandbox` (it exports
-    `DSH_NO_OPENSANDBOX=1`, which also drops the opensandbox MCP row); plain
-    `dsh` keeps the OpenSandbox world.
+    session on the built-in bwrap/Landlock world, run `dsh-no-opensandbox`
+    (it exports `DSH_NO_OPENSANDBOX=1`); that fallback is not the hardened
+    OpenSandbox boundary.
 
     `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
     c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
@@ -1657,11 +1696,11 @@ let
     - `osb-work stop <type>` — delete it;
     - `osb-work run <type> -- <cmd...>` — one-shot create/run/delete.
 
-    Use `osb` directly for lifecycle flags the helper does not cover, and the
-    `opensandbox` MCP tools where they are mounted. Prefer a sandbox over the
-    host shell for untrusted dependencies, generated code, package installs,
-    or anything that would touch files outside the project; the host `$HOME`
-    and the rest of the user session are outside it.
+    Use `osb` directly for lifecycle flags the helper does not cover. Prefer
+    an `osb-work` sandbox over the host shell for untrusted dependencies,
+    generated code, package installs, or anything that would touch files
+    outside the project; the host `$HOME` and the rest of the user session
+    are outside it.
   '';
 
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
@@ -2017,6 +2056,7 @@ in
     ]
     ++ lib.optionals (podmanEnabled && dshContainerWorld) [
       dshNoOpenSandbox
+      dshHostAccess
     ];
 
     # Nested rather than three top-level `activation.` keys: statix's
@@ -2241,25 +2281,22 @@ in
           before reading.
 
         <!-- ZVEC_GREP_START -->
-        ## zvec-grep is an MCP server here
+        ## zvec-grep is not mounted in this dsh tier
 
-        Both zvec-grep routes are ordinary tools in the tool list, provided by the
-        `zvec_grep` MCP server declared in `$DSH_HOME/cordis.patch.yml`. The
-        indexed-search route is `mcp__zvec_grep__zvec_grep_search`; if
-        `mcp__zvec_grep__zvec_grep_rg` is absent from the list, the server is
-        running its default indexed-only toolset and exact lookups belong to the
-        native Grep tool or `rg` via bash, exactly as the rules below say.
+        The host-side `zvec_grep` MCP server is deliberately absent from the
+        OpenSandbox dsh profile because it reads arbitrary host paths. For
+        exact lookups use the native Grep tool or `rg` via bash; those run in
+        the sandbox against the mounted workspace. Ask the user before adding
+        any host bridge for semantic indexing.
 
-        ${zgGuidanceDsh}
         <!-- ZVEC_GREP_END -->
         <!-- RIPWIRE_START -->
-        ## ripwire is a CLI first, MCP server second here
+        ## ripwire is a CLI first here
 
-        ripwire is on PATH and dsh has a shell tool, so use the CLI forms below
-        via bash; they cost no context until invoked. The `ripwire` MCP server is
-        also mounted (`mcp__ripwire__<verb>`); like every MCP row in dsh, its
-        tools sit in the request context, so prefer the CLI unless the warm index
-        is worth that cost.
+        ripwire is on PATH inside the sandbox and dsh has a shell tool, so use
+        the CLI forms below via bash; they cost no context until invoked. The
+        host-side `ripwire` MCP server is deliberately not mounted in this
+        tier.
 
         ${ripwireGuidance}
         <!-- RIPWIRE_END -->
@@ -2279,67 +2316,29 @@ in
       # overlays, so rows here apply to every profile: web, headless, acp, sdk,
       # and the custom dsh-tui profile.
       #
-      # zvec-grep and ripwire reuse the argv declared above for opencode and pi,
-      # but dsh's mcp client has no lazy proxy: every tool each server
-      # advertises sits in the tool list of every request. That is the price of
-      # mounting them here -- delete a row to fall back to the native
-      # grep/glob tools and the ripwire CLI alone.
+      # Only the shared memory server is mounted here. The host-side bridges
+      # (zvec-grep, ripwire, opensandbox) are intentionally absent from the
+      # default agent tier: they run as the host user and accept arbitrary
+      # host paths, arbitrary sandboxes, or arbitrary commands. Their CLIs
+      # remain available inside the sandbox (where they run against the
+      # mounted workspace), and the per-work-type sandboxes remain available
+      # through `osb-work` on the host side. Re-add a row only with the same
+      # trust review as `dsh-host-access`.
       #
-      # Protocol era: dsh 0.1.6's MCP SDK v2 negotiates the 2026-07-28
-      # stateless protocol when the server offers it and falls back to the
-      # 2025-era initialize handshake otherwise. zvec-grep ships on
-      # @modelcontextprotocol/server 2.0.0, so its stdio row already speaks
-      # the modern stateless protocol, and the memory URL is served stateless
-      # by mcp-proxy (see the agent-memory unit below). ripwire 0.3.8 and
-      # opensandbox-mcp 0.1.1 are still 2025-era servers with no upstream
-      # stateless mode; the SDK's legacy fallback carries them until one ships.
+      # The memory URL is served stateless by mcp-proxy (see the agent-memory
+      # unit below), so dsh's MCP SDK v2 client talks to it without a session.
       #
-      # Written as YAML text (the loader reads YAML, not JSON) with only the
-      # argv rendered from nix; `builtins.toJSON` is used for the args list
-      # because a JSON flow sequence is valid YAML.
-      #
-      # Each row sits inside a top-level `insert` with no `id`: a patch entry
-      # with an `id` and no `insert` only overrides a row that already exists,
-      # so targeting `mcp-zvec-grep` directly warns "entry not found" and is
-      # skipped -- nothing in the bundle layers defines it yet.
+      # Written as YAML text (the loader reads YAML, not JSON); the row sits
+      # inside a top-level `insert` with no `id`, because a patch entry with
+      # an `id` and no `insert` only overrides a row that already exists.
       ".dsh/cordis.patch.yml".text = ''
         - insert:
-            - id: mcp-zvec-grep
-              name: '@deepseek-ai/dsh-mcp-client'
-              config:
-                serverName: ${zgServerName}
-                transport: stdio
-                command: ${builtins.head zgArgv}
-                args: ${builtins.toJSON (builtins.tail zgArgv)}
-                toolCallTimeoutMs: ${toString zgTimeoutMs}
-            - id: mcp-ripwire
-              name: '@deepseek-ai/dsh-mcp-client'
-              config:
-                serverName: ${ripwireServerName}
-                transport: stdio
-                command: ${builtins.head ripwireArgv}
-                args: ${builtins.toJSON (builtins.tail ripwireArgv)}
             - id: mcp-memory
               name: '@deepseek-ai/dsh-mcp-client'
               config:
                 serverName: ${memoryServerName}
                 transport: streamable-http
                 url: ${memoryUrl}
-            # dsh has no lazy MCP proxy: every schema this server advertises
-            # sits in every request. Keep the row while sandbox work is being
-            # delegated; remove it and use `osb`/`osb-work` from bash when the
-            # ~19 extra tool schemas cost more context than the platform saves.
-            # DSH_NO_OPENSANDBOX drops it for a fallback session, where the
-            # container world it drives is not mounted anyway.
-            - id: mcp-opensandbox
-              name: '@deepseek-ai/dsh-mcp-client'
-              disabled: !!js "${dshNoOpenSandboxJs}"
-              config:
-                serverName: opensandbox
-                transport: stdio
-                command: opensandbox-mcp
-                args: ["--request-timeout-seconds", "900"]
-                toolCallTimeoutMs: 960000
       '';
 
       # The Minimal-Agents agent preset, authored in the user preset root

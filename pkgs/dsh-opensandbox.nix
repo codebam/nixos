@@ -1,32 +1,24 @@
 {
   lib,
   stdenvNoCC,
-  fetchFromGitHub,
+  fetchzip,
   nodejs,
 }:
 
 stdenvNoCC.mkDerivation {
   pname = "dsh-opensandbox";
-  version = "0.1.0-unstable-2026-09-15";
+  version = "0.2.0";
 
-  # @codebam/dsh-opensandbox is published to npm from its own repository; this
-  # host pins the revision that revalidates a cached sandbox against the
-  # lifecycle server, so a server-reaped sandbox (its TTL expired) is replaced
-  # instead of every later command failing on the dead execd endpoint.
-  src = fetchFromGitHub {
-    owner = "codebam";
-    repo = "dsh-opensandbox";
-    rev = "59d51bb40e28bb832abbec4a19616556365e8a47";
-    hash = "sha256-6c+TGowy5MjGvPofVp7uH2hwmqXfmOXlNd9U3nJLowQ=";
+  # @codebam/dsh-opensandbox 0.2.0 is the published artifact of the
+  # `security/mount-boundary` branch: the mount-root boundary (`mountRootFor`
+  # no longer binds an arbitrary host directory), the mount-fenced ctx.fs
+  # backend, and the human `/directory-add` family. Fetching the npm tarball
+  # means the flake runs exactly what npm consumers install; the GitHub branch
+  # remains the reviewable source until it is merged upstream.
+  src = fetchzip {
+    url = "https://registry.npmjs.org/@codebam/dsh-opensandbox/-/dsh-opensandbox-0.2.0.tgz";
+    hash = "sha256-l/zsy2o6k8VBiO5zSyA30B1+iUyCgF9FenszUaQ1t7k=";
   };
-
-  # dsh 0.1.6 changed the provider seams this plugin implements: confine
-  # became cancellable-async, SubprocessRuntime gained terminalEnvironment,
-  # SubprocessTerminalHandle gained resize and terminalType, and a missing
-  # executable must throw SubprocessExecutableNotFoundError so the new Web
-  # terminal's shell discovery can skip absent candidates. Drop this patch
-  # when upstream main carries the same changes and bump rev instead.
-  patches = [ ./dsh-opensandbox-dsh016.patch ];
 
   nativeBuildInputs = [ nodejs ];
 
@@ -54,7 +46,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "OpenSandbox-backed dsh execution world (subprocess + sandbox providers)";
+    description = "OpenSandbox-backed dsh execution world (subprocess, sandbox, and mount-fenced fs providers)";
     homepage = "https://github.com/codebam/dsh-opensandbox";
     license = lib.licenses.mit;
     platforms = lib.platforms.all;

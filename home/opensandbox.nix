@@ -67,15 +67,22 @@ let
   sandboxMaxGpu = 1;
 
   # Host paths that are always mounted read-only regardless of what a create
-  # request asks for: they are either immutable inputs (/nix/store), host
-  # control sockets, or credentials. Workspaces and /persistent stay writable.
+  # request asks for: immutable inputs (/nix/store), host control sockets, and
+  # credentials. The same list doubles as the server-side ancestor guard: a
+  # bind whose source directory *contains* one of these paths is rejected
+  # outright, so the old `workdir=/home/codebam` bypass cannot mount the whole
+  # home directory around the read-only guard.
   sandboxReadonlyHostPaths = [
     "/nix/store"
     "/etc/nix"
     "/nix/var/nix"
     "/run/user/1000/gnupg"
     "/home/codebam/.gnupg"
+    "/home/codebam/.ssh"
+    "/home/codebam/.dsh"
     "/home/codebam/.config/git"
+    "/home/codebam/.config/gh"
+    "/home/codebam/.config/sops"
     "/home/codebam/.config/dsh-sandbox"
   ];
 
@@ -145,12 +152,11 @@ let
         printf '\n'
         printf '%s\n' '[storage]'
         printf '%s\n' '# Host bind mounts are rejected unless their source path is under one of'
-        printf '%s\n' '# these prefixes: /home covers project dirs, /persistent the system flake,'
-        printf '%s\n' '# /tmp scratch work, /nix/store the read-only toolchain mount, and the'
-        printf '%s\n' '# last three what the dsh container world needs to be a workspace rather'
-        printf '%s\n' '# than only a boundary: the nix client config and the daemon socket (its'
-        printf '%s\n' '# builds go through the host daemon) plus the gpg agent sockets (commit'
-        printf '%s\n' '# signing and SSH push through the YubiKey).'
+        printf '%s\n' '# these prefixes. The prefix list is deliberately broad because dsh'
+        printf '%s\n' '# workspaces and explicit /directory-add grants can name any project'
+        printf '%s\n' '# directory; sitecustomize.py adds the real control: a bind whose source'
+        printf '%s\n' '# contains a protected credential/control path (SandboxReadonlyHostPaths)'
+        printf '%s\n' '# is rejected, and a bind exactly on one is forced read-only.'
         printf '%s\n' 'allowed_host_paths = ["/home/codebam", "/persistent", "/tmp", "/nix/store", "/etc/nix", "/nix/var/nix", "/run/user/1000/gnupg"]'
         printf '\n'
         printf '%s\n' '[store]'
@@ -193,8 +199,11 @@ let
   #    rejects the two optional profiles unless explicitly enabled.
   #
   # 4. Sensitive host paths (/nix/store, /etc/nix, /nix/var/nix, agent
-  #    sockets/keyrings) are forced read-only, so a request cannot turn those
-  #    allowlisted mounts writable just by omitting the readOnly flag.
+  #    sockets/keyrings, dotfiles that hold credentials) are forced read-only,
+  #    and any bind whose source directory contains one of them is rejected.
+  #    The old guard only checked descendants, so mounting a parent such as
+  #    /home/codebam turned the sensitive read-only children into ordinary
+  #    writable paths inside the container.
   serverSitecustomize = pkgs.writeTextDir "sitecustomize.py" ''
     """Apply OpenSandbox server guardrails at interpreter startup.
 
@@ -411,21 +420,40 @@ let
                     return True
             return False
 
+        def host_contains_protected(path):
+            """Return the protected descendant when `path` is its ancestor."""
+            try:
+                resolved = os.path.realpath(path)
+            except Exception:
+                return None
+            if resolved == os.sep:
+                return os.sep
+            for prefix in _READONLY_HOST_PATHS:
+                if prefix != resolved and prefix.startswith(resolved + os.sep):
+                    return prefix
+            return None
+
         def build_volume_binds(self, volumes, pvc_inspect_cache=None):
             binds = original(self, volumes, pvc_inspect_cache)
             guarded = []
             for bind in binds:
                 parts = bind.rsplit(":", 2)
-                if (
-                    len(parts) == 3
-                    and os.path.isabs(parts[0])
-                    and host_is_sensitive(parts[0])
-                ):
-                    options = [part for part in parts[2].split(",") if part]
-                    options = ["ro" if part == "rw" else part for part in options]
-                    if "ro" not in options:
-                        options.append("ro")
-                    bind = ":".join([parts[0], parts[1], ",".join(options)])
+                if len(parts) == 3 and os.path.isabs(parts[0]):
+                    protected = host_contains_protected(parts[0])
+                    if protected is not None:
+                        raise ValueError(
+                            "refusing to bind "
+                            + parts[0]
+                            + ": it contains the protected host path "
+                            + protected
+                            + "; bind that path directly if it is needed"
+                        )
+                    if host_is_sensitive(parts[0]):
+                        options = [part for part in parts[2].split(",") if part]
+                        options = ["ro" if part == "rw" else part for part in options]
+                        if "ro" not in options:
+                            options.append("ro")
+                        bind = ":".join([parts[0], parts[1], ",".join(options)])
                 guarded.append(bind)
             return guarded
 
