@@ -1454,6 +1454,29 @@ let
   # opencode2 beta-19378 and opencode 1.18.29.
   zgTimeoutMs = 600000;
 
+  # Microsoft's Playwright MCP server, declared once and rendered in each
+  # host's shape next to zvec-grep/ripwire/memory. The nixpkgs package's
+  # wrapper already points Playwright at the matching
+  # `playwright-driver.browsers` bundle, defaults to Chromium, and turns on
+  # `--isolated` unless PLAYWRIGHT_MCP_USER_DATA_DIR is set, so a session
+  # starts from an empty in-memory profile and cannot touch the user's real
+  # browser profile. `--headless` keeps the same entry usable from a terminal,
+  # a desktop launch, and the dsh-web systemd service (no DISPLAY).
+  #
+  # The argv names the store path rather than relying on PATH: the config is
+  # also read by desktop launches and a systemd user service, neither of which
+  # is guaranteed to inherit the interactive shell's PATH. Playwright's own
+  # default file-access guardrail restricts file access to the server's
+  # working directory and blocks file:// navigation; that is a convenience
+  # guardrail, not a sandbox boundary.
+  pwServerName = "playwright";
+  pwArgv = [
+    (lib.getExe pkgs.playwright-mcp)
+    "--headless"
+  ];
+  # Browser navigation and first paint can outrun the 60s MCP default.
+  pwTimeoutMs = 120000;
+
   # Shared agent memory: the official knowledge-graph MCP server
   # (`mcp-server-memory`) run once behind mcp-proxy as a systemd *user*
   # service, so every harness reads and writes ONE JSONL graph instead of
@@ -1621,6 +1644,14 @@ let
     not linger. If something looks broken, `agent-browser doctor --json`
     reports Chrome, daemon, and config state; report its output instead of
     installing anything.
+
+    The host also registers Microsoft's Playwright MCP server (isolated,
+    headless Chromium; its default file guardrail is scoped to the session
+    workspace). Its tools appear directly in opencode and dsh; pi reaches them
+    through the `mcp` proxy, so discover them with
+    `mcp({ search: "playwright" })`. Prefer it for multi-step interaction when
+    an MCP tool is simpler than the shell loop above; the empty in-memory
+    profile means it cannot reuse the CLI session's logins.
   '';
 
   # Shared guidance for the agent-memory server, rendered with the tool names
@@ -2336,14 +2367,21 @@ in
       # overlays, so rows here apply to every profile: web, headless, acp, sdk,
       # and the custom dsh-tui profile.
       #
-      # Only the shared memory server is mounted here. The host-side bridges
-      # (zvec-grep, ripwire, opensandbox) are intentionally absent from the
-      # default agent tier: they run as the host user and accept arbitrary
-      # host paths, arbitrary sandboxes, or arbitrary commands. Their CLIs
-      # remain available inside the sandbox (where they run against the
-      # mounted workspace), and the per-work-type sandboxes remain available
-      # through `osb-work` on the host side. Re-add a row only with the same
-      # trust review as `dsh-host-access`.
+      # The memory server and the Playwright MCP server are mounted here; the
+      # other host-side bridges (zvec-grep, ripwire, opensandbox) are
+      # intentionally absent from the default agent tier: they run as the host
+      # user and accept arbitrary host paths, arbitrary sandboxes, or
+      # arbitrary commands. Their CLIs remain available inside the sandbox
+      # (where they run against the mounted workspace), and the per-work-type
+      # sandboxes remain available through `osb-work` on the host side.
+      #
+      # Playwright is the deliberate exception for browser automation: it
+      # runs as the host user and therefore on the host network, so it can
+      # reach public web and host-loopback URLs the container's own shell
+      # cannot. Its file access defaults to the session workspace and is a
+      # convenience guardrail, not a security boundary; the isolated, headless
+      # profile keeps it out of the user's real browser. Re-review it with the
+      # same care as `dsh-host-access` if the threat model changes.
       #
       # The memory URL is served stateless by mcp-proxy (see the agent-memory
       # unit below), so dsh's MCP SDK v2 client talks to it without a session.
@@ -2359,6 +2397,15 @@ in
                 serverName: ${memoryServerName}
                 transport: streamable-http
                 url: ${memoryUrl}
+
+            - id: mcp-playwright
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${pwServerName}
+                transport: stdio
+                command: ${builtins.toJSON (builtins.head pwArgv)}
+                args: ${builtins.toJSON (builtins.tail pwArgv)}
+                toolCallTimeoutMs: ${toString pwTimeoutMs}
       '';
 
       # The Minimal-Agents agent preset, authored in the user preset root
@@ -2601,8 +2648,8 @@ in
         autoupdate = false;
         share = "disabled";
 
-        # All three MCP servers live under one `mcp` key: statix's repeated-keys
-        # lint (W20) flags three sibling `mcp.<name>` assignments, the same
+        # All four MCP servers live under one `mcp` key: statix's repeated-keys
+        # lint (W20) flags four sibling `mcp.<name>` assignments, the same
         # reason `xdg.configFile` above is nested rather than flat.
         mcp = {
           # Declarative equivalent of `zg install --target opencode
@@ -2635,6 +2682,19 @@ in
               "--mcp"
             ];
             enabled = true;
+          };
+
+          # Microsoft's Playwright MCP server: headless Chromium with an
+          # in-memory profile (the nixpkgs wrapper's isolated default), so a
+          # session cannot read or write the user's real browser profile.
+          # `command` takes the whole argv here (opencode shape, top-level
+          # `mcp`); pwArgv names the store path because a desktop launch may
+          # not inherit the interactive PATH.
+          ${pwServerName} = {
+            type = "local";
+            command = pwArgv;
+            enabled = true;
+            timeout = pwTimeoutMs;
           };
 
           # Shared agent memory, served once over loopback by the `agent-memory`
@@ -2856,7 +2916,7 @@ in
       # `zgGuidance`, so that text is worth re-checking if the server name or the
       # adapter's `toolPrefix` setting ever changes.
       "mcp/mcp.json".text = builtins.toJSON {
-        # All three servers under one `mcpServers` key (statix W20; see the
+        # All four servers under one `mcpServers` key (statix W20; see the
         # opencode block above).
         mcpServers = {
           ${zgServerName} = {
@@ -2906,6 +2966,33 @@ in
               "orient"
               "explore"
               "symbols"
+            ];
+          };
+
+          # Microsoft's Playwright MCP server, reached through the same lazy
+          # proxy as the others: only the `mcp` tool is in context until a
+          # search names it. The browser is headless Chromium with an in-memory
+          # profile (the nixpkgs wrapper's isolated default), so it cannot read
+          # or write the user's real browser profile. Tool names come out as
+          # `playwright_browser_*`.
+          ${pwServerName} = {
+            command = builtins.head pwArgv;
+            args = builtins.tail pwArgv;
+            requestTimeoutMs = pwTimeoutMs;
+
+            searchKeywords."*" = [
+              "browser"
+              "playwright"
+              "web"
+              "page"
+              "navigate"
+              "click"
+              "form"
+              "screenshot"
+              "scrape"
+              "automation"
+              "ui"
+              "test"
             ];
           };
 

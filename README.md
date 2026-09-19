@@ -209,14 +209,17 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
 - **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, and
-  dsh. The host harnesses keep their zvec-grep/ripwire/OpenSandbox MCP rows and
-  are trusted host tools; dsh's default OpenSandbox world mounts only the
-  shared memory MCP.
+  dsh. The host harnesses keep their zvec-grep/ripwire/OpenSandbox/Playwright
+  MCP rows and are trusted host tools; dsh's default OpenSandbox world also
+  registers the shared memory MCP and the isolated, headless Playwright MCP
+  (its file access is scoped to the session workspace by Playwright's default
+  guardrail, and it runs on the host network).
 - **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
   images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
   steel, shell, browser, code). The default dsh world is the untrusted-agent
   tier: project plus `/nix/store` read-only, no credentials or host Nix daemon,
-  a mount-fenced `ctx.fs`, and no host-side MCP bridges. A human scopes one
+  a mount-fenced `ctx.fs`, and no host-side MCP bridges other than
+  the isolated, headless Playwright browser row. A human scopes one
   directory with `/directory-add` in a session, or launches `dsh-host-access`
   for reviewed host builds/commits/pushes. `dsh-no-opensandbox` is the
   unhardened built-in bwrap/Landlock fallback for a session when the local
