@@ -219,9 +219,9 @@ in
       # instruction files.
       agent-browser
       # Microsoft's Playwright MCP server, registered by home/agents.nix in
-      # every harness. The nixpkgs wrapper points Playwright at a matching
-      # browser bundle and defaults to an isolated Chromium profile; the
-      # harness entries force `--headless` so dsh-web works without a DISPLAY.
+      # every harness. pkgs/playwright-mcp.nix points it at a Chromium +
+      # chromium-headless-shell browser farm; the harness entries force
+      # `--headless` so dsh-web works without a DISPLAY.
       playwright-mcp
       # Shared agent-memory knowledge graph. mcp-proxy bridges the stdio
       # knowledge-graph server to loopback Streamable HTTP so a single writer

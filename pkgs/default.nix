@@ -10,7 +10,13 @@
 #
 # `voxtype-plainify.nix` is deliberately absent: it is not a derivation, it
 # returns the sed program string that home/voxtype.nix wraps itself.
-{ pkgs }:
+# `prev` is the pre-overlay nixpkgs set. It is only needed by wrappers that
+# re-export a nixpkgs package under the same attribute name, so they can name
+# the original instead of recursing into the wrapper being defined.
+{
+  pkgs,
+  prev ? pkgs,
+}:
 let
   # The SDK is a sibling of the CLI/MCP attrs below, not a nixpkgs package;
   # bind it once so all three resolve to the same derivation.
@@ -44,6 +50,14 @@ in
   # tag's package-lock.json and skips install scripts; every native dependency
   # (zvec, onnxruntime, ripgrep, llama.cpp, sharp) arrives prebuilt.
   zvec-grep = pkgs.callPackage ./zvec-grep.nix { };
+
+  # Microsoft's Playwright MCP server, wrapped around the nixpkgs package so
+  # it uses the Chromium-only browser farm instead of the all-browser farm
+  # (which on older pins tries and fails to build playwright-webkit). See
+  # pkgs/playwright-mcp.nix.
+  playwright-mcp = pkgs.callPackage ./playwright-mcp.nix {
+    base = prev.playwright-mcp;
+  };
 
   # OpenSandbox Python SDK, CLI (`osb`), and MCP server. Pinned to the PyPI
   # releases the sandbox server image supports; see home/opensandbox.nix for

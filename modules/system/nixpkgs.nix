@@ -28,7 +28,10 @@
         # paths.
         (
           final: prev:
-          (import ../../pkgs { pkgs = final; })
+          (import ../../pkgs {
+            pkgs = final;
+            inherit prev;
+          })
           // {
             # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
             # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this

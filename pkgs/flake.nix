@@ -35,6 +35,11 @@
 
       # For a NixOS config that wants these as `pkgs.<name>`:
       #   nixpkgs.overlays = [ inputs.packages.overlays.default ];
-      overlays.default = _final: _prev: import ./default.nix { pkgs = _final; };
+      overlays.default =
+        final: prev:
+        import ./default.nix {
+          pkgs = final;
+          inherit prev;
+        };
     };
 }

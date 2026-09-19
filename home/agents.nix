@@ -1455,13 +1455,14 @@ let
   zgTimeoutMs = 600000;
 
   # Microsoft's Playwright MCP server, declared once and rendered in each
-  # host's shape next to zvec-grep/ripwire/memory. The nixpkgs package's
-  # wrapper already points Playwright at the matching
-  # `playwright-driver.browsers` bundle, defaults to Chromium, and turns on
-  # `--isolated` unless PLAYWRIGHT_MCP_USER_DATA_DIR is set, so a session
-  # starts from an empty in-memory profile and cannot touch the user's real
-  # browser profile. `--headless` keeps the same entry usable from a terminal,
-  # a desktop launch, and the dsh-web systemd service (no DISPLAY).
+  # host's shape next to zvec-grep/ripwire/memory. pkgs/playwright-mcp.nix
+  # rebuilds the nixpkgs package against a Chromium + chromium-headless-shell
+  # browser farm, so Playwright MCP never pulls Firefox or WebKit. The wrapper
+  # also turns on `--isolated` unless
+  # PLAYWRIGHT_MCP_USER_DATA_DIR is set, so a session starts from an empty
+  # in-memory profile and cannot touch the user's real browser profile.
+  # `--headless` keeps the same entry usable from a terminal, a desktop
+  # launch, and the dsh-web systemd service (no DISPLAY).
   #
   # The argv names the store path rather than relying on PATH: the config is
   # also read by desktop launches and a systemd user service, neither of which

@@ -182,7 +182,12 @@
       # For a NixOS config or another flake that wants the same definitions as
       # `pkgs.<name>`:
       #   nixpkgs.overlays = [ inputs.nixos.overlays.default ];
-      overlays.default = final: _prev: import ./pkgs { pkgs = final; };
+      overlays.default =
+        final: prev:
+        import ./pkgs {
+          pkgs = final;
+          inherit prev;
+        };
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
