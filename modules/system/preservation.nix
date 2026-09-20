@@ -127,6 +127,11 @@ _: {
             ".pi"
             # deepseek harness settings and plugins
             ".dsh"
+            # `wrangler login` OAuth token. The agentic-inbox email MCP
+            # bridge (home/email-mcp.nix, registered in home/agents.nix and
+            # home/hermes.nix) reads it on every MCP start; without this a
+            # root wipe silently logs the bridge out.
+            ".config/.wrangler"
             # Shared agent-memory knowledge graph (the `agent-memory` user
             # service owned by home/agents.nix): one JSONL file, machine-local.
             ".local/share/agent-memory"

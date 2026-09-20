@@ -209,24 +209,32 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
 - **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, and
-  dsh. The host harnesses keep their zvec-grep/ripwire/OpenSandbox/Playwright
-  MCP rows and are trusted host tools; dsh's default OpenSandbox world also
-  registers the shared memory MCP and the isolated, headless Playwright MCP
-  (its file access is scoped to the session workspace by Playwright's default
-  guardrail, and it runs on the host network).
+  dsh, plus Hermes on the desktop. The host harnesses keep their
+  zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and are trusted host
+  tools; dsh's default OpenSandbox world also registers the shared memory MCP
+  and the isolated, headless Playwright MCP (its file access is scoped to the
+  session workspace by Playwright's default guardrail, and it runs on the
+  host network). Hermes and dsh additionally register the agentic-inbox email
+  MCP, a host-side stdio bridge that authenticates with the local `wrangler
+  login` token (run `npx wrangler login` once from that checkout); both
+  harnesses carry a standing instruction that outbound mail is sent only after
+  an explicit authorization for that exact message.
 - **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
   images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
   steel, shell, browser, code). The default dsh world is the untrusted-agent
   tier: project plus `/nix/store` read-only, no credentials or host Nix daemon,
   a mount-fenced `ctx.fs`, and no host-side MCP bridges other than
-  the isolated, headless Playwright browser row. A human scopes one
-  directory with `/directory-add` in a session, or launches `dsh-host-access`
-  for reviewed host builds/commits/pushes. `dsh-no-opensandbox` is the
-  unhardened built-in bwrap/Landlock fallback for a session when the local
-  OpenSandbox server is unhealthy. Egress filtering is the known gap: sandbox
-  traffic still reaches the LAN/tailnet as the host user, and rootless podman's
-  network mode makes a host-nft source rule unreliable; the intended follow-up
-  is OpenSandbox `network_policy` with the `bridge` network.
+  the isolated, headless Playwright browser row and the Wrangler-authenticated
+  agentic-inbox email bridge. Both run as the host user and read their host
+  state (browser profile, Wrangler token) outside the sandbox. A human scopes
+  one directory with `/directory-add` in a session, or launches
+  `dsh-host-access` for reviewed host builds/commits/pushes.
+  `dsh-no-opensandbox` is the unhardened built-in bwrap/Landlock fallback for a
+  session when the local OpenSandbox server is unhealthy. Egress filtering is
+  the known gap: sandbox traffic still reaches the LAN/tailnet as the host user,
+  and rootless podman's network mode makes a host-nft source rule unreliable;
+  the intended follow-up is OpenSandbox `network_policy` with the `bridge`
+  network.
 - **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)

@@ -1495,6 +1495,12 @@ let
   # `-e` passthrough is what tells the child stdio server where its graph lives.
   memoryFileSpec = "%h/.local/share/agent-memory/memory.jsonl";
 
+  # agentic-inbox email MCP: one definition shared by the dsh registration
+  # below and the .dsh/AGENTS.md guardrail. home/hermes.nix imports the same
+  # file for Hermes, so the bridge path, URL, server name, and send policy
+  # stay in one place.
+  emailMcp = import ./email-mcp.nix { inherit config pkgs; };
+
   # The guidance block `zg install` writes, copied verbatim from its 0.2.2
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
@@ -2305,7 +2311,9 @@ in
       # not look at ~/.claude/CLAUDE.md, ~/.pi/agent/AGENTS.md, or opencode's
       # copy, so the shared tooling rules need a dsh copy; the zvec-grep block is
       # the dsh-named rendering from above, and the MCP servers are ordinary
-      # listed tools here rather than something behind a lazy proxy.
+      # listed tools here rather than something behind a lazy proxy. The email
+      # block makes the outbound-send rule explicit even when the MCP client's
+      # server instructions fail to load.
       #
       # The tooling rules also live in the hand-written ~/.claude/CLAUDE.md. That
       # file stays hand-written because Claude Code's `/memory` can rewrite it,
@@ -2332,6 +2340,13 @@ in
           closures; `nvd diff` for generation changes. Filter logs >50 lines with `awk`/`sed`/`jq`/`rg`
           before reading.
 
+        <!-- EMAIL_START -->
+        ${emailMcp.policy}
+
+        In dsh the email tools are named `mcp__${emailMcp.name}__*`. If they
+        are missing, the bridge or the Wrangler login is unavailable; report
+        that and do not try another send path.
+        <!-- EMAIL_END -->
         <!-- ZVEC_GREP_START -->
         ## zvec-grep is not mounted in this dsh tier
 
@@ -2368,13 +2383,14 @@ in
       # overlays, so rows here apply to every profile: web, headless, acp, sdk,
       # and the custom dsh-tui profile.
       #
-      # The memory server and the Playwright MCP server are mounted here; the
-      # other host-side bridges (zvec-grep, ripwire, opensandbox) are
-      # intentionally absent from the default agent tier: they run as the host
-      # user and accept arbitrary host paths, arbitrary sandboxes, or
-      # arbitrary commands. Their CLIs remain available inside the sandbox
-      # (where they run against the mounted workspace), and the per-work-type
-      # sandboxes remain available through `osb-work` on the host side.
+      # The memory server, the Playwright MCP server, and the agentic-inbox
+      # email bridge are mounted here; the other host-side bridges (zvec-grep,
+      # ripwire, opensandbox) are intentionally absent from the default agent
+      # tier: they run as the host user and accept arbitrary host paths,
+      # arbitrary sandboxes, or arbitrary commands. Their CLIs remain available
+      # inside the sandbox (where they run against the mounted workspace), and
+      # the per-work-type sandboxes remain available through `osb-work` on the
+      # host side.
       #
       # Playwright is the deliberate exception for browser automation: it
       # runs as the host user and therefore on the host network, so it can
@@ -2407,6 +2423,26 @@ in
                 command: ${builtins.toJSON (builtins.head pwArgv)}
                 args: ${builtins.toJSON (builtins.tail pwArgv)}
                 toolCallTimeoutMs: ${toString pwTimeoutMs}
+
+            # agentic-inbox email MCP, through the stdio bridge in the
+            # checkout. The bridge runs `wrangler auth token` itself, so the
+            # token never appears in this patch or in the Nix store. Startup
+            # failure is non-fatal (the client's default): hosts without the
+            # checkout still get a working dsh, just without email tools.
+            - id: mcp-email
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${emailMcp.name}
+                transport: stdio
+                command: ${builtins.toJSON emailMcp.runner}
+                args: ${
+                  builtins.toJSON [
+                    emailMcp.bridge
+                    "--url"
+                    emailMcp.url
+                  ]
+                }
+                toolCallTimeoutMs: 180000
       '';
 
       # The Minimal-Agents agent preset, authored in the user preset root

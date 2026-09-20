@@ -1,11 +1,14 @@
 {
+  config,
   osConfig,
+  pkgs,
   lib,
   ...
 }:
 
 let
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
+  emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 in
 {
   # Hermes is per-user now, not the retired system service: the upstream
@@ -19,6 +22,21 @@ in
   services.hermes-agent = lib.mkIf isDesktop {
     enable = true;
     environmentFiles = [ osConfig.sops.templates."hermes-env".path ];
+
+    # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
+    # with the local Wrangler login token (home/email-mcp.nix); its launcher
+    # pins Node and PATH itself so this service does not depend on the
+    # interactive shell's profile.
+    mcpServers = {
+      ${emailMcp.name} = {
+        command = emailMcp.runner;
+        args = [
+          emailMcp.bridge
+          "--url"
+          emailMcp.url
+        ];
+      };
+    };
 
     # The gateway shares this HERMES_HOME. TELEGRAM_BOT_TOKEN turns the
     # Telegram platform on by itself; TELEGRAM_ALLOWED_USERS then pins the
@@ -39,6 +57,15 @@ in
         base_url = "";
         default = "deepseek-flash";
         provider = "deepseek";
+      };
+      # Standing operator policy for outbound email. In this Hermes
+      # revision the native MCP client ignores a server's InitializeResult
+      # instructions, and `environment_hint` is the only always-on
+      # system-prompt surface available through config.yaml. Coding
+      # sessions also see the same rule through `coding_instructions`.
+      agent = {
+        environment_hint = emailMcp.policy;
+        coding_instructions = emailMcp.policy;
       };
       # Hermes' static DeepSeek catalog only knows the legacy
       # deepseek-v4-flash alias, so pin the metadata DeepSeek documents for
