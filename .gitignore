@@ -7,3 +7,4 @@ nono/
 result
 result-*
 .zvec-grep/
+.playwright-mcp/

@@ -649,12 +649,6 @@
         };
       };
     };
-    # History search for nushell (enabled in shell-common.nix); this activates
-    # Atuin for codebam only, not for makano, who imports shell-common.nix.
-    atuin = {
-      enable = true;
-      enableNushellIntegration = true;
-    };
     fd = {
       enable = true;
       hidden = true;
