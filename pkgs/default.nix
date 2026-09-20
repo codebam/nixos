@@ -73,13 +73,6 @@ in
   # --expose-internals (its HMR plugin requires it). See pkgs/dsh.nix.
   dsh = pkgs.callPackage ./dsh.nix { };
 
-  # dsh's OpenSandbox execution-world plugin. It lives in its own repository so
-  # it stays independently publishable to npm; this host pins the revision that
-  # revalidates a reaped sandbox instead of leaving commands on its dead execd
-  # endpoint. home/agents.nix copies it into $DSH_HOME next to the profile's
-  # node_modules.
-  dsh-opensandbox = pkgs.callPackage ./dsh-opensandbox.nix { };
-
   # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell
   # provider (bash-sandbox in the OpenSandbox world), so the stock bash tool
   # and execution world stay mounted; home/agents.nix copies it into $DSH_HOME

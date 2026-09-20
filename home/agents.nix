@@ -784,22 +784,29 @@ let
   # only exist where rootless podman does (desktop and laptop).
   podmanEnabled = osConfig.virtualisation.podman.enable or false;
 
-  # The @codebam/dsh-opensandbox world replacement: on, dsh's execution world
-  # (ctx.subprocess/ctx.sandbox) is OpenSandbox containers instead of the host.
-  # The plugin reaches execd through each sandbox's direct published endpoint --
-  # the official SDK default (use_server_proxy=false) -- because the pinned
-  # server image's own API-proxy WebSocket route never completes its handshake
-  # and then crashes reporting that on a websockets API mismatch. Verified
-  # end-to-end against the live server in both policy modes: terminal startup,
-  # PTY command I/O, and the model-facing bash tool's one-shot collect path.
+  # The @codebam/dsh-opensandbox world replacement is installed into the web
+  # profile through dsh's own plugin manager, not copied here:
+  #
+  #   dsh plugin --profile web add @codebam/dsh-opensandbox
+  #
+  # Nix still owns the deployment side: the id-targeted overrides appended to
+  # web's cordis.patch.yml below carry this host's connection, mount table,
+  # env, and escape hatches. The plugin reaches execd through each sandbox's
+  # direct published endpoint -- the official SDK default
+  # (use_server_proxy=false) -- because the pinned server image's own
+  # API-proxy WebSocket route never completes its handshake and then crashes
+  # reporting that on a websockets API mismatch. Verified end-to-end against
+  # the live server in both policy modes: terminal startup, PTY command I/O,
+  # and the model-facing bash tool's one-shot collect path.
   dshContainerWorld = true;
 
-  # Per-process escape hatch for the row swap below. dsh treats every DSH_*
-  # name as bootstrap-only, so a repository's .env cannot set it -- it has to
-  # come from the launching environment. Any non-empty value boots dsh on the
-  # built-in bwrap/Landlock world for that process; unset or empty keeps the
-  # OpenSandbox world. The `dsh-no-opensandbox` wrapper is the one-command
-  # form. This fallback is deliberately outside the hardened mount boundary.
+  # Per-process escape hatch for the post-bundle row overrides below. dsh
+  # treats every DSH_* name as bootstrap-only, so a repository's .env cannot
+  # set it -- it has to come from the launching environment. Any non-empty
+  # value boots dsh on the built-in bwrap/Landlock world for that process;
+  # unset or empty keeps the OpenSandbox world. The `dsh-no-opensandbox`
+  # wrapper is the one-command form. This fallback is deliberately outside
+  # the hardened mount boundary.
   dshNoOpenSandboxEnv = "DSH_NO_OPENSANDBOX";
   dshUseOpenSandboxJs = "!process.env.${dshNoOpenSandboxEnv}";
   dshNoOpenSandboxJs = "Boolean(process.env.${dshNoOpenSandboxEnv})";
@@ -857,18 +864,14 @@ let
   dshProtectedHostPaths =
     (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
 
-  # Both interactive dsh surfaces keep the one hand-written patch row they
-  # carried before the sandbox providers changed: the hand-declared OpenCode Go
-  # routes (`opencode-go-deepseek`, `opencode-go-union-alpha`) must be named or
-  # dsh attaches no x-opencode-session header and OpenCode Go answers 400.
-  #
-  # dshContainerWorld (see above) also swaps the execution world:
-  # @codebam/dsh-opensandbox registers ctx.subprocess, ctx.sandbox, and
-  # ctx.fs, so the two local providers and dsh's host-fs provider are
-  # disabled and the stock bash, terminal, search, and file tools run over
-  # the OpenSandbox mount table. While it is off -- or a process sets
-  # DSH_NO_OPENSANDBOX, see below -- every host keeps the built-in
-  # bwrap/Landlock sandbox rows and the host-fs provider.
+  # The interactive dsh profiles share the hand-written OpenCode Go route
+  # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
+  # named or dsh attaches no x-opencode-session header and OpenCode Go answers
+  # 400. The container world itself is installed in the web profile through
+  # dsh's plugin manager (`dsh plugin --profile web add
+  # @codebam/dsh-opensandbox`), so the package's bundle layer owns the
+  # insert/disable rows; dshProfileOpenSandboxPatch below adds only
+  # id-targeted overrides for this host's deployment values.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
@@ -891,23 +894,39 @@ let
           - opencode-go-union-alpha
   ''
   + lib.optionalString dshContainerWorld ''
-    # dsh-opensandbox: replace the host execution world with
-    # OpenSandbox containers. The plugin registers ctx.subprocess,
-    # ctx.sandbox, and ctx.fs, so both local providers and dsh's host-fs
-    # provider are disabled; the stock bash, terminal, search, and file tools
-    # then run over the container world and its mount table. `apiKeyFile` is
-    # the per-boot key home/opensandbox.nix generates under the user runtime
-    # dir; the plugin reads it lazily, so login ordering does not matter.
-    #
-    # The default configuration is the untrusted-agent tier: /nix/store is
-    # visible read-only for toolchain binaries, and no host credentials,
-    # daemon socket, or arbitrary host path is. A human runs
-    # `dsh-host-access` for reviewed work that needs those host bridges; it
-    # is a separate command and never the default.
-    #
-    # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips these
-    # load-time expressions: the local rows come back, dsh's host fs provider
-    # stays mounted, and the plugin row is skipped for that process.
+    # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
+    # consumes the mounted ctx.shell provider, so do NOT disable or replace
+    # bash-sandbox / tool-bash; the stock bash tool and world are unchanged.
+    # Works in the OpenSandbox world, in the built-in bwrap/Landlock world,
+    # and in a dsh-no-opensandbox session, because all leave a bash executor
+    # mounted as ctx.shell.
+    - insert:
+        - id: tool-nu
+          name: ${config.home.homeDirectory}/.dsh/profiles/tool-nu/index.mjs
+          disabled: !!js process.platform === 'win32'
+          config:
+            executable: ${pkgs.nushell}/bin/nu
+            enableRunInBackground: true
+  '';
+
+  # Appended only to the web profile's cordis.patch.yml, after the bundle
+  # layers installed by `dsh plugin --profile web add
+  # @codebam/dsh-opensandbox`. The bundle inserts opensandbox-world and
+  # disables subprocess, sandbox, and fs-sandbox; these id-targeted entries
+  # override those rows with this host's values without adding a second
+  # insert to the composed tree.
+  #
+  # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips the row
+  # switches back for one process: the built-in bwrap/Landlock providers come
+  # back and the plugin row is skipped. The default tier is still the
+  # untrusted-agent OpenSandbox boundary below.
+  dshProfileOpenSandboxPatch = lib.optionalString dshContainerWorld ''
+    # `apiKeyFile` is the per-boot key home/opensandbox.nix generates under
+    # the user runtime dir; the plugin reads it lazily, so login ordering
+    # does not matter. The default configuration is the untrusted-agent tier:
+    # /nix/store is visible read-only for toolchain binaries, and no host
+    # credentials, daemon socket, or arbitrary host path is. A human runs
+    # `dsh-host-access` for reviewed work that needs those host bridges.
     - id: subprocess
       disabled: !!js "${dshUseOpenSandboxJs}"
 
@@ -921,61 +940,45 @@ let
     - id: fs-sandbox
       disabled: !!js "${dshUseOpenSandboxJs}"
 
-    - insert:
-        - id: opensandbox-world
-          name: ${config.home.homeDirectory}/.dsh/profiles/opensandbox/index.mjs
-          disabled: !!js "${dshNoOpenSandboxJs}"
-          config:
-            apiKeyFile: /run/user/1000/opensandbox/api-key
-            domain: 127.0.0.1:8090
-            image: docker.io/library/debian@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
-            requestTimeoutMs: 900000
-            timeoutSeconds: 43200
+    - id: opensandbox-world
+      disabled: !!js "${dshNoOpenSandboxJs}"
+      config:
+        apiKeyFile: /run/user/1000/opensandbox/api-key
+        domain: 127.0.0.1:8090
+        image: docker.io/library/debian@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
+        requestTimeoutMs: 900000
+        timeoutSeconds: 43200
 
-            # Only the mount table, env, and forwarded names change between
-            # the default tier and an explicit `dsh-host-access` launch; the
-            # filesystem fence and dynamic-mount commands stay the same.
-            # Block scalars keep the JSON colons out of YAML parsing.
-            extraReadOnlyMounts: !!js >-
-              ${dshHostAccessJs}
-              ? ${builtins.toJSON dshHostAccessReadOnlyMounts}
-              : ${builtins.toJSON dshStrictReadOnlyMounts}
-            extraWritableMounts: []
-            trustedReadPaths: ${builtins.toJSON dshTrustedReadPaths}
-            workspaceParents: ${builtins.toJSON dshWorkspaceParents}
-            protectedPaths: ${builtins.toJSON dshProtectedHostPaths}
-            allowDynamicMounts: true
-            provideFilesystem: true
+        # Only the mount table, env, and forwarded names change between the
+        # default tier and an explicit `dsh-host-access` launch; the
+        # filesystem fence and dynamic-mount commands stay the same. Block
+        # scalars keep the JSON colons out of YAML parsing.
+        extraReadOnlyMounts: !!js >-
+          ${dshHostAccessJs}
+          ? ${builtins.toJSON dshHostAccessReadOnlyMounts}
+          : ${builtins.toJSON dshStrictReadOnlyMounts}
+        extraWritableMounts: []
+        trustedReadPaths: ${builtins.toJSON dshTrustedReadPaths}
+        workspaceParents: ${builtins.toJSON dshWorkspaceParents}
+        protectedPaths: ${builtins.toJSON dshProtectedHostPaths}
+        allowDynamicMounts: true
+        provideFilesystem: true
 
-            # Host-access adds GIT_CONFIG_GLOBAL for the sandbox git config;
-            # the default tier carries only the CA bundle names every network
-            # tool needs.
-            env: !!js >-
-              ${dshHostAccessJs}
-              ? ${builtins.toJSON dshHostAccessEnvVars}
-              : ${builtins.toJSON dshCaEnv}
+        # Host-access adds GIT_CONFIG_GLOBAL for the sandbox git config; the
+        # default tier carries only the CA bundle names every network tool
+        # needs.
+        env: !!js >-
+          ${dshHostAccessJs}
+          ? ${builtins.toJSON dshHostAccessEnvVars}
+          : ${builtins.toJSON dshCaEnv}
 
-            # Host-prepared credentials, only in the host-access tier; unset
-            # names are skipped rather than blanked. The default tier forwards
-            # nothing.
-            forwardEnv: !!js >-
-              ${dshHostAccessJs}
-              ? ["SSH_AUTH_SOCK", "GH_TOKEN"]
-              : []
-  ''
-  + lib.optionalString dshContainerWorld ''
-    # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
-    # consumes the mounted ctx.shell provider, so do NOT disable or replace
-    # bash-sandbox / tool-bash; the stock bash tool and world are unchanged.
-    # Works in the OpenSandbox world and in a dsh-no-opensandbox session,
-    # because both leave a bash executor mounted as ctx.shell.
-    - insert:
-        - id: tool-nu
-          name: ${config.home.homeDirectory}/.dsh/profiles/tool-nu/index.mjs
-          disabled: !!js process.platform === 'win32'
-          config:
-            executable: ${pkgs.nushell}/bin/nu
-            enableRunInBackground: true
+        # Host-prepared credentials, only in the host-access tier; unset
+        # names are skipped rather than blanked. The default tier forwards
+        # nothing.
+        forwardEnv: !!js >-
+          ${dshHostAccessJs}
+          ? ["SSH_AUTH_SOCK", "GH_TOKEN"]
+          : []
   '';
 
   # Host credentials prepared only for `dsh-host-access`, never for the
@@ -1095,9 +1098,9 @@ let
 
   # One-command form of the DSH_NO_OPENSANDBOX escape hatch, installed only
   # where the OpenSandbox world exists. It just exports the launch variable;
-  # the profile patch above does the switching, so every dsh subcommand (`web`,
-  # `--profile`, `plugin`) keeps its normal argv. The result is still a
-  # sandbox -- dsh's built-in bwrap/Landlock world, not the host shell.
+  # the web profile's patch above does the switching, so every dsh subcommand
+  # (`web`, `--profile`, `plugin`) keeps its normal argv. The result is still
+  # a sandbox -- dsh's built-in bwrap/Landlock world, not the host shell.
   dshNoOpenSandbox = pkgs.writeShellApplication {
     name = "dsh-no-opensandbox";
     text = ''
@@ -1725,9 +1728,10 @@ let
     loopback-only and its key lives in the host runtime dir, so it belongs to
     host harnesses and a host terminal, not to a dsh session's own shell.
 
-    In dsh sessions, the @codebam/dsh-opensandbox world runs bash, terminal,
-    fs-search, and the file tools inside an OpenSandbox container with the
-    session's workspace project mounted at the same absolute path. The default
+    In dsh sessions whose profile has the @codebam/dsh-opensandbox bundle
+    installed (the web profile), the OpenSandbox world runs bash, terminal,
+    fs-search, and the file tools inside a container with the session's
+    workspace project mounted at the same absolute path. The default
     mount table is that workspace plus `/nix/store` read-only: no host daemon
     socket, no credential mount, no forwarded
     `GH_TOKEN`/`SSH_AUTH_SOCK`, and no arbitrary host read. Web sessions may
@@ -2143,46 +2147,27 @@ in
         run ${pkgs.coreutils}/bin/rmdir "$HOME/.dsh/profiles/nono" 2>/dev/null || true
       '';
 
-      # @codebam/dsh-opensandbox is published from its own repository, pinned
-      # in pkgs/dsh-opensandbox.nix so a reaped sandbox is revalidated rather
-      # than left with a dead execd endpoint. Copy it into $DSH_HOME rather
-      # than symlinking: Node resolves a module through its symlink target, so
-      # a symlinked module would look for @deepseek-ai/* next to the store
-      # directory instead of the profile's node_modules. Only runs when
-      # dshContainerWorld is enabled above.
-      dshOpenSandbox = lib.mkIf (podmanEnabled && dshContainerWorld) (
-        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/opensandbox"
-          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/index.mjs "$HOME/.dsh/profiles/opensandbox/index.mjs"
-          # cp -r copies the store source directory's 0555 mode onto the
-          # destination, so a tree copied by an earlier activation cannot be
-          # unlinked by this user on the next one ("rm: ... Permission
-          # denied", failing the whole switch). Repair the old tree before
-          # replacing it and leave the new one writable.
-          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/opensandbox/src" 2>/dev/null || true
-          run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox/src"
-          run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/src "$HOME/.dsh/profiles/opensandbox/src"
-          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/opensandbox/src"
-          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-opensandbox}/lib/dsh-opensandbox/package.json "$HOME/.dsh/profiles/opensandbox/package.json"
-          run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/opensandbox/node_modules"
-          run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/opensandbox/node_modules"
-        ''
-      );
+      # One-shot cleanup after moving @codebam/dsh-opensandbox to dsh's own
+      # plugin manager: older activations copied the module into $DSH_HOME,
+      # which home-manager does not own and therefore does not remove. The
+      # plugin manager's copy lives under profiles/web/node_modules instead.
+      dshOpenSandboxCleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox"
+      '';
 
       # @codebam/dsh-tool-nu is published from its own repository, pinned in
       # pkgs/dsh-tool-nu.nix. Copy it into $DSH_HOME rather than symlinking:
       # Node resolves a module through its symlink target, so a symlinked
       # module would look for @deepseek-ai/* next to the store directory
       # instead of the profile's node_modules. Same podman gate as the
-      # dshOpenSandbox block: only hosts whose dsh profiles carry the patch
-      # file get the plugin.
+      # OpenSandbox wrappers and web profile patch: only hosts that run the
+      # OpenSandbox server get the plugin.
       dshToolNu = lib.mkIf (podmanEnabled && dshContainerWorld) (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/tool-nu"
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/index.mjs "$HOME/.dsh/profiles/tool-nu/index.mjs"
           # cp -r copies the store source directory's 0555 mode onto the
-          # destination, so repair an older copied tree before replacing it
-          # (same reason as the dshOpenSandbox block).
+          # destination, so repair an older copied tree before replacing it.
           run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/tool-nu/src" 2>/dev/null || true
           run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/tool-nu/src"
           run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/src "$HOME/.dsh/profiles/tool-nu/src"
@@ -2215,7 +2200,7 @@ in
       ".dsh/skills/security-audit".source = securityAuditSkill;
 
       # Files the dsh container world reads through its read-only mounts
-      # (see dshProfilePatch below).
+      # (see dshProfileOpenSandboxPatch below).
       #
       # The git config `include`s the real one -- identity, signing key and
       # credential helpers stay authoritative in one place -- and adds the two
@@ -2640,12 +2625,16 @@ in
       ".zvec-grep/.keep".text = "";
     }
     // lib.optionalAttrs podmanEnabled {
-      # Both interactive dsh surfaces get the same profile patch; managing the
-      # files here means `dsh plugin` and the TUI no longer own that layer.
+      # Both interactive dsh surfaces get the shared hand-written patch; web
+      # adds the OpenSandbox bundle overrides below. The bundle install itself
+      # stays with `dsh plugin` because it writes the profile's package.json.
       # podmanEnabled, not isDesktop: these hosts are where the OpenSandbox
-      # service the container-world rows talk to actually runs.
+      # service the container-world rows talk to runs.
       ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
-      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
+      # Web owns the bundle installed by dsh's plugin manager; the extra
+      # overrides only make sense after `dsh plugin --profile web add
+      # @codebam/dsh-opensandbox`.
+      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch + dshProfileOpenSandboxPatch;
     };
   };
 
@@ -3151,11 +3140,10 @@ in
         # flake, so root it there; other project directories belong in
         # `osb-work` containers, not in this host shell.
         WorkingDirectory = "/persistent/etc/nixos";
-        # Name the pinned plugin revision in the unit text so changing it
-        # restarts this long-lived web process during activation. Without the
-        # marker, an activation that only rewrites the copied module would
-        # leave the old plugin in memory until the next boot.
-        Environment = [ "DSH_OPENSANDBOX_PLUGIN=${pkgs.dsh-opensandbox}" ];
+        # The plugin is installed by dsh's plugin manager, so Nix cannot name
+        # its revision in the unit text. Restart this unit after
+        # `dsh plugin --profile web add` or an upgrade so the long-lived web
+        # process loads the new module.
         ExecStart = lib.getExe dshWebServe;
         Restart = "always";
         RestartSec = 2;

@@ -95,7 +95,6 @@ per-host overrides for hardware, networking, and services.
 │   ├── unfree.nix               # Unfree names the hosts and package flake allow
 │   ├── agent-overview.nix       # tmux agent dashboard
 │   ├── dsh.nix                  # DeepSeek Harness CLI
-│   ├── dsh-opensandbox.nix      # dsh's OpenSandbox container-world plugin
 │   ├── dsh-tool-nu.nix          # dsh's Nushell (`nu`) tool plugin
 │   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
 │   ├── opencode-desktop-beta.nix
@@ -211,7 +210,8 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, and
   dsh, plus Hermes on the desktop. The host harnesses keep their
   zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and are trusted host
-  tools; dsh's default OpenSandbox world also registers the shared memory MCP
+  tools; dsh's OpenSandbox world (the web profile) also registers the shared
+  memory MCP
   and the isolated, headless Playwright MCP (its file access is scoped to the
   session workspace by Playwright's default guardrail, and it runs on the
   host network). Hermes and dsh additionally register the agentic-inbox email
@@ -221,7 +221,10 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   an explicit authorization for that exact message.
 - **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
   images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
-  steel, shell, browser, code). The default dsh world is the untrusted-agent
+  steel, shell, browser, code). The dsh plugin is installed per profile with
+  dsh's own plugin manager
+  (`dsh plugin --profile web add @codebam/dsh-opensandbox`). The default world
+  is the untrusted-agent
   tier: project plus `/nix/store` read-only, no credentials or host Nix daemon,
   a mount-fenced `ctx.fs`, and no host-side MCP bridges other than
   the isolated, headless Playwright browser row and the Wrangler-authenticated
