@@ -1804,6 +1804,7 @@ let
         # each tag's own chat template: the base qwen3.8 tags expose off/high/
         # max (`off: none` is how Ollama spells "no thinking" there -- omitting
         # the field means think), while the cyber tag exposes low/medium/xhigh.
+        # The MiMo entry below is a local Ollama GGUF import, not a pi mirror.
         ollama:
           displayName: Ollama
           api: openai-completions
@@ -1848,6 +1849,22 @@ let
                 low: low
                 medium: medium
                 xhigh: xhigh
+            # MiMo V2.6 Distill is an SFT of Qwen3.5-9B on MiMo agentic data.
+            # This Q4_K_M import is text-only (no mmproj projector), so it
+            # does not advertise image input the way the qwen3.8 entries do.
+            - id: mimo-v2.6-distill-qwen-9b:q4_k_m-262k
+              name: MiMo V2.6 Distill Qwen 9B (Q4_K_M, 262k)
+              contextWindow: 251904
+              maxTokens: 16384
+              input:
+                - text
+              # The template only toggles a boolean `enable_thinking`, not
+              # tiered levels: `none` disables it, every enabled label below
+              # turns it on, so Ollama accepts all three values.
+              reasoningEfforts:
+                off: none
+                high: high
+                max: max
         # DeepSeek V4.1 Flash (OpenCode model id `deepseek-flash`) is served by
         # OpenCode Go but is not in pi-ai's bundled `opencode-go` catalog
         # (0.84.4), and a hand-declared model cannot be appended to that route:
