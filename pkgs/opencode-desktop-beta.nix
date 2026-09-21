@@ -64,7 +64,9 @@ appimageTools.wrapType2 {
       --replace-fail 'Name=OpenCode' 'Name=OpenCode (v2)'
 
     mkdir -p $out/share
-    cp -r ${appimageContents}/usr/share/icons $out/share/
+    # The AppImage's icon tree is mode 0555/0444; plain `cp -r` preserves those
+    # directory modes, which makes the renames below fail with EACCES.
+    cp -r --no-preserve=mode ${appimageContents}/usr/share/icons $out/share/
     for icon in $out/share/icons/hicolor/*/apps/ai.opencode.desktop.png; do
       [ -e "$icon" ] || continue
       mv "$icon" "''${icon%.png}.beta.png"
