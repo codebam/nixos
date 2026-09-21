@@ -80,12 +80,12 @@ in
   # stays independently publishable to npm.
   dsh-tool-nu = pkgs.callPackage ./dsh-tool-nu.nix { };
 
-  # OpenCode's beta CLI from npm (@opencode/cli, command `opencode2`): the
+  # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode2`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };
 
-  # The beta desktop that pairs with that CLI and hosts the browser the agent's
-  # browser.* tools attach to. Only the AppImage exists upstream; see
+  # The v2 desktop that pairs with that CLI and hosts the browser the agent's
+  # browser.* tools attach to. Upstream ships it as a prebuilt AppImage; see
   # pkgs/opencode-desktop-beta.nix.
   opencode-desktop-beta = pkgs.callPackage ./opencode-desktop-beta.nix { };
 

@@ -13,12 +13,12 @@ let
   variants = {
     "x86_64-linux" = {
       npmName = "linux-x64";
-      hash = "sha256-WxCtciL29EKqI+rBQRYq/J+Mq/AMXQJYMdB3aWPn4Xc=";
-      baselineHash = "sha256-gsXNLhsOBSoqXwtSrgXlEQkZ56LzfcttPj7x1ku2lmk=";
+      hash = "sha256-Knm+suJDgssr27cJI328IvSYz1KhBtAppqOjJDdgx4s=";
+      baselineHash = "sha256-rHUvYQWO4a2AuTE+LiuUGE2LDocZjEjOXvQ1DSjnpPs=";
     };
     "aarch64-linux" = {
       npmName = "linux-arm64";
-      hash = "sha256-YgVUf1sdHRNowa0djyiHR2HQuqiQFX4ap8nxga8Wsjs=";
+      hash = "sha256-M/Dd6fDwVbajZl0pA3G8/Ixj2s6t56U1xLlNOG8r2Rc=";
     };
   };
 
@@ -29,13 +29,14 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "opencode-cli";
-  version = "0.0.0-beta-19378";
+  version = "2.0.12";
 
-  # The @opencode/cli npm wrapper (upstream command: `opencode2`) ships no
-  # runnable code: bin/opencode2.exe is a stub and its postinstall copies the
-  # bun-compiled single-file executable out of a platform optionalDependency
-  # (@opencode/cli-<os>-<arch>). Pin those tarballs directly and skip the npm
-  # layer; nothing else in the closure is interpreted at runtime.
+  # The @opencode/cli npm wrapper (upstream command: `opencode`, with an
+  # `opencode2` alias) ships no runnable code: bin/opencode.exe is a stub and
+  # the postinstall copies the bun-compiled single-file executable out of a
+  # platform optionalDependency (@opencode/cli-<os>-<arch>). Pin those tarballs
+  # directly and skip the npm layer; nothing else in the closure is interpreted
+  # at runtime.
   src = fetchurl {
     url = "https://registry.npmjs.org/@opencode/cli-${pkgSuffix}/-/cli-${pkgSuffix}-${finalAttrs.version}.tgz";
     hash = if useBaseline then variant.baselineHash else variant.hash;
@@ -59,7 +60,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 bin/opencode2 "$out/bin/opencode2"
+    # The 2.0 line renamed the payload from bin/opencode2 to bin/opencode;
+    # keep installing it as `opencode2` so this package exposes the command the
+    # repo wraps (and `bin/opencode` stays nixpkgs' v1 package).
+    install -Dm755 bin/opencode "$out/bin/opencode2"
     runHook postInstall
   '';
 
@@ -69,27 +73,30 @@ stdenv.mkDerivation (finalAttrs: {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    # The beta opens a log file under $HOME/.local/share/opencode before it
+    # The binary opens a log file under $HOME/.local/share/opencode before it
     # answers even `--version`, and the build sandbox points HOME at the
     # non-existent /homeless-shelter.
     export HOME="$PWD"
     version="$($out/bin/opencode2 --version)"
     echo "opencode2 --version: $version"
-    if [ "$version" != "opencode2 v${finalAttrs.version}" ]; then
-      echo "expected 'opencode2 v${finalAttrs.version}'; a bare bun version here" \
+    if [ "$version" != "opencode v${finalAttrs.version}" ]; then
+      echo "expected 'opencode v${finalAttrs.version}'; a bare bun version here" \
         "means the embedded module graph was damaged during the build (see dontStrip)"
       exit 1
     fi
     runHook postInstallCheck
   '';
 
-  # npm republishes a new beta-<build> essentially daily:
-  #   curl -s 'https://registry.npmjs.org/@opencode%2Fcli' | jq -r '."dist-tags".beta'
+  # npm publishes new releases on the `latest` dist-tag every few days:
+  #   curl -s 'https://registry.npmjs.org/@opencode%2Fcli' | jq -r '."dist-tags".latest'
   # then bump `version` and re-hash every platform tarball (nix hash file on
-  # the downloaded .tgz, or nix-prefetch-url on its registry URL).
+  # the downloaded .tgz, or nix-prefetch-url on its registry URL). Check the
+  # tarball's bin/ name, too: the 2.0 line ships bin/opencode. The beta
+  # channel's last publish was 0.0.0-beta-19507, so `latest` is the channel to
+  # track now.
 
   meta = {
-    description = "AI coding agent terminal CLI (npm @opencode/cli beta channel)";
+    description = "AI coding agent terminal CLI (npm @opencode/cli, v2 line)";
     homepage = "https://github.com/anomalyco/opencode";
     changelog = "https://github.com/anomalyco/opencode/releases";
     license = lib.licenses.mit;

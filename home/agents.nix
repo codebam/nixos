@@ -698,11 +698,13 @@ let
     '';
   };
 
-  # The beta desktop is the build that pairs with opencode2 and hosts the
-  # integrated browser the agent's browser.* tools attach to; the stable
-  # nixpkgs package above does not. Wrapped with loadKey for the same reason:
-  # a .desktop launch inherits no shell environment, and it needs the same
-  # provider secrets.
+  # The v2 desktop is upstream's 2.0.x AppImage, the build that pairs with
+  # opencode2 and hosts the integrated browser the agent's browser.* tools
+  # attach to; the stable nixpkgs package above is still the 1.18.x source tree
+  # and has no browser host. The historical `-beta` name stays so the command
+  # and package don't collide with that v1 binary. Wrapped with loadKey for the
+  # same reason as opencode-desktop: a .desktop launch inherits no shell
+  # environment, and it needs the same provider secrets.
   opencode-desktop-beta = pkgs.symlinkJoin {
     name = "opencode-desktop-beta-wrapped-${pkgs.opencode-desktop-beta.version}";
     paths = [ pkgs.opencode-desktop-beta ];
@@ -712,13 +714,12 @@ let
     '';
   };
 
-  # The beta channel of the same agent (npm @opencode/cli, upstream command
-  # `opencode2`), built from the registry binaries in pkgs/opencode-cli.nix.
-  # Wrapped with loadKey like the stable one so both see the same provider
-  # secrets; it stays a separate binary so the nixpkgs `opencode` is
-  # untouched until the beta proves itself.
+  # The v2 line of the same agent (npm @opencode/cli, installed as `opencode2`
+  # from the registry binaries in pkgs/opencode-cli.nix). Wrapped with loadKey
+  # like the stable one so both see the same provider secrets; it stays a
+  # separate binary so the v1 and v2 CLIs can be used side by side.
   #
-  # OPENCODE_DISABLE_AUTOUPDATE: the beta polls
+  # OPENCODE_DISABLE_AUTOUPDATE: the CLI polls
   # opencode.ai/update/api/<platform>/<arch>/npm on a 10-minute interval and,
   # when it recognises its own install method (npm/pnpm/bun/yarn -g), offers to
   # reinstall itself. A /nix/store binary is read-only and pkged here, so both
@@ -1454,7 +1455,7 @@ let
   # object belongs to opencode's internal Mcp.TimeoutConfig and is not accepted
   # here: config normalization rejects the whole entry ("skipped malformed
   # recognized value") and the server silently never loads. Verified against
-  # opencode2 beta-19378 and opencode 1.18.29.
+  # opencode2 2.0.12 and opencode 1.18.29.
   zgTimeoutMs = 600000;
 
   # Microsoft's Playwright MCP server, declared once and rendered in each
@@ -2923,7 +2924,7 @@ in
       '';
 
       # opencode's documented global skill root, under the config directory
-      # the stable and beta CLIs share. A copy here makes the setup independent
+      # the v1 and v2 CLIs share. A copy here makes the setup independent
       # of opencode's `~/.claude/skills` auto-discovery fallback.
       "opencode/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
 

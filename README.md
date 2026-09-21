@@ -96,7 +96,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── agent-overview.nix       # tmux agent dashboard
 │   ├── dsh.nix                  # DeepSeek Harness CLI
 │   ├── dsh-tool-nu.nix          # dsh's Nushell (`nu`) tool plugin
-│   ├── opencode-cli.nix         # @opencode/cli beta (opencode2)
+│   ├── opencode-cli.nix         # @opencode/cli v2 (opencode2)
 │   ├── opencode-desktop-beta.nix
 │   ├── opensandbox-{sdk,cli,mcp}.nix  # OpenSandbox Python SDK, osb CLI, MCP server
 │   ├── pinentry-auto.nix        # terminal-aware pinentry
@@ -207,7 +207,7 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
-- **Agents**: OpenCode (stable + beta `opencode2`), OpenCode Desktop, Pi, and
+- **Agents**: OpenCode (v1 stable + v2 `opencode2`), OpenCode Desktop, Pi, and
   dsh, plus Hermes on the desktop. The host harnesses keep their
   zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and are trusted host
   tools; dsh's OpenSandbox world (the web profile) also registers the shared
