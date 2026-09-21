@@ -727,6 +727,15 @@ let
   # the same variable. ripgrep joins PATH because opencode2 shells out to `rg`
   # for grep/search and, unlike the stable package, gets no wrapper that names
   # it for it.
+  #
+  # OPENCODE_DISABLE_FILEWATCHER: opencode 2.0.12's background service leaks
+  # inotify watches until the user-wide pool is exhausted; after that even
+  # unrelated apps fail to watch files and the next TUI start dies with ENOSPC
+  # (anomalyco/opencode#48384). The service inherits this environment and
+  # server-process maps it to `fs.filewatcher: false`, which makes the watcher
+  # service a no-op. This trades config/skill hot reload (restart the session
+  # to reload) for not wedging the watch pool; drop it when upstream fixes the
+  # leak. `opencode2 service restart` releases watches an older server holds.
   opencode2 = pkgs.symlinkJoin {
     name = "opencode2-wrapped-${pkgs.opencode-cli.version}";
     paths = [ pkgs.opencode-cli ];
@@ -735,7 +744,8 @@ let
       wrapProgram $out/bin/opencode2 \
         --run '. ${loadKey}' \
         --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep ]} \
-        --set OPENCODE_DISABLE_AUTOUPDATE true
+        --set OPENCODE_DISABLE_AUTOUPDATE true \
+        --set OPENCODE_DISABLE_FILEWATCHER true
     '';
   };
 
