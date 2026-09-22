@@ -2103,6 +2103,30 @@ let
     fi
     ${pkgs.yq-go}/bin/yq -i ". * load(\"${dshSettings}\")" "$settings"
   '';
+
+  # opencode2's CLI settings document (`cli.json`) is written by the TUI itself
+  # -- Ctrl+P "Open settings", and the thinking toggle migrated out of v1's
+  # state -- so it cannot become a read-only store symlink the way opencode.json
+  # still is. Merge the managed keys in, Nix winning, the same treatment pi's
+  # settings.json gets. Only the thinking default is managed: `session.thinking
+  # = "hide"` is the config-level form of the v1 `/thinking` toggle, so reasoning
+  # blocks stay out of the transcript while every other key the TUI writes
+  # (theme, tabs, ...) survives an activation.
+  opencodeCliSettings = {
+    "$schema" = "https://opencode.ai/v2/cli.json";
+    session.thinking = "hide";
+  };
+
+  opencodeCliSettingsMerge = pkgs.writeShellScript "opencode-cli-settings-merge" ''
+    set -eu
+    settings="$HOME/.config/opencode/cli.json"
+    mkdir -p "$(dirname "$settings")"
+    current=$(${pkgs.jq}/bin/jq . "$settings" 2>/dev/null || echo '{}')
+    printf '%s' "$current" \
+      | ${pkgs.jq}/bin/jq --argjson managed ${lib.escapeShellArg (builtins.toJSON opencodeCliSettings)} '. * $managed' \
+      > "$settings.tmp"
+    mv "$settings.tmp" "$settings"
+  '';
 in
 {
   home = {
@@ -2129,6 +2153,13 @@ in
       # handled its own config.yaml.
       piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${piSettingsMerge}
+      '';
+
+      # opencode2's cli.json is the same kind of live document (see the
+      # opencodeCliSettings comment above): the TUI writes it, so the managed
+      # keys are merged in rather than symlinked.
+      opencodeCliSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${opencodeCliSettingsMerge}
       '';
 
       # dsh's settings.yaml is the same kind of live document (onboarding, chat
