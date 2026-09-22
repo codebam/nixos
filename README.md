@@ -221,7 +221,12 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   an explicit authorization for that exact message.
 - **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
   images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
-  steel, shell, browser, code). The dsh plugin is installed per profile with
+  steel, shell, browser, code). opencode2's shell tool executes through
+  `opencode-sandbox-shell` (home/opencode-sandbox-shell.nix): one container per
+  workspace root, the workspace and a read-only `/nix/store` bind-mounted at
+  their host paths, no credentials; `OPENCODE2_NO_SANDBOX=1` in the launching
+  environment restores the host shell for that session. The dsh plugin is
+  installed per profile with
   dsh's own plugin manager
   (`dsh plugin --profile web add @codebam/dsh-opensandbox`). The default world
   is the untrusted-agent

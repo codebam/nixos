@@ -22,6 +22,11 @@ let
   # the image table can be read without the service/wrapper plumbing.
   work = import ./opensandbox-work.nix { inherit pkgs lib; };
   inherit (work) osbWork;
+
+  # The OpenSandbox-backed shell opencode2's `shell` setting points at; see
+  # home/opencode-sandbox-shell.nix. Imported here too so the command is on
+  # PATH for a human debugging a sandboxed command by hand.
+  opencodeSandboxShell = import ./opencode-sandbox-shell.nix { inherit pkgs lib; };
   # Keep port_range_min/max in sync with the loopback-only nftables guard in
   # modules/system/networking.nix.
   serverPort = 8090;
@@ -574,6 +579,7 @@ in
     osb
     opensandboxMcp
     osbWork
+    opencodeSandboxShell
   ];
 
   # The sandbox server only makes sense where rootless podman exists: desktop

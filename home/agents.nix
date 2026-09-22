@@ -848,6 +848,13 @@ let
   dshProtectedHostPaths =
     (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
 
+  # opencode2's shell (home/opencode-sandbox-shell.nix): with it in the
+  # `shell` setting below, every command the agent executes through the shell
+  # tool runs in a per-workspace OpenSandbox container instead of the host
+  # shell. The setting is only applied on hosts that run the OpenSandbox
+  # server; elsewhere opencode2 keeps the default host shell.
+  opencodeSandboxShell = import ./opencode-sandbox-shell.nix { inherit pkgs lib; };
+
   # The interactive dsh profiles share the hand-written OpenCode Go route
   # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
   # named or dsh attaches no x-opencode-session header and OpenCode Go answers
@@ -2677,243 +2684,254 @@ in
   # three are agent config anyway.
   xdg = {
     configFile = {
-      "opencode/opencode.json".text = builtins.toJSON {
-        "$schema" = "https://opencode.ai/config.json";
+      "opencode/opencode.json".text = builtins.toJSON (
+        {
+          "$schema" = "https://opencode.ai/config.json";
 
-        # opencode ships permissive: every tool runs unprompted. Kept that way on
-        # purpose -- the prompts were more friction than guardrail here.
-        permission = {
-          edit = "allow";
-          bash = "allow";
-          external_directory = "allow";
-          webfetch = "allow";
-          task = "allow";
-        };
-
-        # Compact at 140k rather than riding the gateway's 1M window up: keeps a
-        # session on the card, where it is free and fast. The OpenRouter fallback
-        # is then only reached by a single turn that overshoots 145k on its own --
-        # a huge paste or file read -- not by a conversation growing into it.
-        compaction = {
-          auto = true;
-          reserved = compactionReserved;
-        };
-
-        # The binary is a store path it cannot rewrite, and sessions should not
-        # leave the machine unless asked for explicitly.
-        autoupdate = false;
-        share = "disabled";
-
-        # All four MCP servers live under one `mcp` key: statix's repeated-keys
-        # lint (W20) flags four sibling `mcp.<name>` assignments, the same
-        # reason `xdg.configFile` above is nested rather than flat.
-        mcp = {
-          # Declarative equivalent of `zg install --target opencode
-          # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
-          # installOpenCodeIntegration). stdio means no daemon to keep up: each
-          # opencode session spawns `zg server --stdio`, which manages its own
-          # shared daemon. Re-derive both this and `zgGuidance` from the new
-          # package (run the installer with HOME pointed at a scratch dir) when
-          # bumping zvec-grep's version.
-          ${zgServerName} = {
-            type = "local";
-            # Resolved from the session PATH; zvec-grep is in home.packages.
-            command = zgArgv;
-            enabled = true;
-            timeout = zgTimeoutMs;
+          # opencode ships permissive: every tool runs unprompted. Kept that way on
+          # purpose -- the prompts were more friction than guardrail here.
+          permission = {
+            edit = "allow";
+            bash = "allow";
+            external_directory = "allow";
+            webfetch = "allow";
+            task = "allow";
           };
 
-          # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
-          # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
-          # each session spawns `ripwire --mcp`, which manages its own warm
-          # index cache. The CLI-first blurb in AGENTS.md below is the
-          # recommended path (zero context until invoked); this is the
-          # warm-index alternative. `command` is the whole argv here (opencode
-          # shape, top-level `mcp`).
-          ripwire = {
-            type = "local";
-            # Resolved from the session PATH; ripwire is in home.packages.
-            command = [
-              "ripwire"
-              "--mcp"
-            ];
-            enabled = true;
+          # Compact at 140k rather than riding the gateway's 1M window up: keeps a
+          # session on the card, where it is free and fast. The OpenRouter fallback
+          # is then only reached by a single turn that overshoots 145k on its own --
+          # a huge paste or file read -- not by a conversation growing into it.
+          compaction = {
+            auto = true;
+            reserved = compactionReserved;
           };
 
-          # Microsoft's Playwright MCP server: headless Chromium with an
-          # in-memory profile (the nixpkgs wrapper's isolated default), so a
-          # session cannot read or write the user's real browser profile.
-          # `command` takes the whole argv here (opencode shape, top-level
-          # `mcp`); pwArgv names the store path because a desktop launch may
-          # not inherit the interactive PATH.
-          ${pwServerName} = {
-            type = "local";
-            command = pwArgv;
-            enabled = true;
-            timeout = pwTimeoutMs;
-          };
+          # The binary is a store path it cannot rewrite, and sessions should not
+          # leave the machine unless asked for explicitly.
+          autoupdate = false;
+          share = "disabled";
 
-          # Shared agent memory, served once over loopback by the `agent-memory`
-          # user service (systemd unit at the end of this file). Remote rather
-          # than one stdio server per session: the JSONL store has a single
-          # writer, and the whole fleet must share the same graph.
-          ${memoryServerName} = {
-            type = "remote";
-            url = memoryUrl;
-            enabled = true;
-            # The service is idle-cheap; this only guards a slow first connect.
-            timeout = 30000;
-          };
-
-          # OpenSandbox sandbox lifecycle/command/file tools. Sandbox creation
-          # may pull a multi-GB image, so allow a long tool call; the MCP
-          # server's own HTTP timeout is raised in its args for the same reason.
-          opensandbox = {
-            type = "local";
-            # Resolved from the session PATH; the wrapper is in home.packages
-            # and injects the per-boot API key (home/opensandbox.nix).
-            command = [
-              "opensandbox-mcp"
-              "--request-timeout-seconds"
-              "900"
-            ];
-            enabled = true;
-            timeout = 960000;
-          };
-        };
-
-        # Models picked from the TUI's model list (`/models`) live in opencode's
-        # own sqlite state, so the last selection survives sessions without
-        # fighting the Nix-managed config. Listing this provider is what puts
-        # `cloudflare-workers-ai` in that list -- the rest of the
-        # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
-        # comes from models.dev, and the endpoint is built from
-        # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
-        provider = {
-          # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
-          # local `ollama`, so the endpoint and the local tag are declared here.
-          # The served windows mirror the pi/dsh entries: 153600 of the 160k
-          # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
-          # output and the 20k compaction reserve.
-          # opencode2 reads this same config directory.
-          ollama = {
-            npm = "@ai-sdk/openai-compatible";
-            name = "Ollama (local)";
-            options = {
-              baseURL = "http://127.0.0.1:11434/v1";
-              apiKey = "ollama"; # Ollama ignores it; the SDK wants a value
+          # All four MCP servers live under one `mcp` key: statix's repeated-keys
+          # lint (W20) flags four sibling `mcp.<name>` assignments, the same
+          # reason `xdg.configFile` above is nested rather than flat.
+          mcp = {
+            # Declarative equivalent of `zg install --target opencode
+            # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
+            # installOpenCodeIntegration). stdio means no daemon to keep up: each
+            # opencode session spawns `zg server --stdio`, which manages its own
+            # shared daemon. Re-derive both this and `zgGuidance` from the new
+            # package (run the installer with HOME pointed at a scratch dir) when
+            # bumping zvec-grep's version.
+            ${zgServerName} = {
+              type = "local";
+              # Resolved from the session PATH; zvec-grep is in home.packages.
+              command = zgArgv;
+              enabled = true;
+              timeout = zgTimeoutMs;
             };
-            models."orcarouter/Qwen3.8-27B-Uncensored:160k" = {
-              name = "Qwen3.8 27B Uncensored (160k)";
-              attachment = true;
-              reasoning = true;
-              tool_call = true;
-              limit = {
-                context = 153600;
-                output = 16384;
-              };
-              modalities = {
-                input = [
-                  "text"
-                  "image"
-                ];
-                output = [ "text" ];
-              };
-            };
-            models."qwen3.8-cyber-iq4xs:262k" = {
-              name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
-              attachment = true;
-              reasoning = true;
-              tool_call = true;
-              limit = {
-                context = 251904;
-                output = 16384;
-              };
-              modalities = {
-                input = [
-                  "text"
-                  "image"
-                ];
-                output = [ "text" ];
-              };
-            };
-          };
-          cloudflare-workers-ai.models.${cfModel} = { };
 
-          # Union Alpha Free. models.dev already carries it for both OpenCode
-          # provider ids; the explicit declarations pin the free metadata so a
-          # stale catalog cache cannot drop the model. The Zen row below is the
-          # client-gated free tier, the Go row the one the exported
-          # OPENCODE_API_KEY authenticates; loadKey above explains the split.
-          opencode.models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
-          "opencode-go".models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
-
-          # DeepSeek direct API (OpenAI-compatible endpoint).
-          deepseek = {
-            npm = "@ai-sdk/openai-compatible";
-            name = "DeepSeek";
-            options = {
-              baseURL = "https://api.deepseek.com/v1";
-              apiKey = "{env:DEEPSEEK_API_KEY}";
-            };
-            models."deepseek-v4.1-flash-expires-on-0910" = {
-              name = "DeepSeek V4.1 Flash";
-              reasoning = true;
-              tool_call = true;
-              limit = {
-                context = 1000000;
-                output = 384000;
-              };
-            };
-          };
-
-          # models.dev lists the router as non-reasoning, so opencode would send no
-          # thinking parameters at all for it; `reasoning` here marks it capable and
-          # `options.reasoning` sets the tier the underlying coder gets.
-          #
-          # Caveat: opencode has a standing report of provider model `options` being
-          # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
-          # closed unresolved). Whether 1.18.18 still drops them is unverified here,
-          # and the failure is silent both ways -- no plugin means the router takes
-          # the strongest, priciest coder, and no reasoning block means default
-          # effort. Check one live request body before trusting either.
-          openrouter.models.${codingModel} = {
-            reasoning = true;
-            options = {
-              plugins = paretoPlugin;
-              reasoning.effort = "medium";
-            };
-          };
-
-          # OpenRouter's copy of the same free stealth model. Vision and tool
-          # calls come from models.dev; `reasoning = false` is pinned because
-          # the model's advertised parameters omit reasoning (unlike the
-          # OpenCode copy above), and a truthy value would only make opencode
-          # expose a thinking picker for a capability the endpoint lacks.
-          openrouter.models.${unionAlpha.openrouterId} = {
-            name = "Union Alpha";
-            reasoning = false;
-            tool_call = true;
-            attachment = true;
-            limit = {
-              context = unionAlpha.contextWindow;
-              output = unionAlpha.maxTokens;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
+            # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
+            # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
+            # each session spawns `ripwire --mcp`, which manages its own warm
+            # index cache. The CLI-first blurb in AGENTS.md below is the
+            # recommended path (zero context until invoked); this is the
+            # warm-index alternative. `command` is the whole argv here (opencode
+            # shape, top-level `mcp`).
+            ripwire = {
+              type = "local";
+              # Resolved from the session PATH; ripwire is in home.packages.
+              command = [
+                "ripwire"
+                "--mcp"
               ];
-              output = [ "text" ];
+              enabled = true;
+            };
+
+            # Microsoft's Playwright MCP server: headless Chromium with an
+            # in-memory profile (the nixpkgs wrapper's isolated default), so a
+            # session cannot read or write the user's real browser profile.
+            # `command` takes the whole argv here (opencode shape, top-level
+            # `mcp`); pwArgv names the store path because a desktop launch may
+            # not inherit the interactive PATH.
+            ${pwServerName} = {
+              type = "local";
+              command = pwArgv;
+              enabled = true;
+              timeout = pwTimeoutMs;
+            };
+
+            # Shared agent memory, served once over loopback by the `agent-memory`
+            # user service (systemd unit at the end of this file). Remote rather
+            # than one stdio server per session: the JSONL store has a single
+            # writer, and the whole fleet must share the same graph.
+            ${memoryServerName} = {
+              type = "remote";
+              url = memoryUrl;
+              enabled = true;
+              # The service is idle-cheap; this only guards a slow first connect.
+              timeout = 30000;
+            };
+
+            # OpenSandbox sandbox lifecycle/command/file tools. Sandbox creation
+            # may pull a multi-GB image, so allow a long tool call; the MCP
+            # server's own HTTP timeout is raised in its args for the same reason.
+            opensandbox = {
+              type = "local";
+              # Resolved from the session PATH; the wrapper is in home.packages
+              # and injects the per-boot API key (home/opensandbox.nix).
+              command = [
+                "opensandbox-mcp"
+                "--request-timeout-seconds"
+                "900"
+              ];
+              enabled = true;
+              timeout = 960000;
             };
           };
 
-          # CrofAI's OpenAI-compatible endpoint. The catalog is not in
-          # models.dev, so the metadata travels with the provider.
-          CrofAI = crofOpencodeProvider;
+          # Models picked from the TUI's model list (`/models`) live in opencode's
+          # own sqlite state, so the last selection survives sessions without
+          # fighting the Nix-managed config. Listing this provider is what puts
+          # `cloudflare-workers-ai` in that list -- the rest of the
+          # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
+          # comes from models.dev, and the endpoint is built from
+          # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
+          provider = {
+            # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
+            # local `ollama`, so the endpoint and the local tag are declared here.
+            # The served windows mirror the pi/dsh entries: 153600 of the 160k
+            # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
+            # output and the 20k compaction reserve.
+            # opencode2 reads this same config directory.
+            ollama = {
+              npm = "@ai-sdk/openai-compatible";
+              name = "Ollama (local)";
+              options = {
+                baseURL = "http://127.0.0.1:11434/v1";
+                apiKey = "ollama"; # Ollama ignores it; the SDK wants a value
+              };
+              models."orcarouter/Qwen3.8-27B-Uncensored:160k" = {
+                name = "Qwen3.8 27B Uncensored (160k)";
+                attachment = true;
+                reasoning = true;
+                tool_call = true;
+                limit = {
+                  context = 153600;
+                  output = 16384;
+                };
+                modalities = {
+                  input = [
+                    "text"
+                    "image"
+                  ];
+                  output = [ "text" ];
+                };
+              };
+              models."qwen3.8-cyber-iq4xs:262k" = {
+                name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
+                attachment = true;
+                reasoning = true;
+                tool_call = true;
+                limit = {
+                  context = 251904;
+                  output = 16384;
+                };
+                modalities = {
+                  input = [
+                    "text"
+                    "image"
+                  ];
+                  output = [ "text" ];
+                };
+              };
+            };
+            cloudflare-workers-ai.models.${cfModel} = { };
+
+            # Union Alpha Free. models.dev already carries it for both OpenCode
+            # provider ids; the explicit declarations pin the free metadata so a
+            # stale catalog cache cannot drop the model. The Zen row below is the
+            # client-gated free tier, the Go row the one the exported
+            # OPENCODE_API_KEY authenticates; loadKey above explains the split.
+            opencode.models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+            "opencode-go".models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+
+            # DeepSeek direct API (OpenAI-compatible endpoint).
+            deepseek = {
+              npm = "@ai-sdk/openai-compatible";
+              name = "DeepSeek";
+              options = {
+                baseURL = "https://api.deepseek.com/v1";
+                apiKey = "{env:DEEPSEEK_API_KEY}";
+              };
+              models."deepseek-v4.1-flash-expires-on-0910" = {
+                name = "DeepSeek V4.1 Flash";
+                reasoning = true;
+                tool_call = true;
+                limit = {
+                  context = 1000000;
+                  output = 384000;
+                };
+              };
+            };
+
+            # models.dev lists the router as non-reasoning, so opencode would send no
+            # thinking parameters at all for it; `reasoning` here marks it capable and
+            # `options.reasoning` sets the tier the underlying coder gets.
+            #
+            # Caveat: opencode has a standing report of provider model `options` being
+            # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
+            # closed unresolved). Whether 1.18.18 still drops them is unverified here,
+            # and the failure is silent both ways -- no plugin means the router takes
+            # the strongest, priciest coder, and no reasoning block means default
+            # effort. Check one live request body before trusting either.
+            openrouter.models.${codingModel} = {
+              reasoning = true;
+              options = {
+                plugins = paretoPlugin;
+                reasoning.effort = "medium";
+              };
+            };
+
+            # OpenRouter's copy of the same free stealth model. Vision and tool
+            # calls come from models.dev; `reasoning = false` is pinned because
+            # the model's advertised parameters omit reasoning (unlike the
+            # OpenCode copy above), and a truthy value would only make opencode
+            # expose a thinking picker for a capability the endpoint lacks.
+            openrouter.models.${unionAlpha.openrouterId} = {
+              name = "Union Alpha";
+              reasoning = false;
+              tool_call = true;
+              attachment = true;
+              limit = {
+                context = unionAlpha.contextWindow;
+                output = unionAlpha.maxTokens;
+              };
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+            };
+
+            # CrofAI's OpenAI-compatible endpoint. The catalog is not in
+            # models.dev, so the metadata travels with the provider.
+            CrofAI = crofOpencodeProvider;
+          }
+          // qwenProvider;
         }
-        // qwenProvider;
-      };
+        // lib.optionalAttrs podmanEnabled {
+          # opencode2 runs every shell-tool command through the configured shell
+          # (`<shell> -c <command>`), so naming the OpenSandbox wrapper here is
+          # what makes agent command execution sandboxed rather than host-side.
+          # Hosts without the OpenSandbox server keep the default shell; see
+          # home/opencode-sandbox-shell.nix for the sandbox shape and the
+          # OPENCODE2_NO_SANDBOX escape hatch.
+          shell = "${opencodeSandboxShell}/bin/opencode-sandbox-shell";
+        }
+      );
 
       # opencode loads the config-dir AGENTS.md globally; the body is shared with
       # pi's copy below.
@@ -2933,6 +2951,21 @@ in
         <!-- OPENSANDBOX_START -->
         ${opensandboxGuidance}
         <!-- OPENSANDBOX_END -->
+
+        ## opencode2 command execution
+
+        This harness's `shell` tool is not the host shell: opencode2 runs
+        every command through an OpenSandbox sandbox, one container per
+        workspace root, with that root and a read-only `/nix/store`
+        bind-mounted at their host paths. Commands still see the same files
+        and host toolchains, but the container has no Nix daemon, no host
+        credentials, and an ephemeral `/root`, so `git commit`, `git push`,
+        and `nix build` against the host store fail by design. Ask the human
+        to run those on the host, or to relaunch opencode2 with
+        `OPENCODE2_NO_SANDBOX=1` for a host-shell session. Do not reach for
+        `osb-work` from the shell tool: it is a host command, the sandbox
+        cannot reach the OpenSandbox server, and the shell is already
+        sandboxed.
       '';
 
       # opencode2's documented global skill root. A copy here makes the setup
