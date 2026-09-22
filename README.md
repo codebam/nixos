@@ -239,7 +239,12 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   one directory with `/directory-add` in a session, or launches
   `dsh-host-access` for reviewed host builds/commits/pushes.
   `dsh-no-opensandbox` is the unhardened built-in bwrap/Landlock fallback for a
-  session when the local OpenSandbox server is unhealthy. Egress filtering is
+  session when the local OpenSandbox server is unhealthy. Sandbox DNS is
+  guarded by `opensandbox-dns-repair` (home/opensandbox.nix): a user timer,
+  plus a pre-start step on the server, restarts `aardvark-dns` when it has been
+  left behind in a torn-down rootless netns, which otherwise makes netavark
+  signal the old server instead of starting one and silently stops name
+  resolution for every sandbox (containers/podman#20396). Egress filtering is
   the known gap: sandbox traffic still reaches the LAN/tailnet as the host user,
   and rootless podman's network mode makes a host-nft source rule unreliable;
   the intended follow-up is OpenSandbox `network_policy` with the `bridge`
