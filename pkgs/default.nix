@@ -96,25 +96,34 @@ in
   # the HIP/CUDA switch driven by nixpkgs' rocmSupport, the patched ggml
   # submodule that carries INT8 convrot, the cmake flags -- is still nixpkgs'
   # derivation. Installed by home/qwen-image.nix, desktop only.
-  stable-diffusion-cpp = prev.stable-diffusion-cpp.overrideAttrs (old: {
-    version = "master-890-74988b2";
-    src = prev.fetchFromGitHub {
-      owner = "leejet";
-      repo = "stable-diffusion.cpp";
-      rev = "74988b290e40155fe2313914e44b979b750e958b";
-      hash = "sha256-gxX4cODfSwpLMGZd/9NUoXrI8jqUZjUt92+752JWS/Q=";
-      fetchSubmodules = true;
-    };
-    # The version above is deliberately ahead of the pin, not an accident a
-    # nixpkgs bump should "fix" by replacing the src.
-    __intentionallyOverridingVersion = true;
-    # Upstream installs the CLI as bin/sd-cli (so does the cached nixpkgs build
-    # of the version this replaces), but the package's meta still claims "sd";
-    # keep lib.getExe and `nix run` pointing at a file that exists.
-    meta = (old.meta or { }) // {
-      mainProgram = "sd-cli";
-    };
-  });
+  stable-diffusion-cpp =
+    (prev.stable-diffusion-cpp.override {
+      # HIP kernels are compiled once per target and nixpkgs' default list is
+      # every gfx it knows (16 on this pin), so the ggml-hip kernel set alone
+      # is a ~16x compile. The desktop's 7900 XTX is gfx1100; another card
+      # needs its target added here and a rebuild.
+      rocmGpuTargets = [ "gfx1100" ];
+    }).overrideAttrs
+      (old: {
+        version = "master-890-74988b2";
+        src = prev.fetchFromGitHub {
+          owner = "leejet";
+          repo = "stable-diffusion.cpp";
+          rev = "74988b290e40155fe2313914e44b979b750e958b";
+          hash = "sha256-gxX4cODfSwpLMGZd/9NUoXrI8jqUZjUt92+752JWS/Q=";
+          fetchSubmodules = true;
+        };
+        # The version above is deliberately ahead of the pin, not an accident
+        # a nixpkgs bump should "fix" by replacing the src.
+        __intentionallyOverridingVersion = true;
+        # Upstream installs the CLI as bin/sd-cli (so does the cached nixpkgs
+        # build of the version this replaces), but the package's meta still
+        # claims "sd"; keep lib.getExe and `nix run` pointing at a file that
+        # exists.
+        meta = (old.meta or { }) // {
+          mainProgram = "sd-cli";
+        };
+      });
 
   # Polarium Code desktop app. The vendor ships only an AppImage and gates the
   # download behind an account, so there is no URL to pin a hash against:
