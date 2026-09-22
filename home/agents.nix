@@ -674,37 +674,12 @@ let
   # Headroom opencode keeps before it auto-compacts; see `compaction` below.
   compactionReserved = 20000;
 
-  opencode = pkgs.symlinkJoin {
-    name = "opencode-wrapped-${pkgs.opencode.version}";
-    paths = [ pkgs.opencode ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/opencode --run '. ${loadKey}'
-    '';
-  };
-
-  # Desktop front-end of the same agent. It reads the shared
-  # ~/.config/opencode/opencode.json (written below), whose providers key off
-  # `{env:QWEN_API_KEY}` and OPENROUTER_API_KEY. Launched from a .desktop entry
-  # it inherits no shell environment, so wrap it with the same loadKey the CLI
-  # uses: symlinkJoin keeps the package's share/applications, and the bundled
-  # Exec=opencode-desktop resolves to this wrapped binary on PATH.
-  opencode-desktop = pkgs.symlinkJoin {
-    name = "opencode-desktop-wrapped-${pkgs.opencode-desktop.version}";
-    paths = [ pkgs.opencode-desktop ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/opencode-desktop --run '. ${loadKey}'
-    '';
-  };
-
-  # The v2 desktop is upstream's 2.0.x AppImage, the build that pairs with
-  # opencode2 and hosts the integrated browser the agent's browser.* tools
-  # attach to; the stable nixpkgs package above is still the 1.18.x source tree
-  # and has no browser host. The historical `-beta` name stays so the command
-  # and package don't collide with that v1 binary. Wrapped with loadKey for the
-  # same reason as opencode-desktop: a .desktop launch inherits no shell
-  # environment, and it needs the same provider secrets.
+  # The desktop client of the opencode2 line: upstream's 2.0.x AppImage, and
+  # the build that hosts the integrated browser the agent's browser.* tools
+  # attach to. The historical `-beta` name stays so the command, desktop-entry
+  # id, and icon names don't change. Wrapped with loadKey because a .desktop
+  # launch inherits no shell environment, and it needs the same provider secrets
+  # as the CLI.
   opencode-desktop-beta = pkgs.symlinkJoin {
     name = "opencode-desktop-beta-wrapped-${pkgs.opencode-desktop-beta.version}";
     paths = [ pkgs.opencode-desktop-beta ];
@@ -714,19 +689,17 @@ let
     '';
   };
 
-  # The v2 line of the same agent (npm @opencode/cli, installed as `opencode2`
-  # from the registry binaries in pkgs/opencode-cli.nix). Wrapped with loadKey
-  # like the stable one so both see the same provider secrets; it stays a
-  # separate binary so the v1 and v2 CLIs can be used side by side.
+  # The v2 line of the agent (npm @opencode/cli, installed as `opencode2` from
+  # the registry binaries in pkgs/opencode-cli.nix). Wrapped with loadKey so it
+  # sees the same provider secrets as the other agents.
   #
   # OPENCODE_DISABLE_AUTOUPDATE: the CLI polls
   # opencode.ai/update/api/<platform>/<arch>/npm on a 10-minute interval and,
   # when it recognises its own install method (npm/pnpm/bun/yarn -g), offers to
   # reinstall itself. A /nix/store binary is read-only and pkged here, so both
-  # the poll and the offer are noise; the stable nixpkgs opencode wrapper sets
-  # the same variable. ripgrep joins PATH because opencode2 shells out to `rg`
-  # for grep/search and, unlike the stable package, gets no wrapper that names
-  # it for it.
+  # the poll and the offer are noise. ripgrep joins PATH because opencode2
+  # shells out to `rg` for grep/search and the wrapper is the only place to
+  # name it.
   #
   # OPENCODE_DISABLE_FILEWATCHER: opencode 2.0.12's background service leaks
   # inotify watches until the user-wide pool is exhausted; after that even
@@ -764,7 +737,7 @@ let
   };
 
   # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadKey for
-  # the same reason as opencode and pi: its llm-pi-ai `opencode-go` route names
+  # the same reason as opencode2 and pi: its llm-pi-ai `opencode-go` route names
   # the OPENCODE_API_KEY credential reference, and the credential store falls
   # back to the launch environment, so exporting the key here is what makes the
   # route authenticate without a secret in settings.yaml. dsh's own wrapper
@@ -1465,7 +1438,7 @@ let
   # object belongs to opencode's internal Mcp.TimeoutConfig and is not accepted
   # here: config normalization rejects the whole entry ("skipped malformed
   # recognized value") and the server silently never loads. Verified against
-  # opencode2 2.0.12 and opencode 1.18.29.
+  # opencode2 2.0.12.
   zgTimeoutMs = 600000;
 
   # Microsoft's Playwright MCP server, declared once and rendered in each
@@ -2134,8 +2107,6 @@ in
 {
   home = {
     packages = [
-      opencode
-      opencode-desktop
       opencode-desktop-beta
       opencode2
       pi
@@ -2933,14 +2904,12 @@ in
         <!-- OPENSANDBOX_END -->
       '';
 
-      # opencode's documented global skill root, under the config directory
-      # the v1 and v2 CLIs share. A copy here makes the setup independent
-      # of opencode's `~/.claude/skills` auto-discovery fallback.
+      # opencode2's documented global skill root. A copy here makes the setup
+      # independent of its `~/.claude/skills` auto-discovery fallback.
       "opencode/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
 
-      # The same for opencode2, which shares this config directory with the
-      # stable CLI: it scans both `skill/` and `skills/` under a config root
-      # and follows the directory symlink.
+      # opencode2 scans both `skill/` and `skills/` under a config root and
+      # follows the directory symlink.
       "opencode/skills/security-audit".source = securityAuditSkill;
 
       # The same server in the host-agnostic format pi-mcp-adapter reads. The
