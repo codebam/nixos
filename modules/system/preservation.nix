@@ -204,6 +204,10 @@ _: {
             ".local/share/vkBasalt/shaders"
             ".local/share/kwalletd"
             ".local/share/uv"
+            # Qwen-Image-2.1 GGUF weights (~10 GiB) downloaded by
+            # `qwen-image-models` (home/qwen-image.nix); a root wipe without
+            # this means fetching them all over again.
+            ".local/share/qwen-image"
             ".local/bin"
             # SigmaShake Desktop: license, prefs, daemon state. Not generated
             # by the flake; a root wipe would drop the login.

@@ -89,6 +89,33 @@ in
   # pkgs/opencode-desktop-beta.nix.
   opencode-desktop-beta = pkgs.callPackage ./opencode-desktop-beta.nix { };
 
+  # stable-diffusion.cpp pinned ahead of nixpkgs: upstream added Qwen-Image-2.1
+  # support on 2026-09-20, after the master-849-d04e895 commit this nixpkgs
+  # pins, and the model's GGUF was converted by that same tree. src is the
+  # upstream release tag master-890-74988b2, a commit pin; everything else --
+  # the HIP/CUDA switch driven by nixpkgs' rocmSupport, the patched ggml
+  # submodule that carries INT8 convrot, the cmake flags -- is still nixpkgs'
+  # derivation. Installed by home/qwen-image.nix, desktop only.
+  stable-diffusion-cpp = prev.stable-diffusion-cpp.overrideAttrs (old: {
+    version = "master-890-74988b2";
+    src = prev.fetchFromGitHub {
+      owner = "leejet";
+      repo = "stable-diffusion.cpp";
+      rev = "74988b290e40155fe2313914e44b979b750e958b";
+      hash = "sha256-gxX4cODfSwpLMGZd/9NUoXrI8jqUZjUt92+752JWS/Q=";
+      fetchSubmodules = true;
+    };
+    # The version above is deliberately ahead of the pin, not an accident a
+    # nixpkgs bump should "fix" by replacing the src.
+    __intentionallyOverridingVersion = true;
+    # Upstream installs the CLI as bin/sd-cli (so does the cached nixpkgs build
+    # of the version this replaces), but the package's meta still claims "sd";
+    # keep lib.getExe and `nix run` pointing at a file that exists.
+    meta = (old.meta or { }) // {
+      mainProgram = "sd-cli";
+    };
+  });
+
   # Polarium Code desktop app. The vendor ships only an AppImage and gates the
   # download behind an account, so there is no URL to pin a hash against:
   # pkgs/polariumcode wraps the AppImage kept at ~/Downloads and extracts it to

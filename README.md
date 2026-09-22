@@ -80,6 +80,7 @@ per-host overrides for hardware, networking, and services.
 │   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
 │   ├── opensandbox.nix          # rootless-podman OpenSandbox server, osb/MCP wrappers
 │   ├── opensandbox-work.nix     # pinned per-work-type sandbox images + osb-work helper
+│   ├── qwen-image.nix           # Qwen-Image-2.1 CLI over stable-diffusion.cpp (desktop)
 │   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
 │   ├── shell-common.nix         # bash, carapace, zoxide, direnv, nushell, tmux, fzf
 │   ├── stylix.nix               # Per-user theming targets
@@ -244,6 +245,12 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   the intended follow-up is OpenSandbox `network_policy` with the `bridge`
   network.
 - **Dev**: gh, git (signed commits), claude-code
+- **Images**: `qwen-image` renders a prompt with Qwen-Image-2.1 through
+  stable-diffusion.cpp (HIP on the desktop card) into the current directory;
+  `qwen-image-models` downloads and verifies the ~10 GiB of GGUF weights into
+  `~/.local/share/qwen-image` first (also done on demand by `qwen-image`). The
+  desktop-only package pin and the model flags live in `home/qwen-image.nix`,
+  the version pin in `pkgs/default.nix`.
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)
 

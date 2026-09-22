@@ -19,6 +19,7 @@ _:
     ./agents.nix
     ./hermes.nix
     ./opensandbox.nix
+    ./qwen-image.nix
     ./voxtype.nix
   ];
 }
