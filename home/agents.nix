@@ -3154,6 +3154,12 @@ in
     # dsh-web is kept here rather than in home/services.nix because its
     # ExecStart has to name the wrapped package defined above; it is gated to
     # the desktop, which is where the matching Tailscale Serve unit exists.
+    #
+    # Intentionally has no Install.WantedBy: home-manager generates no
+    # default.target.wants symlink, so the UI no longer runs at login. Start it
+    # on demand with `systemctl --user start dsh-web.service`; `dsh-web-url`
+    # still prints the tokenized front-door URL. The Tailscale Serve unit in
+    # desktop/configuration/systemd.nix is unaffected and keeps its route.
     dsh-web = lib.mkIf isDesktop {
       Unit = {
         Description = "DeepSeek Harness web UI";
@@ -3179,7 +3185,6 @@ in
         StandardOutput = "journal";
         StandardError = "journal";
       };
-      Install.WantedBy = [ "default.target" ];
     };
 
   };
