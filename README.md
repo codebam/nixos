@@ -239,16 +239,18 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   one directory with `/directory-add` in a session, or launches
   `dsh-host-access` for reviewed host builds/commits/pushes.
   `dsh-no-opensandbox` is the unhardened built-in bwrap/Landlock fallback for a
-  session when the local OpenSandbox server is unhealthy. Sandbox DNS is
-  guarded by `opensandbox-dns-repair` (home/opensandbox.nix): a user timer,
-  plus a pre-start step on the server, restarts `aardvark-dns` when it has been
-  left behind in a torn-down rootless netns, which otherwise makes netavark
-  signal the old server instead of starting one and silently stops name
-  resolution for every sandbox (containers/podman#20396). Egress filtering is
-  the known gap: sandbox traffic still reaches the LAN/tailnet as the host user,
-  and rootless podman's network mode makes a host-nft source rule unreliable;
-  the intended follow-up is OpenSandbox `network_policy` with the `bridge`
-  network.
+  session when the local OpenSandbox server is unhealthy. The sandbox network
+  is created without podman's per-network DNS server (`--disable-dns` in
+  home/opensandbox.nix): `aardvark-dns` is a single process per network with no
+  self-healing, and when it dies, or is left behind in a torn-down rootless
+  netns, every sandbox silently loses name resolution while egress keeps
+  working (containers/podman#20396). Without it the containers get the host's
+  resolvers through pasta -- `169.254.1.1` (systemd-resolved) first -- so the
+  host's DoT policy and the tailnet search domain still apply. Egress
+  filtering is the known gap: sandbox traffic still reaches the LAN/tailnet as
+  the host user, and rootless podman's network mode makes a host-nft source
+  rule unreliable; the intended follow-up is OpenSandbox `network_policy` with
+  the `bridge` network.
 - **Dev**: gh, git (signed commits), claude-code
 - **Images**: `qwen-image` renders a prompt with Qwen-Image-2.1 through
   stable-diffusion.cpp (HIP on the desktop card) into the current directory;

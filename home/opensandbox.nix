@@ -42,6 +42,7 @@ let
   # A named network rather than "bridge": rootless podman's default network is
   # the pasta-backed "podman" network, while OpenSandbox treats any non-host
   # name as a user-defined bridge and resolves published ports through it.
+  # Created without podman's per-network DNS server; see networkEnsure.
   # Network policies/egress require the literal "bridge" network and are not
   # configured here; switch this value if you need them.
   sandboxNetwork = "opensandbox";
@@ -514,99 +515,57 @@ let
     _install_provision_guards()
   '';
 
+  # The sandbox network runs without podman's per-network DNS server.
+  #
+  # Sandboxes never resolve each other by name -- the server reaches them
+  # through the ports it publishes on loopback -- and aardvark-dns is a single
+  # process per network that podman only starts as part of container setup and
+  # never revives on its own. When it dies, or is left behind in a torn-down
+  # rootless netns (containers/podman#20396), every sandbox keeps the dead
+  # server's address in /etc/resolv.conf and silently loses name resolution
+  # while egress keeps working: a failure that looks like "the sandbox has no
+  # network" and that only a container recreate used to clear.
+  #
+  # Without DNS the containers get podman's DNS-less path instead: the host's
+  # resolvers, with the systemd-resolved stub replaced by the pasta-forwarded
+  # address 169.254.1.1, so queries still take the host's DoT policy and the
+  # tailnet search domain keeps working -- and nothing of ours has to stay
+  # alive for it.
+  #
+  # dns_enabled cannot be changed on an existing network, and podman refuses to
+  # remove one that still has containers attached, so a network created before
+  # this change is recreated here the first time the server starts with no
+  # sandbox on it (a reboot is the natural way to get there, since sandboxes do
+  # not survive one).
   networkEnsure = pkgs.writeShellApplication {
     name = "opensandbox-network";
     runtimeInputs = [ pkgs.podman ];
     text = ''
       set -eu
+
       if ! podman network inspect ${sandboxNetwork} >/dev/null 2>&1; then
-        podman network create ${sandboxNetwork}
-      fi
-    '';
-  };
-
-  # netavark only SIGHUPs an already-running aardvark-dns when a network gains
-  # another container. If aardvark outlived the rootless netns it was started
-  # in -- podman tears that netns down when the last container on it stops, and
-  # a config entry left behind by a failed teardown keeps aardvark alive
-  # holding the old namespace -- the signal reaches a server that can no longer
-  # bind the new bridge address, so every sandbox on the network resolves
-  # nothing while the containers themselves stay online
-  # (containers/podman#20396). netavark 1.17.2 notices the namespace mismatch
-  # but only logs it, so repair from here: kill the stale server, then reload
-  # the containers' networks, which runs netavark setup again and starts a
-  # fresh aardvark-dns bound to the current rootless netns.
-  dnsRepair = pkgs.writeShellApplication {
-    name = "opensandbox-dns-repair";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.podman
-      pkgs.procps
-    ];
-    text = ''
-      set -eu
-
-      uid=$(id -u)
-      # podman is authoritative about the runroot, which holds both the
-      # rootless netns and the per-network aardvark state.
-      runroot=$(podman info --format '{{.Store.RunRoot}}' 2>/dev/null) || exit 0
-      [ -n "$runroot" ] || exit 0
-
-      # The pasta/slirp process named here lives in the rootless netns, so its
-      # namespace is the one every network of this user is built in.
-      netns_dir="$runroot/networks/rootless-netns"
-      current=""
-      if [ -r "$netns_dir/rootless-netns-conn.pid" ]; then
-        netns_pid=$(cat "$netns_dir/rootless-netns-conn.pid")
-        current=$(readlink "/proc/$netns_pid/ns/net" 2>/dev/null) || current=""
-      fi
-
-      stale=""
-      healthy=""
-      for pid in $(pgrep -u "$uid" -x aardvark-dns || true); do
-        ns=$(readlink "/proc/$pid/ns/net" 2>/dev/null) || continue
-        if [ -n "$current" ] && [ "$ns" = "$current" ]; then
-          healthy=1
-        else
-          stale=1
-        fi
-      done
-      if [ -z "$stale" ] && [ -n "$healthy" ]; then
+        podman network create --disable-dns ${sandboxNetwork}
         exit 0
       fi
 
-      # No aardvark at all is only broken when the network has DNS enabled and
-      # something is running on it; otherwise the next create starts a server.
-      if [ -z "$stale" ]; then
-        dns_enabled=$(podman network inspect ${sandboxNetwork} --format '{{.DNSEnabled}}' 2>/dev/null) || exit 0
-        [ "$dns_enabled" = "true" ] || exit 0
-        [ -n "$(podman ps -q --filter network=${sandboxNetwork} 2>/dev/null)" ] || exit 0
+      dns_enabled=$(podman network inspect ${sandboxNetwork} --format '{{.DNSEnabled}}' 2>/dev/null || echo "")
+      [ "$dns_enabled" = "true" ] || exit 0
+
+      if [ -n "$(podman ps -q --filter network=${sandboxNetwork} 2>/dev/null)" ]; then
+        echo "opensandbox-network: ${sandboxNetwork} still serves sandbox DNS through aardvark-dns" >&2
+        echo "opensandbox-network: and cannot be recreated while sandboxes are running on it." >&2
+        echo "opensandbox-network: reboot, or stop them and restart opensandbox-server, to migrate." >&2
+        exit 0
       fi
 
-      echo "opensandbox-dns-repair: restarting aardvark-dns for the current rootless netns" >&2
-
-      # A pid file that names a process other than aardvark-dns makes netavark
-      # signal an unrelated process instead of starting a server; drop it.
-      pidfile="$runroot/networks/aardvark-dns/aardvark.pid"
-      if [ -f "$pidfile" ]; then
-        pid=$(cat "$pidfile" 2>/dev/null) || pid=""
-        if [ -n "$pid" ] && [ "$(cat "/proc/$pid/comm" 2>/dev/null)" != "aardvark-dns" ]; then
-          rm -f "$pidfile"
-        fi
+      # -f also drops the stopped sandbox records a previous boot left behind:
+      # podman counts every container that names the network, running or not,
+      # and would otherwise refuse to remove it forever.
+      if ! podman network rm -f ${sandboxNetwork}; then
+        echo "opensandbox-network: could not remove ${sandboxNetwork}; leaving it alone" >&2
+        exit 0
       fi
-
-      pkill -u "$uid" -x aardvark-dns || true
-      # Wait for the stale server to exit: netavark starts a new one only when
-      # the pid is gone, otherwise it just signals the old process again.
-      for _ in $(seq 1 50); do
-        pgrep -u "$uid" -x aardvark-dns >/dev/null 2>&1 || break
-        sleep 0.1
-      done
-      pkill -u "$uid" -9 -x aardvark-dns 2>/dev/null || true
-
-      # Reloading drives netavark setup for every running container, which
-      # starts the replacement server in the current netns.
-      podman network reload --all >/dev/null 2>&1 || true
+      podman network create --disable-dns ${sandboxNetwork}
     '';
   };
 
@@ -665,7 +624,6 @@ in
     opensandboxMcp
     osbWork
     opencodeSandboxShell
-    dnsRepair
   ];
 
   # The sandbox server only makes sense where rootless podman exists: desktop
@@ -705,19 +663,6 @@ in
     };
 
     timers = lib.mkIf podmanEnabled {
-      opensandbox-dns-repair = {
-        Unit.Description = "Periodic repair of a stale OpenSandbox aardvark-dns";
-        Timer = {
-          # The check is a couple of /proc reads, so it runs often enough to
-          # catch a broken namespace in the middle of a session rather than
-          # only at the next sandbox creation.
-          OnBootSec = "2min";
-          OnUnitActiveSec = "1min";
-          AccuracySec = "5s";
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
-
       opensandbox-image-prune = {
         Unit.Description = "Monthly reclaim of the rootless podman image cache";
         Timer = {
@@ -733,14 +678,6 @@ in
     };
 
     services = lib.mkIf podmanEnabled {
-      opensandbox-dns-repair = {
-        Unit.Description = "Restart aardvark-dns when it serves a stale rootless netns";
-        Service = {
-          Type = "oneshot";
-          ExecStart = lib.getExe dnsRepair;
-        };
-      };
-
       opensandbox-image-prune = {
         Unit = {
           Description = "Prune unused rootless podman images older than 30 days";
@@ -777,9 +714,6 @@ in
           ExecStartPre = [
             (lib.getExe serverPrepare)
             (lib.getExe networkEnsure)
-            # Sandboxes created after a restart must not inherit a stale DNS
-            # server; see dnsRepair.
-            (lib.getExe dnsRepair)
           ];
           ExecStart = lib.concatStringsSep " " [
             "${pkgs.podman}/bin/podman run"
