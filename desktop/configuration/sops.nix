@@ -52,9 +52,12 @@
         owner = "codebam";
         group = "users";
       };
-      # Second OpenCode Go subscription. Hermes reads it as the numbered
-      # OPENCODE_GO_API_KEY_2 sibling (see the hermes-env template below);
-      # no wrapper exports it, so no other agent picks it up.
+      # Second OpenCode Go subscription, and the one Hermes leads with: the
+      # hermes-env template below puts its placeholder in the unnumbered
+      # OPENCODE_GO_API_KEY slot, which the credential pool's fill_first
+      # order tries before the numbered sibling, so the first subscription
+      # becomes the fallback entry. No wrapper exports it, so no other
+      # agent picks it up.
       opencode-go-api-key-2 = {
         owner = "codebam";
         group = "users";
@@ -86,9 +89,12 @@
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
     # Qwen Token Plan / CrofAI providers find their key_env, the gateway gets
     # the Telegram bot token, and its pinned web.extract_backend (home/hermes.nix)
-    # finds the Tavily key. The numbered OPENCODE_GO_API_KEY_2 sibling
-    # is auto-discovered into the OpenCode Go credential pool, so a spent
-    # subscription rotates to the second one mid-session instead of failing.
+    # finds the Tavily key. Both OpenCode Go subscriptions enter the
+    # credential pool as the unnumbered/numbered pair (the numbered sibling
+    # is auto-discovered), and fill_first tries the unnumbered slot first --
+    # so the placeholders are crossed below: the second subscription leads
+    # and the first one backs it up when a spent subscription rotates
+    # mid-session.
     # owner codebam so Home Manager activation can read it and copy it into
     # $HERMES_HOME/.env.
     templates."hermes-env" = {
@@ -99,8 +105,8 @@
         CLOUDFLARE_ACCOUNT_ID=${config.sops.placeholder.cloudflare-account-id}
         QWEN_TOKEN_PLAN_API_KEY=${config.sops.placeholder.qwen-api-key}
         DEEPSEEK_API_KEY=${config.sops.placeholder.deepseek-api-key}
-        OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key}
-        OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key-2}
+        OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key-2}
+        OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key}
         CROFAI_API_KEY=${config.sops.placeholder.crofai-api-key}
         TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
