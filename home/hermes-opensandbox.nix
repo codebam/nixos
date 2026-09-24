@@ -9,6 +9,15 @@
 # whose provider spawns home/opensandbox-exec.nix's executor once per command,
 # and `terminal.backend = "opensandbox"` in home/hermes.nix selects it.
 #
+# One container per session, not per workspace: the provider declares
+# `session_isolated_when_nonpersistent` and home/hermes.nix sets
+# `terminal.container_persistent: false`, so core keys its container cache by
+# the session's task id and a container is destroyed at session close or after
+# the idle window. That removes the ambient-context lookup which let a
+# dispatcher without the session key collapse to the shared "default" slot and
+# run a command in another workspace's container; subagents share their
+# parent's container through the alias registry, as before.
+#
 # Two guards run before a container is asked for, mirroring the server's own
 # rules so an impossible workspace lands as a clear fallback instead of a
 # create-time error: the workspace root must sit under allowedHostPaths and
@@ -264,6 +273,14 @@ let
               self._root = root
               self._task_id = str(task_id or "default")
               self._persistent = bool(persistent)
+              # Session-scoped marker, read by the lifecycle's
+              # is_persistent_env(): the env survives BETWEEN turns (the
+              # per-turn teardown skips it) but is destroyed at session close
+              # (cleanup_vm) and by the idle reaper -- the same contract
+              # docker's session-isolated containers get. Without it a
+              # non-persistent env is torn down at the end of every turn, and
+              # the container with it.
+              self._session_scoped = not self._persistent
               self._cpu = str(cpu or DEFAULT_CPU)
               self._memory = str(memory or DEFAULT_MEMORY)
               # One key per workspace, or per session in non-persistent mode:
@@ -359,6 +376,18 @@ let
           # is_container triggers would break both. Dangerous-command approval
           # stays on for the same reason: this backend mounts real host paths.
           is_container = False
+          # A container carries a workspace bind mount, so core's container
+          # cache must key it per session. The resolver otherwise keys by the
+          # ambient session context, which a dispatching thread can lack: a
+          # resumed desktop turn collapsed to the shared "default" slot, which
+          # held another workspace's env, and the session's command ran in that
+          # container with its own repo unmounted. With this declared (plus
+          # terminal.container_persistent: false) core keys by the explicit
+          # per-turn task id instead -- resolver branch 2, no ambient context --
+          # and the env is session-isolated: one container per session,
+          # destroyed at session close or idle timeout; subagents share their
+          # parent's through the alias registry.
+          session_isolated_when_nonpersistent = True
 
           @property
           def description(self):

@@ -370,13 +370,29 @@ in
       # The allowlist above is the whole access policy: do not let unknown DMs
       # fall back into the pairing flow.
       unauthorized_dm_behavior = "ignore";
-      # "." is Hermes' placeholder for the launch directory; the module would
-      # otherwise write its workingDirectory default into config.yaml.
-      terminal.cwd = ".";
-      # Terminal and file commands run in OpenSandbox workspace containers
-      # (extraPlugins above, home/hermes-opensandbox.nix); the manifest name
-      # gates the plugin in.
-      terminal.backend = "opensandbox";
+      terminal = {
+        # "." is Hermes' placeholder for the launch directory; the module
+        # would otherwise write its workingDirectory default into config.yaml.
+        cwd = ".";
+        # Terminal and file commands run in OpenSandbox workspace containers
+        # (extraPlugins above, home/hermes-opensandbox.nix); the manifest name
+        # gates the plugin in.
+        backend = "opensandbox";
+        # Session-isolated sandboxes. An OpenSandbox env carries a workspace
+        # bind mount, so the container cache must key by the explicit session:
+        # with container_persistent off, the plugin's declared
+        # session_isolated_when_nonpersistent flag makes core key by the
+        # per-turn task id rather than the ambient session context -- which a
+        # dispatching turn can lack (a resumed desktop turn collapsed to the
+        # shared "default" slot, which held another workspace's env, and its
+        # command ran in that other container with its own repo unmounted).
+        # One container per session now, destroyed at session close; the idle
+        # window is widened so a long reasoning gap between commands does not
+        # reap an interactive session's container mid-work (the server TTL
+        # remains the hard cap).
+        container_persistent = false;
+        lifetime_seconds = 3600;
+      };
       plugins.enabled = [ "opensandbox" ];
     };
   };
