@@ -209,10 +209,10 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
 - **Agents**: OpenCode (v1 stable + v2 `opencode2`), OpenCode Desktop, Pi, and
-  dsh, plus Hermes on the desktop. The host harnesses keep their
-  zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and are trusted host
-  tools; dsh's OpenSandbox world (the web profile) also registers the shared
-  memory MCP
+  dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. The host
+  harnesses keep their zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and
+  are trusted host tools; dsh's OpenSandbox world (the web profile) also
+  registers the shared memory MCP
   and the isolated, headless Playwright MCP (its file access is scoped to the
   session workspace by Playwright's default guardrail, and it runs on the
   host network). Hermes and dsh additionally register the agentic-inbox email

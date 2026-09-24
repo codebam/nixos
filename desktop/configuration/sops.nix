@@ -52,6 +52,13 @@
         owner = "codebam";
         group = "users";
       };
+      # Second OpenCode Go subscription. Hermes reads it as the numbered
+      # OPENCODE_GO_API_KEY_2 sibling (see the hermes-env template below);
+      # no wrapper exports it, so no other agent picks it up.
+      opencode-go-api-key-2 = {
+        owner = "codebam";
+        group = "users";
+      };
       # CrofAI API key for the CrofAI provider in opencode, pi, and dsh;
       # home/agents.nix exports it as CROFAI_API_KEY from the wrappers.
       crofai-api-key = {
@@ -72,8 +79,11 @@
     # are added under the names Hermes resolves them by, so its built-in
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
     # Qwen Token Plan / CrofAI providers find their key_env, and the gateway
-    # gets the Telegram bot token. owner codebam so
-    # Home Manager activation can read it and copy it into $HERMES_HOME/.env.
+    # gets the Telegram bot token. The numbered OPENCODE_GO_API_KEY_2 sibling
+    # is auto-discovered into the OpenCode Go credential pool, so a spent
+    # subscription rotates to the second one mid-session instead of failing.
+    # owner codebam so Home Manager activation can read it and copy it into
+    # $HERMES_HOME/.env.
     templates."hermes-env" = {
       content = ''
         OPENROUTER_API_KEY=${config.sops.placeholder.openrouter-api-key}
@@ -83,6 +93,7 @@
         QWEN_TOKEN_PLAN_API_KEY=${config.sops.placeholder.qwen-api-key}
         DEEPSEEK_API_KEY=${config.sops.placeholder.deepseek-api-key}
         OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key}
+        OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key-2}
         CROFAI_API_KEY=${config.sops.placeholder.crofai-api-key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
       '';

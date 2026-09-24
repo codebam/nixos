@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   osConfig,
   pkgs,
   lib,
@@ -9,6 +10,45 @@
 let
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
+
+  # Hermes Desktop from the pinned hermes-agent input, re-called here for one
+  # reason: upstream's desktop.nix fetches Electron's Node headers from a URL
+  # pinned to the hash of the Electron version in the input's own flake.lock
+  # (41.10.3). The input follows this flake's nixpkgs, whose Electron has moved
+  # on, so that fetch can never match again and the desktop build would fail on
+  # it. Everything else stays upstream's build; only the `pkgs` scope that one
+  # fetchurl resolves in is wrapped, and the call is answered with nixpkgs' own
+  # headers for the Electron actually shipped, repacked into the tarball shape
+  # the build unpacks (a `node_headers/` root that its `tar
+  # --strip-components=1` removes again). Revisit on a hermes-agent bump: drop
+  # this and use `...packages.${system}.desktop` again if upstream stops
+  # pinning the hash or pins one for the nixpkgs Electron in use.
+  hermesAgent = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  electronHeaders =
+    pkgs.runCommand "node-v${pkgs.electron.version}-headers.tar.gz"
+      {
+        nativeBuildInputs = [
+          pkgs.gzip
+          pkgs.gnutar
+        ];
+      }
+      ''
+        mkdir -p unpacked/node_headers
+        cp -r ${pkgs.electron.headers}/. unpacked/node_headers/
+        tar -czf $out -C unpacked node_headers
+      '';
+  hermesDesktop = pkgs.callPackage "${inputs.hermes-agent}/nix/desktop.nix" {
+    inherit (hermesAgent) hermesNpmLib;
+    inherit hermesAgent;
+    pkgs = pkgs // {
+      fetchurl =
+        args:
+        if lib.hasPrefix "https://artifacts.electronjs.org/headers/" (args.url or "") then
+          electronHeaders
+        else
+          pkgs.fetchurl args;
+    };
+  };
 in
 {
   # Hermes is per-user now, not the retired system service: the upstream
@@ -90,4 +130,16 @@ in
       terminal.cwd = ".";
     };
   };
+
+  # Hermes Desktop, the upstream Electron app from the same flake input the
+  # agent module comes from (see the let block for the one Electron-headers
+  # adjustment). It shares $HERMES_HOME with the CLI and gateway: the upstream
+  # wrapper points HERMES_DESKTOP_HERMES at the fully wrapped `hermes` binary
+  # and the app spawns its own headless `hermes serve` child, so the managed
+  # config.yaml, the sops-built .env, and the OpenCode Go credential pool are
+  # what it runs on. A .desktop launch inherits no shell environment, which is
+  # fine here: everything it needs is in HERMES_HOME. Electron userData
+  # (window state, themes, connections) is preserved as .config/Hermes in
+  # modules/system/preservation.nix.
+  home.packages = lib.mkIf isDesktop [ hermesDesktop ];
 }
