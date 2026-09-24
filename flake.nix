@@ -72,11 +72,13 @@
       url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Hermes Agent. Pinned to the last revision this config built against
-    # (b0c4e9e's lock): bump it deliberately and rebuild, since upstream
-    # changes the package and its module together.
+    # Hermes Agent, pinned to the v2026.9.21 release (0.21.4). OpenCode Go
+    # answers 400 to clients that do not send x-opencode-session; that support
+    # landed in PR #101864, merged after v0.21.0, so the previous 0.20.4 pin
+    # could not talk to the Go subscription at all. Bump deliberately and
+    # rebuild, since upstream changes the package and its module together.
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/66bb77cbf95614760d12445218a8e5af18e0b0a1";
+      url = "github:NousResearch/hermes-agent/v2026.9.21";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

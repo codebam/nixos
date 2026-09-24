@@ -20,10 +20,11 @@ let
   # fetchurl resolves in is wrapped, and the call is answered with nixpkgs' own
   # headers for the Electron actually shipped, repacked into the tarball shape
   # the build unpacks (a `node_headers/` root that its `tar
-  # --strip-components=1` removes again). Revisit on a hermes-agent bump: drop
-  # this and use `...packages.${system}.desktop` again if upstream stops
-  # pinning the hash or pins one for the nixpkgs Electron in use.
-  hermesAgent = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  # --strip-components=1` removes again). The module wraps the result with the
+  # launcher environment, so it must keep upstream's `override` arguments
+  # (`extraEnv`, `extraRun`). Revisit on a hermes-agent bump: drop this and use
+  # the module's default desktop package if upstream stops pinning the hash.
+  hermesAgent = config.programs.hermes-agent.package;
   electronHeaders =
     pkgs.runCommand "node-v${pkgs.electron.version}-headers.tar.gz"
       {
@@ -52,10 +53,11 @@ let
 in
 {
   # Hermes is per-user now, not the retired system service: the upstream
-  # home-manager module installs the package, exports HERMES_HOME, and writes
-  # $HERMES_HOME/.env on every activation from environmentFiles. The file it
-  # reads is the sops template built from the individual API-key secrets, so
-  # the hand-maintained hermes-env blob does not have to come back.
+  # home-manager module installs the package (`programs.hermes-agent` below),
+  # exports HERMES_HOME, and writes $HERMES_HOME/.env on every activation from
+  # environmentFiles. The file it reads is the sops template built from the
+  # individual API-key secrets, so the hand-maintained hermes-env blob does not
+  # have to come back.
   #
   # Gated to the desktop like the old module: the template below, the
   # OpenRouter key path, and the Telegram gateway are desktop-only.
@@ -131,15 +133,22 @@ in
     };
   };
 
-  # Hermes Desktop, the upstream Electron app from the same flake input the
-  # agent module comes from (see the let block for the one Electron-headers
-  # adjustment). It shares $HERMES_HOME with the CLI and gateway: the upstream
-  # wrapper points HERMES_DESKTOP_HERMES at the fully wrapped `hermes` binary
-  # and the app spawns its own headless `hermes serve` child, so the managed
-  # config.yaml, the sops-built .env, and the OpenCode Go credential pool are
-  # what it runs on. A .desktop launch inherits no shell environment, which is
-  # fine here: everything it needs is in HERMES_HOME. Electron userData
-  # (window state, themes, connections) is preserved as .config/Hermes in
+  # The installation half of the upstream module (separate from the service
+  # since 0.21): `hermes` on PATH with HERMES_HOME exported, and Hermes
+  # Desktop with an XDG launcher that carries HERMES_HOME itself, because a
+  # .desktop launch reads no shell profile. Desktop-only, like the service
+  # block above; the app spawns its own headless `hermes serve` child from the
+  # wrapped binary, so the managed config.yaml, the sops-built .env, and the
+  # OpenCode Go credential pool are what it runs on. Electron userData (window
+  # state, themes, connections) is preserved as .config/Hermes in
   # modules/system/preservation.nix.
-  home.packages = lib.mkIf isDesktop [ hermesDesktop ];
+  programs.hermes-agent = {
+    enable = isDesktop;
+    desktop = {
+      enable = isDesktop;
+      # The default follows `programs.hermes-agent.package`; this flake builds
+      # it itself instead, see the let block.
+      package = hermesDesktop;
+    };
+  };
 }
