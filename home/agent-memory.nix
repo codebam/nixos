@@ -45,6 +45,12 @@ let
     `add_observations` on an existing entity over a near-duplicate one.
     `search_nodes` is substring matching, not semantic, so try distinctive
     terms and synonyms.
+
+    On this machine the graph is *the* durable memory: Hermes runs with its
+    native MEMORY.md store disabled and recalls graph entries into every turn
+    by itself, so a fact worth keeping belongs here rather than in a
+    harness-local file, and entries written by any one harness are read by the
+    others.
   '';
 in
 {

@@ -37,22 +37,32 @@ let
   agentMemory = import ./agent-memory.nix;
   memoryGuidance = "\n\n" + agentMemory.guidanceMcp;
 
-  # Standing facts for every Hermes session. Native memory is switched off in
-  # the service settings below, so this block -- carried through
-  # agent.environment_hint / agent.coding_instructions, the only always-on
-  # system-prompt surfaces in this revision -- takes over the role
-  # MEMORY.md/USER.md played. Repo state on purpose: reviewed, versioned,
-  # identical in every session, never written at runtime. Durable knowledge
-  # the user asks Hermes to keep goes to the shared agent-memory graph
-  # instead; to change a standing fact, edit this file.
+  # The native memory provider (home/hermes-agent-memory.nix): the plugin that
+  # recalls graph entries into every turn and asks for a review every ten
+  # turns, so the graph is used the way Hermes' own MEMORY.md store would have
+  # been. Off with everything else on non-desktop hosts.
+  memoryProvider = import ./hermes-agent-memory.nix { inherit pkgs agentMemory; };
+
+  # Standing facts for every Hermes session. The native MEMORY.md/USER.md
+  # store is off; this block -- carried through agent.environment_hint /
+  # agent.coding_instructions, the only always-on system-prompt surfaces in
+  # this revision -- is the always-on layer that took over its job, and the
+  # shared agent-memory graph is the memory itself: its provider
+  # (home/hermes-agent-memory.nix) recalls relevant entries into every turn
+  # and asks for a review on the native ten-turn cadence. Repo state on
+  # purpose: reviewed, versioned, identical in every session, never written at
+  # runtime. Durable knowledge the user asks Hermes to keep goes to the graph;
+  # to change a standing fact, edit this file.
   standingFacts = "\n\n" + ''
     ## Standing facts
 
-    Hermes runs with native memory disabled: there is no MEMORY.md/USER.md and
-    no memory tool. This block is the always-on layer, maintained in
-    /persistent/etc/nixos/home/hermes.nix; durable facts go to the shared
-    agent-memory knowledge graph (see the Agent memory section below), not to
-    any Hermes-local file.
+    Hermes runs with its native memory store disabled: there is no
+    MEMORY.md/USER.md and no memory tool. Memory is the shared agent-memory
+    knowledge graph (see the Agent memory section below): its provider recalls
+    relevant entries into context before each turn, and every ten turns it
+    asks for a review of the session. This block is the always-on layer,
+    maintained in /persistent/etc/nixos/home/hermes.nix; durable facts go to
+    the graph, not to any Hermes-local file.
 
     Environment:
     - Hermes config is declarative: `~/.hermes/config.yaml` is GENERATED from
@@ -268,6 +278,16 @@ in
     # settings pick it up.
     extraPlugins = [ opensandboxPlugin ];
 
+    # The memory provider (home/hermes-agent-memory.nix) arrives here rather
+    # than above because it ships as an installed package with a
+    # `hermes_agent.memory_providers` entry point -- the route upstream
+    # documents for out-of-tree providers, and the only one whose name matches
+    # `memory.provider` below (a directory plugin is discovered under its
+    # `nix-managed-` symlink name). It must be built with the venv's python312,
+    # which the module enforces, and it lands in the same venv `hermes` runs
+    # from -- CLI, gateway and the desktop's `hermes serve` child alike.
+    extraPythonPackages = [ memoryProvider.package ];
+
     # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
     # with the local Wrangler login token (home/email-mcp.nix); its launcher
     # pins Node and PATH itself so this service does not depend on the
@@ -344,11 +364,17 @@ in
       };
       # Native memory off, deliberately: the always-on facts live in this file
       # (standingFacts above) and durable knowledge in the shared agent-memory
-      # graph; a Hermes-local MEMORY.md/USER.md would be a third copy that
-      # drifts from both.
+      # graph, whose provider (home/hermes-agent-memory.nix) recalls entries
+      # into every turn and asks for a review every ten turns. A Hermes-local
+      # MEMORY.md/USER.md would be a third copy that drifts from both, and the
+      # provider only ever reads the graph -- writes stay on the
+      # mcp__memory__* tools, as for every other harness.
       memory = {
         memory_enabled = false;
         user_profile_enabled = false;
+        # Names the entry point the package above installs; from here on the
+        # provider, not the native store, fills the per-turn memory block.
+        provider = memoryProvider.name;
       };
       # Dormant under the Go default above; it applies if the route moves back
       # to the direct DeepSeek API, whose static catalog knows only the legacy
