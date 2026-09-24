@@ -72,13 +72,18 @@
       url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Hermes Agent, pinned to the v2026.9.21 release (0.21.4). OpenCode Go
-    # answers 400 to clients that do not send x-opencode-session; that support
-    # landed in PR #101864, merged after v0.21.0, so the previous 0.20.4 pin
-    # could not talk to the Go subscription at all. Bump deliberately and
-    # rebuild, since upstream changes the package and its module together.
+    # Hermes Agent, pinned past the v2026.9.21 release (0.21.4) to the main
+    # tip at the time of the bump. The release still produces the desktop's
+    # "Result unavailable" tool rows (upstream #118481): micro-compaction
+    # stamped summarized assistant/tool rows `active=0, compacted=0`, which
+    # the display read (`active = 1 OR compacted = 1`) skips, so results held
+    # in state.db never reach the transcript. Main carries the fix (#119860,
+    # merge f5e6de6f4a, merged after the tag), and this pin also keeps the
+    # x-opencode-session support the v2026.9.21 bump needed. Bump
+    # deliberately and rebuild, since upstream changes the package and its
+    # module together.
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.9.21";
+      url = "github:NousResearch/hermes-agent/f6d0e0c20d9a4be5e13c21807344b731ecebaf86";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
