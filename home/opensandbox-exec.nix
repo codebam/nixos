@@ -389,7 +389,14 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
 
         def handler(stream):
             def emit(message):
-                stream.write((message.text or "") + "\n")
+                # execd's per-line events arrive stripped ("abc"), but a blank
+                # line arrives with its newline ("\n"): appending one
+                # unconditionally doubles every blank line, and anything that
+                # reads content off this stream -- the file tools' cat, the
+                # patch tool's read-back check -- then sees a file taller than
+                # it is.
+                text = message.text or ""
+                stream.write(text if text.endswith("\n") else text + "\n")
                 stream.flush()
 
             return emit
