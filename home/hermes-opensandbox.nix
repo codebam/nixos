@@ -60,6 +60,7 @@ let
       import os
       import socket
       import subprocess
+      import tempfile
       from pathlib import Path
 
       from agent.terminal_env_provider import TerminalEnvironmentProvider
@@ -241,10 +242,18 @@ let
           wrapped script as its argv; the executor reuses the workspace
           container and streams output back, so the parent-side machinery
           (login-shell snapshot, cwd tracking, timeouts, output caps) stays the
-          base class's, unchanged.
+          base class's, unchanged. A command's stdin goes to the executor as a
+          host file (see _stdin_mode), which stages it inside the sandbox.
           """
 
-          _stdin_mode = "heredoc"
+          # stdin is staged as a file, not embedded as a heredoc: the executor
+          # uploads the payload through the sandbox files API and runs the
+          # command with `< file`, so the bytes arrive verbatim. The file tools
+          # verify a sha256 of what they wrote, and heredoc framing both appends
+          # a trailing newline and binds the redirect to the script's last
+          # command rather than the reader. This is the base class's default
+          # "pipe" contract, delivered by the executor.
+          _stdin_mode = "pipe"
           # The first executor call can pay for a cold image pull (it allows 15
           # minutes to become ready), so the snapshot bootstrap needs more room
           # than the 30s default.
@@ -270,8 +279,6 @@ let
               return self._root
 
           def _run_bash(self, cmd_string, *, login=False, timeout=120, stdin_data=None):
-              if stdin_data:
-                  cmd_string = self._embed_stdin_heredoc(cmd_string, stdin_data)
               argv = [
                   EXEC_BIN,
                   "--key",
@@ -286,21 +293,38 @@ let
                   self._cpu,
                   "--memory",
                   self._memory,
-                  "--",
-                  "/bin/bash",
-                  "-lc" if login else "-c",
-                  cmd_string,
               ]
-              return subprocess.Popen(
-                  argv,
-                  stdin=subprocess.DEVNULL,
-                  stdout=subprocess.PIPE,
-                  stderr=subprocess.STDOUT,
-                  text=True,
-                  encoding="utf-8",
-                  errors="replace",
-                  cwd=self._root,
-              )
+              stdin_path = ""
+              if stdin_data is not None:
+                  # One host temp file per payload; the executor reads it,
+                  # stages it in the sandbox and deletes it, so it does not
+                  # outlive the command. surrogateescape matches the encoding
+                  # the write tool hashes, keeping the round trip byte-exact.
+                  fd, stdin_path = tempfile.mkstemp(prefix="hermes-opensandbox-stdin-")
+                  with os.fdopen(fd, "wb") as handle:
+                      handle.write(stdin_data.encode("utf-8", "surrogateescape"))
+                  argv += ["--stdin-file", stdin_path]
+              argv += ["--", "/bin/bash", "-lc" if login else "-c", cmd_string]
+              try:
+                  return subprocess.Popen(
+                      argv,
+                      stdin=subprocess.DEVNULL,
+                      stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT,
+                      text=True,
+                      encoding="utf-8",
+                      errors="replace",
+                      cwd=self._root,
+                  )
+              except BaseException:
+                  # A spawn that never reached the executor would otherwise
+                  # leave the payload behind in this process's temp dir.
+                  if stdin_path:
+                      try:
+                          os.unlink(stdin_path)
+                      except OSError:
+                          pass
+                  raise
 
           def cleanup(self):
               if self._persistent:

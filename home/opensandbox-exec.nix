@@ -17,6 +17,14 @@
 # modules/system/preservation.nix); the key namespaces keep the two harnesses
 # from fighting over one container.
 #
+# `--stdin-file PATH` carries a command's stdin: the payload is uploaded into
+# the sandbox through the server's files API (content arrives verbatim) and the
+# command runs with `< file`, because execd itself has no stdin channel. The
+# heredoc embedding Hermes' base class offers instead cannot serve the file
+# tools: the redirect binds to the script's last command rather than the
+# reader, and every heredoc appends a trailing newline their sha256 check
+# rejects.
+#
 # `opensandbox-exec --destroy --key K` deletes the sandbox recorded for a key
 # (the plugin calls it when a non-persistent session ends). OPEN_SANDBOX_DOMAIN
 # / OPEN_SANDBOX_API_KEY in the environment override the loopback default and
@@ -54,6 +62,8 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
       --cpu N          CPUs for a newly created sandbox (default 4)
       --memory SIZE    memory for a newly created sandbox (default 8Gi)
       --name NAME      sandbox metadata name (default hermes-shell)
+      --stdin-file F   upload F's bytes into the sandbox and run the command
+                       with them as its stdin; F is deleted afterwards
       --destroy        delete the sandbox recorded for KEY, then exit
       --debug          diagnostics on stderr (or OPENSANDBOX_EXEC_DEBUG=1)
 
@@ -67,6 +77,7 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
     import pwd
     import shlex
     import sys
+    import uuid
     from datetime import timedelta
 
     from opensandbox.config.connection_sync import ConnectionConfigSync
@@ -94,6 +105,9 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
     # a cold image pull is the slow case that READY_TIMEOUT covers.
     DEFAULT_CPU = "4"
     DEFAULT_MEMORY = "8Gi"
+    # Where a command's stdin payload is staged inside the container; the
+    # runner deletes it once the command has exited.
+    STDIN_STAGE_TEMPLATE = "/tmp/.hermes-stdin-{}"
 
     STATE_ROOT = os.path.join(
         os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")),
@@ -336,7 +350,31 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
         return 0
 
 
-    def run_command(sandbox, argv, cwd, timeout):
+    def stage_stdin(sandbox, host_path):
+        """Upload the stdin payload at host_path into the sandbox: remote path.
+
+        The files API carries the bytes as an octet stream, so what lands in
+        the container is exactly what the host file holds; a shell heredoc
+        cannot promise that (it appends a newline, and loses the payload
+        outright when its reader is not the script's last command).
+        """
+        remote_path = STDIN_STAGE_TEMPLATE.format(uuid.uuid4().hex[:12])
+        with open(host_path, "rb") as handle:
+            payload = handle.read()
+        sandbox.files.write_file(remote_path, payload)
+        log(f"staged {len(payload)} bytes of stdin at {remote_path}")
+        return remote_path
+
+
+    def unstage_stdin(sandbox, remote_path):
+        """Best-effort delete of a staged stdin payload (the sandbox outlives it)."""
+        try:
+            sandbox.files.delete_files([remote_path])
+        except Exception as error:
+            log(f"could not remove {remote_path}: {error}")
+
+
+    def run_command(sandbox, argv, cwd, timeout, stdin_path=None):
         """Stream one remote command and return its exit status.
 
         execd reports stdout/stderr as one event per line with the separator
@@ -344,6 +382,9 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
         line structure the agent expects. A non-zero remote status arrives as
         an error event whose value is the exit code; a server-side timeout
         surfaces as an error event naming the timeout and exits 124.
+        ``stdin_path`` names a payload already staged inside the sandbox
+        (stage_stdin): the command reads it as its stdin, and it is removed
+        when the run ends.
         """
 
         def handler(stream):
@@ -354,19 +395,28 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
             return emit
 
         command = "exec " + " ".join(shlex.quote(arg) for arg in argv)
+        if stdin_path:
+            # The redirect rides the exec'd shell, so the command -- and
+            # whatever it runs -- reads the staged payload as its stdin: the
+            # same contract as a host pipe.
+            command += f" < {shlex.quote(stdin_path)}"
         opts = RunCommandOpts(
             working_directory=cwd or None,
             timeout=timedelta(seconds=timeout) if timeout else None,
         )
-        execution = sandbox.commands.run(
-            command,
-            opts=opts,
-            handlers=ExecutionHandlersSync(
-                on_stdout=handler(sys.stdout),
-                on_stderr=handler(sys.stderr),
-                skip_accumulation=True,
-            ),
-        )
+        try:
+            execution = sandbox.commands.run(
+                command,
+                opts=opts,
+                handlers=ExecutionHandlersSync(
+                    on_stdout=handler(sys.stdout),
+                    on_stderr=handler(sys.stderr),
+                    skip_accumulation=True,
+                ),
+            )
+        finally:
+            if stdin_path:
+                unstage_stdin(sandbox, stdin_path)
         if execution.error:
             name = str(execution.error.name or "")
             raw = str(execution.error.value or "")
@@ -399,6 +449,7 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
             "cpu": DEFAULT_CPU,
             "memory": DEFAULT_MEMORY,
             "name": "hermes-shell",
+            "stdin_file": "",
             "destroy": False,
             "debug": DEBUG,
             "command": [],
@@ -411,6 +462,7 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
             "--cpu": "cpu",
             "--memory": "memory",
             "--name": "name",
+            "--stdin-file": "stdin_file",
         }
         index = 0
         while index < len(argv):
@@ -466,9 +518,19 @@ pkgs.writers.writePython3Bin "opensandbox-exec"
         # must name the path the bind mount actually exposes in the container.
         roots = list(dict.fromkeys(os.path.realpath(root) for root in opts["roots"]))
         sandbox = ensure_sandbox(roots, opts, config)
+        staged = None
         try:
-            return run_command(sandbox, opts["command"], opts["cwd"], opts["timeout"])
+            if opts["stdin_file"]:
+                staged = stage_stdin(sandbox, opts["stdin_file"])
+            return run_command(sandbox, opts["command"], opts["cwd"], opts["timeout"], stdin_path=staged)
         finally:
+            if opts["stdin_file"]:
+                # The payload lives only for this run: the host copy goes away
+                # whether staging, the command, or the unstage failed.
+                try:
+                    os.unlink(opts["stdin_file"])
+                except OSError:
+                    pass
             sandbox.close()
 
 
