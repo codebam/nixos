@@ -211,7 +211,9 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Agents**: OpenCode (v1 stable + v2 `opencode2`), OpenCode Desktop, Pi, and
   dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. The host
   harnesses keep their zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and
-  are trusted host tools; dsh's OpenSandbox world (the web profile) also
+  are trusted host tools; Hermes' terminal and file tools are the exception
+  (its OpenSandbox backend, under Sandboxes below); dsh's OpenSandbox world
+  (the web profile) also
   registers the shared memory MCP
   and the isolated, headless Playwright MCP (its file access is scoped to the
   session workspace by Playwright's default guardrail, and it runs on the
@@ -226,8 +228,15 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   `opencode-sandbox-shell` (home/opencode-sandbox-shell.nix): one container per
   workspace root, the workspace and a read-only `/nix/store` bind-mounted at
   their host paths, no credentials; `OPENCODE2_NO_SANDBOX=1` in the launching
-  environment restores the host shell for that session. The dsh plugin is
-  installed per profile with
+  environment restores the host shell for that session. Hermes' terminal and
+  file tools execute through the registered `opensandbox` terminal backend
+  (home/hermes-opensandbox.nix) with home/opensandbox-exec.nix as the
+  per-command executor: the same container shape, one per workspace root. A
+  session directory that cannot be a workspace -- the home directory contains
+  `~/.gnupg` -- falls back to the host shell with a notice in its first
+  command's output; `HERMES_OPENSANDBOX_FALLBACK=error` refuses instead, and
+  `HERMES_NO_SANDBOX=1` restores the host shell for that process. The dsh
+  plugin is installed per profile with
   dsh's own plugin manager
   (`dsh plugin --profile web add @codebam/dsh-opensandbox`). The default world
   is the untrusted-agent

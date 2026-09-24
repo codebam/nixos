@@ -11,6 +11,25 @@ let
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
+  # The OpenSandbox terminal backend plugin (home/hermes-opensandbox.nix):
+  # terminal and file commands run in workspace containers instead of the host
+  # shell, the same tier as opencode2's shell and dsh's default world.
+  opensandboxPlugin = import ./hermes-opensandbox.nix { inherit config pkgs lib; };
+
+  # Always-on system-prompt note about that sandbox. Same channel and reason
+  # as the email policy above: it carries the boundary so the agent does not
+  # chase resources the container cannot reach, and names the human's escape
+  # hatch. Prefixed with two newlines to start its own paragraph.
+  sandboxPolicy = "\n\n" + ''
+    Terminal and file commands run inside an OpenSandbox container bound to
+    the session workspace: the workspace is bind-mounted read-write at its
+    host path, /nix/store read-only, and the container has no Nix daemon, no
+    credentials, and an ephemeral /root. Host paths outside the workspace do
+    not exist in the container; a build that needs its own store goes through
+    osb-work. HERMES_NO_SANDBOX=1 in the launching environment restores the
+    host shell for that process.
+  '';
+
   # Hermes Desktop from the pinned hermes-agent input, re-called here for one
   # reason: upstream's desktop.nix fetches Electron's Node headers from a URL
   # pinned to the hash of the Electron version in the input's own flake.lock
@@ -65,6 +84,11 @@ in
     enable = true;
     environmentFiles = [ osConfig.sops.templates."hermes-env".path ];
 
+    # The OpenSandbox terminal backend above. Activation symlinks the plugin
+    # in as nix-managed-<name>; `terminal.backend` and `plugins.enabled` in
+    # settings pick it up.
+    extraPlugins = [ opensandboxPlugin ];
+
     # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
     # with the local Wrangler login token (home/email-mcp.nix); its launcher
     # pins Node and PATH itself so this service does not depend on the
@@ -100,14 +124,14 @@ in
         default = "deepseek-flash";
         provider = "deepseek";
       };
-      # Standing operator policy for outbound email. In this Hermes
-      # revision the native MCP client ignores a server's InitializeResult
+      # Standing operator notes for every session. In this Hermes revision
+      # the native MCP client ignores a server's InitializeResult
       # instructions, and `environment_hint` is the only always-on
-      # system-prompt surface available through config.yaml. Coding
-      # sessions also see the same rule through `coding_instructions`.
+      # system-prompt surface available through config.yaml. Coding sessions
+      # also see the same text through `coding_instructions`.
       agent = {
-        environment_hint = emailMcp.policy;
-        coding_instructions = emailMcp.policy;
+        environment_hint = emailMcp.policy + sandboxPolicy;
+        coding_instructions = emailMcp.policy + sandboxPolicy;
       };
       # Hermes' static DeepSeek catalog only knows the legacy
       # deepseek-v4-flash alias, so pin the metadata DeepSeek documents for
@@ -130,6 +154,11 @@ in
       # "." is Hermes' placeholder for the launch directory; the module would
       # otherwise write its workingDirectory default into config.yaml.
       terminal.cwd = ".";
+      # Terminal and file commands run in OpenSandbox workspace containers
+      # (extraPlugins above, home/hermes-opensandbox.nix); the manifest name
+      # gates the plugin in.
+      terminal.backend = "opensandbox";
+      plugins.enabled = [ "opensandbox" ];
     };
   };
 

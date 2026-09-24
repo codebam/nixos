@@ -27,6 +27,11 @@ let
   # home/opencode-sandbox-shell.nix. Imported here too so the command is on
   # PATH for a human debugging a sandboxed command by hand.
   opencodeSandboxShell = import ./opencode-sandbox-shell.nix { inherit pkgs lib; };
+
+  # The OpenSandbox command executor Hermes' terminal backend plugin spawns
+  # (home/hermes-opensandbox.nix); see the module for the contract. On PATH
+  # too, like opencode's shell, for debugging a sandboxed command by hand.
+  opensandboxExec = import ./opensandbox-exec.nix { inherit pkgs lib; };
   # Keep port_range_min/max in sync with the loopback-only nftables guard in
   # modules/system/networking.nix.
   serverPort = 8090;
@@ -78,10 +83,15 @@ let
   # credentials. The same list doubles as the server-side ancestor guard: a
   # bind whose source directory *contains* one of these paths is rejected
   # outright, so the old `workdir=/home/codebam` bypass cannot mount the whole
-  # home directory around the read-only guard. Defined once in
-  # opensandbox-paths.nix because the dsh plugin's ctx.fs fence consumes it too.
-  sandboxReadonlyHostPaths =
-    (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
+  # home directory around the read-only guard. Both guard lists, and the
+  # allowedHostPaths prefixes a bind source must sit under, are defined once in
+  # opensandbox-paths.nix because the dsh plugin's ctx.fs fence and the Hermes
+  # backend plugin's workspace pre-check consume them too.
+  sandboxPaths = import ./opensandbox-paths.nix { home = config.home.homeDirectory; };
+  sandboxReadonlyHostPaths = sandboxPaths.readonlyHostPaths;
+  # Emitted into the server config as a TOML inline array; toJSON of a list of
+  # plain strings is exactly one.
+  sandboxAllowedHostPaths = builtins.toJSON sandboxPaths.allowedHostPaths;
 
   # The server config holds the API key, so it is generated under the user's
   # runtime dir (tmpfs, mode 0600) on every boot rather than stored in the Nix
@@ -151,10 +161,10 @@ let
         printf '%s\n' '# Host bind mounts are rejected unless their source path is under one of'
         printf '%s\n' '# these prefixes. The prefix list is deliberately broad because dsh'
         printf '%s\n' '# workspaces and explicit /directory-add grants can name any project'
-        printf '%s\n' '# directory; sitecustomize.py adds the real control: a bind whose source'
-        printf '%s\n' '# contains a protected credential/control path (SandboxReadonlyHostPaths)'
-        printf '%s\n' '# is rejected, and a bind exactly on one is forced read-only.'
-        printf '%s\n' 'allowed_host_paths = ["/home/codebam", "/persistent", "/tmp", "/nix/store", "/etc/nix", "/nix/var/nix", "/run/user/1000/gnupg"]'
+        printf '%s\n' '# directory; the sitecustomize rejection rule is the real control there.'
+        printf '%s\n' '# The list itself lives in opensandbox-paths.nix (allowedHostPaths) so'
+        printf '%s\n' '# the Hermes backend plugin answers the same question before it mounts.'
+        printf '%s\n' 'allowed_host_paths = ${sandboxAllowedHostPaths}'
         printf '\n'
         printf '%s\n' '[store]'
         printf '%s\n' '# Mounted from ~/.local/state/opensandbox so sandbox records survive a'
@@ -624,6 +634,7 @@ in
     opensandboxMcp
     osbWork
     opencodeSandboxShell
+    opensandboxExec
   ];
 
   # The sandbox server only makes sense where rootless podman exists: desktop

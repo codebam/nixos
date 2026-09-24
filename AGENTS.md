@@ -30,8 +30,10 @@ broader file is dropped before a more specific one when the budget is hit.
   launching `dsh-host-access`. Never ask a user to add a host path or credential
   (`/directory-add`, `dsh-host-access`) just to make a command succeed.
 - **opencode/pi are trusted host harnesses, not sandboxes.** Their shell and
-  MCP tools run as the host user; the OpenSandbox boundary only covers dsh's
-  own container world and `osb-work`.
+  MCP tools run as the host user; the OpenSandbox boundary covers dsh's own
+  container world, `osb-work`, and Hermes' terminal backend
+  (home/hermes-opensandbox.nix) -- a Hermes session in this repo builds through
+  `osb-work` like dsh, and its MCP rows stay host-side.
 - **Treat agent-modified repo content as untrusted host input.** Do not run
   `nix develop`, `nix build`, git hooks, or an autoloaded `.envrc` on a tree an
   agent changed until the diff is reviewed; build it in `osb-work nix` first.
