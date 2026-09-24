@@ -114,15 +114,19 @@ in
     # Pin the startup route. home/agents.nix declares the token-plan
     # providers for explicit /model picks; this keeps a mutable `hermes model`
     # selection or an upstream default from silently changing what every turn
-    # lands on. deepseek-flash is the direct DeepSeek API's current model name
-    # for DeepSeek-V4.1-Flash.
+    # lands on. The OpenCode Go subscription is the default because both
+    # subscriptions sit in the credential pool, so a spent one rotates to the
+    # second mid-session; deepseek-v4.1-flash is the id the Go relay (a flat
+    # namespace, no vendor prefixes) and models.dev both carry for
+    # DeepSeek-V4.1-Flash. The direct DeepSeek API calls the same model
+    # deepseek-flash, which is why the override below still keys off that id.
     settings = {
       model = {
         # Empty base_url clears the OpenRouter URL persisted by the previous
-        # default so the built-in deepseek endpoint wins.
+        # default so the built-in OpenCode Go endpoint wins.
         base_url = "";
-        default = "deepseek-flash";
-        provider = "deepseek";
+        default = "deepseek-v4.1-flash";
+        provider = "opencode-go";
       };
       # Standing operator notes for every session. In this Hermes revision
       # the native MCP client ignores a server's InitializeResult
@@ -132,10 +136,18 @@ in
       agent = {
         environment_hint = emailMcp.policy + sandboxPolicy;
         coding_instructions = emailMcp.policy + sandboxPolicy;
+        # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
+        # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
+        # every route asks for max and each route clamps onto the levels it
+        # accepts; auxiliary tasks resolve effort from their own
+        # auxiliary.<task> entries, so a title or approval call stays cheap.
+        reasoning_effort = "max";
       };
-      # Hermes' static DeepSeek catalog only knows the legacy
-      # deepseek-v4-flash alias, so pin the metadata DeepSeek documents for
-      # the current deepseek-flash id.
+      # Dormant under the Go default above; it applies if the route moves back
+      # to the direct DeepSeek API, whose static catalog knows only the legacy
+      # deepseek-v4-flash alias. The Go relay's deepseek-v4.1-flash needs no
+      # entry: models.dev carries it with the same metadata (1M context, 384k
+      # output, vision, reasoning).
       model_overrides = {
         "deepseek"."deepseek-flash" = {
           context_window = 1000000;
