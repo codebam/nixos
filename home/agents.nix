@@ -1472,22 +1472,17 @@ let
   # Browser navigation and first paint can outrun the 60s MCP default.
   pwTimeoutMs = 120000;
 
-  # Shared agent memory: the official knowledge-graph MCP server
-  # (`mcp-server-memory`) run once behind mcp-proxy as a systemd *user*
-  # service, so every harness reads and writes ONE JSONL graph instead of
-  # spawning its own copy. The reference server rewrites the whole file per
-  # write and takes no cross-process lock, so a single shared writer is the
-  # point -- do not register it per-session over stdio. The store lives on a
-  # preserved path (modules/system/preservation.nix); the port is loopback only.
-  #
-  # opencode names the tools `<server>_<tool>` and pi's adapter does the same
-  # with its default `toolPrefix` ("server"); dsh builds `mcp__<server>__<tool>`.
-  memoryServerName = "memory";
-  memoryPort = 7979;
-  memoryUrl = "http://127.0.0.1:${toString memoryPort}/mcp";
-  # ExecStart expands %h (the requester's home) to the real path below; the
-  # `-e` passthrough is what tells the child stdio server where its graph lives.
-  memoryFileSpec = "%h/.local/share/agent-memory/memory.jsonl";
+  # Shared agent memory (home/agent-memory.nix holds the definition, shared
+  # with Hermes): the aliases below keep this file's service unit and the
+  # opencode/pi/dsh registrations reading the same names.
+  memorySrv = import ./agent-memory.nix;
+  memoryServerName = memorySrv.name;
+  memoryPort = memorySrv.port;
+  memoryUrl = memorySrv.url;
+  memoryFileSpec = memorySrv.fileSpec;
+  memoryGuidance = memorySrv.guidance;
+  # dsh names the tools `mcp__<server>__<tool>`, like Hermes.
+  memoryGuidanceDsh = memorySrv.guidanceMcp;
 
   # agentic-inbox email MCP: one definition shared by the dsh registration
   # below and the .dsh/AGENTS.md guardrail. home/hermes.nix imports the same
@@ -1654,58 +1649,6 @@ let
     an MCP tool is simpler than the shell loop above; the empty in-memory
     profile means it cannot reuse the CLI session's logins.
   '';
-
-  # Shared guidance for the agent-memory server, rendered with the tool names
-  # each host actually registers. dsh's `mcp__<server>__<tool>` names are one
-  # substitution away.
-  memoryGuidance = ''
-    ## Agent memory (shared knowledge graph)
-
-    A `memory` MCP server holds a persistent entity/relation/observation
-    knowledge graph shared by every harness on this machine. Use it for durable
-    facts the user asks you to keep, and to recall earlier decisions,
-    preferences and project conventions.
-
-    Tools (names as this host registers them):
-    - `${memoryServerName}_search_nodes { query }` — find entities by name, type, or observation text.
-    - `${memoryServerName}_open_nodes { names }` — open named entities with their relations.
-    - `${memoryServerName}_read_graph` — the whole graph; use sparingly, it can be large.
-    - `${memoryServerName}_create_entities { entities: [{ name, entityType, observations }] }`
-    - `${memoryServerName}_create_relations { relations: [{ from, to, relationType }] }`
-    - `${memoryServerName}_add_observations { observations: [{ entityName, contents }] }`
-    - `${memoryServerName}_delete_entities` / `${memoryServerName}_delete_relations` / `${memoryServerName}_delete_observations`
-
-    Rules: store only durable, user-relevant facts — decisions, preferences,
-    conventions — not transient chatter. Search before writing, and prefer
-    `add_observations` on an existing entity over a near-duplicate one.
-    `search_nodes` is substring matching, not semantic, so try distinctive
-    terms and synonyms.
-  '';
-  memoryGuidanceDsh =
-    builtins.replaceStrings
-      [
-        "${memoryServerName}_search_nodes"
-        "${memoryServerName}_open_nodes"
-        "${memoryServerName}_read_graph"
-        "${memoryServerName}_create_entities"
-        "${memoryServerName}_create_relations"
-        "${memoryServerName}_add_observations"
-        "${memoryServerName}_delete_entities"
-        "${memoryServerName}_delete_relations"
-        "${memoryServerName}_delete_observations"
-      ]
-      [
-        "mcp__${memoryServerName}__search_nodes"
-        "mcp__${memoryServerName}__open_nodes"
-        "mcp__${memoryServerName}__read_graph"
-        "mcp__${memoryServerName}__create_entities"
-        "mcp__${memoryServerName}__create_relations"
-        "mcp__${memoryServerName}__add_observations"
-        "mcp__${memoryServerName}__delete_entities"
-        "mcp__${memoryServerName}__delete_relations"
-        "mcp__${memoryServerName}__delete_observations"
-      ]
-      memoryGuidance;
 
   # Shared by all three harnesses. dsh's own container world and the
   # host-side `osb-work` tool are different execution worlds; this guidance

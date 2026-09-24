@@ -30,6 +30,77 @@ let
     host shell for that process.
   '';
 
+  # The shared agent-memory knowledge graph (home/agent-memory.nix): the same
+  # remote server opencode, dsh, and pi read and write, plus the guidance
+  # block those harnesses render -- Hermes registers the
+  # `mcp__<server>__<tool>` form like dsh.
+  agentMemory = import ./agent-memory.nix;
+  memoryGuidance = "\n\n" + agentMemory.guidanceMcp;
+
+  # Standing facts for every Hermes session. Native memory is switched off in
+  # the service settings below, so this block -- carried through
+  # agent.environment_hint / agent.coding_instructions, the only always-on
+  # system-prompt surfaces in this revision -- takes over the role
+  # MEMORY.md/USER.md played. Repo state on purpose: reviewed, versioned,
+  # identical in every session, never written at runtime. Durable knowledge
+  # the user asks Hermes to keep goes to the shared agent-memory graph
+  # instead; to change a standing fact, edit this file.
+  standingFacts = "\n\n" + ''
+    ## Standing facts
+
+    Hermes runs with native memory disabled: there is no MEMORY.md/USER.md and
+    no memory tool. This block is the always-on layer, maintained in
+    /persistent/etc/nixos/home/hermes.nix; durable facts go to the shared
+    agent-memory knowledge graph (see the Agent memory section below), not to
+    any Hermes-local file.
+
+    Environment:
+    - Hermes config is declarative: `~/.hermes/config.yaml` is GENERATED from
+      `/persistent/etc/nixos/home/hermes.nix` (HERMES_MANAGED=home-manager);
+      never hand-edit it -- Hermes changes go in that repo. The terminal
+      backend "opensandbox" lives in `home/hermes-opensandbox.nix` and
+      `home/opensandbox-exec.nix`.
+    - Sean's shell is nushell (nu 0.115, reedline, edit_mode=emacs). He does
+      NOT use fish, even though `$SHELL` points at fish and a legacy
+      `~/.config/fish/config.fish` exists -- never infer the shell from
+      `$SHELL`. `config.nu` sources atuin (Ctrl-R + up-arrow), fzf (Alt-C,
+      Ctrl-T), carapace, zoxide, starship. bash 5.3 for scripts. His AGENTS.md
+      forbids `nix profile install` / `nix-env -i`; ephemeral tools go through
+      `nix shell nixpkgs#<pkg> -c`.
+    - dsh (@deepseek-ai, the DeepSeek Harness) is his coding agent: `~/.dsh`
+      holds profiles, settings.yaml, and session logs as zstd-compressed
+      JSONL at `~/.dsh/sessions/<project-dir>/<session-id>/session.v3.jsonl.zstd`
+      (event types: session, user/message with source.kind=="user",
+      assistant/message, tool/call, tool/result with isError).
+    - Local services: SearXNG at 127.0.0.1:8081, the shared agent-memory MCP
+      at 127.0.0.1:7979, the OpenSandbox server at 127.0.0.1:8090 (osb-work).
+    - Build-on-request tools: dsh session-log scan
+      `~/.hermes/scripts/dsh-task-scan.sh`; terminal-lesson apparatus
+      `~/.hermes/lessons` + `scripts/terminal-lesson-context.sh` (skill
+      terminal-skills-daily); NixOS news harvest
+      `~/.hermes/scripts/nixos-news-collect.sh` (skill nixos-news-digest).
+    - NixOS news sources that work (verified): discourse announcements/events
+      JSON + `top.json?period=weekly`,
+      nixos.org/blog/{announcements,newsletters,stories}-rss.xml, nixpkgs
+      GHSA advisories API, NixOS/nix tags (its releases API is empty -- tags
+      carry versions), NixOS/rfcs pulls. DEAD: weekly.nixos.org and
+      nixos.org/security. No GitHub token in the env, so the API is 60 calls/hr.
+    - Opencode history was imported into Hermes (2026-09-23): 622 sessions
+      tagged source='opencode' plus 38 desktop projects. The importer at
+      `~/.hermes/scripts/opencode-import/run.sh` is idempotent; re-run it to
+      sync new sessions. `~/.hermes/state.db` is ~479MB.
+
+    Sean:
+    - Tracks tech news in three areas: AI, programming/dev tooling, and
+      consumer electronics; digests grouped by those sections land well.
+    - Audits the claims he is given: state the observation time, and re-probe
+      live state before asserting something is currently true; he pushes back
+      when a present-tense claim rests only on historical evidence.
+    - Tracks the NixOS ecosystem (releases/governance, security advisories,
+      tooling announcements); prefers cited digests grouped by section, with
+      coverage gaps stated explicitly rather than implied completeness.
+  '';
+
   # Hermes Desktop from the pinned hermes-agent input, re-called here for one
   # reason: upstream's desktop.nix fetches Electron's Node headers from a URL
   # pinned to the hash of the Electron version in the input's own flake.lock
@@ -102,6 +173,14 @@ in
           emailMcp.url
         ];
       };
+
+      # Shared agent-memory knowledge graph (home/agent-memory.nix): a remote
+      # Streamable HTTP row onto the one `agent-memory` unit, not a stdio
+      # spawn -- the JSONL store takes no cross-process lock, so the single
+      # shared writer is the point; Hermes connects like the other harnesses.
+      ${agentMemory.name} = {
+        inherit (agentMemory) url;
+      };
     };
 
     # The gateway shares this HERMES_HOME. TELEGRAM_BOT_TOKEN turns the
@@ -132,16 +211,36 @@ in
       # the native MCP client ignores a server's InitializeResult
       # instructions, and `environment_hint` is the only always-on
       # system-prompt surface available through config.yaml. Coding sessions
-      # also see the same text through `coding_instructions`.
+      # also see the same text through `coding_instructions`. The standing
+      # facts and the memory guidance ride the same channel: native memory is
+      # off below, so this text is the replacement.
       agent = {
-        environment_hint = emailMcp.policy + sandboxPolicy;
-        coding_instructions = emailMcp.policy + sandboxPolicy;
+        environment_hint = emailMcp.policy + sandboxPolicy + standingFacts + memoryGuidance;
+        coding_instructions = emailMcp.policy + sandboxPolicy + standingFacts + memoryGuidance;
         # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
         # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
         # every route asks for max and each route clamps onto the levels it
         # accepts; auxiliary tasks resolve effort from their own
         # auxiliary.<task> entries, so a title or approval call stays cheap.
         reasoning_effort = "max";
+      };
+      # Web search/extract routing, pinned so the process environment cannot
+      # decide it: sessionVariables exports SEARXNG_URL, which would otherwise
+      # let each process resolve to whichever backend looks available. Search
+      # stays on the local SearXNG instance; extraction runs on the Tavily key
+      # from SOPS (desktop/configuration/sops.nix) instead of the anonymous
+      # shared keyless tier.
+      web = {
+        search_backend = "searxng";
+        extract_backend = "tavily";
+      };
+      # Native memory off, deliberately: the always-on facts live in this file
+      # (standingFacts above) and durable knowledge in the shared agent-memory
+      # graph; a Hermes-local MEMORY.md/USER.md would be a third copy that
+      # drifts from both.
+      memory = {
+        memory_enabled = false;
+        user_profile_enabled = false;
       };
       # Dormant under the Go default above; it applies if the route moves back
       # to the direct DeepSeek API, whose static catalog knows only the legacy

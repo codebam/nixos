@@ -71,6 +71,12 @@
         owner = "codebam";
         group = "users";
       };
+      # Tavily API key backing Hermes' web.extract_backend (home/hermes.nix).
+      # No wrapper exports it; only the hermes-env template below consumes it.
+      tavily-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       searx-secret = { };
     };
 
@@ -78,8 +84,9 @@
     # come from the same individual sops keys the wrappers read; the plan keys
     # are added under the names Hermes resolves them by, so its built-in
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
-    # Qwen Token Plan / CrofAI providers find their key_env, and the gateway
-    # gets the Telegram bot token. The numbered OPENCODE_GO_API_KEY_2 sibling
+    # Qwen Token Plan / CrofAI providers find their key_env, the gateway gets
+    # the Telegram bot token, and its pinned web.extract_backend (home/hermes.nix)
+    # finds the Tavily key. The numbered OPENCODE_GO_API_KEY_2 sibling
     # is auto-discovered into the OpenCode Go credential pool, so a spent
     # subscription rotates to the second one mid-session instead of failing.
     # owner codebam so Home Manager activation can read it and copy it into
@@ -95,6 +102,7 @@
         OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key}
         OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key-2}
         CROFAI_API_KEY=${config.sops.placeholder.crofai-api-key}
+        TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
       '';
       owner = "codebam";
