@@ -135,16 +135,43 @@ in
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      virtualHosts =
-        let
-          # The public name serves navidrome and nothing else.
-          publicNavidrome = {
-            forceSSL = true;
-            enableACME = true;
-            locations."/" = {
-              return = "301 https://$host/navidrome$request_uri";
+      virtualHosts = {
+        # Never let an IP address or unknown Host fall through to a real vhost.
+        "_" = {
+          default = true;
+          rejectSSL = true;
+          locations."/".return = "444";
+        };
+
+        # Tailnet only. The admin UIs live here, on this host's MagicDNS
+        # name, and this is the only vhost nginx serves: music.codebam.ca is
+        # no longer used, so its public server block — and with it the only
+        # ACME certificate in the flake — went with it. Nothing on this host
+        # requests an ACME order any more.
+        #
+        # No ACME: a *.ts.net name cannot answer the public ACME challenge,
+        # and plain HTTP is not a downgrade here because tailscale already
+        # encrypts the transport. The allow/deny is the actual control and
+        # does not depend on which name was used to arrive — nginx listens
+        # on 0.0.0.0:80, so without it a stranger could reach these by
+        # sending this Host header to the public address.
+        "nixos-desktop.tail7d7a2.ts.net" = {
+          extraConfig = ''
+            allow 100.64.0.0/10;
+            allow fd7a:115c:a1e0::/48;
+            allow 127.0.0.1;
+            deny all;
+          '';
+          locations = {
+            "/lidarr" = {
+              proxyPass = "http://127.0.0.1:8686";
+              proxyWebsockets = true;
             };
-            locations."/navidrome" = {
+            "/prowlarr" = {
+              proxyPass = "http://127.0.0.1:9696";
+              proxyWebsockets = true;
+            };
+            "/navidrome" = {
               proxyPass = "http://127.0.0.1:4533";
               proxyWebsockets = true;
               extraConfig = ''
@@ -152,52 +179,8 @@ in
               '';
             };
           };
-        in
-        {
-          # Never let an IP address or unknown Host fall through to a real vhost.
-          "_" = {
-            default = true;
-            rejectSSL = true;
-            locations."/".return = "444";
-          };
-
-          "music.codebam.ca" = publicNavidrome;
-
-          # Tailnet only. The admin UIs live here, on this host's MagicDNS
-          # name, and never appear on the public vhosts above.
-          #
-          # No ACME: a *.ts.net name cannot answer the public ACME challenge,
-          # and plain HTTP is not a downgrade here because tailscale already
-          # encrypts the transport. The allow/deny is the actual control and
-          # does not depend on which name was used to arrive — nginx listens
-          # on 0.0.0.0:80, so without it a stranger could reach these by
-          # sending this Host header to the public address.
-          "nixos-desktop.tail7d7a2.ts.net" = {
-            extraConfig = ''
-              allow 100.64.0.0/10;
-              allow fd7a:115c:a1e0::/48;
-              allow 127.0.0.1;
-              deny all;
-            '';
-            locations = {
-              "/lidarr" = {
-                proxyPass = "http://127.0.0.1:8686";
-                proxyWebsockets = true;
-              };
-              "/prowlarr" = {
-                proxyPass = "http://127.0.0.1:9696";
-                proxyWebsockets = true;
-              };
-              "/navidrome" = {
-                proxyPass = "http://127.0.0.1:4533";
-                proxyWebsockets = true;
-                extraConfig = ''
-                  proxy_set_header X-Forwarded-Protocol $scheme;
-                '';
-              };
-            };
-          };
         };
+      };
     };
     timesyncd = {
       servers = [

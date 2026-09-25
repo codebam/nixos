@@ -184,7 +184,8 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - Low-latency quantum (256/512), configurable sample rates (44.1k–96k)
 
 ### Services
-- **Media**: Lidarr, Prowlarr, Transmission, Navidrome behind nginx + ACME
+- **Media**: Lidarr, Prowlarr, Transmission, Navidrome behind nginx on the
+  tailnet name (no public vhost and no ACME certificate)
 - **Search**: SearXNG on 127.0.0.1:8081 (JSON API for agents)
 - **Cloudflare**: FlareSolverr container (loopback) for interstitial solving
 - **Local AI**: Ollama (loopback, AMD ROCm override)
