@@ -1699,6 +1699,15 @@ in
         run ${pkgs.yq-go}/bin/yq -i 'del(.llm-pi-ai.providers.crofai)' "$HOME/.dsh/settings.yaml"
       '';
 
+      # Same one-shot cleanup for Hermes: config.yaml is a merged document
+      # too, so the providers.crofai entry an earlier activation wrote into
+      # it survived the fragment change and kept the provider in the desktop
+      # picker. Ordered after hermesAgentSetup, which rewrites the document;
+      # `del` on the missing key is a no-op.
+      hermesCrofCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "hermesAgentSetup" ] ''
+        run ${pkgs.yq-go}/bin/yq -i 'del(.providers.crofai)' "$HOME/.hermes/config.yaml"
+      '';
+
       # One-shot cleanup after dropping the nono provider: the old activation
       # copied this module into $DSH_HOME, which home-manager does not manage
       # and therefore does not remove when the provider goes away.
