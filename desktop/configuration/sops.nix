@@ -62,12 +62,6 @@
         owner = "codebam";
         group = "users";
       };
-      # CrofAI API key for the CrofAI provider in opencode, pi, and dsh;
-      # home/agents.nix exports it as CROFAI_API_KEY from the wrappers.
-      crofai-api-key = {
-        owner = "codebam";
-        group = "users";
-      };
       # Telegram bot token consumed only by the Hermes gateway. It is not in
       # home/agents.nix's secretVars: no interactive agent wrapper needs it.
       hermes-bot-telegram-key = {
@@ -87,7 +81,7 @@
     # come from the same individual sops keys the wrappers read; the plan keys
     # are added under the names Hermes resolves them by, so its built-in
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
-    # Qwen Token Plan / CrofAI providers find their key_env, the gateway gets
+    # Qwen Token Plan provider finds its key_env, the gateway gets
     # the Telegram bot token, and its pinned web.extract_backend (home/hermes.nix)
     # finds the Tavily key. Both OpenCode Go subscriptions enter the
     # credential pool as the unnumbered/numbered pair (the numbered sibling
@@ -107,7 +101,6 @@
         DEEPSEEK_API_KEY=${config.sops.placeholder.deepseek-api-key}
         OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key-2}
         OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key}
-        CROFAI_API_KEY=${config.sops.placeholder.crofai-api-key}
         TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
       '';
