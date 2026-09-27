@@ -9,7 +9,12 @@
 # agent harnesses, no GPG agent and no commit signing (there is no YubiKey
 # reader in the guest). Keep the overlapping settings in sync with those
 # files.
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   home = {
@@ -23,13 +28,20 @@
 
     sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
 
-    # The inbound half of the managed-keys story: this file is the VM's whole
-    # authorized set and is written from here instead of hand-edited. The
-    # desktop's key is the same identity the other hosts carry in
+    # The inbound half of the managed-keys story: this is the VM's whole
+    # authorized set, written from here instead of hand-edited. The desktop's
+    # key is the same identity the other hosts carry in
     # modules/users/default.nix; the VM's own key is declared there too, so
     # the ssh trust in both directions lives in the repo.
-    file.".ssh/authorized_keys".text = ''
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkBfTf9i6kG6P+HGWN3ghszdxQYmXzxllIlxPkwuyCo codebam@nixos-desktop
+    #
+    # Installed by activation as a real file, NOT as a file."..." entry: that
+    # would symlink the keys into /nix/store, and sshd's StrictModes refuses
+    # any authorized_keys chain through /nix/store (1775, group-writable):
+    # "Authentication refused: bad ownership or modes for directory
+    # /nix/store" locked the VM out after its first switch.
+    activation.droidAuthorizedKeys = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      run install -d -m700 "$HOME/.ssh"
+      run install -m600 ${pkgs.writeText "droid-authorized_keys" "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkBfTf9i6kG6P+HGWN3ghszdxQYmXzxllIlxPkwuyCo codebam@nixos-desktop\n"} "$HOME/.ssh/authorized_keys"
     '';
 
     # Referenced by core.excludesfile below, like home/home.nix does.
