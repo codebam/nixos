@@ -3,6 +3,7 @@
     ../hardware-configuration.nix
     ./sops.nix
     ./boot.nix
+    ./cloudflared.nix
     ./environment.nix
     ./flaresolverr.nix
     ./hardware.nix

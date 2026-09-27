@@ -327,9 +327,20 @@ in
 
     # The gateway shares this HERMES_HOME. TELEGRAM_BOT_TOKEN turns the
     # Telegram platform on by itself; TELEGRAM_ALLOWED_USERS then pins the
-    # only account the bot answers to. The user ID is not a credential, so it
-    # goes through `environment` rather than the sops env file.
-    environment.TELEGRAM_ALLOWED_USERS = "69148517";
+    # only account the bot answers to. The user ID is not a credential, so
+    # it goes through `environment` rather than the sops env file.
+    #
+    # Webhook mode in place of long polling: Telegram pushes updates to the
+    # cloudflared hostname (desktop/configuration/cloudflared.nix), which
+    # forwards them to the loopback listener, so nothing on the WAN listens
+    # and the origin address never appears in DNS. The delivery secret
+    # Telegram must echo rides the sops env file with the bot token.
+    environment = {
+      TELEGRAM_ALLOWED_USERS = "69148517";
+      TELEGRAM_WEBHOOK_URL = "https://tg.codebam.ca/telegram";
+      TELEGRAM_WEBHOOK_PORT = "8443";
+      TELEGRAM_WEBHOOK_HOST = "127.0.0.1";
+    };
     gateway.enable = true;
 
     # Pin the startup route. home/agents.nix declares the token-plan

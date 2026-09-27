@@ -68,6 +68,18 @@
         owner = "codebam";
         group = "users";
       };
+      # Telegram echoes this on every webhook delivery; the gateway refuses
+      # to start in webhook mode without it (GHSA-3vpc-7q5r-276h). Same
+      # audience as the bot token: the hermes-env template only.
+      telegram-webhook-secret = {
+        owner = "codebam";
+        group = "users";
+      };
+      # cloudflared credentials for the hermes-telegram tunnel
+      # (desktop/configuration/cloudflared.nix), loaded by the tunnel unit as
+      # a runtime credential -- systemd reads it as root, so root ownership
+      # is fine.
+      cloudflared-tunnel-credentials = { };
       # Tavily API key backing Hermes' web.extract_backend (home/hermes.nix).
       # No wrapper exports it; only the hermes-env template below consumes it.
       tavily-api-key = {
@@ -82,8 +94,9 @@
     # are added under the names Hermes resolves them by, so its built-in
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
     # Qwen Token Plan provider finds its key_env, the gateway gets
-    # the Telegram bot token, and its pinned web.extract_backend (home/hermes.nix)
-    # finds the Tavily key. Both OpenCode Go subscriptions enter the
+    # the Telegram bot token and its webhook secret, and its pinned
+    # web.extract_backend (home/hermes.nix) finds the Tavily key. Both
+    # OpenCode Go subscriptions enter the
     # credential pool as the unnumbered/numbered pair (the numbered sibling
     # is auto-discovered), and fill_first tries the unnumbered slot first --
     # so the placeholders are crossed below: the second subscription leads
@@ -103,6 +116,7 @@
         OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key}
         TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
+        TELEGRAM_WEBHOOK_SECRET=${config.sops.placeholder.telegram-webhook-secret}
       '';
       owner = "codebam";
       group = "users";

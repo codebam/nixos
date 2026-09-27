@@ -188,6 +188,9 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   tailnet name (no public vhost and no ACME certificate)
 - **Search**: SearXNG on 127.0.0.1:8081 (JSON API for agents)
 - **Cloudflare**: FlareSolverr container (loopback) for interstitial solving
+- **Cloudflare tunnel**: cloudflared serves `tg.codebam.ca` for the Hermes
+  Telegram webhook to `127.0.0.1:8443` (locally-managed tunnel, nothing
+  listens on the WAN)
 - **Local AI**: Ollama (loopback, AMD ROCm override)
 - **Networking**: Tailscale, IVPN, NetworkManager/iwd, systemd-resolved (DoT)
 - **Gaming**: Steam (extest, Gamescope, Proton CachyOS); Steam firewall holes closed
