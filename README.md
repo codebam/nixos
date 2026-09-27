@@ -2,7 +2,9 @@
 
 Personal NixOS configuration managing three machines: a desktop, a laptop, and a
 Steam Deck. The same flake defines every host via a shared module tree, with
-per-host overrides for hardware, networking, and services.
+per-host overrides for hardware, networking, and services. It also provisions
+the Android Linux Terminal VM on the phone (`droid@debian`) as a standalone
+home-manager target -- that guest runs its own Debian, not NixOS.
 
 ## Hosts
 
@@ -36,6 +38,17 @@ per-host overrides for hardware, networking, and services.
 - RetroArch with libretro cores, Prism Launcher, Moonlight
 - VRAM-based swapfile (2 GB)
 - Distributed builds off the desktop
+
+### Android Linux Terminal (`droid@debian`)
+- Debian trixie VM on aarch64, inside the Android Terminal app (AVF); it keeps
+  its own OS, so it is provisioned as a standalone home-manager profile
+  (`homeConfigurations."droid@debian"`, `droid/home.nix`) rather than a host
+- Shell stack and CLI tooling only (nushell, starship, carapace, tmux, git,
+  gh, helix, ripgrep, ...); activated on the device with `nh home switch`
+- SSH both ways is managed from this repo: the VM's key is declared with the
+  fleet keys in `modules/users/default.nix`, and the VM's own
+  `~/.ssh/authorized_keys` + ssh client config come from its profile; the
+  private half is backed up in `secrets/secrets.yaml` for re-provisioning
 
 ## Flake Structure
 
@@ -72,6 +85,9 @@ per-host overrides for hardware, networking, and services.
 ├── steamdeck/
 │   └── configuration/           # cleanupRoot (btrfs), Jovian, Decky, Steam, RetroArch,
 │                                  gaming/extest, lsfg-vk, Moonlight, distributed builds
+├── droid/
+│   └── home.nix                 # Standalone home-manager profile for the Android
+│                                  Linux Terminal VM (aarch64 Debian; not a NixOS host)
 ├── home/                        # Shared home-manager for codebam
 │   ├── home.nix                 # Packages, env vars, custom scripts
 │   ├── programs.nix             # fish, git, gh, tmux, starship, fastfetch, gpg, wlogout,
@@ -298,4 +314,7 @@ nix build .#ripwire
 
 # Rebuild
 nh os switch
+
+# Rebuild the phone VM's profile (run on the device, or over ssh into it)
+nh home switch
 ```

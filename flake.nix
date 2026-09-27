@@ -317,5 +317,18 @@
           ];
         };
       };
+
+      # The Android Linux Terminal VM on the phone (`droid@debian`): a Debian
+      # guest on aarch64 that keeps its own OS, so it cannot take a
+      # nixosConfiguration -- only its user environment is managed, as a
+      # standalone home-manager profile. aarch64-linux because the device is
+      # arm64; nothing else in this flake follows it there. Activate on the
+      # device with `nh home switch` (its ~/nixos checkout) or
+      # `home-manager switch --flake <repo>#droid@debian` from anywhere.
+      homeConfigurations."droid@debian" = inputs.home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        extraSpecialArgs = { inherit inputs; };
+        modules = [ ./droid/home.nix ];
+      };
     };
 }

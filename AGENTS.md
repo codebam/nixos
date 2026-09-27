@@ -1,7 +1,9 @@
 # AGENTS.md — NixOS flake (codebam)
 
 Personal NixOS + home-manager flake for three hosts: `nixos-desktop`,
-`nixos-laptop`, `nixos-steamdeck`. `README.md` is the human map of hosts,
+`nixos-laptop`, `nixos-steamdeck`, plus a standalone home-manager target for
+the Android Linux Terminal VM (`droid@debian`) -- that guest runs its own
+Debian, so it is not a NixOS host. `README.md` is the human map of hosts,
 services, and layout; this file is the working contract for agents. Keep it
 short — the harness injects it into every session in this repository, and a
 broader file is dropped before a more specific one when the budget is hit.
@@ -43,7 +45,8 @@ broader file is dropped before a more specific one when the budget is hit.
 ## Layout
 
 - `flake.nix` — inputs, devShell, formatter, `checks` (per-host toplevel +
-  `lint`), and the three `nixosConfigurations`. Hosts share `./modules`.
+  `lint`), the three `nixosConfigurations`, and one standalone
+  `homeConfigurations."droid@debian"` (the phone VM). Hosts share `./modules`.
 - `modules/{hardware,programs,security,services,stylix,system,users}` — system
   modules shared by every host. `modules/system/nixpkgs.nix` holds the host
   overlays and imports `pkgs/default.nix` (the single definition of every
@@ -51,6 +54,8 @@ broader file is dropped before a more specific one when the budget is hit.
 - `<host>/configuration/` — per-host system config; `disko.nix` and
   `hardware-configuration.nix` next to it. `desktop-laptop/` is shared between
   desktop and laptop only, and is imported by both.
+- `droid/` — standalone home-manager profile for the Android Linux Terminal
+  VM (aarch64 Debian; the NixOS module tree does not apply to it).
 - `home/` — one shared home-manager tree for `codebam` (imported in `flake.nix`).
   `home.nix` owns packages and user files; `agents.nix` owns the coding agents
   (opencode/opencode2, pi, dsh), their MCP servers, and their instruction files.

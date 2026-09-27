@@ -53,6 +53,7 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKnwv9Ifx6b82N/oRMCAKYi0vWCDyue9Mkf2Fh8lLidm codebam@nixos-laptop" # nixos-laptop
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkBfTf9i6kG6P+HGWN3ghszdxQYmXzxllIlxPkwuyCo codebam@nixos-desktop" # nixos-desktop
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC0JDzoEnVeIEBRwa9OsATFe+X/fRPUZ4MCMwQKTiceR u0_a207@localhost" # termux
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJzLbcPx56ylMDP9XT9J25kw4kDPxu/zBzI9G4lL9Bxs droid@debian" # android-linux-terminal
         ];
       };
     };
