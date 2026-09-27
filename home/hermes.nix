@@ -278,15 +278,29 @@ in
     # settings pick it up.
     extraPlugins = [ opensandboxPlugin ];
 
-    # The memory provider (home/hermes-agent-memory.nix) arrives here rather
-    # than above because it ships as an installed package with a
+    # The memory provider (home/hermes-agent-memory.nix) rides the default
+    # package directly rather than through the module's `extraPythonPackages`
+    # option: that option routes through the module's package override, which
+    # also resets extraDependencyGroups to the option default `[]` -- and so
+    # REPLACES the `full` default package's group list. The sealed venv then
+    # collapses from the full set to `all` and the platform extras go with
+    # it: group `messaging` is what ships python-telegram-bot, so the gateway
+    # logs "Platform 'Telegram' dependencies missing" at every start and the
+    # Telegram platform never loads. Overriding the default package here
+    # keeps its groups and still gets the PYTHONPATH + collision-check
+    # treatment the option exists for.
+    #
+    # It ships as an installed package with a
     # `hermes_agent.memory_providers` entry point -- the route upstream
     # documents for out-of-tree providers, and the only one whose name matches
     # `memory.provider` below (a directory plugin is discovered under its
-    # `nix-managed-` symlink name). It must be built with the venv's python312,
-    # which the module enforces, and it lands in the same venv `hermes` runs
-    # from -- CLI, gateway and the desktop's `hermes serve` child alike.
-    extraPythonPackages = [ memoryProvider.package ];
+    # `nix-managed-` symlink name). Built with the venv's python312, so its
+    # site-packages land where the wrapper's PYTHONPATH looks, and it lands
+    # in the same venv `hermes` runs from -- CLI, gateway and the desktop's
+    # `hermes serve` child alike.
+    package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      extraPythonPackages = [ memoryProvider.package ];
+    };
 
     # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
     # with the local Wrangler login token (home/email-mcp.nix); its launcher
