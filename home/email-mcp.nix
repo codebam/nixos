@@ -5,6 +5,15 @@
 # rule cannot drift between the two harnesses.
 { config, pkgs }:
 
+let
+  # TEMPORARY STOPGAP (2026-09-28): the /mcp endpoint verifies Cloudflare API
+  # tokens only and does not yet accept the Settings-minted `ain1_` scoped
+  # token that `email-api-key` holds, so the launcher below must not export
+  # it -- exporting made every bridge request fail. Flip back to true in the
+  # same change that deploys scoped-token support to /mcp (agentic-inbox
+  # branch feat/mcp-scoped-token-auth).
+  exportEmailApiKey = false;
+in
 {
   # The stdio -> Streamable HTTP bridge built in the agentic-inbox checkout.
   # It reads its bearer from MCP_AUTH_TOKEN when the launcher below has
@@ -23,19 +32,26 @@
   # `npx` fallback) still resolves when the harness unit starts with a
   # minimal environment.
   #
-  # The launcher also exports the `email-api-key` sops secret (mounted by
+  # The launcher can export the `email-api-key` sops secret (mounted by
   # sops-nix at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN,
-  # which the bridge prefers over `wrangler auth token`. The file test is a
-  # runtime check, not an eval-time dependency, so hosts without the secret --
-  # or a machine before the activation that mounts it -- keep the Wrangler
-  # fallback untouched.
+  # which the bridge prefers over `wrangler auth token`. That export is
+  # TEMPORARILY DISABLED (2026-09-28, see exportEmailApiKey in the let block
+  # above): the secret holds a Settings-minted `ain1_` scoped token and the
+  # /mcp endpoint does not accept those yet, so the bridge runs on the
+  # Wrangler fallback until the scoped-token support ships (agentic-inbox
+  # branch feat/mcp-scoped-token-auth).
+  # The file test is a runtime check, not an eval-time dependency, so hosts
+  # without the secret -- or a machine before the activation that mounts it --
+  # keep the Wrangler fallback untouched.
   runner = builtins.toString (
     pkgs.writeShellScript "agentic-inbox-mcp" ''
       export PATH=${pkgs.nodejs_latest}/bin:$PATH
-      if [ -r /run/secrets/email-api-key ]; then
-        value=$(cat /run/secrets/email-api-key)
-        if [ -n "$value" ]; then export MCP_AUTH_TOKEN="$value"; fi
-      fi
+      ${pkgs.lib.optionalString exportEmailApiKey ''
+        if [ -r /run/secrets/email-api-key ]; then
+          value=$(cat /run/secrets/email-api-key)
+          if [ -n "$value" ]; then export MCP_AUTH_TOKEN="$value"; fi
+        fi
+      ''}
       exec ${pkgs.nodejs_latest}/bin/node "$@"
     ''
   );
