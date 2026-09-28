@@ -7,8 +7,11 @@
 
 {
   # The stdio -> Streamable HTTP bridge built in the agentic-inbox checkout.
-  # It runs `wrangler auth token` itself, so no Cloudflare credential is
-  # stored in this file or in the Nix store. First run, from that checkout:
+  # It reads its bearer from MCP_AUTH_TOKEN when the launcher below has
+  # exported the `email-api-key` sops secret, and otherwise falls back to
+  # running `wrangler auth token` itself; either way no Cloudflare credential
+  # is stored in this file or in the Nix store. On a fallback host, first run
+  # from that checkout:
   #   npx wrangler login
   # The OAuth token lands in ~/.config/.wrangler, which
   # modules/system/preservation.nix preserves across the root wipe.
@@ -19,9 +22,20 @@
   # project-local `wrangler` with a `#!/usr/bin/env node` shebang (or an
   # `npx` fallback) still resolves when the harness unit starts with a
   # minimal environment.
+  #
+  # The launcher also exports the `email-api-key` sops secret (mounted by
+  # sops-nix at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN,
+  # which the bridge prefers over `wrangler auth token`. The file test is a
+  # runtime check, not an eval-time dependency, so hosts without the secret --
+  # or a machine before the activation that mounts it -- keep the Wrangler
+  # fallback untouched.
   runner = builtins.toString (
     pkgs.writeShellScript "agentic-inbox-mcp" ''
       export PATH=${pkgs.nodejs_latest}/bin:$PATH
+      if [ -r /run/secrets/email-api-key ]; then
+        value=$(cat /run/secrets/email-api-key)
+        if [ -n "$value" ]; then export MCP_AUTH_TOKEN="$value"; fi
+      fi
       exec ${pkgs.nodejs_latest}/bin/node "$@"
     ''
   );
@@ -50,9 +64,10 @@
     conversation (for example, "send it" after you show the draft).
     Authorization for an earlier message, a standing request to draft, or
     approval of a different draft does not authorize a send. Do not use a
-    shell, browser, or another tool to work around this rule. If the
-    Wrangler-authenticated bridge is unavailable, report that and ask the
-    user to run `wrangler login`; do not search for or use another
-    credential. When in doubt, show the draft and ask; do not send.
+    shell, browser, or another tool to work around this rule. If the email
+    bridge is unavailable, report that and ask the user to check the
+    `email-api-key` sops secret (or run `wrangler login` on a host without
+    it); do not search for or use another credential. When in doubt, show
+    the draft and ask; do not send.
   '';
 }

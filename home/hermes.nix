@@ -303,9 +303,10 @@ in
     };
 
     # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
-    # with the local Wrangler login token (home/email-mcp.nix); its launcher
-    # pins Node and PATH itself so this service does not depend on the
-    # interactive shell's profile.
+    # with the `email-api-key` sops secret, falling back to the local
+    # Wrangler login token on hosts without it (home/email-mcp.nix); its
+    # launcher pins Node and PATH itself so this service does not depend on
+    # the interactive shell's profile.
     mcpServers = {
       ${emailMcp.name} = {
         command = emailMcp.runner;

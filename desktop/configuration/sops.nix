@@ -86,6 +86,16 @@
         owner = "codebam";
         group = "users";
       };
+      # Bearer for the agentic-inbox email MCP bridge (home/email-mcp.nix):
+      # the bridge launcher exports it as MCP_AUTH_TOKEN so the stdio bridge
+      # authenticates to the deployed Worker without depending on the
+      # interactive `wrangler login` state. It must be a Cloudflare API token
+      # that can read a zone in the Worker's DOMAINS -- workers/lib/mcp-auth.ts
+      # verifies it against the Cloudflare API on every /mcp request.
+      email-api-key = {
+        owner = "codebam";
+        group = "users";
+      };
       searx-secret = { };
     };
 

@@ -1979,10 +1979,12 @@ in
                 toolCallTimeoutMs: ${toString pwTimeoutMs}
 
             # agentic-inbox email MCP, through the stdio bridge in the
-            # checkout. The bridge runs `wrangler auth token` itself, so the
-            # token never appears in this patch or in the Nix store. Startup
-            # failure is non-fatal (the client's default): hosts without the
-            # checkout still get a working dsh, just without email tools.
+            # checkout. The launcher exports the `email-api-key` sops secret
+            # as MCP_AUTH_TOKEN (falling back to `wrangler auth token` on
+            # hosts without it), so the token never appears in this patch or
+            # in the Nix store. Startup failure is non-fatal (the client's
+            # default): hosts without the checkout still get a working dsh,
+            # just without email tools.
             - id: mcp-email
               name: '@deepseek-ai/dsh-mcp-client'
               config:
