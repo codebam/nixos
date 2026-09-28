@@ -6,13 +6,12 @@
 { config, pkgs }:
 
 let
-  # TEMPORARY STOPGAP (2026-09-28): the /mcp endpoint verifies Cloudflare API
-  # tokens only and does not yet accept the Settings-minted `ain1_` scoped
-  # token that `email-api-key` holds, so the launcher below must not export
-  # it -- exporting made every bridge request fail. Flip back to true in the
-  # same change that deploys scoped-token support to /mcp (agentic-inbox
-  # branch feat/mcp-scoped-token-auth).
-  exportEmailApiKey = false;
+  # The `email-api-key` sops secret holds a Settings-minted `ain1_` scoped
+  # token, and /mcp accepts those since agentic-inbox d7e44ef (deployed
+  # 2026-09-28), so the launcher below exports it as MCP_AUTH_TOKEN. Set
+  # false to drop back to the Wrangler credential fallback (e.g. if the
+  # token is revoked).
+  exportEmailApiKey = true;
 in
 {
   # The stdio -> Streamable HTTP bridge built in the agentic-inbox checkout.
@@ -32,17 +31,13 @@ in
   # `npx` fallback) still resolves when the harness unit starts with a
   # minimal environment.
   #
-  # The launcher can export the `email-api-key` sops secret (mounted by
-  # sops-nix at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN,
-  # which the bridge prefers over `wrangler auth token`. That export is
-  # TEMPORARILY DISABLED (2026-09-28, see exportEmailApiKey in the let block
-  # above): the secret holds a Settings-minted `ain1_` scoped token and the
-  # /mcp endpoint does not accept those yet, so the bridge runs on the
-  # Wrangler fallback until the scoped-token support ships (agentic-inbox
-  # branch feat/mcp-scoped-token-auth).
-  # The file test is a runtime check, not an eval-time dependency, so hosts
-  # without the secret -- or a machine before the activation that mounts it --
-  # keep the Wrangler fallback untouched.
+  # The launcher exports the `email-api-key` sops secret (mounted by sops-nix
+  # at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN, which
+  # the bridge prefers over `wrangler auth token`; that session is a scoped
+  # Settings token bound to its mailbox and the token's read/draft/send
+  # scopes. The file test is a runtime check, not an eval-time dependency, so
+  # hosts without the secret -- or a machine before the activation that
+  # mounts it -- keep the Wrangler fallback untouched.
   runner = builtins.toString (
     pkgs.writeShellScript "agentic-inbox-mcp" ''
       export PATH=${pkgs.nodejs_latest}/bin:$PATH
