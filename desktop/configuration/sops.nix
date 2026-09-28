@@ -89,9 +89,10 @@
       # Bearer for the agentic-inbox email MCP bridge (home/email-mcp.nix):
       # the bridge launcher exports it as MCP_AUTH_TOKEN so the stdio bridge
       # authenticates to the deployed Worker without depending on the
-      # interactive `wrangler login` state. It must be a Cloudflare API token
-      # that can read a zone in the Worker's DOMAINS -- workers/lib/mcp-auth.ts
-      # verifies it against the Cloudflare API on every /mcp request.
+      # interactive `wrangler login` state. It is a Settings-minted `ain1_`
+      # scoped access token for the codebam@codebam.ca mailbox; /mcp verifies
+      # it like the scoped surface (agentic-inbox d7e44ef) and binds the
+      # session to that mailbox and its read/draft/send scopes.
       email-api-key = {
         owner = "codebam";
         group = "users";
