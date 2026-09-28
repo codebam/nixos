@@ -10,6 +10,7 @@
 let
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
+  calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
 
   # The OpenSandbox terminal backend plugin (home/hermes-opensandbox.nix):
   # terminal and file commands run in workspace containers instead of the host
@@ -315,6 +316,16 @@ in
           "--url"
           emailMcp.url
         ];
+      };
+
+      # Google Calendar MCP (home/google-calendar-mcp.nix): the local stdio
+      # server from pkgs/google-calendar-mcp.nix, authenticated with the
+      # `google-calendar-oauth` sops secret, falling back to the manual
+      # credentials copy until the first activation that mounts it. Reads
+      # and writes go to Sean's own calendar at his request, so no extra
+      # policy text like the email server's.
+      ${calendarMcp.name} = {
+        command = calendarMcp.launcher;
       };
 
       # Shared agent-memory knowledge graph (home/agent-memory.nix): a remote

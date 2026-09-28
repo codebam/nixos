@@ -51,6 +51,12 @@ in
   # (zvec, onnxruntime, ripgrep, llama.cpp, sharp) arrives prebuilt.
   zvec-grep = pkgs.callPackage ./zvec-grep.nix { };
 
+  # nspady's Google Calendar MCP server (@cocal/google-calendar-mcp): the
+  # stdio server behind the google-calendar tools in home/hermes.nix. The
+  # registry tarball ships a prebuilt build/ and no lockfile, so like
+  # zvec-grep the derivation vendors the upstream tag's package-lock.json.
+  google-calendar-mcp = pkgs.callPackage ./google-calendar-mcp.nix { };
+
   # Microsoft's Playwright MCP server, wrapped around the nixpkgs package so
   # it uses the Chromium-only browser farm instead of the all-browser farm
   # (which on older pins tries and fails to build playwright-webkit). See

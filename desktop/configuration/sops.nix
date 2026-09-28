@@ -96,6 +96,14 @@
         owner = "codebam";
         group = "users";
       };
+      # Desktop-app OAuth client JSON for the Google Calendar MCP server
+      # (home/google-calendar-mcp.nix). The launcher exports it as
+      # GOOGLE_OAUTH_CREDENTIALS. Google treats installed-app client secrets
+      # as non-confidential, but it stays out of the store with the rest.
+      google-calendar-oauth = {
+        owner = "codebam";
+        group = "users";
+      };
       searx-secret = { };
     };
 
