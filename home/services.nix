@@ -2,6 +2,7 @@
   pkgs,
   config,
   lib,
+  osConfig,
   ...
 }:
 
@@ -9,11 +10,17 @@ let
   # Match the running compositor (sway_git), not pkgs.sway -- see home/sway.nix.
   swaymsg = "${config.wayland.windowManager.sway.package}/bin/swaymsg";
   swaylock = lib.getExe pkgs.swaylock;
+
+  # The deck runs the Viewport session, not sway: swayidle's swaymsg half
+  # cannot work there, and its lock would fire 110 seconds behind a handheld
+  # nobody wants to re-unlock. Viewport manages the deck's idle itself
+  # (idle in home/viewport.nix).
+  isDeck = osConfig.networking.hostName == "nixos-steamdeck";
 in
 {
   services = {
     swayidle = {
-      enable = true;
+      enable = !isDeck;
       timeouts = [
         {
           # Lock before the outputs go off so a resume never lands
