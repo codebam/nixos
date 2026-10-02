@@ -223,6 +223,12 @@ in
       # chromium-headless-shell browser farm; the harness entries force
       # `--headless` so dsh-web works without a DISPLAY.
       playwright-mcp
+      # Cloudflare's agentic CLI (provides the `cf` command, pkgs/cf.nix).
+      # home/agents.nix exports the CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID
+      # pair cf authenticates with from the same sops keys as the other agent
+      # secrets, and home/agents.nix + home/hermes.nix carry the no-install
+      # tooling rules in every harness's instruction surface.
+      cf
       # Shared agent-memory knowledge graph. mcp-proxy bridges the stdio
       # knowledge-graph server to loopback Streamable HTTP so a single writer
       # serves every harness; both are wired by home/agents.nix's `agent-memory`

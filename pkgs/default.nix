@@ -57,6 +57,12 @@ in
   # zvec-grep the derivation vendors the upstream tag's package-lock.json.
   google-calendar-mcp = pkgs.callPackage ./google-calendar-mcp.nix { };
 
+  # Cloudflare's agentic CLI (npm `cf`, open beta): every Cloudflare API
+  # operation plus Workers projects. The registry tarball ships no lockfile
+  # and unpublishable devDependencies, so the derivation vendors a production
+  # lockfile; see pkgs/cf.nix.
+  cf = pkgs.callPackage ./cf.nix { };
+
   # Microsoft's Playwright MCP server, wrapped around the nixpkgs package so
   # it uses the Chromium-only browser farm instead of the all-browser farm
   # (which on older pins tries and fails to build playwright-webkit). See

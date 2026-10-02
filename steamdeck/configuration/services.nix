@@ -2,7 +2,7 @@
 
 {
   services = {
-    # jovian turns plasma6 on; sway is the session here.
+    # jovian turns plasma6 on; viewport is the session here (see viewport.nix).
     desktopManager.plasma6.enable = lib.mkForce false;
     # scx/scx_lavd config comes from modules/services/default.nix, which is
     # off; only the desktop opts in through the main-snapshot overlay in

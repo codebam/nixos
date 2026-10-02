@@ -65,7 +65,47 @@
     };
     helix = {
       enable = true;
-      package = pkgs.helix_git;
+      # nyx's helix_git is produced inside nyx's own flake evaluation, whose
+      # grammar farm links a tree-sitter-perl revision (72a08a49) that no
+      # longer compiles against glibc 2.44. The guarded buildGrammar patch
+      # in modules/system/nixpkgs.nix cannot reach that evaluation, and
+      # rebinding the package's `final` is not possible either: its override
+      # functor belongs to the base helix-unwrapped function. So rebuild
+      # just that one parser here with this tree's patched buildGrammar and
+      # re-link the runtime grammar farm with it swapped in. Delete once
+      # nyx's languages.json moves past upstream 18d659f9.
+      package =
+        let
+          grammars = pkgs.helix_git.grammars // {
+            perl = pkgs.tree-sitter.buildGrammar {
+              language = "perl";
+              version = "0-unstable-2024-10-07";
+              src = pkgs.fetchFromGitHub {
+                owner = "tree-sitter-perl";
+                repo = "tree-sitter-perl";
+                rev = "72a08a496a23212f23802490ef6f4700d68cfd0e";
+                hash = "sha256-/WA3E5kDxHl3YJ5yd020iIVc1YEssAcvlD5/Voceu2Y=";
+              };
+            };
+          };
+        in
+        pkgs.helix_git.overrideAttrs (_old: {
+          postInstall = (pkgs.helix-unwrapped.postInstall or "") + ''
+            runtimeDir=$out/lib/runtime
+            mkdir -p $runtimeDir
+            cp -r --no-preserve=mode $src/runtime/* $runtimeDir/
+            rm -rf $runtimeDir/grammars
+            mkdir -p $runtimeDir/grammars
+            ${lib.concatStringsSep "\n" (
+              lib.mapAttrsToList (
+                name: grammar: "ln -s ${grammar}/parser $runtimeDir/grammars/${name}.so"
+              ) grammars
+            )}
+            wrapProgram $out/bin/hx \
+              --set HELIX_RUNTIME "$runtimeDir" \
+              --set HELIX_DISABLE_AUTO_GRAMMAR_BUILD "1"
+          '';
+        });
       defaultEditor = true;
       languages = {
         language = [

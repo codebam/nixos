@@ -33,7 +33,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 ### Steam Deck (`nixos-steamdeck`)
 - Jovian NixOS module (vendored prebuilt through `chaotic`): Steam Deck device
   support, Decky Loader, Steam auto-start
-- Sway session (Plasma6 forced off)
+- Viewport session, Sway as fallback (Plasma6 forced off)
 - Extest layer, Gamescope, Proton CachyOS
 - RetroArch with libretro cores, Prism Launcher, Moonlight
 - VRAM-based swapfile (2 GB)
@@ -83,7 +83,8 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 ├── laptop/
 │   └── configuration/           # cleanupRoot (bcachefs), power-profiles-daemon, thermald
 ├── steamdeck/
-│   └── configuration/           # cleanupRoot (btrfs), Jovian, Decky, Steam, RetroArch,
+│   └── configuration/           # cleanupRoot (btrfs), Jovian, Viewport desktop
+│                                  session, Decky, Steam, RetroArch,
 │                                  gaming/extest, lsfg-vk, Moonlight, distributed builds
 ├── droid/
 │   └── home.nix                 # Standalone home-manager profile for the Android

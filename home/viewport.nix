@@ -195,6 +195,21 @@ let
     fi
     ${pkgs.wl-clipboard}/bin/wl-copy --type image/png < "$out"
   '';
+
+  # True on the Steam Deck, which runs the same session the desktop does.
+  # Its sway config (steamdeck/home.nix) used Mod1 as the modifier -- a
+  # handheld has no Super key of its own -- so the bindings below give its
+  # keyboard Alt mirrors of the built-ins that matter there, alongside the
+  # F-key chords it carried under sway.
+  isDeck = osConfig.networking.hostName == "nixos-steamdeck";
+
+  # What Mod4+Return opens, and what the deck's Alt+Return mirrors. One
+  # definition, so the two cannot drift.
+  terminalCommand = "ghostty";
+
+  # The microphone mute binding, shared by the Mod4 chord and the deck's Alt
+  # mirror for the same reason.
+  micMute = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
 in
 {
   # Viewport's bootstrap config: the tier that has to keep working when the web
@@ -219,7 +234,7 @@ in
 
     # What Mod4+Return opens. Without it the compositor falls back to its
     # built-in default, which is foot.
-    terminal = "ghostty";
+    terminal = terminalCommand;
 
     # The desktop background, taken from stylix so that the picture the rest of
     # the session is themed against is the one the compositor draws. Stylix has
@@ -237,6 +252,14 @@ in
       "*" = {
         max_refresh = true;
       };
+    }
+    # The deck's panel is mounted portrait; rotation is a per-output key, so
+    # the wildcard above cannot carry it. `eDP-1` and `90` mirror the deck's
+    # sway line, `output eDP-1 { transform = "90"; }` (steamdeck/home.nix).
+    // lib.optionalAttrs isDeck {
+      "eDP-1" = {
+        transform = "90";
+      };
     };
 
     # What a notification sounds like when the program sending it does not ask
@@ -252,6 +275,11 @@ in
     bar = "auto";
     logo = false;
     tutorial = false;
+
+    # Startup for the deck: the Steam client in desktop mode, which the deck's
+    # sway `startup` list launched. One shot, as there; the client supervises
+    # itself. `null` is the absent key on the other hosts.
+    startup = if isDeck then "steam -silent -desktop" else null;
 
     # Override the whole right side of the bar with an explicit, ordered list.
     # A bare string is a built-in module (net, disk, cpu, load, memory, clock,
@@ -327,7 +355,7 @@ in
       # Mute or unmute the microphone. wpctl talks to wireplumber, which is
       # what the bar's mic module and sway's push-to-talk binding already use,
       # so all three agree on one mute state.
-      "Mod4+space" = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+      "Mod4+space" = micMute;
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
@@ -345,6 +373,50 @@ in
     # enables the module -- the Steam Deck imports this file too.
     // lib.optionalAttrs (osConfig.streamingMode.enable or false) {
       "Mod4+Shift+o" = "exec ${lib.getExe osConfig.streamingMode.package} toggle";
+    }
+    # The deck's chords, ported from its sway config (steamdeck/home.nix),
+    # whose modifier was Mod1: the built-in keymap keeps its Mod4 chords, and
+    # these are the Alt mirrors a handheld keyboard can press, beside the
+    # F-keys sway bound:
+    #
+    # * F8 was a swaynag exit confirmation. The power picker is that
+    #   confirmation now -- quit is one of its rows, beside suspend, power
+    #   off and reboot -- and Ctrl+Alt+Backspace ends the session with no
+    #   keymap involved, so the deck cannot end up with no way out.
+    # * F9/F10 cycled workspaces under sway; F11 raised wvkbd, which the
+    #   shell's own on-screen keyboard replaces (it also comes up on its own
+    #   for the lock screen and focused text fields); F12 opened wmenu, which
+    #   the built-in launcher answers.
+    # * Alt+Tab copies what `defaults` installs for this session's layout:
+    #   the scrolling strip keeps windows outside the view, so that chord is
+    #   the shell's cycle, not the compositor's.
+    // lib.optionalAttrs isDeck {
+      "F8" = "shell power";
+      "F9" = "shell workspace.prev";
+      "F10" = "shell workspace.next";
+      "F11" = "shell osk";
+      "F12" = "shell launcher";
+      "Alt+k" = "shell osk";
+      "Alt+Return" = "exec ${terminalCommand}";
+      # The built-in chords a keyboard without a Super key cannot type.
+      "Alt+d" = "shell launcher";
+      "Alt+Shift+q" = "close";
+      "Alt+Tab" = "shell layout.focus next";
+      "Alt+Shift+Tab" = "shell layout.focus prev";
+      "Alt+space" = micMute;
+      "Alt+x" = "exec ${screenshotSelect}";
+      "Alt+Shift+x" = "exec ${screenshot}";
+      "Alt+1" = "shell workspace.switch 1";
+      "Alt+2" = "shell workspace.switch 2";
+      "Alt+3" = "shell workspace.switch 3";
+      "Alt+4" = "shell workspace.switch 4";
+      "Alt+5" = "shell workspace.switch 5";
+      "Alt+6" = "shell workspace.switch 6";
+      "Alt+7" = "shell workspace.switch 7";
+      "Alt+8" = "shell workspace.switch 8";
+      "Alt+9" = "shell workspace.switch 9";
+      # The physical power button, which sway bound to suspend.
+      "XF86PowerOff" = "exec systemctl suspend";
     };
   };
 }

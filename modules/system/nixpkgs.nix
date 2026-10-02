@@ -102,6 +102,38 @@
               // {
                 full = prev.scx.full.override { scx = base; };
               };
+
+            # nyx's `helix_git` builds its grammar farm from languages.json,
+            # straight from each grammar's pinned revision. Its tree-sitter-perl
+            # pin (72a08a49, 2024-10-07) predates upstream's bsearch fix
+            # (18d659f9, which moved the vendored bsearch into a header) and its
+            # src/bsearch.c does not compile against glibc 2.44's C23
+            # declarations ("expected identifier or '(' before '_Generic'").
+            # nixpkgs patches the same revision the same way inside its own
+            # helix package; nyx's separate build path misses it, and the whole
+            # home closure -- including the desktop's nightly auto-upgrade --
+            # stops on this one grammar. Delete this once the languages.json
+            # pin moves past 18d659f9.
+            tree-sitter = prev.tree-sitter // {
+              buildGrammar =
+                args:
+                let
+                  drv = prev.tree-sitter.buildGrammar args;
+                in
+                if (args.language or "") == "perl" then
+                  drv.overrideAttrs (old: {
+                    postPatch = ''
+                      ${old.postPatch or ""}
+                      if [ -e src/bsearch.c ]; then
+                        rm src/bsearch.c
+                        substituteInPlace src/tsp_unicode.h \
+                          --replace-fail '#include "bsearch.c"' ""
+                      fi
+                    '';
+                  })
+                else
+                  drv;
+            };
           }
         )
       ];

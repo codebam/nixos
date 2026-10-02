@@ -34,8 +34,12 @@ buildNpmPackage (finalAttrs: {
   # Everything native (zvec bindings, onnxruntime, ripgrep, llama.cpp, sharp)
   # ships as prebuilt platform optionalDependencies, so no install scripts
   # need to run -- and node-llama-cpp's postinstall would try to hit the
-  # network from the sandbox otherwise.
-  npmFlags = [ "--ignore-scripts" ];
+  # network from the sandbox otherwise. legacy-peer-deps restores npm 10's
+  # resolution: npm 11 fails the lockfile's peer graph with ERESOLVE.
+  npmFlags = [
+    "--ignore-scripts"
+    "--legacy-peer-deps"
+  ];
 
   meta = {
     description = "Agent-friendly hybrid workspace search across code and non-code content";

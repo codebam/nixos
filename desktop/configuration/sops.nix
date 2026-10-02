@@ -122,13 +122,15 @@
     # and the first one backs it up when a spent subscription rotates
     # mid-session.
     # owner codebam so Home Manager activation can read it and copy it into
-    # $HERMES_HOME/.env.
+    # $HERMES_HOME/.env. CLOUDFLARE_API_TOKEN carries the same sops value as
+    # CLOUDFLARE_API_KEY, under the name the cf CLI (pkgs/cf.nix) resolves.
     templates."hermes-env" = {
       content = ''
         OPENROUTER_API_KEY=${config.sops.placeholder.openrouter-api-key}
         CONTEXT7_API_KEY=${config.sops.placeholder.context7-api-key}
         CLOUDFLARE_API_KEY=${config.sops.placeholder.cloudflare-api-key}
         CLOUDFLARE_ACCOUNT_ID=${config.sops.placeholder.cloudflare-account-id}
+        CLOUDFLARE_API_TOKEN=${config.sops.placeholder.cloudflare-api-key}
         QWEN_TOKEN_PLAN_API_KEY=${config.sops.placeholder.qwen-api-key}
         DEEPSEEK_API_KEY=${config.sops.placeholder.deepseek-api-key}
         OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key-2}

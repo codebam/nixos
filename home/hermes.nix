@@ -12,6 +12,12 @@ let
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
   calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
 
+  # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block. home/cf.nix defines
+  # the text once (host tiers get `guidance`, the sandbox tiers below get
+  # `guidanceSandbox`), and home/hermes.nix interpolates the same strings into
+  # its system-prompt hints.
+  cfCli = import ./cf.nix;
+
   # The OpenSandbox terminal backend plugin (home/hermes-opensandbox.nix):
   # terminal and file commands run in workspace containers instead of the host
   # shell, the same tier as opencode2's shell and dsh's default world.
@@ -380,8 +386,10 @@ in
       # facts and the memory guidance ride the same channel: native memory is
       # off below, so this text is the replacement.
       agent = {
-        environment_hint = emailMcp.policy + sandboxPolicy + standingFacts + memoryGuidance;
-        coding_instructions = emailMcp.policy + sandboxPolicy + standingFacts + memoryGuidance;
+        environment_hint =
+          emailMcp.policy + sandboxPolicy + cfCli.guidance + standingFacts + memoryGuidance;
+        coding_instructions =
+          emailMcp.policy + sandboxPolicy + cfCli.guidance + standingFacts + memoryGuidance;
         # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
         # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
         # every route asks for max and each route clamps onto the levels it

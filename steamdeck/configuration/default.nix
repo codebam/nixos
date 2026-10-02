@@ -7,6 +7,7 @@ _:
     ./services.nix
     ./boot.nix
     ./environment.nix
+    ./viewport.nix
     ./networking.nix
     ./jovian.nix
     ./programs.nix

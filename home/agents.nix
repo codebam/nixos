@@ -19,6 +19,10 @@ let
     CONTEXT7_API_KEY = "context7-api-key";
     CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
     CLOUDFLARE_API_KEY = "cloudflare-api-key";
+    # cf resolves its token from CLOUDFLARE_API_TOKEN; the sops value behind
+    # cloudflare-api-key is the account's API token (the workers-ai provider
+    # rows already send it as the bearer token), so name it both ways.
+    CLOUDFLARE_API_TOKEN = "cloudflare-api-key";
   };
   secretVarPairs = lib.concatStringsSep " " (
     lib.mapAttrsToList (name: secret: "${name}:${secret}") secretVars
@@ -590,10 +594,11 @@ let
 
         # Host-prepared credentials, only in the host-access tier; unset
         # names are skipped rather than blanked. The default tier forwards
-        # nothing.
+        # nothing, so cf has only its credential-free subcommands there; this
+        # tier carries the Cloudflare token pair its API commands need.
         forwardEnv: !!js >-
           ${dshHostAccessJs}
-          ? ["SSH_AUTH_SOCK", "GH_TOKEN"]
+          ? ["SSH_AUTH_SOCK", "GH_TOKEN", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]
           : []
   '';
 
@@ -1100,6 +1105,12 @@ let
   # file for Hermes, so the bridge path, URL, server name, and send policy
   # stay in one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
+
+  # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block: home/cf.nix defines
+  # the text once -- `guidance` for host tiers, `guidanceSandbox` for the dsh
+  # and opencode sandbox worlds -- and home/hermes.nix interpolates the same
+  # strings into its prompt hints.
+  cfCli = import ./cf.nix;
 
   # The guidance block `zg install` writes, copied verbatim from its 0.2.2
   # opencode output and shared by both hosts: the tool names it cites are the
@@ -1703,9 +1714,13 @@ in
       # too, so the providers.crofai entry an earlier activation wrote into
       # it survived the fragment change and kept the provider in the desktop
       # picker. Ordered after hermesAgentSetup, which rewrites the document;
-      # `del` on the missing key is a no-op.
+      # `del` on the missing key is a no-op. Guarded: hosts that never created
+      # the document (the deck has no Hermes profile) must not fail activation;
+      # yq errors on a missing file.
       hermesCrofCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "hermesAgentSetup" ] ''
-        run ${pkgs.yq-go}/bin/yq -i 'del(.providers.crofai)' "$HOME/.hermes/config.yaml"
+        if [ -f "$HOME/.hermes/config.yaml" ]; then
+          run ${pkgs.yq-go}/bin/yq -i 'del(.providers.crofai)' "$HOME/.hermes/config.yaml"
+        fi
       '';
 
       # One-shot cleanup after dropping the nono provider: the old activation
@@ -1855,6 +1870,9 @@ in
         <!-- OPENSANDBOX_START -->
         ${opensandboxGuidance}
         <!-- OPENSANDBOX_END -->
+        <!-- CF_START -->
+        ${cfCli.guidance}
+        <!-- CF_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
@@ -1930,6 +1948,9 @@ in
         <!-- OPENSANDBOX_START -->
         ${opensandboxGuidance}
         <!-- OPENSANDBOX_END -->
+        <!-- CF_START -->
+        ${cfCli.guidanceSandbox}
+        <!-- CF_END -->
       '';
 
       # dsh's user-global patch layer. Precedence is bundle layers, then the
@@ -2481,6 +2502,9 @@ in
         <!-- OPENSANDBOX_START -->
         ${opensandboxGuidance}
         <!-- OPENSANDBOX_END -->
+        <!-- CF_START -->
+        ${cfCli.guidanceSandbox}
+        <!-- CF_END -->
 
         ## opencode2 command execution
 
