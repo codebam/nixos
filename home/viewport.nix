@@ -346,7 +346,10 @@ in
     };
 
     idle = {
-      lock_after = 600;
+      # The deck does not lock: a handheld has nothing to hide from and the
+      # lock interrupts use. `lock_after = 0` is "off" (idle.rs arms only a
+      # positive value). Blanking stays on for battery.
+      lock_after = if isDeck then 0 else 600;
       lock_command = "${lib.getExe pkgs.swaylock} -f";
       blank_after = 900;
     };
