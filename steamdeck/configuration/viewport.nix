@@ -60,7 +60,7 @@ in
   # start-gamescope-session already unsets DISPLAY and XAUTHORITY for the
   # same class of reason (leftovers from the previous session, its prologue
   # says); this covers the one it misses.
-  systemd.user.services.gamescope-session.Service.UnsetEnvironment = [
+  systemd.user.services.gamescope-session.serviceConfig.UnsetEnvironment = [
     "WAYLAND_DISPLAY"
   ];
 }
