@@ -49,4 +49,18 @@ in
     wants = [ "graphical-session-pre.target" ];
     after = [ "graphical-session-pre.target" ];
   };
+
+  # Quitting the desktop must land back in Gaming Mode. sddm's Relogin=true
+  # starts `start-gamescope-session` again -- but the user manager survives
+  # the switch (Linger=on) and still holds the WAYLAND_DISPLAY this session
+  # exported, so gamescope takes it for a parent to nest in ("Failed to
+  # connect to wayland socket: wayland-1"), the gaming session dies, and sddm
+  # exhausts its retries and leaves no display manager at all.
+  #
+  # start-gamescope-session already unsets DISPLAY and XAUTHORITY for the
+  # same class of reason (leftovers from the previous session, its prologue
+  # says); this covers the one it misses.
+  systemd.user.services.gamescope-session.Service.UnsetEnvironment = [
+    "WAYLAND_DISPLAY"
+  ];
 }
