@@ -210,6 +210,28 @@ let
   # The microphone mute binding, shared by the Mod4 chord and the deck's Alt
   # mirror for the same reason.
   micMute = "exec ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+
+  # The deck's session `startup`, wrapped.
+  #
+  # The compositor runs `startup` before Xwayland has reported a display:
+  # `xdisplay` is recorded when Xwayland's Ready event arrives on the event
+  # loop, and the startup command is spawned before that loop first turns.
+  # So an X11 client started here gets no DISPLAY and dies with "unable to
+  # open a connection to X" -- steam is one. Xwayland is already spawned and
+  # says Ready moments later, so wait for its display and hand it over.
+  deckStartup = pkgs.writeShellScript "viewport-deck-startup" ''
+    export PATH=${lib.makeBinPath [ pkgs.procps pkgs.gnugrep pkgs.coreutils ]}:/run/current-system/sw/bin:$PATH
+    for _ in $(seq 1 30); do
+      display=$(pgrep -af 'Xwayland :[0-9]' | grep -oE ':[0-9]+' | head -n1)
+      if [ -n "$display" ]; then
+        export DISPLAY="$display"
+        exec steam -silent -desktop
+      fi
+      sleep 1
+    done
+    echo "viewport-deck-startup: no Xwayland display after 30s; start steam from the launcher" >&2
+    exit 1
+  '';
 in
 {
   # Viewport's bootstrap config: the tier that has to keep working when the web
@@ -278,10 +300,12 @@ in
     logo = false;
     tutorial = false;
 
-    # Startup for the deck: the Steam client in desktop mode, which the deck's
-    # sway `startup` list launched. One shot, as there; the client supervises
-    # itself. `null` is the absent key on the other hosts.
-    startup = if isDeck then "steam -silent -desktop" else null;
+    # Startup for the deck: the Steam client in desktop mode, wrapped so it
+    # finds Xwayland's display (see deckStartup above -- a bare
+    # `steam -silent -desktop` here starts before Xwayland has reported one
+    # and dies with "unable to open a connection to X"). One shot; the
+    # client supervises itself. `null` is the absent key on the other hosts.
+    startup = if isDeck then "${deckStartup}" else null;
 
     # Override the whole right side of the bar with an explicit, ordered list.
     # A bare string is a built-in module (net, disk, cpu, load, memory, clock,
