@@ -254,11 +254,13 @@ in
       };
     }
     # The deck's panel is mounted portrait; rotation is a per-output key, so
-    # the wildcard above cannot carry it. `eDP-1` and `90` mirror the deck's
-    # sway line, `output eDP-1 { transform = "90"; }` (steamdeck/home.nix).
+    # the wildcard above cannot carry it. The value is NOT the sway line's:
+    # sway's `output eDP-1 { transform = "90"; }` (steamdeck/home.nix) and
+    # Viewport's "90" do not turn the same way -- "90" here leaves the panel
+    # upside down, "270" is upright (verified on the deck, 2026-10-02).
     // lib.optionalAttrs isDeck {
       "eDP-1" = {
-        transform = "90";
+        transform = "270";
       };
     };
 
