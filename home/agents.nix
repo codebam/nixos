@@ -69,16 +69,18 @@ let
     fi
   '';
 
-  # dsh's launch environment: the shared agent keys plus a second OpenCode Go
-  # credential reference. Every dsh launcher below sources this instead of
-  # loadKey directly, so both subscriptions resolve inside dsh -- each
-  # llm-pi-ai route's `apiKeyEnv` names OPENCODE_API_KEY (first subscription)
-  # or OPENCODE_API_KEY_2 (second). The credential seam resolves a reference
-  # per operation from the launch environment, so a route bills whichever
-  # subscription its reference names; dsh keeps no credential pool, so there
-  # is no automatic rotation -- switching a route between subscriptions is
-  # changing that one reference. opencode2, pi, and the desktop client still
-  # read OPENCODE_API_KEY alone: the second key is dsh-only.
+  # dsh's launch environment: the shared agent keys plus both OpenCode Go
+  # subscription keys. Every dsh launcher below sources this instead of
+  # loadKey directly. OPENCODE_API_KEY_2 always carries the second
+  # subscription; OPENCODE_API_KEY resolves to the subscription the runtime
+  # choice names -- DSH_OPENCODE_SUB for one run (`DSH_OPENCODE_SUB=2 dsh`),
+  # otherwise ~/.dsh/opencode-subscription (written by `dsh-subscription`),
+  # defaulting to the first. The credential seam resolves a reference per
+  # operation from the launch environment, so every route naming
+  # OPENCODE_API_KEY follows the choice; dsh keeps no credential pool, so
+  # there is no automatic rotation -- the choice is the switch. opencode2,
+  # pi, and the desktop client still read OPENCODE_API_KEY alone: the second
+  # key is dsh-only.
   loadDshKey = pkgs.writeShellScript "dsh-load-env" ''
     . ${loadKey}
 
@@ -86,6 +88,15 @@ let
     if [ -r "$go2_secret" ]; then
       value=$(cat "$go2_secret")
       if [ -n "$value" ]; then export OPENCODE_API_KEY_2="$value"; fi
+    fi
+
+    choice=''${DSH_OPENCODE_SUB:-}
+    if [ -z "$choice" ] && [ -r "$HOME/.dsh/opencode-subscription" ]; then
+      choice=$(cat "$HOME/.dsh/opencode-subscription")
+    fi
+    if [ "$choice" = "2" ] && [ -r "$go2_secret" ]; then
+      value=$(cat "$go2_secret")
+      if [ -n "$value" ]; then export OPENCODE_API_KEY="$value"; fi
     fi
   '';
 
@@ -390,8 +401,9 @@ let
   # name the OPENCODE_API_KEY credential reference, and the credential store
   # falls back to the launch environment, so exporting the keys here is what
   # makes the routes authenticate without a secret in settings.yaml. loadDshKey
-  # also exports the second Go subscription as OPENCODE_API_KEY_2, so both
-  # subscriptions resolve and a route bills whichever reference it names. dsh's
+  # also exports both Go subscriptions, with OPENCODE_API_KEY following the
+  # `dsh-subscription` choice, so a route bills whichever subscription the
+  # choice names. dsh's
   # own wrapper already adds --expose-internals for its HMR plugin; wrapProgram
   # preserves that and only prepends the environment load.
   dsh = pkgs.symlinkJoin {
@@ -880,8 +892,9 @@ let
   };
 
   # Desktop-only dsh command: source the model API keys outside the harness
-  # (loadDshKey -- both OpenCode Go subscriptions resolve, so any route can
-  # name either), then run the upstream binary. Host credentials are
+  # (loadDshKey -- both OpenCode Go subscriptions resolve; a one-off
+  # `DSH_OPENCODE_SUB=2 dsh` runs this session against the second), then run
+  # the upstream binary. Host credentials are
   # deliberately NOT loaded here: the default session is the untrusted-agent
   # tier and the OpenSandbox profile forwards nothing. Use `dsh-host-access`
   # when reviewed work really needs the host daemon or credentials. Starting in
@@ -974,6 +987,40 @@ let
         --port ${toString dshWebBackendPort} \
         --no-open \
         --trusted-host "$authority:${toString dshWebProxyPort}"
+    '';
+  };
+
+  # Flip which OpenCode Go subscription the dsh launchers resolve
+  # OPENCODE_API_KEY to. Writes the choice file read by loadDshKey and
+  # restarts the web UI so it picks the change up; running terminal sessions
+  # keep their old key, so start a new one (or run `DSH_OPENCODE_SUB=2 dsh`
+  # for a one-off). Only dsh consults this: Hermes and the other agents keep
+  # their own key wiring.
+  dshSubscription = pkgs.writeShellApplication {
+    name = "dsh-subscription";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -eu
+      choice_file="$HOME/.dsh/opencode-subscription"
+      case "''${1:-show}" in
+        show)
+          if [ -r "$choice_file" ]; then cat "$choice_file"; else echo 1; fi
+          ;;
+        1 | 2)
+          mkdir -p "$(dirname "$choice_file")"
+          echo "$1" > "$choice_file"
+          echo "dsh: OpenCode Go subscription $1 is now the choice"
+          if systemctl --user cat dsh-web.service >/dev/null 2>&1; then
+            systemctl --user restart dsh-web.service
+            echo "dsh-web restarted with the new choice"
+          fi
+          echo "start new terminal sessions to pick it up (or DSH_OPENCODE_SUB=$1 dsh for one-off)"
+          ;;
+        *)
+          echo "usage: dsh-subscription [1|2]" >&2
+          exit 2
+          ;;
+      esac
     '';
   };
 
@@ -1538,19 +1585,20 @@ let
   # those routes only carry the display label and credential reference; the
   # secrets stay in /run/secrets and the launchers above export them. Both
   # OpenCode Go subscriptions resolve inside dsh: the routes below name
-  # OPENCODE_API_KEY (first subscription), and `loadDshKey` also exports the
-  # second as OPENCODE_API_KEY_2, so changing which subscription a route bills
-  # is changing that one reference -- dsh has no credential pool, one
-  # reference per route, no automatic rotation. Keeping this a separate store
-  # file means the merge below can deep-merge one namespace without restating
-  # the rest of the document.
+  # OPENCODE_API_KEY, which follows the runtime choice (`dsh-subscription`
+  # writes ~/.dsh/opencode-subscription; DSH_OPENCODE_SUB overrides it for
+  # one session), and OPENCODE_API_KEY_2 always names the second. dsh has no
+  # credential pool, one reference per route, no automatic rotation, so the
+  # choice is the switch. Keeping this a separate store file means the merge
+  # below can deep-merge one namespace without restating the rest of the
+  # document.
   dshSettings = pkgs.writeText "dsh-settings-managed.yaml" ''
     llm-pi-ai:
       providers:
         opencode-go:
           displayName: OpenCode Go
-          # First subscription; OPENCODE_API_KEY_2 is the second. Both refs
-          # resolve via loadDshKey -- change this one to switch subscriptions.
+          # Follows the `dsh-subscription` choice (default: first
+          # subscription); OPENCODE_API_KEY_2 always names the second.
           apiKeyEnv: OPENCODE_API_KEY
         # Local Ollama. pi-ai ships no catalog for it, so this route is the
         # whole declaration: protocol, endpoint, and model list. There is no
@@ -1871,6 +1919,7 @@ in
       opencode2
       pi
       dshInstalled
+      dshSubscription
     ]
     ++ lib.optionals isDesktop [
       dshWebUrl

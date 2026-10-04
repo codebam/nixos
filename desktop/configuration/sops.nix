@@ -58,7 +58,8 @@
       # order tries before the numbered sibling, so the first subscription
       # becomes the fallback entry. The dsh launchers export it too, as
       # OPENCODE_API_KEY_2 (loadDshKey in home/agents.nix), so both
-      # subscriptions resolve inside dsh; no other agent picks it up.
+      # subscriptions resolve inside dsh and `dsh-subscription` flips which
+      # one OPENCODE_API_KEY names; no other agent picks it up.
       opencode-go-api-key-2 = {
         owner = "codebam";
         group = "users";
