@@ -220,7 +220,13 @@ let
   # open a connection to X" -- steam is one. Xwayland is already spawned and
   # says Ready moments later, so wait for its display and hand it over.
   deckStartup = pkgs.writeShellScript "viewport-deck-startup" ''
-    export PATH=${lib.makeBinPath [ pkgs.procps pkgs.gnugrep pkgs.coreutils ]}:/run/current-system/sw/bin:$PATH
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.procps
+        pkgs.gnugrep
+        pkgs.coreutils
+      ]
+    }:/run/current-system/sw/bin:$PATH
     for _ in $(seq 1 30); do
       display=$(pgrep -af 'Xwayland :[0-9]' | grep -oE ':[0-9]+' | head -n1)
       if [ -n "$display" ]; then
