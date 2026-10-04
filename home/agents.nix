@@ -69,6 +69,26 @@ let
     fi
   '';
 
+  # dsh's launch environment: the shared agent keys plus a second OpenCode Go
+  # credential reference. Every dsh launcher below sources this instead of
+  # loadKey directly, so both subscriptions resolve inside dsh -- each
+  # llm-pi-ai route's `apiKeyEnv` names OPENCODE_API_KEY (first subscription)
+  # or OPENCODE_API_KEY_2 (second). The credential seam resolves a reference
+  # per operation from the launch environment, so a route bills whichever
+  # subscription its reference names; dsh keeps no credential pool, so there
+  # is no automatic rotation -- switching a route between subscriptions is
+  # changing that one reference. opencode2, pi, and the desktop client still
+  # read OPENCODE_API_KEY alone: the second key is dsh-only.
+  loadDshKey = pkgs.writeShellScript "dsh-load-env" ''
+    . ${loadKey}
+
+    go2_secret=/run/secrets/opencode-go-api-key-2
+    if [ -r "$go2_secret" ]; then
+      value=$(cat "$go2_secret")
+      if [ -n "$value" ]; then export OPENCODE_API_KEY_2="$value"; fi
+    fi
+  '';
+
   # OpenRouter's Pareto Code Router picks a coder per request off the current
   # price/capability frontier, so there is no fixed per-token price to quote.
   # The floor below is what keeps it from bottoming out on a weak one.
@@ -365,19 +385,21 @@ let
     '';
   };
 
-  # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadKey for
-  # the same reason as opencode2 and pi: its llm-pi-ai `opencode-go` route names
-  # the OPENCODE_API_KEY credential reference, and the credential store falls
-  # back to the launch environment, so exporting the key here is what makes the
-  # route authenticate without a secret in settings.yaml. dsh's own wrapper
-  # already adds --expose-internals for its HMR plugin; wrapProgram preserves
-  # that and only prepends the environment load.
+  # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadDshKey
+  # for the same reason as opencode2 and pi: its llm-pi-ai `opencode-go` routes
+  # name the OPENCODE_API_KEY credential reference, and the credential store
+  # falls back to the launch environment, so exporting the keys here is what
+  # makes the routes authenticate without a secret in settings.yaml. loadDshKey
+  # also exports the second Go subscription as OPENCODE_API_KEY_2, so both
+  # subscriptions resolve and a route bills whichever reference it names. dsh's
+  # own wrapper already adds --expose-internals for its HMR plugin; wrapProgram
+  # preserves that and only prepends the environment load.
   dsh = pkgs.symlinkJoin {
     name = "dsh-wrapped-${pkgs.dsh.version}";
     paths = [ pkgs.dsh ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/dsh --run '. ${loadKey}'
+      wrapProgram $out/bin/dsh --run '. ${loadDshKey}'
     '';
   };
 
@@ -857,12 +879,14 @@ let
     '';
   };
 
-  # Desktop-only dsh command: source the model API keys outside the harness,
-  # then run the upstream binary. Host credentials are deliberately NOT loaded
-  # here: the default session is the untrusted-agent tier and the OpenSandbox
-  # profile forwards nothing. Use `dsh-host-access` when reviewed work really
-  # needs the host daemon or credentials. Starting in $HOME is still refused:
-  # it would make the whole home directory the writable workspace.
+  # Desktop-only dsh command: source the model API keys outside the harness
+  # (loadDshKey -- both OpenCode Go subscriptions resolve, so any route can
+  # name either), then run the upstream binary. Host credentials are
+  # deliberately NOT loaded here: the default session is the untrusted-agent
+  # tier and the OpenSandbox profile forwards nothing. Use `dsh-host-access`
+  # when reviewed work really needs the host daemon or credentials. Starting in
+  # $HOME is still refused: it would make the whole home directory the writable
+  # workspace.
   dshSandboxed = pkgs.writeShellApplication {
     name = "dsh";
     runtimeInputs = [
@@ -872,7 +896,7 @@ let
     text = ''
       set -eu
       # shellcheck source=/dev/null
-      . ${loadKey}
+      . ${loadDshKey}
       case "$PWD" in
         "$HOME")
           echo "dsh: refusing to start in \$HOME; cd into a project directory first" >&2
@@ -918,7 +942,7 @@ let
     text = ''
       set -eu
       # shellcheck source=/dev/null
-      . ${loadKey}
+      . ${loadDshKey}
       # shellcheck source=/dev/null
       . ${credentialEnv}
       export ${dshHostAccessEnv}=1
@@ -943,7 +967,7 @@ let
     text = ''
       set -eu
       # shellcheck source=/dev/null
-      . ${loadKey}
+      . ${loadDshKey}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
       exec ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
@@ -1512,14 +1536,21 @@ let
   # `opencode-go`, `qwen-token-plan-individual`, and `openrouter` provider
   # catalogs (endpoint, wire protocol, and model list all come from them), so
   # those routes only carry the display label and credential reference; the
-  # secrets stay in /run/secrets and `loadKey` above exports them. Keeping this
-  # a separate store file means the merge below can deep-merge one namespace
-  # without restating the rest of the document.
+  # secrets stay in /run/secrets and the launchers above export them. Both
+  # OpenCode Go subscriptions resolve inside dsh: the routes below name
+  # OPENCODE_API_KEY (first subscription), and `loadDshKey` also exports the
+  # second as OPENCODE_API_KEY_2, so changing which subscription a route bills
+  # is changing that one reference -- dsh has no credential pool, one
+  # reference per route, no automatic rotation. Keeping this a separate store
+  # file means the merge below can deep-merge one namespace without restating
+  # the rest of the document.
   dshSettings = pkgs.writeText "dsh-settings-managed.yaml" ''
     llm-pi-ai:
       providers:
         opencode-go:
           displayName: OpenCode Go
+          # First subscription; OPENCODE_API_KEY_2 is the second. Both refs
+          # resolve via loadDshKey -- change this one to switch subscriptions.
           apiKeyEnv: OPENCODE_API_KEY
         # Local Ollama. pi-ai ships no catalog for it, so this route is the
         # whole declaration: protocol, endpoint, and model list. There is no

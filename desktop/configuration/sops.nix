@@ -56,8 +56,9 @@
       # hermes-env template below puts its placeholder in the unnumbered
       # OPENCODE_GO_API_KEY slot, which the credential pool's fill_first
       # order tries before the numbered sibling, so the first subscription
-      # becomes the fallback entry. No wrapper exports it, so no other
-      # agent picks it up.
+      # becomes the fallback entry. The dsh launchers export it too, as
+      # OPENCODE_API_KEY_2 (loadDshKey in home/agents.nix), so both
+      # subscriptions resolve inside dsh; no other agent picks it up.
       opencode-go-api-key-2 = {
         owner = "codebam";
         group = "users";
