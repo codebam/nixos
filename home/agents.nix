@@ -512,6 +512,179 @@ let
           - opencode-go
           - opencode-go-deepseek
           - opencode-go-union-alpha
+
+    # The Minimal-Agents agent preset: the shipped `minimal` composition plus
+    # workspace instructions, the subagent delegation tools, and local skills.
+    # Declared as a `@deepseek-ai/dsh-agent-preset` row: dsh 0.2.x replaced the
+    # `$DSH_HOME/.agent-presets` directory form with declaration rows carried by
+    # patch layers, so this profile patch is where the preset is registered now.
+    #
+    # The persona block is `minimal`'s verbatim (fixed prompt, complete: true, no
+    # runtime context), so identity/Web/tool-guidance sections still cannot add
+    # prompt text here, and the persistent shell is still the only built-in shell.
+    # `suffix` states the working directory for the same reason pkgs/dsh.nix adds it
+    # to the shipped `minimal`: complete: true suppresses the runtime-context snapshot.
+    #
+    # The delegation rows mirror the dsh-base bundle's four, minus `tool-workflow`
+    # and `tool-ralph`: "agents" means spawning and steering subagents, not the
+    # workflow engine. A spawned child inherits this preset by joining the parent's
+    # standing composition (AgentPresets.composeFrom), so a delegated agent gets the
+    # same shell and this same toolset; `maxDepth` is left at its package default.
+    #
+    # The `subagents` registry and its spawn/fork backends live in the HOST
+    # composition (dsh-base, where the dsh-tui bundle patch leaves them enabled
+    # while disabling the host-level tool rows). These rows therefore register the
+    # delegation TOOLS only and must NOT be isolated: their `subagents` inject has
+    # to resolve that host registry. That is why this group has no `isolate` block,
+    # unlike `persistent-shell` below, whose PTY registry is agent-owned.
+    - insert:
+        - id: preset-minimal-agents
+          name: '@deepseek-ai/dsh-agent-preset'
+          config:
+            id: minimal-agents
+            name: Minimal-Agents
+            description: Minimal's fixed persona and persistent shell, plus workspace instructions (AGENTS.md/CLAUDE.md), local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
+            order: 6
+            plugins:
+              - id: persona
+                name: '@deepseek-ai/dsh-persona'
+                config:
+                  prefix: You are a helpful software engineer assistant.
+                  suffix: Your working directory is {{cwd}}.
+                  complete: true
+                  includeRuntimeContext: false
+
+              # dsh-web disables dsh-base's host-level agent-instructions row and makes
+              # each preset opt in (standard does). minimal does not, so without this row
+              # a minimal-agents session never receives `$DSH_HOME/AGENTS.md` or the repo
+              # `AGENTS.md` chain -- not as a system prompt and not as a system-reminder.
+              # The persona's `complete: true` only suppresses system-prompt sections; this
+              # plugin injects workspace context as a separate user-message baseline.
+              - id: agent-instructions
+                name: '@deepseek-ai/dsh-agent-instructions'
+                config:
+                  maxBytes: 65536
+
+              # The PTY registry is an agent-owned service, so it lives in an entry-local
+              # realm. The backend still consumes the host sandbox policy and subprocess
+              # implementation, while the tool registers into this agent's scoped catalog.
+              # Exactly one shell stack mounts per host: the bash stack gates off win32 and
+              # its pwsh twin gates off POSIX, mirroring the one-shot shell rows.
+              - id: persistent-shell
+                name: cordis:group
+                group: true
+                isolate:
+                  terminals: true
+                config:
+                  - id: pty
+                    name: '@deepseek-ai/dsh-terminal'
+
+                  - id: terminal-bash
+                    name: '@deepseek-ai/dsh-terminal-bash'
+                    disabled: !!js process.platform === 'win32'
+                    config:
+                      timeoutMs: 300000
+
+                  - id: persistent-bash
+                    name: '@deepseek-ai/dsh-tool-bash-persistent'
+                    disabled: !!js process.platform === 'win32'
+                    config:
+                      timeoutMs: 300000
+                      description: |-
+                        Run commands in a bash shell
+                        * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+                        * Network access depends on the task environment. Prefer configured mirrors/proxies when they are available.
+                        * State is persistent across command calls and discussions with the user.
+                        * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+                        * Please avoid commands that may produce a very large amount of output.
+                        * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+                  - id: terminal-pwsh
+                    name: '@deepseek-ai/dsh-terminal-bash'
+                    disabled: !!js process.platform !== 'win32'
+                    config:
+                      shellDialect: pwsh
+                      timeoutMs: 300000
+
+                  - id: persistent-pwsh
+                    name: '@deepseek-ai/dsh-tool-pwsh-persistent'
+                    disabled: !!js process.platform !== 'win32'
+                    config:
+                      timeoutMs: 300000
+                      description: |-
+                        Run commands in a PowerShell shell
+                        * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+                        * You don't have access to the internet via this tool.
+                        * State is persistent across command calls and discussions with the user.
+                        * Use native Windows paths (C:\...) and $env:NAME variables; this is PowerShell, not bash.
+                        * Please avoid commands that may produce a very large amount of output.
+                        * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
+
+              # Compaction: `/compact` and automatic history compaction are
+              # agent-plane choices, so a preset that omits this group has neither.
+              # The isolate realm keeps this preset's compaction instance private,
+              # like persistent-shell above.
+              - id: compaction
+                name: cordis:group
+                group: true
+                isolate:
+                  compaction: true
+                  toolResultPruner: true
+                config:
+                  - id: compaction-basic
+                    name: '@deepseek-ai/dsh-compaction-basic'
+
+                  - id: command-compact
+                    name: '@deepseek-ai/dsh-command-compact'
+
+                  - id: tool-result-pruner
+                    name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                    config:
+                      thresholdChars: 8192
+                      headChars: 4096
+                      tailChars: 1024
+
+              # Continuous delegation: the spawn/fork tools plus the control API over
+              # continuable children (`send_message`/`interrupt_agent` and `list_agents`).
+              - id: delegation
+                name: cordis:group
+                group: true
+                config:
+                  - id: tool-subagent-control
+                    name: '@deepseek-ai/dsh-tool-subagent-control'
+
+                  - id: tool-subagent-list-agents
+                    name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+
+                  - id: tool-subagent
+                    name: '@deepseek-ai/dsh-tool-subagent'
+                    config:
+                      provider: spawn
+                      toolName: subagent
+                      backgroundMode: continuable
+
+                  - id: tool-subagent-fork
+                    name: '@deepseek-ai/dsh-tool-subagent'
+                    config:
+                      provider: fork
+                      toolName: subagent_fork
+                      backgroundMode: one-shot
+
+              # Skills: the Web surface disables the host-level `skill-filesystem` and
+              # `tool-skill` rows and leaves local discovery to each agent preset (see
+              # @deepseek-ai/dsh-web-app's patch), so `minimal` alone composes an empty
+              # catalog -- no `/` suggestions in the composer and no model-facing
+              # `skill` tool. These two rows restore the shipped `standard` preset's
+              # arrangement: the filesystem provider contributes `~/.dsh/skills` and
+              # the project roots to this agent's registry scope, and `tool-skill`
+              # renders the catalog and loader (and owns the `/name` gesture boundary).
+              # The skill registry itself stays host-level and shared; these rows only
+              # add this preset's provider and consumer.
+              - id: skill-filesystem
+                name: '@deepseek-ai/dsh-skill-filesystem'
+
+              - id: tool-skill
+                name: '@deepseek-ai/dsh-tool-skill'
   ''
   + lib.optionalString dshContainerWorld ''
     # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
@@ -2022,192 +2195,6 @@ in
                 toolCallTimeoutMs: 180000
       '';
 
-      # The Minimal-Agents agent preset, authored in the user preset root
-      # `$DSH_HOME/.agent-presets` beside `liangshen` rather than patched into the
-      # shipped root from pkgs/dsh.nix. The roster scans the shipped presets
-      # first and this root last (`includeUserRoot`), the directory name is the
-      # preset id (so it must be lowercase), and `preset.yml` supplies the
-      # display name -- the TUI therefore offers it as "Minimal-Agents" in
-      # `/preset` and the choice is per session, not a change of the default.
-      #
-      # Composition: the shipped `minimal` preset's persona and persistent-shell
-      # rows verbatim (same one-line prompt, `complete: true` so no other prompt
-      # section can add text, no runtime context, bash as the only built-in
-      # tool), plus dsh-base's delegation rows and the agent-instructions row that
-      # the web profile makes each preset opt into. `tool-workflow` and `tool-ralph`
-      # are deliberately absent: this is "minimal + agents", not minimal plus the
-      # workflow engine. The subagents registry and the spawn/fork backends stay
-      # in the host composition; these rows only contribute the tools that
-      # resolve it. See the composition's own header for the rest.
-      ".dsh/.agent-presets/minimal-agents/agent.cordis.yml".text = ''
-        # The `minimal-agents` agent preset: the shipped `minimal` composition plus
-        # workspace instructions, the subagent delegation tools, and local skills.
-        #
-        # The persona block is `minimal`'s verbatim (fixed prompt, complete: true, no
-        # runtime context), so identity/Web/tool-guidance sections still cannot add
-        # prompt text here, and the persistent shell is still the only built-in shell.
-        # `suffix` states the working directory for the same reason pkgs/dsh.nix adds it
-        # to the shipped `minimal`: complete: true suppresses the runtime-context snapshot.
-        #
-        # The delegation rows mirror the dsh-base bundle's four, minus `tool-workflow`
-        # and `tool-ralph`: "agents" means spawning and steering subagents, not the
-        # workflow engine. A spawned child inherits this preset by joining the parent's
-        # standing composition (AgentPresets.composeFrom), so a delegated agent gets the
-        # same shell and this same toolset; `maxDepth` is left at its package default.
-        #
-        # The `subagents` registry and its spawn/fork backends live in the HOST
-        # composition (dsh-base, where the dsh-tui bundle patch leaves them enabled
-        # while disabling the host-level tool rows). These rows therefore register the
-        # delegation TOOLS only and must NOT be isolated: their `subagents` inject has
-        # to resolve that host registry. That is why this group has no `isolate` block,
-        # unlike `persistent-shell` below, whose PTY registry is agent-owned.
-
-        - id: persona
-          name: '@deepseek-ai/dsh-persona'
-          config:
-            prefix: You are a helpful software engineer assistant.
-            suffix: Your working directory is {{cwd}}.
-            complete: true
-            includeRuntimeContext: false
-
-        # dsh-web disables dsh-base's host-level agent-instructions row and makes
-        # each preset opt in (standard does). minimal does not, so without this row
-        # a minimal-agents session never receives `$DSH_HOME/AGENTS.md` or the repo
-        # `AGENTS.md` chain -- not as a system prompt and not as a system-reminder.
-        # The persona's `complete: true` only suppresses system-prompt sections; this
-        # plugin injects workspace context as a separate user-message baseline.
-        - id: agent-instructions
-          name: '@deepseek-ai/dsh-agent-instructions'
-          config:
-            maxBytes: 65536
-
-        # The PTY registry is an agent-owned service, so it lives in an entry-local
-        # realm. The backend still consumes the host sandbox policy and subprocess
-        # implementation, while the tool registers into this agent's scoped catalog.
-        # Exactly one shell stack mounts per host: the bash stack gates off win32 and
-        # its pwsh twin gates off POSIX, mirroring the one-shot shell rows.
-        - id: persistent-shell
-          name: cordis:group
-          group: true
-          isolate:
-            terminals: true
-          config:
-            - id: pty
-              name: '@deepseek-ai/dsh-terminal'
-
-            - id: terminal-bash
-              name: '@deepseek-ai/dsh-terminal-bash'
-              disabled: !!js process.platform === 'win32'
-              config:
-                timeoutMs: 300000
-
-            - id: persistent-bash
-              name: '@deepseek-ai/dsh-tool-bash-persistent'
-              disabled: !!js process.platform === 'win32'
-              config:
-                timeoutMs: 300000
-                description: |-
-                  Run commands in a bash shell
-                  * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
-                  * Network access depends on the task environment. Prefer configured mirrors/proxies when they are available.
-                  * State is persistent across command calls and discussions with the user.
-                  * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
-                  * Please avoid commands that may produce a very large amount of output.
-                  * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
-
-            - id: terminal-pwsh
-              name: '@deepseek-ai/dsh-terminal-bash'
-              disabled: !!js process.platform !== 'win32'
-              config:
-                shellDialect: pwsh
-                timeoutMs: 300000
-
-            - id: persistent-pwsh
-              name: '@deepseek-ai/dsh-tool-pwsh-persistent'
-              disabled: !!js process.platform !== 'win32'
-              config:
-                timeoutMs: 300000
-                description: |-
-                  Run commands in a PowerShell shell
-                  * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
-                  * You don't have access to the internet via this tool.
-                  * State is persistent across command calls and discussions with the user.
-                  * Use native Windows paths (C:\...) and $env:NAME variables; this is PowerShell, not bash.
-                  * Please avoid commands that may produce a very large amount of output.
-                  * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
-
-        # Compaction: `/compact` and automatic history compaction are
-        # agent-plane choices, so a preset that omits this group has neither.
-        # The isolate realm keeps this preset's compaction instance private,
-        # like persistent-shell above.
-        - id: compaction
-          name: cordis:group
-          group: true
-          isolate:
-            compaction: true
-            toolResultPruner: true
-          config:
-            - id: compaction-basic
-              name: '@deepseek-ai/dsh-compaction-basic'
-
-            - id: command-compact
-              name: '@deepseek-ai/dsh-command-compact'
-
-            - id: tool-result-pruner
-              name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
-              config:
-                thresholdChars: 8192
-                headChars: 4096
-                tailChars: 1024
-
-        # Continuous delegation: the spawn/fork tools plus the control API over
-        # continuable children (`send_message`/`interrupt_agent` and `list_agents`).
-        - id: delegation
-          name: cordis:group
-          group: true
-          config:
-            - id: tool-subagent-control
-              name: '@deepseek-ai/dsh-tool-subagent-control'
-
-            - id: tool-subagent-list-agents
-              name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-
-            - id: tool-subagent
-              name: '@deepseek-ai/dsh-tool-subagent'
-              config:
-                provider: spawn
-                toolName: subagent
-                backgroundMode: continuable
-
-            - id: tool-subagent-fork
-              name: '@deepseek-ai/dsh-tool-subagent'
-              config:
-                provider: fork
-                toolName: subagent_fork
-                backgroundMode: one-shot
-
-        # Skills: the Web surface disables the host-level `skill-filesystem` and
-        # `tool-skill` rows and leaves local discovery to each agent preset (see
-        # @deepseek-ai/dsh-web-app's patch), so `minimal` alone composes an empty
-        # catalog -- no `/` suggestions in the composer and no model-facing
-        # `skill` tool. These two rows restore the shipped `standard` preset's
-        # arrangement: the filesystem provider contributes `~/.dsh/skills` and
-        # the project roots to this agent's registry scope, and `tool-skill`
-        # renders the catalog and loader (and owns the `/name` gesture boundary).
-        # The skill registry itself stays host-level and shared; these rows only
-        # add this preset's provider and consumer.
-        - id: skill-filesystem
-          name: '@deepseek-ai/dsh-skill-filesystem'
-
-        - id: tool-skill
-          name: '@deepseek-ai/dsh-tool-skill'
-      '';
-
-      ".dsh/.agent-presets/minimal-agents/preset.yml".text = ''
-        name: Minimal-Agents
-        description: Minimal's fixed persona and persistent shell, plus workspace instructions (AGENTS.md/CLAUDE.md), local skills (filesystem provider + skill catalog/loader) and the subagent delegation tools (subagent, subagent_fork, send_message, interrupt_agent, list_agents).
-        order: 6
-      '';
     }
     // lib.optionalAttrs isDesktop {
       # Package caches and the zvec-grep daemon state root are created eagerly

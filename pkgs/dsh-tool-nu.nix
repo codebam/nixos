@@ -13,9 +13,15 @@ stdenvNoCC.mkDerivation {
   # host pins the reviewed revision so the profile copies exactly the plugin
   # sources it was tested with. The hash is the tag's unpacked-tree hash
   # (nix-prefetch-url --unpack, converted to SRI) and was precomputed from the
-  # pushed v0.1.0 tag. This plugin has
-  # no dsh-version patch: it uses only the stable ctx.shell request/render
-  # surface that dsh 0.1.6-alpha.2 exposes.
+  # pushed v0.1.0 tag.
+  #
+  # Known gap after the dsh 0.2.x bump: v0.1.0 was written against the
+  # 0.1.6-alpha.2 ctx.shell seam, and 0.1.7-alpha.1 replaced its
+  # foreground/background pair (run/start) with one execute() handle whose
+  # result() is the foreground projection; 0.2.x also pulls background job
+  # output through JobSpec `output` sources instead of the hooks'
+  # `readOutput`. Until the plugin repository ships a revision for that seam,
+  # the `nu` tool fails at call time under dsh >= 0.1.7.
   src = fetchFromGitHub {
     owner = "codebam";
     repo = "dsh-tool-nu";

@@ -80,9 +80,10 @@ in
   opensandbox-mcp = pkgs.callPackage ./opensandbox-mcp.nix { inherit opensandbox; };
 
   # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has no
-  # lockfile and an unpublished devDependencies block, so the derivation
-  # vendors a production lockfile and wraps the bin to start node with
-  # --expose-internals (its HMR plugin requires it). See pkgs/dsh.nix.
+  # lockfile, so the derivation vendors a production lockfile and strips the
+  # devDependencies block that lockfile cannot match; it wraps the bin to
+  # start node with --expose-internals (its HMR plugin requires it). See
+  # pkgs/dsh.nix.
   dsh = pkgs.callPackage ./dsh.nix { };
 
   # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell

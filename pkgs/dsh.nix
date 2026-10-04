@@ -16,11 +16,10 @@ let
   patchManifest = ''
     cp ${./dsh/package-lock.json} package-lock.json
 
-    # The published package.json declares devDependencies on internal
-    # @deepseek-ai packages that were never pushed to npm
-    # (e.g. dsh-experimental-agent-team), so `npm ci` aborts with ETARGET
-    # while resolving the manifest. Installing dsh as a dependency never
-    # needs them; delete the block before npm reads it.
+    # The published package.json declares devDependencies, but the vendored
+    # lockfile covers production dependencies only, and `npm ci` aborts when
+    # the manifest and lockfile disagree on that block. Installing dsh as a
+    # dependency never needs them; delete the block before npm reads it.
     ${lib.getExe' nodejs "node"} -e '
       const fs = require("node:fs");
       const manifest = JSON.parse(fs.readFileSync("package.json", "utf8"));
@@ -31,11 +30,11 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "dsh";
-  version = "0.1.6-alpha.2";
+  version = "0.2.1-alpha.1";
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${finalAttrs.version}.tgz";
-    hash = "sha256-djggrZi7XOFePm331Njhw22UEAMc6fkkdPldfID/RRY=";
+    hash = "sha256-jY2S+8UT+66v1QS5QXriqQjzeaV3fC69li7T6wAON08=";
   };
 
   # buildNpmPackage forwards postPatch to fetchNpmDeps but not nativeBuildInputs,
@@ -46,7 +45,7 @@ buildNpmPackage (finalAttrs: {
     inherit (finalAttrs) src;
     nativeBuildInputs = [ nodejs ];
     postPatch = patchManifest;
-    hash = "sha256-p4uALt5vuWnFnnJnNAmPDW10DEGnfbjEC1BhQ9CyLDE=";
+    hash = "sha256-UpvNMZJ+54w8kdllRFDWG57OnnZFnFe8sLJrjpg1ZQg=";
   };
 
   postPatch = patchManifest;
@@ -60,14 +59,16 @@ buildNpmPackage (finalAttrs: {
 
   nativeBuildInputs = [ makeWrapper ];
 
-  # The web profile sets `patchReload: live`, which makes the launcher mount
-  # alpha.2's @deepseek-ai/dsh-hmr. HMR reaches Node's internal ESM loader
-  # through --expose-internals; alpha.2's profile resolution (PluginPackages)
-  # reaches the same modules through node-addon-require-builtin, and that
-  # addon cannot read V8 internals on Node >= 26 or against Nix's Node builds.
-  # Start node with the flag HMR checks for, and read those internals through
-  # createRequire in dsh-app-boot instead of the addon -- the exposed-internals
-  # require path works on every supported Node line.
+  # The base bundle mounts @deepseek-ai/dsh-hmr (the `hmr` row, enabled
+  # wherever a profile composes), and the HMR service refuses to start
+  # without --expose-internals on the node argv. HMR reads Node's internal
+  # modules through that flag first and falls back to
+  # node-addon-require-builtin; dsh-app-boot's profile resolution goes
+  # straight through the addon, and that addon cannot read V8 internals on
+  # Node >= 26 or against Nix's Node builds. Start node with the flag HMR
+  # checks for, and read those internals through createRequire in
+  # dsh-app-boot instead of the addon -- the exposed-internals require path
+  # works on every supported Node line.
   #
   # The persistent-shell PTY backend (`dsh-terminal-bash`) defaults its bash
   # executable to /bin/bash, which NixOS does not ship. Every shell call in a
@@ -108,9 +109,15 @@ buildNpmPackage (finalAttrs: {
     # /home, ...) and reports the index missing even though one exists at the
     # workspace. State the cwd the way `standard` does; drop this block to keep
     # the preset's shipped training prompt byte-for-byte.
-    minimal="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-agent-presets/presets/minimal/agent.cordis.yml"
+    #
+    # 0.2.x moved the shipped presets out of dsh-agent-presets: each is now a
+    # `@deepseek-ai/dsh-agent-preset` declaration row in dsh-web-app's
+    # presets/<id>.patch.yml, and `minimal`'s persona row lives in
+    # presets/minimal.patch.yml. Insert the suffix line after the prefix line,
+    # matching that file's indentation.
+    minimal="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-web-app/presets/minimal.patch.yml"
     chmod u+w "$minimal"
-    awk '{ print } /^    prefix: You are a helpful software engineer assistant\.$/ { print "    suffix: Your working directory is {{cwd}}." }' "$minimal" > "$minimal.tmp"
+    awk '{ print } /^              prefix: You are a helpful software engineer assistant\.$/ { print "              suffix: Your working directory is {{cwd}}." }' "$minimal" > "$minimal.tmp"
     mv "$minimal.tmp" "$minimal"
 
     rm -f "$out/bin/dsh"
