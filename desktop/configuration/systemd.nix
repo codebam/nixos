@@ -128,12 +128,12 @@
           echo "Using AMD GPU at $GPU_CARD"
 
           # Apply clock and voltage settings
-          echo "s 0 500" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "s 1 3050" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "m 0 97" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "m 1 1275" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "vo -35" > "$GPU_CARD/device/pp_od_clk_voltage"
-          echo "c" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "s 0 500" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "s 1 3050" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "m 0 97" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "m 1 1275" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "vo -35" > "$GPU_CARD/device/pp_od_clk_voltage"
+          # echo "c" > "$GPU_CARD/device/pp_od_clk_voltage"
 
           # Dynamically find the hwmon directory and apply a safe power limit
           # Replace 350000000 (350W) with your verified safe max value
