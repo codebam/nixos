@@ -3,7 +3,7 @@ _:
 {
   chaotic = {
     mesa-git = {
-      enable = false;
+      enable = true;
       fallbackSpecialisation = false;
     };
   };
