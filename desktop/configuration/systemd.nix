@@ -139,7 +139,7 @@
           # Replace 350000000 (350W) with your verified safe max value
           for cap_file in "$GPU_CARD/device/hwmon"/hwmon*/power1_cap; do
             if [ -f "$cap_file" ]; then
-              echo "334000000" > "$cap_file"
+              echo "402000000" > "$cap_file"
             fi
           done
 
