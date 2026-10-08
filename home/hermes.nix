@@ -358,6 +358,12 @@ in
       TELEGRAM_WEBHOOK_URL = "https://tg.codebam.ca/telegram";
       TELEGRAM_WEBHOOK_PORT = "8443";
       TELEGRAM_WEBHOOK_HOST = "127.0.0.1";
+      # Home channel: the /sethome target for Sean's DM -- where gateway
+      # notices, cron deliveries, and bare `telegram` sends land. Seeded from
+      # these at gateway start; pinned because a value that lives only in
+      # $HERMES_HOME/.env does not survive activation, which regenerates it.
+      TELEGRAM_HOME_CHANNEL = "69148517";
+      TELEGRAM_HOME_CHANNEL_NAME = "Sean";
     };
     gateway.enable = true;
 
