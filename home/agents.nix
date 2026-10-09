@@ -67,6 +67,22 @@ let
       OPENCODE_API_KEY=$(cat "$go_secret")
       export OPENCODE_API_KEY
     fi
+
+    # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1),
+    # used by the `nano-gpt` provider/route in pi's models.json, dsh's
+    # llm-pi-ai profile, and Hermes. Two names, one secret: NANOGPT_API_KEY
+    # is the name NanoGPT's own docs use; NANO_GPT_API_KEY is the name
+    # models.dev lists for its `nano-gpt` provider and what opencode2 and
+    # the desktop client resolve provider credentials from, so the full
+    # models.dev catalog needs no provider block in opencode.json -- the
+    # same mechanism as OpenCode Go above.
+    nanogpt_secret=/run/secrets/nanogpt-api-key
+    if [ -r "$nanogpt_secret" ]; then
+      NANOGPT_API_KEY=$(cat "$nanogpt_secret")
+      export NANOGPT_API_KEY
+      NANO_GPT_API_KEY=$NANOGPT_API_KEY
+      export NANO_GPT_API_KEY
+    fi
   '';
 
   # dsh's launch environment: the shared agent keys plus both OpenCode Go
@@ -330,6 +346,154 @@ let
       };
     };
   };
+
+  # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
+  # the curated selection for the fleet -- three models, deliberately, not the
+  # 600-plus-model catalog. opencode needs no declaration at all: models.dev
+  # carries the `nano-gpt` provider with the full catalog, keyed from
+  # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
+  # so this list is the single source their projections below read.
+  #
+  # Metadata is from the provider's own /api/v1/models?detailed=true, checked
+  # against models.dev's copy (both live 2026-10-08): `efforts` are the wire
+  # values the gateway's reasoning_effort parameter accepts, `cost` is USD per
+  # million tokens with NanoGPT's cache-read rate, and `vision` mirrors the
+  # capabilities block.
+  nanogptModels = [
+    {
+      id = "deepseek/deepseek-v4.1-flash";
+      name = "DeepSeek V4.1 Flash";
+      context = 1000000;
+      output = 384000;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "none"
+        "low"
+        "high"
+        "max"
+      ];
+      cost = {
+        input = 0.13;
+        output = 0.52;
+        cacheRead = 0.006;
+      };
+    }
+    {
+      id = "xiaomi/mimo-v2.6-flash";
+      name = "MiMo V2.6 Flash";
+      context = 1048576;
+      output = 131072;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "none"
+        "high"
+      ];
+      cost = {
+        input = 0.14;
+        output = 0.28;
+        cacheRead = 0.003;
+      };
+    }
+    {
+      id = "xiaomi/mimo-v2.6-pro";
+      name = "MiMo V2.6 Pro";
+      context = 1048576;
+      output = 131072;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "none"
+        "high"
+      ];
+      cost = {
+        input = 0.435;
+        output = 0.87;
+        cacheRead = 0.004;
+      };
+    }
+  ];
+
+  # pi's models.json shape. `nano-gpt` is a new provider rather than an
+  # override of a built-in, so it names the endpoint and protocol itself. The
+  # compat block is not optional: pi cannot recognise the endpoint, and
+  # without it the `developer` role, `store`, and the max_completion_tokens
+  # spelling would reach a gateway that follows the classic chat-completions
+  # shape. thinkingLevelMap offers exactly the reasoning_effort levels the
+  # gateway reports for a model and hides the rest, with off spelled as the
+  # gateway's "none".
+  nanogptPiModels = map (
+    model:
+    {
+      inherit (model) id name;
+      reasoning = model.efforts != [ ];
+      input =
+        if model.vision then
+          [
+            "text"
+            "image"
+          ]
+        else
+          [ "text" ];
+      contextWindow = model.context;
+      maxTokens = model.output;
+      cost = {
+        input = model.cost.input;
+        output = model.cost.output;
+        cacheRead = model.cost.cacheRead;
+        cacheWrite = 0;
+      };
+    }
+    // lib.optionalAttrs (model.efforts != [ ]) {
+      thinkingLevelMap = {
+        off = if builtins.elem "none" model.efforts then "none" else null;
+        minimal = null;
+        low = if builtins.elem "low" model.efforts then "low" else null;
+        medium = if builtins.elem "medium" model.efforts then "medium" else null;
+        high = if builtins.elem "high" model.efforts then "high" else null;
+        xhigh = if builtins.elem "xhigh" model.efforts then "xhigh" else null;
+        max = if builtins.elem "max" model.efforts then "max" else null;
+      };
+    }
+  ) nanogptModels;
+
+  # dsh's llm-pi-ai route takes the same catalog as YAML. Every emitted line
+  # carries its final indentation: the route sits at the same depth as dsh's
+  # other hand-declared routes, and the heredoc dedent only strips the
+  # literal indent before the interpolation. dsh's reasoningEfforts key means
+  # "selectable": only the levels the gateway reports are emitted, and an
+  # unsupported level stays hidden (an explicit empty `off:` would declare it
+  # selectable and send nothing).
+  nanogptDshModelYaml =
+    model:
+    lib.concatStringsSep "\n" (
+      [
+        "        - id: ${model.id}"
+        "          name: ${model.name}"
+        "          contextWindow: ${toString model.context}"
+        "          maxTokens: ${toString model.output}"
+        "          input:"
+        "            - text"
+      ]
+      ++ lib.optional model.vision "            - image"
+      ++ (
+        if model.efforts == [ ] then
+          [ "          reasoningEfforts: false" ]
+        else
+          [ "          reasoningEfforts:" ]
+          ++ lib.optional (builtins.elem "none" model.efforts) "            off: none"
+          ++ lib.optional (builtins.elem "low" model.efforts) "            low: low"
+          ++ lib.optional (builtins.elem "medium" model.efforts) "            medium: medium"
+          ++ lib.optional (builtins.elem "high" model.efforts) "            high: high"
+          ++ lib.optional (builtins.elem "xhigh" model.efforts) "            xhigh: xhigh"
+          ++ lib.optional (builtins.elem "max" model.efforts) "            max: max"
+      )
+    );
+
+  nanogptDshModelsYaml = lib.concatStringsSep "\n" (
+    [ "      models:" ] ++ map nanogptDshModelYaml nanogptModels
+  );
 
   # Headroom opencode keeps before it auto-compacts; see `compaction` below.
   compactionReserved = 20000;
@@ -1169,6 +1333,23 @@ let
         ];
       };
 
+      # NanoGPT (OpenAI-compatible gateway). Like Ollama this is a provider
+      # pi does not ship, so endpoint, protocol, auth, and the curated
+      # catalog live here; model metadata is projected from nanogptModels
+      # above.
+      "nano-gpt" = {
+        api = "openai-completions";
+        apiKey = "$NANOGPT_API_KEY";
+        baseUrl = "https://nano-gpt.com/api/v1";
+        compat = {
+          supportsDeveloperRole = false;
+          supportsReasoningEffort = true;
+          supportsStore = false;
+          maxTokensField = "max_tokens";
+        };
+        models = nanogptPiModels;
+      };
+
       openrouter.models = [
         {
           id = codingModel;
@@ -1831,21 +2012,40 @@ let
                 - text
                 - image
               reasoningEfforts: false
+
+        # NanoGPT's OpenAI-compatible gateway. Not a pi-ai catalog route, so
+        # this profile is the whole declaration: endpoint, protocol, credential
+        # reference, compat, and the curated model list (nanogptModels above,
+        # projected to YAML by nanogptDshModelsYaml). The compat block mirrors
+        # pi's models.json -- pi-ai cannot recognise the endpoint, so `store`,
+        # the `developer` role, and the max_completion_tokens spelling would
+        # otherwise reach a gateway shaped like classic chat-completions.
+        nano-gpt:
+          displayName: NanoGPT
+          apiKeyEnv: NANOGPT_API_KEY
+          api: openai-completions
+          baseURL: https://nano-gpt.com/api/v1
+          compat:
+            supportsStore: false
+            supportsDeveloperRole: false
+            supportsReasoningEffort: true
+            maxTokensField: max_tokens
+    ${nanogptDshModelsYaml}
   '';
 
-  # Hermes' token-plan providers. The upstream module ships built-in catalogs
-  # for OpenCode Go and DeepSeek, which the extended hermes-env template in
-  # desktop/configuration/sops.nix unlocks with OPENCODE_GO_API_KEY /
-  # DEEPSEEK_API_KEY; home/hermes.nix keeps OpenRouter pinned as the startup
-  # default. The Qwen Cloud Token Plan below has no Hermes catalog and points
-  # at the wrong endpoint out of the box:
+  # Hermes' hand-declared model providers. The upstream module ships built-in
+  # catalogs for OpenCode Go and DeepSeek, which the extended hermes-env
+  # template in desktop/configuration/sops.nix unlocks with
+  # OPENCODE_GO_API_KEY / DEEPSEEK_API_KEY; home/hermes.nix keeps OpenRouter
+  # pinned as the startup default. The Qwen Cloud Token Plan below has no
+  # Hermes catalog and points at the wrong endpoint out of the box:
   #
   #   - Qwen Cloud's Token Plan speaks Anthropic Messages (the vendor's
   #     opencode recipe), while Hermes' built-in `alibaba` provider speaks
   #     OpenAI-compatible DashScope; declare the vendor endpoint directly.
   #
-  # Model metadata is projected from the same qwenProvider shape the other
-  # harnesses use, so the plan list cannot drift between agents.
+  # Model metadata is projected from the same qwenProvider/nanogptModels
+  # shapes the other harnesses use, so the lists cannot drift between agents.
   hermesProviderModels = {
     qwen-token-plan = lib.mapAttrs (_: model: {
       context_length = model.limit.context;
@@ -1853,6 +2053,18 @@ let
       supports_tools = model.tool_call or false;
       supports_vision = builtins.elem "image" (model.modalities.input or [ ]);
     }) qwenProvider.qwen.models;
+
+    nanogpt = builtins.listToAttrs (
+      map (model: {
+        name = model.id;
+        value = {
+          context_length = model.context;
+          supports_reasoning = model.efforts != [ ];
+          supports_tools = model.tool_call;
+          supports_vision = model.vision;
+        };
+      }) nanogptModels
+    );
   };
 
   hermesProviders = {
@@ -1865,6 +2077,16 @@ let
       # the declared list instead of probing it.
       discover_models = false;
       models = hermesProviderModels.qwen-token-plan;
+    };
+
+    nano-gpt = {
+      name = "NanoGPT";
+      api = "https://nano-gpt.com/api/v1";
+      key_env = "NANOGPT_API_KEY";
+      transport = "chat_completions";
+      # Same reason as Qwen: the curated nanogptModels list is the catalog.
+      discover_models = false;
+      models = hermesProviderModels.nanogpt;
     };
   };
 
