@@ -372,16 +372,17 @@ in
     # selection or an upstream default from silently changing what every turn
     # lands on. The OpenCode Go subscription is the default because both
     # subscriptions sit in the credential pool, so a spent one rotates to the
-    # second mid-session; deepseek-v4.1-flash is the id the Go relay (a flat
-    # namespace, no vendor prefixes) and models.dev both carry for
-    # DeepSeek-V4.1-Flash. The direct DeepSeek API calls the same model
-    # deepseek-flash, which is why the override below still keys off that id.
+    # second mid-session. mimo-v2.6-pro is the id the Go relay (a flat
+    # namespace, no vendor prefixes) and models.dev both carry for Xiaomi
+    # MiMo-V2.6-Pro (multimodal reasoning, 1M context, 131k output). The
+    # override below keys off the direct DeepSeek API's deepseek-flash id and
+    # stays dormant on this route.
     settings = {
       model = {
         # Empty base_url clears the OpenRouter URL persisted by the previous
         # default so the built-in OpenCode Go endpoint wins.
         base_url = "";
-        default = "deepseek-v4.1-flash";
+        default = "mimo-v2.6-pro";
         provider = "opencode-go";
       };
       # Standing operator notes for every session. In this Hermes revision
