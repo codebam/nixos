@@ -394,7 +394,7 @@ in
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
-      "Mod4+Shift+p" = "shell power";
+      # "Mod4+Shift+p" = "shell power";
     }
     # Press to start dictating, press again to stop and transcribe the whole
     # take. Both keys sit under the left hand, and `Mod4+c` is otherwise unused
