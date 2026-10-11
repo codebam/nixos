@@ -14,9 +14,16 @@
       # Not on the desktop itself, which would be asking a service on this
       # machine for paths this machine already has -- and would block on the
       # connect timeout whenever tailscale is down.
+      #
+      # The tailnet FQDN, not the bare `nixos-desktop`: MagicDNS answers the
+      # short name only via the search domain in resolv.conf, which curl and
+      # getent apply but nix's resolver does not. Nix then times out on it,
+      # `fallback = true` silently drops the cache, and a rebuild that should
+      # substitute becomes a source build -- including the viewport flakes
+      # this cache exists to hand out.
       extra-substituters = lib.optional (
         config.networking.hostName != "nixos-desktop"
-      ) "http://nixos-desktop:5000";
+      ) "http://nixos-desktop.tail7d7a2.ts.net:5000";
       extra-trusted-public-keys = lib.optional (
         config.networking.hostName != "nixos-desktop"
       ) "nixos-desktop-1:YsdpYxRpYwHAN8WFWJhTU9kC1QWc4OqacfZaPfe/ey8=";
