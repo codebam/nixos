@@ -435,6 +435,12 @@ in
       "Alt+Return" = "exec ${terminalCommand}";
       # The built-in chords a keyboard without a Super key cannot type.
       "Alt+d" = "shell launcher";
+      # Scrolling mode's resize: `defaults` binds Mod4+r to cycling the
+      # focused column through niri's preset widths (1/3, 1/2, 2/3, full).
+      # A Super key is one the deck's own controls cannot send, so the chord
+      # has to be reachable without one -- it was the one built-in the Alt
+      # list below was still missing.
+      "Alt+r" = "shell layout.column.width";
       "Alt+Shift+q" = "close";
       "Alt+Tab" = "shell layout.focus next";
       "Alt+Shift+Tab" = "shell layout.focus prev";
