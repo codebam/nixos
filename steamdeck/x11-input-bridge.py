@@ -20,7 +20,7 @@ Usage: x11-input-bridge.py [x-socket] [log-file] [debug]
 """
 import socket, struct, os, sys, time, array, fcntl, re
 
-SOCK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/.X11-unix/X0'
+SOCK = sys.argv[1] if len(sys.argv) > 1 else None  # optional preferred socket
 LOG = sys.argv[2] if len(sys.argv) > 2 else '/tmp/vpinput/bridge.log'
 DEBUG = len(sys.argv) > 3 and sys.argv[3] == 'debug'
 
@@ -148,8 +148,39 @@ def real_key_state():
 
 
 def connect_x():
+    # Xwayland's display number increments on every session restart (:0, :1,
+    # :2, ...) and dead sockets stay behind in /tmp/.X11-unix, so a hardcoded
+    # X0 ends up retrying a stale socket forever. Try the explicit socket
+    # first when given, then every candidate; the live one answers the setup
+    # handshake.
+    cands: list = []
+    if SOCK:
+        cands.append(SOCK)
+    try:
+        for f in sorted(os.listdir('/tmp/.X11-unix')):
+            if f.startswith('X') and f[1:].isdigit():
+                p = '/tmp/.X11-unix/' + f
+                if p not in cands:
+                    cands.append(p)
+    except Exception:
+        pass
+    if not cands:
+        cands = ['/tmp/.X11-unix/X0']
+    last = None
+    for path in cands:
+        try:
+            return try_connect(path)
+        except Exception as e:
+            last = e
+            continue
+    raise last if last else RuntimeError('no X socket answered')
+
+
+def try_connect(path):
     s = socket.socket(socket.AF_UNIX)
-    s.connect(SOCK)
+    s.settimeout(3)
+    s.connect(path)
+    s.settimeout(None)
     req = struct.pack('<BBHHHH', 0x6c, 0, 11, 0, 0, 0) + struct.pack('<H', 0)
     s.send(req)
     hdr = read_exact(s, 8)
