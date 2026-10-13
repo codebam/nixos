@@ -28,6 +28,15 @@ EV_SYN, EV_KEY, EV_REL = 0, 1, 2
 REL_X, REL_Y = 0, 1
 BTN_LEFT, BTN_RIGHT, BTN_MIDDLE = 0x110, 0x111, 0x112
 MODIFIERS = {29, 97, 42, 54, 56, 100, 125, 126}  # ctrl/shift/alt/meta both sides
+# System control keys: systemd-logind turns KEY_POWER/KEY_SUSPEND/KEY_SLEEP/...
+# events from ANY input device into suspend/hibernate actions, so a synthetic
+# XF86Suspend relayed through here can sleep the machine mid-session (seen on
+# the Deck: phantom suspends while the launcher was open -- logind logged
+# "Suspend key pressed short" with nobody touching the power button). Never
+# mirror these keys, and never advertise their keybits, so logind has no
+# reason to treat this device as a power button at all.
+DENY_KEYS = {116, 142, 143, 205, 206, 248}  # POWER SLEEP WAKEUP SUSPEND POWER2 HIBERNATE
+DENIED_LOGGED: set = set()
 
 UI_SET_EVBIT = 0x40045564
 UI_SET_KEYBIT = 0x40045565
@@ -98,10 +107,11 @@ def make_uinput(name, rel=False):
     else:
         i = 1
         while i < 249:
-            try:
-                fcntl.ioctl(fd, UI_SET_KEYBIT, i)
-            except Exception:
-                pass
+            if i not in DENY_KEYS:
+                try:
+                    fcntl.ioctl(fd, UI_SET_KEYBIT, i)
+                except Exception:
+                    pass
             i += 1
     nm = name.encode() + b'\0' * (80 - len(name))
     setup = struct.pack('<HHHH', 0x0003, 0x28de, 0x1205, 1) + nm + struct.pack('<I', 0)
@@ -262,7 +272,11 @@ def main():
                 while i < 256:
                     if ((cur >> i) % 2) != ((prev >> i) % 2):
                         code = i - 8
-                        if code in real:
+                        if code in DENY_KEYS:
+                            if code not in DENIED_LOGGED:
+                                DENIED_LOGGED.add(code)
+                                log('refusing to mirror system key code=%d' % code)
+                        elif code in real:
                             pass  # a real key: the compositor already saw it
                         elif (cur >> i) % 2:
                             downs.append(code)
