@@ -267,6 +267,19 @@ def main():
                 log('hb %064x keys' % cur)
             if cur != prev:
                 real = real_key_state()
+                # A keymap swap -- Xwayland reconfiguring the keyboard at
+                # session start, Steam grabbing the controller -- flips dozens
+                # of state bits at once, and mirroring that reads as a phantom
+                # flood of keypresses: it fires calculator/WWW/file-manager
+                # action keys and browser shortcuts in whatever is focused
+                # ("pressing a back button opened random apps"). Real input
+                # never changes more than a few keys in one poll, so treat a
+                # mass change as a resync instead of as input.
+                changed = bin(cur ^ prev).count('1')
+                if changed > 10:
+                    log('resync: %d key state bits changed at once (keymap swap?)' % changed)
+                    prev = cur
+                    continue
                 downs, ups = [], []
                 i = 8
                 while i < 256:
