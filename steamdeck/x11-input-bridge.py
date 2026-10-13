@@ -1,0 +1,301 @@
+#!/usr/bin/env python3
+"""Mirror XTEST input from Xwayland into uinput devices the compositor reads.
+
+Why this exists on the Deck: Steam Input delivers the back-button chords (and
+Steam's trackpad mouse) as XTEST events inside Xwayland. A rootless Xwayland
+never hands synthetic input back to the Wayland compositor, so the chords
+reached no binding and the pointer never reached a seat -- the session showed
+no cursor at all. This process watches the X server's own key state (and
+pointer) at a high rate and re-emits everything the kernel did not already
+see (i.e. synthetic input) through two virtual devices: a keyboard and a
+mouse. Keys are emitted modifiers-first so a chord (Alt+R, Alt+Shift+Q, ...)
+forms for the compositor's binding matcher; the pointer becomes relative
+motion plus button events.
+
+Device ids 28de:1205 (the Valve vendor) are deliberate: the Deck's udev rules
+tag Valve-vendor input devices for the seat, which is what gives the
+compositor (and this user) access to them.
+
+Usage: x11-input-bridge.py [x-socket] [log-file] [debug]
+"""
+import socket, struct, os, sys, time, array, fcntl, re
+
+SOCK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/.X11-unix/X0'
+LOG = sys.argv[2] if len(sys.argv) > 2 else '/tmp/vpinput/bridge.log'
+DEBUG = len(sys.argv) > 3 and sys.argv[3] == 'debug'
+
+EV_SYN, EV_KEY, EV_REL = 0, 1, 2
+REL_X, REL_Y = 0, 1
+BTN_LEFT, BTN_RIGHT, BTN_MIDDLE = 0x110, 0x111, 0x112
+MODIFIERS = {29, 97, 42, 54, 56, 100, 125, 126}  # ctrl/shift/alt/meta both sides
+
+UI_SET_EVBIT = 0x40045564
+UI_SET_KEYBIT = 0x40045565
+UI_SET_RELBIT = 0x40045566
+UI_DEV_SETUP = 0x405c5503
+UI_DEV_CREATE = 0x5501
+
+LAST_MOTION_LOG = [0.0]
+REAL_KBD: list = [None]  # resolved lazily from /proc/bus/input/devices
+
+
+def log(msg):
+    try:
+        os.makedirs(os.path.dirname(LOG), exist_ok=True)
+        with open(LOG, 'a') as f:
+            f.write('%s %s\n' % (time.strftime('%H:%M:%S'), msg))
+    except Exception:
+        pass
+
+
+def read_exact(s, n):
+    b = b''
+    while len(b) < n:
+        c = s.recv(n - len(b))
+        if not c:
+            raise EOFError('closed')
+        b += c
+    return b
+
+
+def drain(s, wait=0.35):
+    s.settimeout(wait)
+    data = b''
+    try:
+        while True:
+            c = s.recv(4096)
+            if not c:
+                break
+            data += c
+    except Exception:
+        pass
+    return data
+
+
+def find_real_kbd():
+    """the event node of the physical AT keyboard, by name (numbers drift)"""
+    try:
+        with open('/proc/bus/input/devices') as f:
+            for block in f.read().split('\n\n'):
+                if 'AT Translated Set 2 keyboard' in block:
+                    m = re.search(r'event(\d+)', block)
+                    if m:
+                        return '/dev/input/event%s' % m.group(1)
+    except Exception:
+        pass
+    return None
+
+
+def make_uinput(name, rel=False):
+    fd = os.open('/dev/uinput', os.O_WRONLY | os.O_NONBLOCK)
+    fcntl.ioctl(fd, UI_SET_EVBIT, EV_KEY)
+    if rel:
+        fcntl.ioctl(fd, UI_SET_EVBIT, EV_REL)
+        fcntl.ioctl(fd, UI_SET_RELBIT, REL_X)
+        fcntl.ioctl(fd, UI_SET_RELBIT, REL_Y)
+        for code in (BTN_LEFT, BTN_RIGHT, BTN_MIDDLE):
+            fcntl.ioctl(fd, UI_SET_KEYBIT, code)
+    else:
+        i = 1
+        while i < 249:
+            try:
+                fcntl.ioctl(fd, UI_SET_KEYBIT, i)
+            except Exception:
+                pass
+            i += 1
+    nm = name.encode() + b'\0' * (80 - len(name))
+    setup = struct.pack('<HHHH', 0x0003, 0x28de, 0x1205, 1) + nm + struct.pack('<I', 0)
+    fcntl.ioctl(fd, UI_DEV_SETUP, setup)
+    fcntl.ioctl(fd, UI_DEV_CREATE)
+    return fd
+
+
+def ev(fd, etype, code, value):
+    now = time.time()
+    sec = int(now)
+    usec = int((now - sec) * 1e6)
+    os.write(fd, struct.pack('<qqHHi', sec, usec, etype, code, value))
+
+
+def emit_key(fd, code, value):
+    ev(fd, EV_KEY, code, value)
+    ev(fd, EV_SYN, 0, 0)
+
+
+def real_key_state():
+    """evdev keycodes currently down on the physical keyboard"""
+    if REAL_KBD[0] is None:
+        REAL_KBD[0] = find_real_kbd()
+    if REAL_KBD[0] is None:
+        return set()
+    buf = array.array('B', [0] * 96)
+    try:
+        fd = os.open(REAL_KBD[0], os.O_RDONLY | os.O_NONBLOCK)
+        req = 0x80000000 | (96 << 16) | (0x45 << 8) | 0x18  # EVIOCGKEY
+        fcntl.ioctl(fd, req, buf, True)
+        os.close(fd)
+    except Exception:
+        REAL_KBD[0] = None  # re-resolve next time
+        return set()
+    out = set()
+    i = 0
+    while i < 96 * 8:
+        b, r = divmod(i, 8)
+        if (buf[b] >> r) % 2:
+            out.add(i)
+        i += 1
+    return out
+
+
+def connect_x():
+    s = socket.socket(socket.AF_UNIX)
+    s.connect(SOCK)
+    req = struct.pack('<BBHHHH', 0x6c, 0, 11, 0, 0, 0) + struct.pack('<H', 0)
+    s.send(req)
+    hdr = read_exact(s, 8)
+    if hdr[0] != 1:
+        raise ValueError('X connect refused')
+    extra = int.from_bytes(hdr[6:8], 'little') * 4
+    body = read_exact(s, extra)
+    # Find the screen's root window: width/height fields sit 20 bytes after
+    # the screen's root window id in the setup body. The reply length is
+    # taken from a live query (Xwayland's QueryPointer reply carries four
+    # trailing bytes past the spec size).
+    root, ptr_size = None, None
+    for pat in (struct.pack('<HH', 1280, 800), struct.pack('<HH', 800, 1280),
+                struct.pack('<HH', 1280, 720), struct.pack('<HH', 1920, 1080),
+                struct.pack('<HH', 1024, 768), struct.pack('<HH', 640, 480)):
+        for m in re.finditer(re.escape(pat), body):
+            cand = struct.unpack('<I', body[m.start() - 20:m.start() - 16])[0]
+            if cand < 256:
+                continue
+            s.send(struct.pack('<BBHI', 38, 0, 2, cand))
+            data = drain(s, 0.3)
+            if len(data) >= 28 and data[0] == 1:
+                rx, ry = struct.unpack('<hh', data[16:20])
+                if 0 <= rx <= 8192 and 0 <= ry <= 8192:
+                    root, ptr_size = cand, len(data)
+                    break
+        if root:
+            break
+    log('connected: root=%s ptr_reply=%s' % (hex(root) if root else 'none', ptr_size))
+    return s, root, ptr_size
+
+
+def query_keymap(s):
+    s.send(struct.pack('<BBH', 44, 0, 1))
+    read_exact(s, 8)
+    raw = read_exact(s, 32)
+    v = 0
+    i = 0
+    while i < 32:
+        v |= raw[i] << (8 * i)
+        i += 1
+    return v
+
+
+def query_pointer(s, root, ptr_size):
+    s.send(struct.pack('<BBHI', 38, 0, 2, root))
+    read_exact(s, 8)
+    return read_exact(s, ptr_size - 8)
+
+
+def main():
+    kbd = make_uinput('viewport-x11-bridge', rel=False)
+    mouse = make_uinput('viewport-x11-bridge-mouse', rel=True)
+    log('uinput devices created')
+    time.sleep(6)  # let the seat hand us an ACL before anyone needs it
+    while True:
+        try:
+            xs, root, ptr_size = connect_x()
+            break
+        except Exception as e:
+            log('waiting for X at %s: %r' % (SOCK, e))
+            time.sleep(3)
+    prev = query_keymap(xs)
+    prev_pos = None
+    prev_mask = 0
+    prev_body = [b'']
+    log('bridge up prev=%064x' % prev)
+    loops = 0
+    while True:
+        try:
+            cur = query_keymap(xs)
+            loops += 1
+            if loops % 2000 == 0:
+                log('hb %064x keys' % cur)
+            if cur != prev:
+                real = real_key_state()
+                downs, ups = [], []
+                i = 8
+                while i < 256:
+                    if ((cur >> i) % 2) != ((prev >> i) % 2):
+                        code = i - 8
+                        if code in real:
+                            pass  # a real key: the compositor already saw it
+                        elif (cur >> i) % 2:
+                            downs.append(code)
+                        else:
+                            ups.append(code)
+                    i += 1
+                # modifiers first on the way down, last on the way up
+                downs.sort(key=lambda c: 0 if c in MODIFIERS else 1)
+                ups.sort(key=lambda c: 1 if c in MODIFIERS else 0)
+                for code, value, what in [(c, 1, 'down') for c in downs] + [(c, 0, 'up') for c in ups]:
+                    try:
+                        emit_key(kbd, code, value)
+                        log('mirror %s code=%d val=%d' % (what, code, value))
+                    except Exception as e3:
+                        log('emit failed code=%d: %r' % (code, e3))
+                prev = cur
+            if root and loops % 2 == 0:
+                body = query_pointer(xs, root, ptr_size)
+                rx, ry = struct.unpack('<hh', body[8:12])
+                mask = struct.unpack('<H', body[16:18])[0]
+                if body != prev_body[0]:
+                    if DEBUG:
+                        log('ptr_raw %s (rx=%d ry=%d mask=%04x)' % (body.hex(), rx, ry, mask))
+                    prev_body[0] = body
+                if prev_pos is None:
+                    prev_pos = (rx, ry)
+                    prev_mask = mask
+                else:
+                    dx, dy = rx - prev_pos[0], ry - prev_pos[1]
+                    if dx or dy:
+                        if abs(dx) <= 300 and abs(dy) <= 300:
+                            ev(mouse, EV_REL, REL_X, dx)
+                            ev(mouse, EV_REL, REL_Y, dy)
+                            ev(mouse, EV_SYN, 0, 0)
+                            if time.time() - LAST_MOTION_LOG[0] > 1.0:
+                                LAST_MOTION_LOG[0] = time.time()
+                                log('motion %d %d (at %d,%d)' % (dx, dy, rx, ry))
+                        prev_pos = (rx, ry)
+                    if mask != prev_mask:
+                        for bit, code in ((0x100, BTN_LEFT), (0x200, BTN_RIGHT), (0x400, BTN_MIDDLE)):
+                            was = 1 if prev_mask % (bit * 2) >= bit else 0
+                            now = 1 if mask % (bit * 2) >= bit else 0
+                            if was != now:
+                                emit_key(mouse, code, now)
+                                log('mirror mouse %s' % ('down' if now else 'up'))
+                        prev_mask = mask
+        except Exception as e:
+            log('error: %r' % e)
+            try:
+                xs.close()
+            except Exception:
+                pass
+            time.sleep(2)
+            while True:
+                try:
+                    xs, root, ptr_size = connect_x()
+                    prev = query_keymap(xs)
+                    prev_pos = None
+                    break
+                except Exception as e2:
+                    log('reconnect failed: %r' % e2)
+                    time.sleep(3)
+        time.sleep(0.002)
+
+
+if __name__ == '__main__':
+    main()

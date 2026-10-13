@@ -89,6 +89,28 @@
     };
   };
 
+  # Steam Input delivers the back-button chords and Steam's trackpad mouse as
+  # XTEST events inside Xwayland, and a rootless Xwayland never hands
+  # synthetic input back to the compositor: the chords matched no binding and
+  # the pointer never reached a seat, so the session had no visible cursor.
+  # The bridge mirrors Xwayland's key state and pointer into uinput devices
+  # the compositor reads like any other input (see steamdeck/x11-input-bridge.py).
+  # It rides the Viewport session: the compositor starts that target, and the
+  # script waits for Xwayland's socket on its own.
+  systemd.user.services.viewport-x11-bridge = {
+    Unit = {
+      Description = "mirror Xwayland XTEST input (Steam Input chords, mouse) into uinput";
+      After = [ "viewport-session.target" ];
+      PartOf = [ "viewport-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.python3}/bin/python3 ${./x11-input-bridge.py}";
+      Restart = "always";
+      RestartSec = 3;
+    };
+    Install.WantedBy = [ "viewport-session.target" ];
+  };
+
   programs = {
     git = {
       signing = {
