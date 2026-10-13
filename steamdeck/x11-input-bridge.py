@@ -37,6 +37,33 @@ MODIFIERS = {29, 97, 42, 54, 56, 100, 125, 126}  # ctrl/shift/alt/meta both side
 # reason to treat this device as a power button at all.
 DENY_KEYS = {116, 142, 143, 205, 206, 248}  # POWER SLEEP WAKEUP SUSPEND POWER2 HIBERNATE
 DENIED_LOGGED: set = set()
+# Keys the controller's desktop layout can actually send (the layout's own
+# key_press list): the four back-button chords (Alt+R, Alt+D, Alt+Shift+Q,
+# Alt+Tab), the pad buttons that fake Esc/Enter/Space/arrows, F8, modifiers.
+# Xwayland re-applies its keymap (session start) and Steam churns its
+# controller configs (live previews) by dragging a machine-generated key
+# carousel across the whole keycode space; without this gate the bridge
+# mirrors that noise too -- volume, brightness, menu and calculator keys
+# landing in whatever is focused -- and the rolling edges of the carousel
+# slip under the mass-change resync. Anything not in this set is churn.
+ALLOW_KEYS = {
+    1,    # ESC
+    15,   # TAB
+    16,   # Q
+    19,   # R
+    28,   # ENTER
+    29,   # LEFT_CTRL
+    32,   # D
+    42,   # LEFT_SHIFT
+    56,   # LEFT_ALT
+    57,   # SPACE
+    66,   # F8
+    103,  # UP
+    105,  # LEFT
+    106,  # RIGHT
+    108,  # DOWN
+}
+DROPPED_LOGGED: set = set()
 
 UI_SET_EVBIT = 0x40045564
 UI_SET_KEYBIT = 0x40045565
@@ -289,6 +316,10 @@ def main():
                             if code not in DENIED_LOGGED:
                                 DENIED_LOGGED.add(code)
                                 log('refusing to mirror system key code=%d' % code)
+                        elif code not in ALLOW_KEYS:
+                            if code not in DROPPED_LOGGED:
+                                DROPPED_LOGGED.add(code)
+                                log('dropping non-controller key code=%d (machine churn)' % code)
                         elif code in real:
                             pass  # a real key: the compositor already saw it
                         elif (cur >> i) % 2:
