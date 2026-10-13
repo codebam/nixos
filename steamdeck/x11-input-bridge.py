@@ -12,9 +12,12 @@ mouse. Keys are emitted modifiers-first so a chord (Alt+R, Alt+Shift+Q, ...)
 forms for the compositor's binding matcher; the pointer becomes relative
 motion plus button events.
 
-Device ids 28de:1205 (the Valve vendor) are deliberate: the Deck's udev rules
-tag Valve-vendor input devices for the seat, which is what gives the
-compositor (and this user) access to them.
+Device id 28de:125a is deliberate: vendor 28de (Valve) because the Deck's
+udev rules tag Valve-vendor input devices for the seat (the rule matches on
+vendor only, so any product id keeps the seat access); product 0x125a chosen
+to be novel because 0x1205 IS the Deck controller's own id -- Steam claims
+its own hardware, and a bridge impersonating the controller id is the kind
+of collision that blocks input when the Steam UI enumerates devices.
 
 Usage: x11-input-bridge.py [x-socket] [log-file] [debug]
 """
@@ -141,7 +144,7 @@ def make_uinput(name, rel=False):
                     pass
             i += 1
     nm = name.encode() + b'\0' * (80 - len(name))
-    setup = struct.pack('<HHHH', 0x0003, 0x28de, 0x1205, 1) + nm + struct.pack('<I', 0)
+    setup = struct.pack('<HHHH', 0x0003, 0x28de, 0x125a, 1) + nm + struct.pack('<I', 0)
     fcntl.ioctl(fd, UI_DEV_SETUP, setup)
     fcntl.ioctl(fd, UI_DEV_CREATE)
     return fd
