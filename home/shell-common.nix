@@ -175,14 +175,5 @@
         set -g main-pane-width 60%
       '';
     };
-
-    fzf = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
-      tmux = {
-        enableShellIntegration = true;
-      };
-    };
   };
 }

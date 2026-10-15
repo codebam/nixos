@@ -123,21 +123,6 @@
       nix-direnv.enable = true;
     };
 
-    fzf = {
-      enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
-      enableNushellIntegration = true;
-      # defaultOptions from programs.nix; unlike there, the Ctrl-R widget is
-      # left alone: there is no Atuin on the VM to take it over.
-      defaultOptions = [
-        "--height 40%"
-        "--layout=reverse"
-        "--border"
-        "--inline-info"
-      ];
-    };
-
     nushell = {
       enable = true;
       # shell-common.nix's config minus the two gpgconf lines: there is no
