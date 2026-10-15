@@ -185,9 +185,8 @@ in
       bat
       cloudflared
       dust
-      # Both are bound to tmux popups in home/shell-common.nix by store path;
-      # on PATH as well so they are usable outside tmux.
-      sesh
+      # Bound to a tmux popup in home/shell-common.nix by store path;
+      # on PATH as well so it is usable outside tmux.
       lazygit
       nvtopPackages.amd
       # Discord Rich Presence server for vesktop (ArRPC); drop together

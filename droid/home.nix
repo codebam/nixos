@@ -197,7 +197,7 @@
       keyMode = "vi";
       clock24 = true;
       # Trimmed from shell-common.nix: the desktop-only pieces are gone (the
-      # wl-clipboard yanks need Wayland; the sesh/agent-overview popups have
+      # wl-clipboard yanks need Wayland; the agent-overview popup has
       # no agents to watch here). What stays is the part that matters when a
       # connection can drop: long history, passthrough, and copy-mode.
       extraConfig = ''

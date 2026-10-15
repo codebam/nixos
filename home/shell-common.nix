@@ -155,7 +155,6 @@
         # disturbing the layout the agents are running in. Store paths rather
         # than PATH lookups — a popup gets the login environment, not this
         # shell's, and a missing binary there fails with an empty flash.
-        bind f display-popup -E -w 80% -h 60% "${pkgs.sesh}/bin/sesh connect \"\$(${pkgs.sesh}/bin/sesh list | ${pkgs.fzf}/bin/fzf)\""
         bind g display-popup -E -w 90% -h 90% "${pkgs.lazygit}/bin/lazygit"
         bind - display-popup -E -w 80% -h 70% "$SHELL"
 
