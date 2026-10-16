@@ -29,11 +29,6 @@
   programs = {
     bash.enable = true;
 
-    carapace = {
-      enable = true;
-      enableNushellIntegration = true;
-    };
-
     zoxide = {
       enable = true;
       enableBashIntegration = true;
