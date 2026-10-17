@@ -118,46 +118,6 @@ let
       coverage gaps stated explicitly rather than implied completeness.
   '';
 
-  # Hermes Desktop from the pinned hermes-agent input, re-called here for one
-  # reason: upstream's desktop.nix fetches Electron's Node headers from a URL
-  # pinned to the hash of the Electron version in the input's own flake.lock
-  # (41.10.3). The input follows this flake's nixpkgs, whose Electron has moved
-  # on, so that fetch can never match again and the desktop build would fail on
-  # it. Everything else stays upstream's build; only the `pkgs` scope that one
-  # fetchurl resolves in is wrapped, and the call is answered with nixpkgs' own
-  # headers for the Electron actually shipped, repacked into the tarball shape
-  # the build unpacks (a `node_headers/` root that its `tar
-  # --strip-components=1` removes again). The module wraps the result with the
-  # launcher environment, so it must keep upstream's `override` arguments
-  # (`extraEnv`, `extraRun`). Revisit on a hermes-agent bump: drop this and use
-  # the module's default desktop package if upstream stops pinning the hash.
-  hermesAgent = config.programs.hermes-agent.package;
-  electronHeaders =
-    pkgs.runCommand "node-v${pkgs.electron.version}-headers.tar.gz"
-      {
-        nativeBuildInputs = [
-          pkgs.gzip
-          pkgs.gnutar
-        ];
-      }
-      ''
-        mkdir -p unpacked/node_headers
-        cp -r ${pkgs.electron.headers}/. unpacked/node_headers/
-        tar -czf $out -C unpacked node_headers
-      '';
-  hermesDesktop = pkgs.callPackage "${inputs.hermes-agent}/nix/desktop.nix" {
-    inherit (hermesAgent) hermesNpmLib;
-    inherit hermesAgent;
-    pkgs = pkgs // {
-      fetchurl =
-        args:
-        if lib.hasPrefix "https://artifacts.electronjs.org/headers/" (args.url or "") then
-          electronHeaders
-        else
-          pkgs.fetchurl args;
-    };
-  };
-
   # ── Backing up what the agent wrote ──────────────────────────────────────
   # HERMES_HOME/skills is agent-writable, so everything the agent authors
   # there is unbacked state that a reinstall, an `hermes update`, or a bad
@@ -488,9 +448,11 @@ in
     enable = isDesktop;
     desktop = {
       enable = isDesktop;
-      # The default follows `programs.hermes-agent.package`; this flake builds
-      # it itself instead, see the let block.
-      package = hermesDesktop;
+      # No `package` here: the default is `programs.hermes-agent.package`'s
+      # `hermesDesktop` passthru. The local re-call of upstream's desktop.nix
+      # existed only to intercept its pinned Electron headers fetchurl;
+      # upstream now uses nixpkgs' own `electron.headers`, so nothing is left
+      # to override and the passthru is the supported path.
     };
   };
 
