@@ -30,11 +30,11 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "dsh";
-  version = "0.2.1-alpha.1";
+  version = "0.2.1-rc.2";
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${finalAttrs.version}.tgz";
-    hash = "sha256-jY2S+8UT+66v1QS5QXriqQjzeaV3fC69li7T6wAON08=";
+    hash = "sha256-/0fTqzTK2lH/opn/5N7aVRHmX8eSE5L9Ugg7ziUvBrw=";
   };
 
   # buildNpmPackage forwards postPatch to fetchNpmDeps but not nativeBuildInputs,
@@ -45,7 +45,7 @@ buildNpmPackage (finalAttrs: {
     inherit (finalAttrs) src;
     nativeBuildInputs = [ nodejs ];
     postPatch = patchManifest;
-    hash = "sha256-UpvNMZJ+54w8kdllRFDWG57OnnZFnFe8sLJrjpg1ZQg=";
+    hash = "sha256-ev7HqUICf4iUbpF3MKOWS3KevcyhN0qarkM1eE63T/8=";
   };
 
   postPatch = patchManifest;
