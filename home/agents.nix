@@ -591,105 +591,14 @@ let
   # that service runs.
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
 
-  # The OpenSandbox user service, osb wrappers, and the dsh container world
-  # only exist where rootless podman does (desktop and laptop).
+  # Rootless podman exists on desktop and laptop, the two hosts that also carry
+  # the interactive dsh profile files below.
   podmanEnabled = osConfig.virtualisation.podman.enable or false;
-
-  # The @codebam/dsh-opensandbox world replacement is installed into the web
-  # profile through dsh's own plugin manager, not copied here:
-  #
-  #   dsh plugin --profile web add @codebam/dsh-opensandbox
-  #
-  # Nix still owns the deployment side: the id-targeted overrides appended to
-  # web's cordis.patch.yml below carry this host's connection, mount table,
-  # env, and escape hatches. The plugin reaches execd through each sandbox's
-  # direct published endpoint -- the official SDK default
-  # (use_server_proxy=false) -- because the pinned server image's own
-  # API-proxy WebSocket route never completes its handshake and then crashes
-  # reporting that on a websockets API mismatch. Verified end-to-end against
-  # the live server in both policy modes: terminal startup, PTY command I/O,
-  # and the model-facing bash tool's one-shot collect path.
-  dshContainerWorld = true;
-
-  # Per-process escape hatch for the post-bundle row overrides below. dsh
-  # treats every DSH_* name as bootstrap-only, so a repository's .env cannot
-  # set it -- it has to come from the launching environment. Any non-empty
-  # value boots dsh on the built-in bwrap/Landlock world for that process;
-  # unset or empty keeps the OpenSandbox world. The `dsh-no-opensandbox`
-  # wrapper is the one-command form. This fallback is deliberately outside
-  # the hardened mount boundary.
-  dshNoOpenSandboxEnv = "DSH_NO_OPENSANDBOX";
-  dshUseOpenSandboxJs = "!process.env.${dshNoOpenSandboxEnv}";
-  dshNoOpenSandboxJs = "Boolean(process.env.${dshNoOpenSandboxEnv})";
-
-  # The default dsh OpenSandbox world is the untrusted-agent tier: /nix/store
-  # read-only for toolchain binaries, no host daemon, no credential mounts,
-  # and no forwarded GH_TOKEN/SSH_AUTH_SOCK. A human launches
-  # `dsh-host-access` when a reviewed task genuinely needs those host
-  # bridges; the profile patch reads this variable at load time and widens
-  # only the explicit mount/env grants. The filesystem fence and the mount
-  # table stay in force in both tiers.
-  dshHostAccessEnv = "DSH_OPEN_SANDBOX_HOST_ACCESS";
-  dshHostAccessJs = "process.env.${dshHostAccessEnv} === '1'";
-  dshStrictReadOnlyMounts = [ "/nix/store" ];
-  dshHostAccessReadOnlyMounts = dshStrictReadOnlyMounts ++ [
-    "/etc/nix"
-    "/nix/var/nix/daemon-socket"
-    "/nix/var/nix/profiles"
-    "${config.home.homeDirectory}/.config/git"
-    "${config.home.homeDirectory}/.config/dsh-sandbox"
-    "${config.home.homeDirectory}/.gnupg"
-    "/run/user/1000/gnupg"
-  ];
-  # Harness-owned reads ctx.fs needs even though they are not sandbox mounts:
-  # user skills and the user-global AGENTS.md. Keep this list narrow.
-  dshTrustedReadPaths = [
-    "${config.home.homeDirectory}/.dsh/AGENTS.md"
-    "${config.home.homeDirectory}/.dsh/skills"
-    "${config.home.homeDirectory}/.agents/skills"
-  ];
-  # The Debian image ships no system CA store. These four names are read by
-  # curl, git, Go, and nix's TLS stack respectively.
-  dshCaEnv = {
-    NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-    GIT_SSL_CAINFO = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-    CURL_CA_BUNDLE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-  };
-  dshHostAccessEnvVars = dshCaEnv // {
-    GIT_CONFIG_GLOBAL = "${config.home.homeDirectory}/.config/dsh-sandbox/gitconfig";
-  };
-
-  # Host roots under which dsh sessions may open a project. `workspaceRoot`
-  # (the dsh process cwd) is always allowed; these add the dsh-web project
-  # picker roots. Only the exact session root becomes a bind mount, so a
-  # sibling project is visible to harness discovery at most, never a workdir
-  # mount.
-  dshWorkspaceParents = [
-    "${config.home.homeDirectory}/Documents/git"
-    "/persistent"
-    "/tmp"
-  ];
-  # The dsh plugin's ctx.fs fence and the OpenSandbox server-side bind guard
-  # must name the same credential/control paths; keep them on one definition.
-  dshProtectedHostPaths =
-    (import ./opensandbox-paths.nix { home = config.home.homeDirectory; }).readonlyHostPaths;
-
-  # opencode2's shell (home/opencode-sandbox-shell.nix): with it in the
-  # `shell` setting below, every command the agent executes through the shell
-  # tool runs in a per-workspace OpenSandbox container instead of the host
-  # shell. The setting is only applied on hosts that run the OpenSandbox
-  # server; elsewhere opencode2 keeps the default host shell.
-  opencodeSandboxShell = import ./opencode-sandbox-shell.nix { inherit pkgs lib; };
 
   # The interactive dsh profiles share the hand-written OpenCode Go route
   # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
   # named or dsh attaches no x-opencode-session header and OpenCode Go answers
-  # 400. The container world itself is installed in the web profile through
-  # dsh's plugin manager (`dsh plugin --profile web add
-  # @codebam/dsh-opensandbox`), so the package's bundle layer owns the
-  # insert/disable rows; dshProfileOpenSandboxPatch below adds only
-  # id-targeted overrides for this host's deployment values.
+  # 400.
   dshProfilePatch = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
@@ -884,13 +793,10 @@ let
               - id: tool-skill
                 name: '@deepseek-ai/dsh-tool-skill'
   ''
-  + lib.optionalString dshContainerWorld ''
+  + lib.optionalString podmanEnabled ''
     # @codebam/dsh-tool-nu: the model-facing `nu` tool, beside `bash`. It
     # consumes the mounted ctx.shell provider, so do NOT disable or replace
     # bash-sandbox / tool-bash; the stock bash tool and world are unchanged.
-    # Works in the OpenSandbox world, in the built-in bwrap/Landlock world,
-    # and in a dsh-no-opensandbox session, because all leave a bash executor
-    # mounted as ctx.shell.
     - insert:
         - id: tool-nu
           name: ${config.home.homeDirectory}/.dsh/profiles/tool-nu/index.mjs
@@ -900,170 +806,12 @@ let
             enableRunInBackground: true
   '';
 
-  # Appended only to the web profile's cordis.patch.yml, after the bundle
-  # layers installed by `dsh plugin --profile web add
-  # @codebam/dsh-opensandbox`. The bundle inserts opensandbox-world and
-  # disables subprocess, sandbox, and fs-sandbox; these id-targeted entries
-  # override those rows with this host's values without adding a second
-  # insert to the composed tree.
-  #
-  # DSH_NO_OPENSANDBOX (exported by dsh-no-opensandbox) flips the row
-  # switches back for one process: the built-in bwrap/Landlock providers come
-  # back and the plugin row is skipped. The default tier is still the
-  # untrusted-agent OpenSandbox boundary below.
-  dshProfileOpenSandboxPatch = lib.optionalString dshContainerWorld ''
-    # `apiKeyFile` is the per-boot key home/opensandbox.nix generates under
-    # the user runtime dir; the plugin reads it lazily, so login ordering
-    # does not matter. The default configuration is the untrusted-agent tier:
-    # /nix/store is visible read-only for toolchain binaries, and no host
-    # credentials, daemon socket, or arbitrary host path is. A human runs
-    # `dsh-host-access` for reviewed work that needs those host bridges.
-    - id: subprocess
-      disabled: !!js "${dshUseOpenSandboxJs}"
-
-    - id: sandbox
-      disabled: !!js "${dshUseOpenSandboxJs}"
-
-    # dsh's shipped fs backend fences writes but deliberately leaves reads
-    # unconfined (the host filesystem is normally the execution world). The
-    # plugin's ctx.fs replaces it with the same mount table the container
-    # uses.
-    - id: fs-sandbox
-      disabled: !!js "${dshUseOpenSandboxJs}"
-
-    - id: opensandbox-world
-      disabled: !!js "${dshNoOpenSandboxJs}"
-      config:
-        apiKeyFile: /run/user/1000/opensandbox/api-key
-        domain: 127.0.0.1:8090
-        image: docker.io/library/debian@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
-        requestTimeoutMs: 900000
-        timeoutSeconds: 43200
-
-        # Only the mount table, env, and forwarded names change between the
-        # default tier and an explicit `dsh-host-access` launch; the
-        # filesystem fence and dynamic-mount commands stay the same. Block
-        # scalars keep the JSON colons out of YAML parsing.
-        extraReadOnlyMounts: !!js >-
-          ${dshHostAccessJs}
-          ? ${builtins.toJSON dshHostAccessReadOnlyMounts}
-          : ${builtins.toJSON dshStrictReadOnlyMounts}
-        extraWritableMounts: []
-        trustedReadPaths: ${builtins.toJSON dshTrustedReadPaths}
-        workspaceParents: ${builtins.toJSON dshWorkspaceParents}
-        protectedPaths: ${builtins.toJSON dshProtectedHostPaths}
-        allowDynamicMounts: true
-        provideFilesystem: true
-
-        # Host-access adds GIT_CONFIG_GLOBAL for the sandbox git config; the
-        # default tier carries only the CA bundle names every network tool
-        # needs.
-        env: !!js >-
-          ${dshHostAccessJs}
-          ? ${builtins.toJSON dshHostAccessEnvVars}
-          : ${builtins.toJSON dshCaEnv}
-
-        # Host-prepared credentials, only in the host-access tier; unset
-        # names are skipped rather than blanked. The default tier forwards
-        # nothing, so cf has only its credential-free subcommands there; this
-        # tier carries the Cloudflare token pair its API commands need.
-        forwardEnv: !!js >-
-          ${dshHostAccessJs}
-          ? ["SSH_AUTH_SOCK", "GH_TOKEN", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]
-          : []
-  '';
-
-  # Host credentials prepared only for `dsh-host-access`, never for the
-  # default dsh session: gh's keyring token becomes GH_TOKEN, SOPS is pointed
-  # at the YubiKey age identity plugin, SSH falls back to the gpg-agent SSH
-  # socket when the login environment did not export one, and GPG gets a real
-  # TTY for pinentry when there is one.
-  credentialEnv = pkgs.writeShellScript "agent-credential-env" ''
-    if [ -z "''${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
-      GH_TOKEN=$(gh auth token 2>/dev/null || true)
-      if [ -n "$GH_TOKEN" ]; then export GH_TOKEN; fi
-    fi
-    export SOPS_AGE_KEY_CMD='age-plugin-yubikey -i'
-    if [ -z "''${SSH_AUTH_SOCK:-}" ]; then
-      for candidate in "/run/user/$(id -u)/gnupg/S.gpg-agent.ssh" "$HOME/.gnupg/S.gpg-agent.ssh"; do
-        if [ -S "$candidate" ]; then
-          SSH_AUTH_SOCK=$candidate
-          export SSH_AUTH_SOCK
-          break
-        fi
-      done
-    fi
-    if [ -t 0 ] && [ -z "''${GPG_TTY:-}" ]; then
-      GPG_TTY=$(tty 2>/dev/null || true)
-      if [ -n "$GPG_TTY" ]; then export GPG_TTY; fi
-    fi
-  '';
-
-  # The host-access tier mounts the host keyring read-only -- a sandbox must
-  # not be able to edit it -- but gpg will not sign without creating lock files
-  # in its homedir (verified: "failed to create temporary file ... Permission
-  # denied", then "no default secret key"). This wrapper gives it a writable
-  # copy inside the container and points every agent socket at the host user's
-  # gpg-agent, so the private key itself never leaves the YubiKey. The sandbox
-  # git config below points gpg.program here.
-  #
-  # GnuPG 2.1+ does not talk to $GNUPGHOME/S.gpg-agent for a custom homedir; it
-  # asks gpgconf for $XDG_RUNTIME_DIR/gnupg/d.<hash>/S.gpg-agent. Linking only
-  # the homedir paths left that runtime path empty, so gpg autostarted a local
-  # sandbox agent whose scdaemon cannot see USB -- and every signed commit
-  # failed through it ("Not confirmed"). Re-link both paths on every call, and
-  # pass --no-autostart so a missing host agent fails loudly instead of silently
-  # falling back to an agent without the card.
-  dshSandboxGpg = pkgs.writeShellApplication {
-    name = "dsh-sandbox-gpg";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gnupg
-    ];
-    text = ''
-      set -eu
-      umask 077
-      source_home=''${DSH_SANDBOX_GNUPGHOME:-/home/codebam/.gnupg}
-      agent_dir=''${DSH_SANDBOX_GPG_AGENT_DIR:-/run/user/1000/gnupg}
-      work=''${TMPDIR:-/tmp}/dsh-sandbox-gnupg
-      if [ ! -d "$work" ]; then
-        mkdir -p "$work"
-        chmod 700 "$work"
-        cp -a "$source_home/." "$work/" 2>/dev/null || true
-      fi
-
-      link_socket() {
-        if [ -S "$agent_dir/$1" ] && [ -n "$2" ]; then
-          mkdir -p "$(dirname "$2")"
-          chmod 700 "$(dirname "$2")"
-          ln -sfn "$agent_dir/$1" "$2"
-        fi
-      }
-
-      # Legacy homedir paths (older clients); harmless on GnuPG 2.4.
-      link_socket S.gpg-agent "$work/S.gpg-agent"
-      link_socket S.gpg-agent.ssh "$work/S.gpg-agent.ssh"
-
-      # What GnuPG 2.1+ actually connects to for this custom homedir.
-      runtime_socket=$(GNUPGHOME="$work" gpgconf --list-dirs agent-socket)
-      runtime_ssh_socket=$(GNUPGHOME="$work" gpgconf --list-dirs agent-ssh-socket)
-      link_socket S.gpg-agent "$runtime_socket"
-      link_socket S.gpg-agent.ssh "$runtime_ssh_socket"
-
-      export GNUPGHOME="$work"
-      exec gpg --no-autostart "$@"
-    '';
-  };
-
   # Desktop-only dsh command: source the model API keys outside the harness
   # (loadDshKey -- both OpenCode Go subscriptions resolve; a one-off
   # `DSH_OPENCODE_SUB=2 dsh` runs this session against the second), then run
-  # the upstream binary. Host credentials are
-  # deliberately NOT loaded here: the default session is the untrusted-agent
-  # tier and the OpenSandbox profile forwards nothing. Use `dsh-host-access`
-  # when reviewed work really needs the host daemon or credentials. Starting in
-  # $HOME is still refused: it would make the whole home directory the writable
-  # workspace.
+  # the upstream binary. Starting in $HOME is refused: dsh's built-in sandbox
+  # roots its writable workspace at the process cwd, so $HOME would hand the
+  # agent the whole home directory.
   dshSandboxed = pkgs.writeShellApplication {
     name = "dsh";
     runtimeInputs = [
@@ -1090,43 +838,6 @@ let
   };
 
   dshInstalled = if isDesktop then dshSandboxed else dsh;
-
-  # One-command form of the DSH_NO_OPENSANDBOX escape hatch, installed only
-  # where the OpenSandbox world exists. It just exports the launch variable;
-  # the web profile's patch above does the switching, so every dsh subcommand
-  # (`web`, `--profile`, `plugin`) keeps its normal argv. The result is still
-  # a sandbox -- dsh's built-in bwrap/Landlock world, not the host shell.
-  dshNoOpenSandbox = pkgs.writeShellApplication {
-    name = "dsh-no-opensandbox";
-    text = ''
-      set -eu
-      export ${dshNoOpenSandboxEnv}=1
-      exec ${lib.getExe' dshInstalled "dsh"} "$@"
-    '';
-  };
-
-  # Explicit human-launched elevated tier. It restores the host Nix daemon
-  # socket, the git/GPG agent mounts, and the forwarded GH_TOKEN/SSH_AUTH_SOCK
-  # for reviewed build/push work. The OpenSandbox mount fence and ctx.fs fence
-  # still apply, so this widens only the host bridges the profile patch names;
-  # it does not restore the old unconfined host fs reads.
-  dshHostAccess = pkgs.writeShellApplication {
-    name = "dsh-host-access";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gh
-    ];
-    text = ''
-      set -eu
-      # shellcheck source=/dev/null
-      . ${loadDshKey}
-      # shellcheck source=/dev/null
-      . ${credentialEnv}
-      export ${dshHostAccessEnv}=1
-      echo "dsh-host-access: host Nix daemon and agent credentials are inside this sandbox session" >&2
-      exec ${lib.getExe' dshInstalled "dsh"} "$@"
-    '';
-  };
 
   # Tailscale Serve forwards the browser's original Host header, so dsh's
   # browser-trust fence has to trust the MagicDNS authority. Resolve it at
@@ -1573,7 +1284,7 @@ let
     - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
   '';
 
-  # The dsh OpenSandbox tier deliberately does not mount the zvec-grep MCP
+  # The dsh sandboxed tier deliberately does not mount the zvec-grep MCP
   # server: it runs as the host user and accepts arbitrary absolute roots. The
   # sandbox's native Grep/`rg` paths stay inside the mount table, so dsh gets
   # its own short routing note rather than the mcp-name-rendered block above.
@@ -1695,55 +1406,6 @@ let
     `mcp({ search: "playwright" })`. Prefer it for multi-step interaction when
     an MCP tool is simpler than the shell loop above; the empty in-memory
     profile means it cannot reuse the CLI session's logins.
-  '';
-
-  # Shared by all three harnesses. dsh's own container world and the
-  # host-side `osb-work` tool are different execution worlds; this guidance
-  # states the default boundary and the two explicit human escape hatches.
-  opensandboxGuidance = ''
-    ## OpenSandbox work sandboxes
-
-    `osb-work` is the explicit per-work-type sandbox front end on every host
-    with the local server (desktop and laptop), and the only path on hosts
-    without one. It is a host-side command: the local OpenSandbox API is
-    loopback-only and its key lives in the host runtime dir, so it belongs to
-    host harnesses and a host terminal, not to a dsh session's own shell.
-
-    In dsh sessions whose profile has the @codebam/dsh-opensandbox bundle
-    installed (the web profile), the OpenSandbox world runs bash, terminal,
-    fs-search, and the file tools inside a container with the session's
-    workspace project mounted at the same absolute path. The default
-    mount table is that workspace plus `/nix/store` read-only: no host daemon
-    socket, no credential mount, no forwarded
-    `GH_TOKEN`/`SSH_AUTH_SOCK`, and no arbitrary host read. Web sessions may
-    open any project under the configured workspace parents; a directory
-    outside them fails until a human adds it. A human can scope one extra host
-    directory with
-    `/directory-add <absolute-path> [ro|rw]` (read-only by default); the
-    mount lasts for that dsh process. Reviewed host work that genuinely needs
-    builds or credentials is a separate human-launched session:
-    `dsh-host-access`. Never ask a user to run either command for a path or
-    credential you were not explicitly asked to use.
-
-    dsh never falls back by itself if the local server is unhealthy. For one
-    session on the built-in bwrap/Landlock world, run `dsh-no-opensandbox`
-    (it exports `DSH_NO_OPENSANDBOX=1`); that fallback is not the hardened
-    OpenSandbox boundary.
-
-    `osb-work list` enumerates the pinned images (nix, python, web, bun, rust,
-    c-cpp, dotnet, lua, steel, shell, browser, code). Start a sandbox with the
-    current project bind-mounted at `/workspace`:
-
-    - `osb-work start <type>` — create it and remember the sandbox id;
-    - `osb-work exec <type> -- <cmd...>` — run a command in it from `/workspace`;
-    - `osb-work stop <type>` — delete it;
-    - `osb-work run <type> -- <cmd...>` — one-shot create/run/delete.
-
-    Use `osb` directly for lifecycle flags the helper does not cover. Prefer
-    an `osb-work` sandbox over the host shell for untrusted dependencies,
-    generated code, package installs, or anything that would touch files
-    outside the project; the host `$HOME` and the rest of the user session
-    are outside it.
   '';
 
   # Nix keys win over whatever pi last wrote, and a settings.json that pi (or a
@@ -2145,10 +1807,6 @@ in
     ]
     ++ lib.optionals isDesktop [
       dshWebUrl
-    ]
-    ++ lib.optionals (podmanEnabled && dshContainerWorld) [
-      dshNoOpenSandbox
-      dshHostAccess
     ];
 
     # Nested rather than three top-level `activation.` keys: statix's
@@ -2198,6 +1856,20 @@ in
         fi
       '';
 
+      # One-shot cleanup after removing the OpenSandbox terminal backend: the
+      # live config.yaml is a merged document, so the backend and plugin keys an
+      # earlier activation wrote would survive every later switch and keep
+      # selecting a plugin that no longer exists. The activation-managed plugin
+      # symlink goes too -- its store path is no longer referenced. Guarded like
+      # the CrofAI prune: the deck has no Hermes profile, and yq errors on a
+      # missing file.
+      hermesOpenSandboxCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "hermesAgentSetup" ] ''
+        if [ -f "$HOME/.hermes/config.yaml" ]; then
+          run ${pkgs.yq-go}/bin/yq -i 'del(.terminal.backend) | del(.terminal.container_persistent) | del(.terminal.lifetime_seconds) | del(.plugins.enabled[] | select(. == "opensandbox"))' "$HOME/.hermes/config.yaml"
+        fi
+        run ${pkgs.coreutils}/bin/rm -f "$HOME/.hermes/plugins/nix-managed-hermes-opensandbox"
+      '';
+
       # One-shot cleanup after dropping the nono provider: the old activation
       # copied this module into $DSH_HOME, which home-manager does not manage
       # and therefore does not remove when the provider goes away.
@@ -2206,11 +1878,15 @@ in
         run ${pkgs.coreutils}/bin/rmdir "$HOME/.dsh/profiles/nono" 2>/dev/null || true
       '';
 
-      # One-shot cleanup after moving @codebam/dsh-opensandbox to dsh's own
-      # plugin manager: older activations copied the module into $DSH_HOME,
-      # which home-manager does not own and therefore does not remove. The
-      # plugin manager's copy lives under profiles/web/node_modules instead.
+      # One-shot cleanup after removing OpenSandbox: dsh's plugin manager owns
+      # the web profile's package.json, so Nix cannot drop the bundle itself.
+      # Delete the dependency and its bundle row, then the installed module.
+      # Guarded: the plugin may never have been installed on this host.
       dshOpenSandboxCleanup = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if [ -f "$HOME/.dsh/profiles/web/package.json" ]; then
+          run ${pkgs.yq-go}/bin/yq -i 'del(.dependencies."@codebam/dsh-opensandbox") | del(.dsh.profile.bundles[] | select(. == "@codebam/dsh-opensandbox"))' "$HOME/.dsh/profiles/web/package.json"
+        fi
+        run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/web/node_modules/@codebam/dsh-opensandbox"
         run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/opensandbox"
       '';
 
@@ -2218,10 +1894,9 @@ in
       # pkgs/dsh-tool-nu.nix. Copy it into $DSH_HOME rather than symlinking:
       # Node resolves a module through its symlink target, so a symlinked
       # module would look for @deepseek-ai/* next to the store directory
-      # instead of the profile's node_modules. Same podman gate as the
-      # OpenSandbox wrappers and web profile patch: only hosts that run the
-      # OpenSandbox server get the plugin.
-      dshToolNu = lib.mkIf (podmanEnabled && dshContainerWorld) (
+      # instead of the profile's node_modules. Same gate as the profile patch
+      # it rides with (desktop and laptop).
+      dshToolNu = lib.mkIf podmanEnabled (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/tool-nu"
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/index.mjs "$HOME/.dsh/profiles/tool-nu/index.mjs"
@@ -2257,32 +1932,6 @@ in
       # (`~/.dsh/skills`, rank 400). The target is a symlink to the bundle;
       # dsh's provider follows symlinked entries when it scans.
       ".dsh/skills/security-audit".source = securityAuditSkill;
-
-      # Files the dsh container world reads through its read-only mounts
-      # (see dshProfileOpenSandboxPatch below).
-      #
-      # The git config `include`s the real one -- identity, signing key and
-      # credential helpers stay authoritative in one place -- and adds the two
-      # programs the read-only mounts cannot run as-is: gpg needs a writable
-      # homedir (dshSandboxGpg above), and ssh needs a known_hosts that is not
-      # ~/.ssh, which holds an unencrypted private key that a read-only mount
-      # would still hand to every sandbox.
-      ".config/dsh-sandbox/gitconfig".text = ''
-        [include]
-        	path = ${config.home.homeDirectory}/.config/git/config
-        [gpg]
-        	program = ${dshSandboxGpg}/bin/dsh-sandbox-gpg
-        [core]
-        	sshCommand = ssh -o UserKnownHostsFile=${config.home.homeDirectory}/.config/dsh-sandbox/known_hosts
-      '';
-
-      # GitHub's published host keys (https://api.github.com/meta). Public data,
-      # kept separate from ~/.ssh for the reason above.
-      ".config/dsh-sandbox/known_hosts".text = ''
-        github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-        github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
-        github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
-      '';
 
       # pi's global context file (docs/usage.md: "Context Files"). pi is not one
       # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
@@ -2342,9 +1991,6 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
-        <!-- OPENSANDBOX_START -->
-        ${opensandboxGuidance}
-        <!-- OPENSANDBOX_END -->
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
@@ -2397,11 +2043,11 @@ in
         <!-- ZVEC_GREP_START -->
         ## zvec-grep is not mounted in this dsh tier
 
-        The host-side `zvec_grep` MCP server is deliberately absent from the
-        OpenSandbox dsh profile because it reads arbitrary host paths. For
-        exact lookups use the native Grep tool or `rg` via bash; those run in
-        the sandbox against the mounted workspace. Ask the user before adding
-        any host bridge for semantic indexing.
+        The host-side `zvec_grep` MCP server is deliberately absent from dsh's
+        sandboxed profile because it reads arbitrary host paths. For exact
+        lookups use the native Grep tool or `rg` via bash; those run in the
+        sandbox against the mounted workspace. Ask the user before adding any
+        host bridge for semantic indexing.
 
         <!-- ZVEC_GREP_END -->
         <!-- RIPWIRE_START -->
@@ -2420,11 +2066,8 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidanceDsh}
         <!-- MEMORY_END -->
-        <!-- OPENSANDBOX_START -->
-        ${opensandboxGuidance}
-        <!-- OPENSANDBOX_END -->
         <!-- CF_START -->
-        ${cfCli.guidanceSandbox}
+        ${cfCli.guidance}
         <!-- CF_END -->
       '';
 
@@ -2435,12 +2078,10 @@ in
       #
       # The memory server, the Playwright MCP server, and the agentic-inbox
       # email bridge are mounted here; the other host-side bridges (zvec-grep,
-      # ripwire, opensandbox) are intentionally absent from the default agent
-      # tier: they run as the host user and accept arbitrary host paths,
-      # arbitrary sandboxes, or arbitrary commands. Their CLIs remain available
-      # inside the sandbox (where they run against the mounted workspace), and
-      # the per-work-type sandboxes remain available through `osb-work` on the
-      # host side.
+      # ripwire) are intentionally absent from the default agent tier: they
+      # run as the host user and accept arbitrary host paths or commands.
+      # Their CLIs remain available inside the sandbox (where they run
+      # against the mounted workspace).
       #
       # Playwright is the deliberate exception for browser automation: it
       # runs as the host user and therefore on the host network, so it can
@@ -2448,7 +2089,7 @@ in
       # cannot. Its file access defaults to the session workspace and is a
       # convenience guardrail, not a security boundary; the isolated, headless
       # profile keeps it out of the user's real browser. Re-review it with the
-      # same care as `dsh-host-access` if the threat model changes.
+      # same care as any other host-side bridge if the threat model changes.
       #
       # The memory URL is served stateless by mcp-proxy (see the agent-memory
       # unit below), so dsh's MCP SDK v2 client talks to it without a session.
@@ -2500,22 +2141,16 @@ in
     }
     // lib.optionalAttrs isDesktop {
       # Package caches and the zvec-grep daemon state root are created eagerly
-      # so a first sandboxed command cannot race directory creation.
+      # so a first command in the sandbox cannot race directory creation.
       ".local/share/pnpm/.keep".text = "";
       ".npm/.keep".text = "";
       ".zvec-grep/.keep".text = "";
     }
     // lib.optionalAttrs podmanEnabled {
-      # Both interactive dsh surfaces get the shared hand-written patch; web
-      # adds the OpenSandbox bundle overrides below. The bundle install itself
-      # stays with `dsh plugin` because it writes the profile's package.json.
-      # podmanEnabled, not isDesktop: these hosts are where the OpenSandbox
-      # service the container-world rows talk to runs.
+      # Both interactive dsh surfaces get the shared hand-written patch; the
+      # deck keeps dsh's own default state.
       ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
-      # Web owns the bundle installed by dsh's plugin manager; the extra
-      # overrides only make sense after `dsh plugin --profile web add
-      # @codebam/dsh-opensandbox`.
-      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch + dshProfileOpenSandboxPatch;
+      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
     };
   };
 
@@ -2528,228 +2163,125 @@ in
   # three are agent config anyway.
   xdg = {
     configFile = {
-      "opencode/opencode.json".text = builtins.toJSON (
-        {
-          "$schema" = "https://opencode.ai/config.json";
+      "opencode/opencode.json".text = builtins.toJSON {
+        "$schema" = "https://opencode.ai/config.json";
 
-          # opencode ships permissive: every tool runs unprompted. Kept that way on
-          # purpose -- the prompts were more friction than guardrail here.
-          permission = {
-            edit = "allow";
-            bash = "allow";
-            external_directory = "allow";
-            webfetch = "allow";
-            task = "allow";
+        # opencode ships permissive: every tool runs unprompted. Kept that way on
+        # purpose -- the prompts were more friction than guardrail here.
+        permission = {
+          edit = "allow";
+          bash = "allow";
+          external_directory = "allow";
+          webfetch = "allow";
+          task = "allow";
+        };
+
+        # Compact at 140k rather than riding the gateway's 1M window up: keeps a
+        # session on the card, where it is free and fast. The OpenRouter fallback
+        # is then only reached by a single turn that overshoots 145k on its own --
+        # a huge paste or file read -- not by a conversation growing into it.
+        compaction = {
+          auto = true;
+          reserved = compactionReserved;
+        };
+
+        # The binary is a store path it cannot rewrite, and sessions should not
+        # leave the machine unless asked for explicitly.
+        autoupdate = false;
+        share = "disabled";
+
+        # All four MCP servers live under one `mcp` key: statix's repeated-keys
+        # lint (W20) flags four sibling `mcp.<name>` assignments, the same
+        # reason `xdg.configFile` above is nested rather than flat.
+        mcp = {
+          # Declarative equivalent of `zg install --target opencode
+          # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
+          # installOpenCodeIntegration). stdio means no daemon to keep up: each
+          # opencode session spawns `zg server --stdio`, which manages its own
+          # shared daemon. Re-derive both this and `zgGuidance` from the new
+          # package (run the installer with HOME pointed at a scratch dir) when
+          # bumping zvec-grep's version.
+          ${zgServerName} = {
+            type = "local";
+            # Resolved from the session PATH; zvec-grep is in home.packages.
+            command = zgArgv;
+            enabled = true;
+            timeout = zgTimeoutMs;
           };
 
-          # Compact at 140k rather than riding the gateway's 1M window up: keeps a
-          # session on the card, where it is free and fast. The OpenRouter fallback
-          # is then only reached by a single turn that overshoots 145k on its own --
-          # a huge paste or file read -- not by a conversation growing into it.
-          compaction = {
-            auto = true;
-            reserved = compactionReserved;
+          # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
+          # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
+          # each session spawns `ripwire --mcp`, which manages its own warm
+          # index cache. The CLI-first blurb in AGENTS.md below is the
+          # recommended path (zero context until invoked); this is the
+          # warm-index alternative. `command` is the whole argv here (opencode
+          # shape, top-level `mcp`).
+          ripwire = {
+            type = "local";
+            # Resolved from the session PATH; ripwire is in home.packages.
+            command = [
+              "ripwire"
+              "--mcp"
+            ];
+            enabled = true;
           };
 
-          # The binary is a store path it cannot rewrite, and sessions should not
-          # leave the machine unless asked for explicitly.
-          autoupdate = false;
-          share = "disabled";
-
-          # All four MCP servers live under one `mcp` key: statix's repeated-keys
-          # lint (W20) flags four sibling `mcp.<name>` assignments, the same
-          # reason `xdg.configFile` above is nested rather than flat.
-          mcp = {
-            # Declarative equivalent of `zg install --target opencode
-            # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
-            # installOpenCodeIntegration). stdio means no daemon to keep up: each
-            # opencode session spawns `zg server --stdio`, which manages its own
-            # shared daemon. Re-derive both this and `zgGuidance` from the new
-            # package (run the installer with HOME pointed at a scratch dir) when
-            # bumping zvec-grep's version.
-            ${zgServerName} = {
-              type = "local";
-              # Resolved from the session PATH; zvec-grep is in home.packages.
-              command = zgArgv;
-              enabled = true;
-              timeout = zgTimeoutMs;
-            };
-
-            # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
-            # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
-            # each session spawns `ripwire --mcp`, which manages its own warm
-            # index cache. The CLI-first blurb in AGENTS.md below is the
-            # recommended path (zero context until invoked); this is the
-            # warm-index alternative. `command` is the whole argv here (opencode
-            # shape, top-level `mcp`).
-            ripwire = {
-              type = "local";
-              # Resolved from the session PATH; ripwire is in home.packages.
-              command = [
-                "ripwire"
-                "--mcp"
-              ];
-              enabled = true;
-            };
-
-            # Microsoft's Playwright MCP server: headless Chromium with an
-            # in-memory profile (the nixpkgs wrapper's isolated default), so a
-            # session cannot read or write the user's real browser profile.
-            # `command` takes the whole argv here (opencode shape, top-level
-            # `mcp`); pwArgv names the store path because a desktop launch may
-            # not inherit the interactive PATH.
-            ${pwServerName} = {
-              type = "local";
-              command = pwArgv;
-              enabled = true;
-              timeout = pwTimeoutMs;
-            };
-
-            # Shared agent memory, served once over loopback by the `agent-memory`
-            # user service (systemd unit at the end of this file). Remote rather
-            # than one stdio server per session: the JSONL store has a single
-            # writer, and the whole fleet must share the same graph.
-            ${memoryServerName} = {
-              type = "remote";
-              url = memoryUrl;
-              enabled = true;
-              # The service is idle-cheap; this only guards a slow first connect.
-              timeout = 30000;
-            };
-
-            # OpenSandbox sandbox lifecycle/command/file tools. Sandbox creation
-            # may pull a multi-GB image, so allow a long tool call; the MCP
-            # server's own HTTP timeout is raised in its args for the same reason.
-            opensandbox = {
-              type = "local";
-              # Resolved from the session PATH; the wrapper is in home.packages
-              # and injects the per-boot API key (home/opensandbox.nix).
-              command = [
-                "opensandbox-mcp"
-                "--request-timeout-seconds"
-                "900"
-              ];
-              enabled = true;
-              timeout = 960000;
-            };
+          # Microsoft's Playwright MCP server: headless Chromium with an
+          # in-memory profile (the nixpkgs wrapper's isolated default), so a
+          # session cannot read or write the user's real browser profile.
+          # `command` takes the whole argv here (opencode shape, top-level
+          # `mcp`); pwArgv names the store path because a desktop launch may
+          # not inherit the interactive PATH.
+          ${pwServerName} = {
+            type = "local";
+            command = pwArgv;
+            enabled = true;
+            timeout = pwTimeoutMs;
           };
 
-          # Models picked from the TUI's model list (`/models`) live in opencode's
-          # own sqlite state, so the last selection survives sessions without
-          # fighting the Nix-managed config. Listing this provider is what puts
-          # `cloudflare-workers-ai` in that list -- the rest of the
-          # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
-          # comes from models.dev, and the endpoint is built from
-          # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
-          provider = {
-            # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
-            # local `ollama`, so the endpoint and the local tag are declared here.
-            # The served windows mirror the pi/dsh entries: 153600 of the 160k
-            # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
-            # output and the 20k compaction reserve.
-            # opencode2 reads this same config directory.
-            ollama = {
-              npm = "@ai-sdk/openai-compatible";
-              name = "Ollama (local)";
-              options = {
-                baseURL = "http://127.0.0.1:11434/v1";
-                apiKey = "ollama"; # Ollama ignores it; the SDK wants a value
-              };
-              models."orcarouter/Qwen3.8-27B-Uncensored:160k" = {
-                name = "Qwen3.8 27B Uncensored (160k)";
-                attachment = true;
-                reasoning = true;
-                tool_call = true;
-                limit = {
-                  context = 153600;
-                  output = 16384;
-                };
-                modalities = {
-                  input = [
-                    "text"
-                    "image"
-                  ];
-                  output = [ "text" ];
-                };
-              };
-              models."qwen3.8-cyber-iq4xs:262k" = {
-                name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
-                attachment = true;
-                reasoning = true;
-                tool_call = true;
-                limit = {
-                  context = 251904;
-                  output = 16384;
-                };
-                modalities = {
-                  input = [
-                    "text"
-                    "image"
-                  ];
-                  output = [ "text" ];
-                };
-              };
+          # Shared agent memory, served once over loopback by the `agent-memory`
+          # user service (systemd unit at the end of this file). Remote rather
+          # than one stdio server per session: the JSONL store has a single
+          # writer, and the whole fleet must share the same graph.
+          ${memoryServerName} = {
+            type = "remote";
+            url = memoryUrl;
+            enabled = true;
+            # The service is idle-cheap; this only guards a slow first connect.
+            timeout = 30000;
+          };
+
+        };
+
+        # Models picked from the TUI's model list (`/models`) live in opencode's
+        # own sqlite state, so the last selection survives sessions without
+        # fighting the Nix-managed config. Listing this provider is what puts
+        # `cloudflare-workers-ai` in that list -- the rest of the
+        # model metadata (262k context, tool calls, vision, $0.45/$3.20 per Mtok)
+        # comes from models.dev, and the endpoint is built from
+        # CLOUDFLARE_ACCOUNT_ID with CLOUDFLARE_API_KEY as the token.
+        provider = {
+          # Local Ollama. models.dev carries `ollama-cloud`, not a discoverable
+          # local `ollama`, so the endpoint and the local tag are declared here.
+          # The served windows mirror the pi/dsh entries: 153600 of the 160k
+          # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
+          # output and the 20k compaction reserve.
+          # opencode2 reads this same config directory.
+          ollama = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "Ollama (local)";
+            options = {
+              baseURL = "http://127.0.0.1:11434/v1";
+              apiKey = "ollama"; # Ollama ignores it; the SDK wants a value
             };
-            cloudflare-workers-ai.models.${cfModel} = { };
-
-            # Union Alpha Free. models.dev already carries it for both OpenCode
-            # provider ids; the explicit declarations pin the free metadata so a
-            # stale catalog cache cannot drop the model. The Zen row below is the
-            # client-gated free tier, the Go row the one the exported
-            # OPENCODE_API_KEY authenticates; loadKey above explains the split.
-            opencode.models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
-            "opencode-go".models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
-
-            # DeepSeek direct API (OpenAI-compatible endpoint).
-            deepseek = {
-              npm = "@ai-sdk/openai-compatible";
-              name = "DeepSeek";
-              options = {
-                baseURL = "https://api.deepseek.com/v1";
-                apiKey = "{env:DEEPSEEK_API_KEY}";
-              };
-              models."deepseek-v4.1-flash-expires-on-0910" = {
-                name = "DeepSeek V4.1 Flash";
-                reasoning = true;
-                tool_call = true;
-                limit = {
-                  context = 1000000;
-                  output = 384000;
-                };
-              };
-            };
-
-            # models.dev lists the router as non-reasoning, so opencode would send no
-            # thinking parameters at all for it; `reasoning` here marks it capable and
-            # `options.reasoning` sets the tier the underlying coder gets.
-            #
-            # Caveat: opencode has a standing report of provider model `options` being
-            # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
-            # closed unresolved). Whether 1.18.18 still drops them is unverified here,
-            # and the failure is silent both ways -- no plugin means the router takes
-            # the strongest, priciest coder, and no reasoning block means default
-            # effort. Check one live request body before trusting either.
-            openrouter.models.${codingModel} = {
-              reasoning = true;
-              options = {
-                plugins = paretoPlugin;
-                reasoning.effort = "medium";
-              };
-            };
-
-            # OpenRouter's copy of the same free stealth model. Vision and tool
-            # calls come from models.dev; `reasoning = false` is pinned because
-            # the model's advertised parameters omit reasoning (unlike the
-            # OpenCode copy above), and a truthy value would only make opencode
-            # expose a thinking picker for a capability the endpoint lacks.
-            openrouter.models.${unionAlpha.openrouterId} = {
-              name = "Union Alpha";
-              reasoning = false;
-              tool_call = true;
+            models."orcarouter/Qwen3.8-27B-Uncensored:160k" = {
+              name = "Qwen3.8 27B Uncensored (160k)";
               attachment = true;
+              reasoning = true;
+              tool_call = true;
               limit = {
-                context = unionAlpha.contextWindow;
-                output = unionAlpha.maxTokens;
+                context = 153600;
+                output = 16384;
               };
               modalities = {
                 input = [
@@ -2759,19 +2291,96 @@ in
                 output = [ "text" ];
               };
             };
-          }
-          // qwenProvider;
+            models."qwen3.8-cyber-iq4xs:262k" = {
+              name = "Qwen3.8 27B Cyber IQ4_XS (262k)";
+              attachment = true;
+              reasoning = true;
+              tool_call = true;
+              limit = {
+                context = 251904;
+                output = 16384;
+              };
+              modalities = {
+                input = [
+                  "text"
+                  "image"
+                ];
+                output = [ "text" ];
+              };
+            };
+          };
+          cloudflare-workers-ai.models.${cfModel} = { };
+
+          # Union Alpha Free. models.dev already carries it for both OpenCode
+          # provider ids; the explicit declarations pin the free metadata so a
+          # stale catalog cache cannot drop the model. The Zen row below is the
+          # client-gated free tier, the Go row the one the exported
+          # OPENCODE_API_KEY authenticates; loadKey above explains the split.
+          opencode.models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+          "opencode-go".models.${unionAlpha.opencodeId} = unionAlphaOpencodeModel;
+
+          # DeepSeek direct API (OpenAI-compatible endpoint).
+          deepseek = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "DeepSeek";
+            options = {
+              baseURL = "https://api.deepseek.com/v1";
+              apiKey = "{env:DEEPSEEK_API_KEY}";
+            };
+            models."deepseek-v4.1-flash-expires-on-0910" = {
+              name = "DeepSeek V4.1 Flash";
+              reasoning = true;
+              tool_call = true;
+              limit = {
+                context = 1000000;
+                output = 384000;
+              };
+            };
+          };
+
+          # models.dev lists the router as non-reasoning, so opencode would send no
+          # thinking parameters at all for it; `reasoning` here marks it capable and
+          # `options.reasoning` sets the tier the underlying coder gets.
+          #
+          # Caveat: opencode has a standing report of provider model `options` being
+          # dropped for OpenRouter rather than forwarded (anomalyco/opencode#27361,
+          # closed unresolved). Whether 1.18.18 still drops them is unverified here,
+          # and the failure is silent both ways -- no plugin means the router takes
+          # the strongest, priciest coder, and no reasoning block means default
+          # effort. Check one live request body before trusting either.
+          openrouter.models.${codingModel} = {
+            reasoning = true;
+            options = {
+              plugins = paretoPlugin;
+              reasoning.effort = "medium";
+            };
+          };
+
+          # OpenRouter's copy of the same free stealth model. Vision and tool
+          # calls come from models.dev; `reasoning = false` is pinned because
+          # the model's advertised parameters omit reasoning (unlike the
+          # OpenCode copy above), and a truthy value would only make opencode
+          # expose a thinking picker for a capability the endpoint lacks.
+          openrouter.models.${unionAlpha.openrouterId} = {
+            name = "Union Alpha";
+            reasoning = false;
+            tool_call = true;
+            attachment = true;
+            limit = {
+              context = unionAlpha.contextWindow;
+              output = unionAlpha.maxTokens;
+            };
+            modalities = {
+              input = [
+                "text"
+                "image"
+              ];
+              output = [ "text" ];
+            };
+          };
         }
-        // lib.optionalAttrs podmanEnabled {
-          # opencode2 runs every shell-tool command through the configured shell
-          # (`<shell> -c <command>`), so naming the OpenSandbox wrapper here is
-          # what makes agent command execution sandboxed rather than host-side.
-          # Hosts without the OpenSandbox server keep the default shell; see
-          # home/opencode-sandbox-shell.nix for the sandbox shape and the
-          # OPENCODE2_NO_SANDBOX escape hatch.
-          shell = "${opencodeSandboxShell}/bin/opencode-sandbox-shell";
-        }
-      );
+        // qwenProvider;
+      };
 
       # opencode loads the config-dir AGENTS.md globally; the body is shared with
       # pi's copy below.
@@ -2788,27 +2397,10 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
-        <!-- OPENSANDBOX_START -->
-        ${opensandboxGuidance}
-        <!-- OPENSANDBOX_END -->
         <!-- CF_START -->
-        ${cfCli.guidanceSandbox}
+        ${cfCli.guidance}
         <!-- CF_END -->
 
-        ## opencode2 command execution
-
-        This harness's `shell` tool is not the host shell: opencode2 runs
-        every command through an OpenSandbox sandbox, one container per
-        workspace root, with that root and a read-only `/nix/store`
-        bind-mounted at their host paths. Commands still see the same files
-        and host toolchains, but the container has no Nix daemon, no host
-        credentials, and an ephemeral `/root`, so `git commit`, `git push`,
-        and `nix build` against the host store fail by design. Ask the human
-        to run those on the host, or to relaunch opencode2 with
-        `OPENCODE2_NO_SANDBOX=1` for a host-shell session. Do not reach for
-        `osb-work` from the shell tool: it is a host command, the sandbox
-        cannot reach the OpenSandbox server, and the shell is already
-        sandboxed.
       '';
 
       # opencode2's documented global skill root. A copy here makes the setup
@@ -2949,32 +2541,6 @@ in
             ];
           };
 
-          # OpenSandbox: the local rootless-podman sandbox platform. A sandbox
-          # create can pull a multi-GB image, so keep both the HTTP request and
-          # the adapter's tool-call timeout long. Lazy by default, so only the
-          # proxy tool is in context until `mcp({ search: "sandbox" })`.
-          opensandbox = {
-            command = "opensandbox-mcp";
-            args = [
-              "--request-timeout-seconds"
-              "900"
-            ];
-            requestTimeoutMs = 960000;
-            searchKeywords."*" = [
-              "sandbox"
-              "container"
-              "podman"
-              "isolated"
-              "isolate"
-              "execute"
-              "execution"
-              "code"
-              "shell"
-              "install"
-              "untrusted"
-              "work"
-            ];
-          };
         };
       };
     };
@@ -3047,8 +2613,7 @@ in
         Type = "simple";
         # dsh's built-in sandbox-local uses process.cwd() as the
         # workspace-write root. The web front door exists to work on this
-        # flake, so root it there; other project directories belong in
-        # `osb-work` containers, not in this host shell.
+        # flake, so root it there; any other project gets its own workspace.
         WorkingDirectory = "/persistent/etc/nixos";
         # The plugin is installed by dsh's plugin manager, so Nix cannot name
         # its revision in the unit text. Restart this unit after

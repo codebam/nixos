@@ -95,8 +95,6 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   │                              helix, firefox, mpv (Anime4K), mangohud, browsers,
 │   │                              terminals (ghostty, rio)
 │   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
-│   ├── opensandbox.nix          # rootless-podman OpenSandbox server, osb/MCP wrappers
-│   ├── opensandbox-work.nix     # pinned per-work-type sandbox images + osb-work helper
 │   ├── qwen-image.nix           # Qwen-Image-2.1 CLI over stable-diffusion.cpp (desktop)
 │   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
 │   ├── shell-common.nix         # bash, carapace, zoxide, direnv, nushell, tmux, fzf
@@ -116,7 +114,6 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── dsh-tool-nu.nix          # dsh's Nushell (`nu`) tool plugin
 │   ├── opencode-cli.nix         # @opencode/cli v2 (opencode2)
 │   ├── opencode-desktop-beta.nix
-│   ├── opensandbox-{sdk,cli,mcp}.nix  # OpenSandbox Python SDK, osb CLI, MCP server
 │   ├── pinentry-auto.nix        # terminal-aware pinentry
 │   ├── polariumcode/            # Polarium Code desktop app (AppImage wrapper)
 │   ├── ripwire.nix              # C++ codebase-map CLI + MCP server
@@ -230,57 +227,21 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
 - **Agents**: OpenCode (v1 stable + v2 `opencode2`), OpenCode Desktop, Pi, and
-  dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. The host
-  harnesses keep their zvec-grep/ripwire/OpenSandbox/Playwright MCP rows and
-  are trusted host tools; Hermes' terminal and file tools are the exception
-  (its OpenSandbox backend, under Sandboxes below); dsh's OpenSandbox world
-  (the web profile) also
-  registers the shared memory MCP
-  and the isolated, headless Playwright MCP (its file access is scoped to the
-  session workspace by Playwright's default guardrail, and it runs on the
-  host network). Hermes and dsh additionally register the agentic-inbox email
-  MCP, a host-side stdio bridge that authenticates with the local `wrangler
-  login` token (run `npx wrangler login` once from that checkout); both
-  harnesses carry a standing instruction that outbound mail is sent only after
-  an explicit authorization for that exact message.
-- **Sandboxes**: rootless-podman OpenSandbox service plus pinned per-work-type
-  images (`osb-work list`: nix, python, web, bun, rust, c-cpp, dotnet, lua,
-  steel, shell, browser, code). opencode2's shell tool executes through
-  `opencode-sandbox-shell` (home/opencode-sandbox-shell.nix): one container per
-  workspace root, the workspace and a read-only `/nix/store` bind-mounted at
-  their host paths, no credentials; `OPENCODE2_NO_SANDBOX=1` in the launching
-  environment restores the host shell for that session. Hermes' terminal and
-  file tools execute through the registered `opensandbox` terminal backend
-  (home/hermes-opensandbox.nix) with home/opensandbox-exec.nix as the
-  per-command executor: the same container shape, one per workspace root. A
-  session directory that cannot be a workspace -- the home directory contains
-  `~/.gnupg` -- falls back to the host shell with a notice in its first
-  command's output; `HERMES_OPENSANDBOX_FALLBACK=error` refuses instead, and
-  `HERMES_NO_SANDBOX=1` restores the host shell for that process. The dsh
-  plugin is installed per profile with
-  dsh's own plugin manager
-  (`dsh plugin --profile web add @codebam/dsh-opensandbox`). The default world
-  is the untrusted-agent
-  tier: project plus `/nix/store` read-only, no credentials or host Nix daemon,
-  a mount-fenced `ctx.fs`, and no host-side MCP bridges other than
-  the isolated, headless Playwright browser row and the Wrangler-authenticated
-  agentic-inbox email bridge. Both run as the host user and read their host
-  state (browser profile, Wrangler token) outside the sandbox. A human scopes
-  one directory with `/directory-add` in a session, or launches
-  `dsh-host-access` for reviewed host builds/commits/pushes.
-  `dsh-no-opensandbox` is the unhardened built-in bwrap/Landlock fallback for a
-  session when the local OpenSandbox server is unhealthy. The sandbox network
-  is created without podman's per-network DNS server (`--disable-dns` in
-  home/opensandbox.nix): `aardvark-dns` is a single process per network with no
-  self-healing, and when it dies, or is left behind in a torn-down rootless
-  netns, every sandbox silently loses name resolution while egress keeps
-  working (containers/podman#20396). Without it the containers get the host's
-  resolvers through pasta -- `169.254.1.1` (systemd-resolved) first -- so the
-  host's DoT policy and the tailnet search domain still apply. Egress
-  filtering is the known gap: sandbox traffic still reaches the LAN/tailnet as
-  the host user, and rootless podman's network mode makes a host-nft source
-  rule unreliable; the intended follow-up is OpenSandbox `network_policy` with
-  the `bridge` network.
+  dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. All are trusted
+  host harnesses: their shell, file, and MCP tools run as the host user. The
+  host harnesses keep their zvec-grep/ripwire/Playwright MCP rows; dsh's web
+  profile also registers the shared memory MCP and the isolated, headless
+  Playwright MCP (its file access is scoped to the session workspace by
+  Playwright's default guardrail, and it runs on the host network). Hermes and
+  dsh additionally register the agentic-inbox email MCP, a host-side stdio
+  bridge that authenticates with the local `wrangler login` token (run `npx
+  wrangler login` once from that checkout); both harnesses carry a standing
+  instruction that outbound mail is sent only after an explicit authorization
+  for that exact message.
+- **Sandbox**: dsh is the one harness that runs its commands in a sandbox by
+  default -- the bundled bwrap/Landlock world, rooted at the process cwd, with
+  no host credentials or Nix daemon socket forwarded. Every other harness
+  (opencode, opencode2, pi, Hermes) executes on the host shell as the user.
 - **Dev**: gh, git (signed commits), claude-code
 - **Images**: `qwen-image` renders a prompt with Qwen-Image-2.1 through
   stable-diffusion.cpp (HIP on the desktop card) into the current directory;

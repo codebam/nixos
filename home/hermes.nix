@@ -18,25 +18,6 @@ let
   # its system-prompt hints.
   cfCli = import ./cf.nix;
 
-  # The OpenSandbox terminal backend plugin (home/hermes-opensandbox.nix):
-  # terminal and file commands run in workspace containers instead of the host
-  # shell, the same tier as opencode2's shell and dsh's default world.
-  opensandboxPlugin = import ./hermes-opensandbox.nix { inherit config pkgs lib; };
-
-  # Always-on system-prompt note about that sandbox. Same channel and reason
-  # as the email policy above: it carries the boundary so the agent does not
-  # chase resources the container cannot reach, and names the human's escape
-  # hatch. Prefixed with two newlines to start its own paragraph.
-  sandboxPolicy = "\n\n" + ''
-    Terminal and file commands run inside an OpenSandbox container bound to
-    the session workspace: the workspace is bind-mounted read-write at its
-    host path, /nix/store read-only, and the container has no Nix daemon, no
-    credentials, and an ephemeral /root. Host paths outside the workspace do
-    not exist in the container; a build that needs its own store goes through
-    osb-work. HERMES_NO_SANDBOX=1 in the launching environment restores the
-    host shell for that process.
-  '';
-
   # The shared agent-memory knowledge graph (home/agent-memory.nix): the same
   # remote server opencode, dsh, and pi read and write, plus the guidance
   # block those harnesses render -- Hermes registers the
@@ -74,9 +55,8 @@ let
     Environment:
     - Hermes config is declarative: `~/.hermes/config.yaml` is GENERATED from
       `/persistent/etc/nixos/home/hermes.nix` (HERMES_MANAGED=home-manager);
-      never hand-edit it -- Hermes changes go in that repo. The terminal
-      backend "opensandbox" lives in `home/hermes-opensandbox.nix` and
-      `home/opensandbox-exec.nix`.
+      never hand-edit it -- Hermes changes go in that repo. Terminal and file
+      commands run on the host shell through Hermes' local backend.
     - Sean's shell is nushell (nu 0.115, reedline, edit_mode=emacs). He does
       NOT use fish, even though `$SHELL` points at fish and a legacy
       `~/.config/fish/config.fish` exists -- never infer the shell from
@@ -89,8 +69,8 @@ let
       JSONL at `~/.dsh/sessions/<project-dir>/<session-id>/session.v3.jsonl.zstd`
       (event types: session, user/message with source.kind=="user",
       assistant/message, tool/call, tool/result with isError).
-    - Local services: SearXNG at 127.0.0.1:8081, the shared agent-memory MCP
-      at 127.0.0.1:7979, the OpenSandbox server at 127.0.0.1:8090 (osb-work).
+    - Local services: SearXNG at 127.0.0.1:8081 and the shared agent-memory
+      MCP at 127.0.0.1:7979.
     - Build-on-request tools: dsh session-log scan
       `~/.hermes/scripts/dsh-task-scan.sh`; terminal-lesson apparatus
       `~/.hermes/lessons` + `scripts/terminal-lesson-context.sh` (skill
@@ -240,11 +220,6 @@ in
     enable = true;
     environmentFiles = [ osConfig.sops.templates."hermes-env".path ];
 
-    # The OpenSandbox terminal backend above. Activation symlinks the plugin
-    # in as nix-managed-<name>; `terminal.backend` and `plugins.enabled` in
-    # settings pick it up.
-    extraPlugins = [ opensandboxPlugin ];
-
     # The memory provider (home/hermes-agent-memory.nix) rides the default
     # package directly rather than through the module's `extraPythonPackages`
     # option: that option routes through the module's package override, which
@@ -353,10 +328,8 @@ in
       # facts and the memory guidance ride the same channel: native memory is
       # off below, so this text is the replacement.
       agent = {
-        environment_hint =
-          emailMcp.policy + sandboxPolicy + cfCli.guidance + standingFacts + memoryGuidance;
-        coding_instructions =
-          emailMcp.policy + sandboxPolicy + cfCli.guidance + standingFacts + memoryGuidance;
+        environment_hint = emailMcp.policy + cfCli.guidance + standingFacts + memoryGuidance;
+        coding_instructions = emailMcp.policy + cfCli.guidance + standingFacts + memoryGuidance;
         # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
         # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
         # every route asks for max and each route clamps onto the levels it
@@ -412,26 +385,7 @@ in
         # "." is Hermes' placeholder for the launch directory; the module
         # would otherwise write its workingDirectory default into config.yaml.
         cwd = ".";
-        # Terminal and file commands run in OpenSandbox workspace containers
-        # (extraPlugins above, home/hermes-opensandbox.nix); the manifest name
-        # gates the plugin in.
-        backend = "opensandbox";
-        # Session-isolated sandboxes. An OpenSandbox env carries a workspace
-        # bind mount, so the container cache must key by the explicit session:
-        # with container_persistent off, the plugin's declared
-        # session_isolated_when_nonpersistent flag makes core key by the
-        # per-turn task id rather than the ambient session context -- which a
-        # dispatching turn can lack (a resumed desktop turn collapsed to the
-        # shared "default" slot, which held another workspace's env, and its
-        # command ran in that other container with its own repo unmounted).
-        # One container per session now, destroyed at session close; the idle
-        # window is widened so a long reasoning gap between commands does not
-        # reap an interactive session's container mid-work (the server TTL
-        # remains the hard cap).
-        container_persistent = false;
-        lifetime_seconds = 3600;
       };
-      plugins.enabled = [ "opensandbox" ];
     };
   };
 

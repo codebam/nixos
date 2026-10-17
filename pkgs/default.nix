@@ -17,11 +17,6 @@
   pkgs,
   prev ? pkgs,
 }:
-let
-  # The SDK is a sibling of the CLI/MCP attrs below, not a nixpkgs package;
-  # bind it once so all three resolve to the same derivation.
-  opensandbox = pkgs.callPackage ./opensandbox-sdk.nix { };
-in
 {
   # Home-manager both installs this and names it in a tmux popup binding.
   agent-overview = pkgs.callPackage ./agent-overview.nix { };
@@ -71,14 +66,6 @@ in
     base = prev.playwright-mcp;
   };
 
-  # OpenSandbox Python SDK, CLI (`osb`), and MCP server. Pinned to the PyPI
-  # releases the sandbox server image supports; see home/opensandbox.nix for
-  # the server runtime and home/opensandbox-work.nix for the work-type
-  # catalog and `osb-work` helper.
-  inherit opensandbox;
-  opensandbox-cli = pkgs.callPackage ./opensandbox-cli.nix { inherit opensandbox; };
-  opensandbox-mcp = pkgs.callPackage ./opensandbox-mcp.nix { inherit opensandbox; };
-
   # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has no
   # lockfile, so the derivation vendors a production lockfile and strips the
   # devDependencies block that lockfile cannot match; it wraps the bin to
@@ -87,10 +74,10 @@ in
   dsh = pkgs.callPackage ./dsh.nix { };
 
   # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell
-  # provider (bash-sandbox in the OpenSandbox world), so the stock bash tool
-  # and execution world stay mounted; home/agents.nix copies it into $DSH_HOME
-  # next to the profile's node_modules. Pinned in its own repository so it
-  # stays independently publishable to npm.
+  # provider (bash-sandbox in dsh's built-in world), so the stock bash tool and
+  # execution world stay mounted; home/agents.nix copies it into $DSH_HOME next
+  # to the profile's node_modules. Pinned in its own repository so it stays
+  # independently publishable to npm.
   dsh-tool-nu = pkgs.callPackage ./dsh-tool-nu.nix { };
 
   # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode2`): the

@@ -25,20 +25,16 @@ broader file is dropped before a more specific one when the budget is hit.
   `sops secrets/secrets.yaml`; never decrypt into a tracked file.
 - **`mutableUsers = false`.** Users, groups, and passwords are declarative. A
   manual `useradd`/`passwd` does not survive and is the wrong fix.
-- **Default dsh sessions are the untrusted-agent tier.** Plain `dsh` mounts the
-  project plus `/nix/store` read-only, fences the model file tools to that
-  mount table, and carries no host credentials or Nix daemon socket. A build
-  that needs the host daemon goes through `osb-work` (its own store) or a human
-  launching `dsh-host-access`. Never ask a user to add a host path or credential
-  (`/directory-add`, `dsh-host-access`) just to make a command succeed.
-- **opencode/pi are trusted host harnesses, not sandboxes.** Their shell and
-  MCP tools run as the host user; the OpenSandbox boundary covers dsh's own
-  container world, `osb-work`, and Hermes' terminal backend
-  (home/hermes-opensandbox.nix) -- a Hermes session in this repo builds through
-  `osb-work` like dsh, and its MCP rows stay host-side.
+- **Default dsh sessions are sandboxed.** Plain `dsh` runs its shell in the
+  bundled bwrap/Landlock world rooted at the process cwd, and carries no host
+  credentials or Nix daemon socket. Work that needs those is a human decision,
+  not something an agent grants itself mid-session.
+- **opencode/pi/Hermes are trusted host harnesses, not sandboxes.** Their shell
+  and MCP tools run as the host user. dsh's sandbox is the only agent-side
+  boundary; do not describe the other harnesses as sandboxed.
 - **Treat agent-modified repo content as untrusted host input.** Do not run
   `nix develop`, `nix build`, git hooks, or an autoloaded `.envrc` on a tree an
-  agent changed until the diff is reviewed; build it in `osb-work nix` first.
+  agent changed until the diff is reviewed.
 - Leave generated or machine-local paths alone: `.direnv/`, `cache/`, `result`,
   `result-*`, `.zvec-grep/`, and any `*.hm-backup` left by home-manager.
 
