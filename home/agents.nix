@@ -599,7 +599,7 @@ let
   # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
   # named or dsh attaches no x-opencode-session header and OpenCode Go answers
   # 400.
-  dshProfilePatch = ''
+  dshProfilePatchCore = ''
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
     # overrides, disables, and insert lists; `!!js` expressions allowed).
@@ -804,6 +804,24 @@ let
           config:
             executable: ${pkgs.nushell}/bin/nu
             enableRunInBackground: true
+  '';
+
+  # dsh 0.2.x keeps plugin config in the active profile's patch: the legacy
+  # harness-home settings.yaml is imported once into whichever profile boots
+  # first, and that import cannot persist into a read-only store symlink
+  # (patch targets must be writable). The interactive profiles therefore get
+  # the llm-pi-ai provider set in the patch itself, rendered from the same
+  # dshSettings document so the two cannot drift; profiles with writable
+  # patches keep receiving it through settings.yaml's one-shot import.
+  dshProfilePatch = pkgs.runCommand "dsh-profile-patch.yml" { nativeBuildInputs = [ pkgs.yq-go ]; } ''
+    cat ${pkgs.writeText "dsh-profile-patch-core.yml" dshProfilePatchCore} > $out
+    {
+      printf '%s\n' \
+        '- id: llm-pi-ai' \
+        "  name: '@deepseek-ai/dsh-llm-pi-ai'" \
+        '  config:'
+      ${pkgs.yq-go}/bin/yq '.llm-pi-ai' ${dshSettings} | ${pkgs.gnused}/bin/sed 's/^/    /'
+    } >> $out
   '';
 
   # Desktop-only dsh command: source the model API keys outside the harness
@@ -2147,10 +2165,11 @@ in
       ".zvec-grep/.keep".text = "";
     }
     // lib.optionalAttrs podmanEnabled {
-      # Both interactive dsh surfaces get the shared hand-written patch; the
-      # deck keeps dsh's own default state.
-      ".dsh/profiles/dsh-tui/cordis.patch.yml".text = dshProfilePatch;
-      ".dsh/profiles/web/cordis.patch.yml".text = dshProfilePatch;
+      # Both interactive dsh surfaces get the shared hand-written patch,
+      # including the llm-pi-ai provider set the 0.2.x profile import cannot
+      # write into a store symlink; the deck keeps dsh's own default state.
+      ".dsh/profiles/dsh-tui/cordis.patch.yml".source = dshProfilePatch;
+      ".dsh/profiles/web/cordis.patch.yml".source = dshProfilePatch;
     };
   };
 
