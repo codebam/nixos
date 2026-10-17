@@ -382,8 +382,8 @@ in
         # Empty base_url clears the OpenRouter URL persisted by the previous
         # default so the built-in OpenCode Go endpoint wins.
         base_url = "";
-        default = "mimo-v2.6-pro";
-        provider = "opencode-go";
+        default = "deepseek/deepseek-v4.1-flash-1017";
+        provider = "nano-gpt";
       };
       # Standing operator notes for every session. In this Hermes revision
       # the native MCP client ignores a server's InitializeResult

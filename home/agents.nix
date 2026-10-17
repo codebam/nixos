@@ -361,8 +361,8 @@ let
   # capabilities block.
   nanogptModels = [
     {
-      id = "deepseek/deepseek-v4.1-flash";
-      name = "DeepSeek V4.1 Flash";
+      id = "deepseek/deepseek-v4.1-flash-1017";
+      name = "DeepSeek V4.1 Flash 1017";
       context = 1000000;
       output = 384000;
       vision = true;
