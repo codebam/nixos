@@ -72,18 +72,9 @@
       url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Hermes Agent, pinned past the v2026.9.21 release (0.21.4) to the main
-    # tip at the time of the bump. The release still produces the desktop's
-    # "Result unavailable" tool rows (upstream #118481): micro-compaction
-    # stamped summarized assistant/tool rows `active=0, compacted=0`, which
-    # the display read (`active = 1 OR compacted = 1`) skips, so results held
-    # in state.db never reach the transcript. Main carries the fix (#119860,
-    # merge f5e6de6f4a, merged after the tag), and this pin also keeps the
-    # x-opencode-session support the v2026.9.21 bump needed. Bump
-    # deliberately and rebuild, since upstream changes the package and its
-    # module together.
+    # Pin hermes-agent to main
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/f6d0e0c20d9a4be5e13c21807344b731ecebaf86";
+      url = "github:NousResearch/hermes-agent/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
