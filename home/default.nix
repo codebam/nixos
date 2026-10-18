@@ -18,7 +18,6 @@ _:
     ./programs.nix
     ./agents.nix
     ./hermes.nix
-    # ./qwen-image.nix
     ./voxtype.nix
   ];
 }
