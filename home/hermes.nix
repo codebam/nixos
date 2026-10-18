@@ -57,13 +57,12 @@ let
       `/persistent/etc/nixos/home/hermes.nix` (HERMES_MANAGED=home-manager);
       never hand-edit it -- Hermes changes go in that repo. Terminal and file
       commands run on the host shell through Hermes' local backend.
-    - Sean's shell is nushell (nu 0.115, reedline, edit_mode=emacs). He does
+    - Sean's shell is nushell (nu 0.116, reedline, edit_mode=emacs). He does
       NOT use fish, even though `$SHELL` points at fish and a legacy
       `~/.config/fish/config.fish` exists -- never infer the shell from
-      `$SHELL`. `config.nu` sources atuin (Ctrl-R + up-arrow), fzf (Alt-C,
-      Ctrl-T), carapace, zoxide, starship. bash 5.3 for scripts. His AGENTS.md
-      forbids `nix profile install` / `nix-env -i`; ephemeral tools go through
-      `nix shell nixpkgs#<pkg> -c`.
+      `$SHELL`. `config.nu` sources zoxide, direnv, and starship. bash 5.3 for
+      scripts. His AGENTS.md forbids `nix profile install` / `nix-env -i`;
+      ephemeral tools go through `nix shell nixpkgs#<pkg> -c`.
     - dsh (@deepseek-ai, the DeepSeek Harness) is his coding agent: `~/.dsh`
       holds profiles, settings.yaml, and session logs as zstd-compressed
       JSONL at `~/.dsh/sessions/<project-dir>/<session-id>/session.v3.jsonl.zstd`

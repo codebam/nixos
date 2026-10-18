@@ -47,12 +47,6 @@
   };
 
   programs = {
-    # Rest of fzf comes from home/shell-common.nix.
-    fzf.defaultOptions = [
-      "--no-height"
-      "--no-reverse"
-    ];
-
     # Base options and key bindings come from home/shell-common.nix.
     tmux = {
       extraConfig = ''

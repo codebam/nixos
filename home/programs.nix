@@ -7,18 +7,6 @@
 
 {
   programs = {
-    # Rest of fzf comes from home/shell-common.nix.
-    fzf.defaultOptions = [
-      "--height 40%"
-      "--layout=reverse"
-      "--border"
-      "--inline-info"
-    ];
-    # fzf and Atuin both bind Ctrl-R; Atuin is meant to own it for this user.
-    # Clearing fzf's widget makes that explicit instead of leaving the winner
-    # to module ordering (and stops Home Manager warning about the clash).
-    fzf.historyWidget.command = "";
-
     google-chrome = {
       enable = true;
     };

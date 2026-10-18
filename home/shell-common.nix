@@ -24,8 +24,8 @@
 
   # Shared by every home-manager user (see home/default.nix and
   # desktop/makano-home.nix). Only the parts that were byte-identical between
-  # users live here -- starship prompts, fish setup and fzf options genuinely
-  # differ per user and stay in the per-user files.
+  # users live here -- starship prompts and fish setup genuinely differ per
+  # user and stay in the per-user files.
   programs = {
     bash.enable = true;
 

@@ -56,6 +56,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 /persistent/etc/nixos/
 ├── flake.nix                    # Entry point: hosts, inputs, packages, devShell
 ├── flake.lock
+├── repo-pulse.nu                # One-shot repo dashboard (commit cadence, file sizes, pins)
 ├── modules/                     # Shared NixOS modules (every host)
 │   ├── default.nix
 │   ├── chaotic.nix              # Chaotic NG (vendors prebuilt Jovian; Mesa Git off)
@@ -66,11 +67,11 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
 │   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # kanagawa scheme, Papirus icons, capitaine cursor,
-│   │                              JetBrainsMono Nerd Font, synthwave wallpaper
+│   │                              JetBrainsMono Nerd Font, neon wallpaper
 │   ├── system/                  # boot, cleanup-root, env, fonts, journald,
 │   │                              networking, nix, nixpkgs (overlays), preservation,
 │   │                              streaming-mode, sysctl, systemd, time, xdg, zram
-│   └── users/                   # Root + codebam (immutable, fish, Yubikey SSH keys)
+│   └── users/                   # Root + codebam (immutable, nushell, Yubikey SSH keys)
 ├── desktop/
 │   ├── disko.nix                # GPT → LUKS → btrfs subvolumes
 │   └── configuration/           # cleanupRoot, Viewport, AMDGPU, nftables
@@ -94,10 +95,15 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── programs.nix             # fish, git, gh, tmux, starship, fastfetch, gpg, wlogout,
 │   │                              helix, firefox, mpv (Anime4K), mangohud, browsers,
 │   │                              terminals (ghostty, rio)
+│   ├── agent-memory.nix         # The one shared agent-memory MCP graph and its guidance
 │   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
-│   ├── qwen-image.nix           # Qwen-Image-2.1 CLI over stable-diffusion.cpp (desktop)
+│   ├── cf.nix                   # Cloudflare CLI guidance shared by the agent prompts
+│   ├── email-mcp.nix            # agentic-inbox email MCP bridge and send policy
+│   ├── google-calendar-mcp.nix  # Google Calendar MCP launcher
+│   ├── hermes.nix               # Hermes agent config and standing prompt
+│   ├── hermes-agent-memory.nix  # Hermes memory provider over the shared graph
 │   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
-│   ├── shell-common.nix         # bash, carapace, zoxide, direnv, nushell, tmux, fzf
+│   ├── shell-common.nix         # bash, zoxide, direnv, nushell, tmux
 │   ├── stylix.nix               # Per-user theming targets
 │   ├── sway.nix                 # Sway config (keybindings, outputs, inputs, gaps, bars)
 │   ├── terminal.nix             # defaultTerminal option
@@ -121,6 +127,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── ssg.nix                  # sigmashake CLI
 │   ├── voxtype-plainify.nix     # transcript filter (a sed program, not a package)
 │   └── zvec-grep.nix            # hybrid workspace search + MCP server
+├── wallpapers/                  # Stylix wallpaper and the OLED rotation pool
 ├── scripts/                     # manual desktop tools, see scripts/README.md
 ├── secrets/                     # SOPS-encrypted secrets (Yubikey + age)
 └── .sops.yaml                   # SOPS key configuration
@@ -171,9 +178,10 @@ is a sed program, not a derivation.
 | `preservation` | nix-community/preservation |
 | `nix-index-database` | nix-community/nix-index-database |
 | `lsfg-vk-flake` | pabloaul/lsfg-vk-flake (Steam Deck) |
-| `voxtype` | peteonrails/voxtype v0.7.5 |
+| `voxtype` | peteonrails/voxtype v1.0.1 |
 | `sops-pass` | codebam/sops-pass |
 | `viewport` | codebam/viewport (compositor; default `servoshell` backend) |
+| `hermes-agent` | NousResearch/hermes-agent (Hermes CLI, gateway, and Desktop) |
 
 ## Key Features
 
@@ -222,7 +230,7 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **ArRPC** + **Mprisence**: Discord Rich Presence
 
 ### Home Manager
-- **Shells**: nushell (default login shell), atuin, fish, bash, tmux, starship, zoxide, direnv, fzf
+- **Shells**: nushell (default login shell), fish, bash, tmux, starship, zoxide, direnv
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
@@ -243,12 +251,6 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   no host credentials or Nix daemon socket forwarded. Every other harness
   (opencode, opencode2, pi, Hermes) executes on the host shell as the user.
 - **Dev**: gh, git (signed commits), claude-code
-- **Images**: `qwen-image` renders a prompt with Qwen-Image-2.1 through
-  stable-diffusion.cpp (HIP on the desktop card) into the current directory;
-  `qwen-image-models` downloads and verifies the ~10 GiB of GGUF weights into
-  `~/.local/share/qwen-image` first (also done on demand by `qwen-image`). The
-  desktop-only package pin and the model flags live in `home/qwen-image.nix`,
-  the version pin in `pkgs/default.nix`.
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)
 
