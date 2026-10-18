@@ -12,8 +12,9 @@ in
     "net.ipv4.ip_forward" = 1;
     "net.ipv4.conf.all.rp_filter" = 0;
     "net.ipv4.conf.default.rp_filter" = 0;
-    # nginx binds 80/443 without CAP_NET_BIND_SERVICE.
-    "net.ipv4.ip_unprivileged_port_start" = 80;
+    # No ip_unprivileged_port_start override: the nginx unit runs as
+    # User=nginx with AmbientCapabilities=CAP_NET_BIND_SERVICE, so it can bind
+    # 80/443 without lowering the kernel-wide floor for every local user.
   };
 
   # Opportunistic rather than the strict "true" from
@@ -96,11 +97,8 @@ in
       # programs.steam.dedicatedServer.openFirewall opens on its own when a
       # server is actually running).
       #
-      # An unused open port is not harmless here: ip_unprivileged_port_start
-      # is 80 so that nginx can bind without the capability, which means any
-      # unprivileged process on this host can claim one of these and be
-      # reachable from the internet. Re-add a line when the service behind it
-      # comes back, not before.
+      # An unused open port is still a hole: re-add a line when the service
+      # behind it comes back, not before.
       allowedTCPPorts = [
         80 # nginx
         443 # nginx

@@ -14,9 +14,8 @@
     programs = {
       steam = {
         enable = true;
-        # Closed: an unused open port is not harmless here —
-        # ip_unprivileged_port_start is 80 on the desktop, so any
-        # unprivileged process can claim these and be internet-reachable.
+        # Closed: local play does not need them, and an unused open port is
+        # still a hole. Re-enable only when the service behind one is wanted.
         remotePlay.openFirewall = false;
         dedicatedServer.openFirewall = false;
         localNetworkGameTransfers.openFirewall = false;

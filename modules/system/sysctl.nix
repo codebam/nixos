@@ -1,7 +1,7 @@
 _: {
   # These used to live in desktop/hardware-configuration.nix, which
   # nixos-generate-config overwrites and statix.toml excludes from linting.
-  # Host-specific networking sysctls (forwarding, rp_filter, low port range)
+  # Host-specific networking sysctls (forwarding, rp_filter)
   # stay next to the NAT rules in desktop/configuration/networking.nix.
   boot.kernel.sysctl = {
     # 16 (sync) only: 1 allows all magic SysRq keys (remount-ro, kill,
