@@ -128,22 +128,8 @@
       # shell-common.nix's config minus the two gpgconf lines: there is no
       # agent socket on the VM to point SSH_AUTH_SOCK at.
       extraConfig = ''
-        let carapace_completer = {|spans|
-        carapace $spans.0 nushell ...$spans | from json
-        }
         $env.config = {
          show_banner: false,
-         completions: {
-         case_sensitive: false,
-         quick: true,
-         partial: true,
-         algorithm: "fuzzy"
-         external: {
-             enable: true
-             max_results: 100
-             completer: $carapace_completer # check 'carapace_completer'
-           }
-         }
         }
         $env.PATH = ($env.PATH |
         split row (char esep) |
