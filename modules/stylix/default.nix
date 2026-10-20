@@ -15,16 +15,24 @@
     # of #1f1f28), so translucent terminal glass tints the synthwave wallpaper
     # dark rather than blue-grey.
     base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa-dragon.yaml";
-    # Neon McLaren mural (wallhaven j5pr65, its native 3840x2160 scaled to
-    # 2560x1440 exactly). One screen, not a panorama: the shell paints the
-    # same picture on each output's own desktop, so DP-1 and DP-3 mirror it
-    # and 5120x1440 "joined" art only shows its centre half, twice. Measured
-    # 12.8% mean drive with `bake.mjs verify` (9% of pixels over half drive,
-    # peak 1.0) -- over the oled budget (README: <8%) and ~2x the synthwave
-    # mural it replaces, the price of the neon highlights. synthwave-hype.png
-    # and the NixOS catppuccin artwork stay in wallpapers/ to switch back to.
-    # base16Scheme above is pinned, so this changes the wallpaper only.
-    image = ../../wallpapers/neon-mclaren.png;
+    # Nebula/ember frame from the OLED pool (wallpapers/oled/, 5120x1440,
+    # generated from live.html -- the pool is the one place wallpaper art is
+    # authored now). Picked over the neon-mclaren mural it replaces on the
+    # exposure numbers, not on looks: mclaren measured 12.8% mean drive, 9%
+    # of pixels over half drive and a peak of 1.0 -- three times the budget
+    # this file exists to keep. This frame is 1.14% mean drive, nothing over
+    # half drive, peak 0.68.
+    #
+    # One screen, not a panorama: the shell paints the same picture on each
+    # output's own desktop, so DP-1 and DP-3 mirror it. `fill` therefore keeps
+    # the centre 2560 columns of the 5120-wide frame on each monitor -- the
+    # measured crop is 0.95% drive and 0.9% over 25% grey, so the crop is not
+    # hiding a bright half. Art authored for a joined surface would do that.
+    #
+    # neon-mclaren.png, synthwave-hype.png and the NixOS catppuccin artwork
+    # stay in wallpapers/ to switch back to. base16Scheme above is pinned, so
+    # this changes the wallpaper only.
+    image = ../../wallpapers/oled/pool/02-nebula-ember.webp;
     # capitaine rather than bibata or phinger: bibata-cursors builds every
     # colour variant into one 338 MB output and there is no attribute for a
     # single theme, and phinger is 53 MB. This is ~10 MB for the same set of
