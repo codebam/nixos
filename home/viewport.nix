@@ -371,9 +371,9 @@ in
     # goes: focus and position are unchanged, so no client is told the mouse
     # left. Milliseconds, not the seconds the idle block uses, because the
     # useful values here are not whole seconds. Zero or absent is off.
-    # cursor = {
-    #   hide_after_ms = 2000;
-    # };
+    cursor = {
+      hide_after_ms = 2000;
+    };
 
     idle = {
       # The deck does not lock: a handheld has nothing to hide from and the
