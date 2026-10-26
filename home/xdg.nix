@@ -41,11 +41,17 @@ in
     };
     mimeApps = {
       enable = true;
+      # The id is chromium-browser.desktop, NOT chromium.desktop: the nixpkgs
+      # chromium/ungoogled-chromium package installs its entry from upstream as
+      # chromium-browser.desktop. Naming a non-existent .desktop here fails
+      # silently -- xdg-mime falls through to the generic handler list, where
+      # Chrome (also installed, and claiming http/https/text/html) wins the
+      # alphabetical tie. Symptom: links open in Chrome despite this config.
       defaultApplications = {
-        "text/html" = "chromium.desktop";
-        "x-scheme-handler/http" = "chromium.desktop";
-        "x-scheme-handler/https" = "chromium.desktop";
-        "x-scheme-handler/about" = "chromium.desktop";
+        "text/html" = "chromium-browser.desktop";
+        "x-scheme-handler/http" = "chromium-browser.desktop";
+        "x-scheme-handler/https" = "chromium-browser.desktop";
+        "x-scheme-handler/about" = "chromium-browser.desktop";
         "inode/directory" = "term-folder.desktop";
       };
     };
