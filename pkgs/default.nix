@@ -66,6 +66,22 @@
     base = prev.playwright-mcp;
   };
 
+  # mcp-proxy is the stdio->HTTP bridge in front of the shared agent-memory
+  # server, so a broken build here breaks every harness. Its 0.13.0 release
+  # requires mcp<2 and imports APIs mcp 2.x deleted, while this pin's
+  # python3Packages.mcp is 2.2.0 -- the build dies in pythonRuntimeDepsCheck
+  # ("mcp<2,>=1.27.1 not satisfied by version 2.2.0"). Relaxing that check
+  # would build and then fail at import, so rebuild it against a 1.x mcp
+  # instead, which is what nixpkgs did upstream (NixOS/nixpkgs#578877). Both
+  # halves live here because the pin predates that fix; see pkgs/mcp-1.nix.
+  mcp-proxy = prev.mcp-proxy.overridePythonAttrs (_: {
+    dependencies = [
+      prev.python3Packages.httpx-auth
+      (prev.python3Packages.callPackage ./mcp-1.nix { })
+      prev.python3Packages.uvicorn
+    ];
+  });
+
   # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has no
   # lockfile, so the derivation vendors a production lockfile and strips the
   # devDependencies block that lockfile cannot match; it wraps the bin to
