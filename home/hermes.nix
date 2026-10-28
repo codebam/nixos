@@ -123,6 +123,7 @@ let
       coreutils
       findutils
       git
+      ffmpeg
     ];
     text = ''
       upstream=${inputs.hermes-agent}

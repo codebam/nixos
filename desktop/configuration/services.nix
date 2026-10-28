@@ -128,6 +128,14 @@ in
         EnableExternalServices = true;
         LastFM.Enabled = false;
         EnableSharing = true;
+        # navidrome 0.64 enables its plugin manager by default, and the NixOS
+        # module hard-codes Plugins.Folder to "${finalPackage}/share/plugins"
+        # readOnly. With no plugins bundled that directory never exists in the
+        # store, so startup dies with:
+        #   mkdir /nix/store/...-navidrome-wrapped: read-only file system
+        # and switch-to-configuration exits 4. Nothing here uses plugins, and
+        # Manager.Start() returns before touching the folder when disabled.
+        Plugins.Enabled = false;
       };
       openFirewall = false;
     };
