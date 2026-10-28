@@ -188,8 +188,7 @@ in
   # Activation half. Writes $HERMES_HOME/tools, which home-manager activation
   # owns for this user; pm's own writes to the same file are read-modify-write
   # merges, so seeding rows (and leaving every other row alone) is safe.
-  # `${seeder}` is the only store path here on purpose: a toFile-derived
-  # activation string embeds its references in the store name, and a longer
-  # list trips Nix's 211-character name limit.
-  script = "${seeder} ${lib.escapeShellArg "${hermesHome}/tools"}";
+  # The store path carries `/bin/` -- writeShellApplication's output is a
+  # directory, so `${seeder}` alone would be run as a directory (status 126).
+  script = "${lib.getExe' seeder "hermes-pm-facts"} ${lib.escapeShellArg "${hermesHome}/tools"}";
 }
