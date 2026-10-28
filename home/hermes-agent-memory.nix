@@ -24,11 +24,36 @@
 # provider: the entry-point name is `agent-memory`. The graph URL, the server
 # name and the cadence are interpolated from home/agent-memory.nix so the
 # plugin cannot drift from the server it talks to.
+#
+# The interpreter is not a free choice. `extraPythonPackages` reaches the
+# running CLI only through
+#
+#   pythonPath = lib.makeSearchPath sitePackagesPath
+#     (python.pkgs.requiredPythonModules extraPythonPackages)
+#
+# and nixpkgs' `hasPythonModule` keeps a derivation only when its
+# `pythonModule` IS the hermes venv's interpreter. A package built from
+# another family (the `pkgs.python312Packages` that used to live here, while
+# the venv moved to 3.14) is dropped from PYTHONPATH silently: the wrapper
+# keeps a PYTHONPATH block, it just holds the interpreter's own
+# site-packages, and Hermes reports
+#
+#   ⚠ Memory provider 'agent-memory' is configured but not installed and not
+#   in the plugin catalog
+#
+# because `importlib.metadata` never sees the dist-info. Hence `python` and
+# `pythonPkgs` come from the hermes package itself
+# (`package.python` / `package.python.pkgs` in home/hermes.nix), which pins
+# them to the same interpreter pm/lock.json pins for the venv.
 {
   pkgs,
   # home/agent-memory.nix -- the one definition of the server, its name, its
   # port and its store.
   agentMemory,
+  # The hermes venv's interpreter and its package set
+  # (`inputs.hermes-agent.packages.<system>.default.python`).
+  python,
+  pythonPkgs,
   # User turns between review notes; mirrors the native nudge
   # (memory.nudge_interval, default 10).
   nudgeTurns ? 10,
@@ -369,10 +394,10 @@ in
   # the entry point is keyed too.
   name = providerName;
 
-  # Interpreter-pinned on purpose: the module type-checks extraPythonPackages
-  # against the hermes venv (python312, nix/hermes-agent.nix), so a
-  # default-python build would be rejected at activation.
-  package = pkgs.python312Packages.buildPythonPackage {
+  # Interpreter-pinned on purpose: nixpkgs drops an extra package whose
+  # `pythonModule` is not the hermes venv's interpreter (see the header), so
+  # this must come from the venv's own package set.
+  package = pythonPkgs.buildPythonPackage {
     pname = "hermes-agent-memory";
     version = "0.1.0";
     pyproject = true;
@@ -383,10 +408,10 @@ in
       # Build-time syntax gate. The interpreter's import check is not usable
       # here: the module subclasses agent.memory_provider, which exists only
       # inside the Hermes venv, not in a build sandbox.
-      ${pkgs.python312}/bin/python3 -m py_compile $out/agent_memory_provider/__init__.py
+      ${python}/bin/python3 -m py_compile $out/agent_memory_provider/__init__.py
       rm -rf $out/agent_memory_provider/__pycache__
     '';
-    build-system = [ pkgs.python312Packages.setuptools ];
+    build-system = [ pythonPkgs.setuptools ];
     # No test suite travels with the module; the gate above is the build-time
     # check, and the runtime behaviour is exercised against the real venv.
     doCheck = false;

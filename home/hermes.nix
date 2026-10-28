@@ -25,11 +25,33 @@ let
   agentMemory = import ./agent-memory.nix;
   memoryGuidance = "\n\n" + agentMemory.guidanceMcp;
 
+  # The hermes package every Hermes surface runs: the CLI on PATH, the
+  # services, and the desktop app (which uses its `hermesDesktop` passthru).
+  # One binding so the memory provider below is built for THIS venv's
+  # interpreter, not a second Python family.
+  hermesPackage = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   # The native memory provider (home/hermes-agent-memory.nix): the plugin that
   # recalls graph entries into every turn and asks for a review every ten
   # turns, so the graph is used the way Hermes' own MEMORY.md store would have
   # been. Off with everything else on non-desktop hosts.
-  memoryProvider = import ./hermes-agent-memory.nix { inherit pkgs agentMemory; };
+  memoryProvider = import ./hermes-agent-memory.nix {
+    inherit pkgs agentMemory;
+    inherit (hermesPackage) python;
+    pythonPkgs = hermesPackage.python.pkgs;
+  };
+
+  # pm's installed-state rows for the tools nix provides (home/hermes-pm-facts.nix):
+  # without them every launch after the first lazily-installed package reports
+  # node/npm/ripgrep/ffmpeg as missing and points at a rebuild that cannot fix it.
+  pmFacts = import ./hermes-pm-facts.nix {
+    inherit pkgs lib;
+    lockfile = "${inputs.hermes-agent}/pm/lock.json";
+    hermesHome = config.services.hermes-agent.hermesHome;
+    node = hermesPackage.hermesNpmLib.nodejs;
+    ripgrep = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.pm-ripgrep;
+    ffmpeg = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.pm-ffmpeg;
+  };
 
   # Standing facts for every Hermes session. The native MEMORY.md/USER.md
   # store is off; this block -- carried through agent.environment_hint /
@@ -236,11 +258,13 @@ in
     # `hermes_agent.memory_providers` entry point -- the route upstream
     # documents for out-of-tree providers, and the only one whose name matches
     # `memory.provider` below (a directory plugin is discovered under its
-    # `nix-managed-` symlink name). Built with the venv's python312, so its
-    # site-packages land where the wrapper's PYTHONPATH looks, and it lands
-    # in the same venv `hermes` runs from -- CLI, gateway and the desktop's
-    # `hermes serve` child alike.
-    package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    # `nix-managed-` symlink name). Built with the venv's own interpreter
+    # (hermesPackage.python.pkgs, 3.14 at this pin), because nixpkgs drops an
+    # extra package built for another family from PYTHONPATH without a word --
+    # see the header of home/hermes-agent-memory.nix. It lands in the same
+    # venv `hermes` runs from -- CLI, gateway and the desktop's `hermes serve`
+    # child alike.
+    package = hermesPackage.override {
       extraPythonPackages = [ memoryProvider.package ];
     };
 
@@ -415,4 +439,10 @@ in
   # credentials. Desktop-only with the service above, since it backs up the
   # state of a hermes install only this host has.
   home.packages = lib.optionals isDesktop [ skillsBackup ];
+
+  # Seed pm's tool store (home/hermes-pm-facts.nix) on every activation, so a
+  # hermes bump re-points the entries at the new store paths. `entryAfter
+  # writeBoundary` because it writes into HERMES_HOME, which the module's own
+  # activation creates; gated like the service because only this host runs pm.
+  home.activation.hermes-pm-facts = lib.mkIf isDesktop pmFacts.script;
 }
