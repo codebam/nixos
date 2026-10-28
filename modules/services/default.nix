@@ -8,10 +8,12 @@
     # that CPU, so it waits out the 21s RCU stall timeout in idle_sched_class
     # and the kernel ejects the scheduler (103 ejections in one 3-hour boot;
     # Firefox threads in systemd's migrate-disabled BPF hooks took the worst
-    # of it). Upstream fixed this after the 1.1.3 tag in 6d31ddd8973, but
-    # nixpkgs reverted to 1.1.2 instead, so the overlay in
-    # modules/system/nixpkgs.nix pins a main snapshot that carries the fix.
-    # Desktop opts in with mkForce below; leave the other hosts on EEVDF.
+    # of it). Upstream fixed this after the 1.1.3 tag in 6d31ddd8973, and the
+    # fix is in 1.1.4, which is what nixpkgs ships now; the desktop still
+    # runs the master snapshot pinned in modules/system/nixpkgs.nix because
+    # it carries the scx_lavd work from after that tag. sched-ext stays
+    # opt-in: desktop turns it on with mkForce below, the other hosts stay on
+    # EEVDF.
     scx = {
       enable = false;
       scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md

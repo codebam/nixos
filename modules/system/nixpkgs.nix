@@ -58,27 +58,33 @@
               '';
             });
 
-            # scx_lavd 1.1.3 regressed on kernel 7.2 and nixpkgs reverted to
-            # 1.1.2; the fix (upstream 6d31ddd8973) only exists on main. Pin
-            # a main snapshot that carries it by commit, not branch, so this
-            # rebuilds identically. importCargoLock reads the matching
-            # Cargo.lock instead of a cargoHash, so the 1.1.3 git tag's hash
-            # cannot silently drift onto a different dependency set.
+            # scx_lavd 1.1.3 regressed on kernel 7.2 (a migration-disabled
+            # task affine to one CPU was never dispatched and sat out the RCU
+            # stall timeout); nixpkgs had reverted to 1.1.2, which is why this
+            # pin exists. nixpkgs now carries 1.1.4, which contains the fix
+            # (upstream 6d31ddd8973), so master is tracked here only for the
+            # scx_lavd work that landed after that tag: per-compute-domain
+            # idle tracking, the uclamp/perf-target fix and the load-balance
+            # band cap. Pin by commit, not branch, so this rebuilds
+            # identically; importCargoLock reads the matching Cargo.lock
+            # instead of a cargoHash, so no tag hash can drift onto a
+            # different dependency set. Drop this attr to fall back to
+            # nixpkgs' 1.1.4 if master breaks.
             scx =
               let
                 rustscheds = prev.scx.rustscheds.overrideAttrs (old: {
-                  version = "1.1.3-unstable-2026-09-11";
+                  version = "1.1.4-unstable-2026-10-27";
                   src = prev.fetchFromGitHub {
                     owner = "sched-ext";
                     repo = "scx";
-                    rev = "8b2479571c0768310510c061960d2c40cb64d160";
-                    hash = "sha256-/bRCnsZ0d56WuIcBNrXmpykS8CoLqkjeKJgekIpbTgQ=";
+                    rev = "abcc603de96a0809e74b4b266eea8e16419be567";
+                    hash = "sha256-DCIz7/slDJmw6MYZ7zm+y3AbStKxFfUcKTQlB5pNAO0=";
                   };
                   cargoDeps = prev.rustPlatform.importCargoLock {
                     lockFileContents = builtins.readFile (
                       builtins.fetchurl {
-                        url = "https://raw.githubusercontent.com/sched-ext/scx/8b2479571c0768310510c061960d2c40cb64d160/Cargo.lock";
-                        sha256 = "127bd3d568cdeb31ea660d811bb1f2f3617aad9bb60d889cc71c0f4486d95816";
+                        url = "https://raw.githubusercontent.com/sched-ext/scx/abcc603de96a0809e74b4b266eea8e16419be567/Cargo.lock";
+                        sha256 = "b922551e6a76c0480c41a488a27c4cbcf12588aa31a44841183bf2525cf0e8f1";
                       }
                     );
                   };
