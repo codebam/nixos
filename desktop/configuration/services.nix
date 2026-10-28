@@ -62,6 +62,21 @@ in
     };
   };
 
+  # transmission 4.1.4 takes an exclusive fcntl() lock on
+  # <confdir>/lock at startup; 4.1.3 never created that file. AppArmor mediates
+  # fcntl locks as the `k` permission, and the module-generated rule for the
+  # config dir is only `owner <confdir>/** rw,`. Without `k` the lock fails with
+  # EACCES, and the daemon reports *any* lock failure the same way:
+  #   "Another process is already using '<confdir>'"
+  # after retrying for 15s -- which reads like a stale lock, but nothing holds
+  # it (no open fds in /proc). The audit log names the real cause:
+  #   apparmor="DENIED" operation="file_lock" ... requested_mask="k"
+  # on <confdir>/lock, then the unit exits 1 and switch-to-configuration
+  # returns status 4. types.lines appends this to the module's own include.
+  security.apparmor.includes."local/bin.transmission-daemon" = ''
+    owner ${config.services.transmission.home}/.config/transmission-daemon/** rwk,
+  '';
+
   services = {
     # The shared module leaves scx off; this host opts in. mkForce is needed
     # because that shared definition is plain false, not a default. The
