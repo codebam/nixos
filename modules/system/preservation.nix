@@ -82,9 +82,28 @@ _: {
           ];
           files = [
             ".claude.json"
-            ".config/kwinoutputconfig.json"
-            ".config/kwalletrc"
-            ".config/kwalletmanagerrc"
+            # KConfig writes a temp file and renames it over the target to
+            # save atomically. A file bind mount is a mount point, so that
+            # rename fails with EBUSY and KConfig reports it as "Disk full?"
+            # even with gigabytes free. KConfig resolves a symlink to its
+            # canonical path, so the rename lands inside /persistent and the
+            # link survives. Directories below stay bind mounts: renames
+            # within a mounted directory are ordinary filesystem operations.
+            {
+              file = ".config/kwinoutputconfig.json";
+              how = "symlink";
+              createLinkTarget = true;
+            }
+            {
+              file = ".config/kwalletrc";
+              how = "symlink";
+              createLinkTarget = true;
+            }
+            {
+              file = ".config/kwalletmanagerrc";
+              how = "symlink";
+              createLinkTarget = true;
+            }
             ".config/viewport/openai-auth.json"
           ];
           directories = [

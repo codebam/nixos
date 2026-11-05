@@ -14,6 +14,7 @@
     ./preservation.nix
     ./searx.nix
     ./programs.nix
+    ./plasma.nix
     ./services.nix
     ./system.nix
     ./auto-upgrade.nix
