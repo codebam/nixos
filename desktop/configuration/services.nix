@@ -78,11 +78,11 @@ in
   '';
 
   services = {
-    # The shared module leaves scx off; this host opts in. mkForce is needed
-    # because that shared definition is plain false, not a default. The
-    # scheduler itself comes from the master snapshot pinned in
+    # The shared module leaves scx-loader off; this host opts in. mkForce is
+    # needed because that shared definition is plain false, not a default.
+    # The scheduler itself comes from the master snapshot pinned in
     # modules/system/nixpkgs.nix.
-    scx.enable = lib.mkForce true;
+    scx-loader.enable = lib.mkForce true;
 
     # Every admin UI below binds loopback and is reached only through nginx.
     #

@@ -14,9 +14,11 @@
     # it carries the scx_lavd work from after that tag. sched-ext stays
     # opt-in: desktop turns it on with mkForce below, the other hosts stay on
     # EEVDF.
-    scx = {
+    # nixpkgs 26.11 removed services.scx in favour of the scx-loader daemon
+    # (services.scx-loader); default_sched replaces the old `scheduler`.
+    scx-loader = {
       enable = false;
-      scheduler = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+      config.default_sched = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
     };
     # Portals are already set up for sway in modules/system/xdg.nix, which is
     # what flatpak apps need to reach files, screenshare, and the theme.

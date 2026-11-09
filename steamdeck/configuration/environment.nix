@@ -2,7 +2,9 @@
 
 {
   environment.systemPackages = with pkgs; [
-    steamdeck-firmware
+    # Jovian 2026-10 moved its packages into the jovianPackages scope; the
+    # bare attribute no longer exists in pkgs.
+    jovianPackages.steamdeck-firmware
     xauth
     protonup-qt
     (wrapRetroArch {
