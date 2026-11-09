@@ -7,7 +7,7 @@
 }:
 
 {
-  programs.voxtype.package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
+  programs.voxtype.package = (import ../home/voxtype-package.nix { inherit pkgs inputs; }).vulkan;
 
   stylix = {
     targets = {

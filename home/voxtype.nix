@@ -21,7 +21,7 @@ in
 {
   programs.voxtype = {
     enable = true;
-    package = lib.mkDefault inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    package = lib.mkDefault (import ./voxtype-package.nix { inherit pkgs inputs; }).default;
     model.name = "base.en";
     service.enable = true;
 

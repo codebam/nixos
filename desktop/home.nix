@@ -56,7 +56,7 @@ let
 in
 {
 
-  programs.voxtype.package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
+  programs.voxtype.package = (import ../home/voxtype-package.nix { inherit pkgs inputs; }).vulkan;
 
   home = {
     # android-studio is not here: it is 3.5 GB plus a 470 MB JDK 17 that
