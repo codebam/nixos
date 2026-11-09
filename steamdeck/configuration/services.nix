@@ -2,8 +2,14 @@
 
 {
   services = {
-    # jovian turns plasma6 on; viewport is the session here (see viewport.nix).
-    desktopManager.plasma6.enable = lib.mkForce false;
+    # Plasma is the session "Switch to Desktop" launches (jovian.nix), so
+    # the module has to be on; viewport (viewport.nix) and sway remain
+    # installed as alternative sessions. Boot default is unchanged: Jovian
+    # still autostarts Gaming Mode.
+    desktopManager.plasma6.enable = true;
+    # plasma6.nix sets this with mkDefault; same choice as the desktop
+    # (desktop/configuration/plasma.nix), for the same closure reason.
+    orca.enable = false;
     # scx/scx_lavd config comes from modules/services/default.nix, which is
     # off; only the desktop opts in through the main-snapshot overlay in
     # modules/system/nixpkgs.nix. The plain false there also keeps Jovian's
@@ -24,4 +30,10 @@
       HandleHibernateKey = "ignore";
     };
   };
+
+  # Plasma's module turns the KDE PIM suite on by default -- akonadi, KMail
+  # and Kontact, with akonadi autostarting in the session. Same choice as the
+  # desktop (desktop/configuration/plasma.nix): a handheld session does not
+  # need it.
+  programs.kde-pim.enable = false;
 }
