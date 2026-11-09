@@ -3,7 +3,7 @@ _:
 {
   jovian = {
     decky-loader = {
-      enable = true;
+      enable = false;
       user = "codebam";
       stateDir = "/home/codebam/.config/decky-loader";
     };
