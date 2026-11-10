@@ -72,10 +72,17 @@
       url = "github:peteonrails/voxtype/v1.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pin hermes-agent to main
+    # Separate nixpkgs for the agent, pinned to the rev its own lock names
+    # (02c087f, patchelf 0.19.2). Its pm-* packages patch patchelf 0.19.2
+    # (NixOS/patchelf#672), while the root nixpkgs pins patchelf 0.15.2 for
+    # stdenv stability, so following the root makes that patch fail to apply
+    # and pm-ripgrep unbuildable. Bump this with the agent, from upstream's
+    # flake.lock.
+    nixpkgs-hermes.url = "github:NixOS/nixpkgs/02c087f3fe673c9e317f206a627cb6b910336dbe";
+
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/main";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:NousResearch/hermes-agent/b56486946cf3151509c8b841b7608712641ba71e";
+      inputs.nixpkgs.follows = "nixpkgs-hermes";
     };
   };
 

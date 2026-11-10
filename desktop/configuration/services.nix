@@ -19,6 +19,15 @@ let
                        "new WebSocketServer({ port, host: '127.0.0.1' })"
     '';
   });
+
+  # nixpkgs' default crate overrides force AWS_LC_SYS_USE_SYSTEM=1 for
+  # aws-lc-sys >= 0.42, but a cargo build ignores a crate override's
+  # buildInputs, so the crate looks for a system AWS-LC that the derivation
+  # never provides and panics. Packages like apt-swarm list aws-lc
+  # themselves; mprisence's expression does not (nixpkgs f4a03c0).
+  mprisence = pkgs.mprisence.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.aws-lc ];
+  });
 in
 {
 
@@ -55,7 +64,7 @@ in
         ];
       };
       serviceConfig = {
-        ExecStart = "${pkgs.mprisence}/bin/mprisence";
+        ExecStart = "${mprisence}/bin/mprisence";
         Restart = "always";
       };
       wantedBy = [ "default.target" ];
