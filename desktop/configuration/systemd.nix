@@ -72,9 +72,12 @@
         requires = [ "tailscaled.service" ];
         wantedBy = [ "multi-user.target" ];
         unitConfig = {
-          # The same boot ordering: retry until tailscaled will accept the
-          # serve config instead of burning through the default start limit.
-          StartLimitIntervalSec = 0;
+          # Bounded retry: allow repeated restarts during boot when
+          # tailscaled accepts the serve config, but do not disable the
+          # start-limit entirely (that retried forever on permanent
+          # failure).
+          StartLimitIntervalSec = 300;
+          StartLimitBurst = 10;
         };
         serviceConfig = {
           Type = "oneshot";
@@ -87,16 +90,6 @@
         };
       };
 
-      wifi-performance = {
-        description = "Disable Wi-Fi Power Save";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${pkgs.iw}/bin/iw dev wlan0 set power_save off";
-          RemainAfterExit = true;
-        };
-      };
       navidrome = {
         serviceConfig.ProtectHome = lib.mkForce "read-only";
       };

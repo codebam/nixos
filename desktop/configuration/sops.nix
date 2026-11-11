@@ -23,34 +23,34 @@
       # reassembles the old hermes-env file for Hermes itself.
       openrouter-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       context7-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       cloudflare-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       cloudflare-account-id = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       qwen-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       deepseek-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # OpenCode Go subscription key, exported as OPENCODE_API_KEY by the
       # wrapper in home/agents.nix. Kept as its own secret: it is a personal
       # subscription key, not part of the shared agent environment.
       opencode-go-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # Second OpenCode Go subscription, and the one Hermes leads with: the
       # hermes-env template below puts its placeholder in the unnumbered
@@ -62,7 +62,7 @@
       # one OPENCODE_API_KEY names; no other agent picks it up.
       opencode-go-api-key-2 = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # NanoGPT API key for the `nano-gpt` provider in opencode (as
       # NANO_GPT_API_KEY, the name models.dev lists for it) and in pi, dsh,
@@ -71,20 +71,20 @@
       # hermes-env template below feeds Hermes.
       nanogpt-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # Telegram bot token consumed only by the Hermes gateway. It is not in
       # home/agents.nix's secretVars: no interactive agent wrapper needs it.
       hermes-bot-telegram-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # Telegram echoes this on every webhook delivery; the gateway refuses
       # to start in webhook mode without it (GHSA-3vpc-7q5r-276h). Same
       # audience as the bot token: the hermes-env template only.
       telegram-webhook-secret = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # cloudflared credentials for the hermes-telegram tunnel
       # (desktop/configuration/cloudflared.nix), loaded by the tunnel unit as
@@ -95,7 +95,7 @@
       # No wrapper exports it; only the hermes-env template below consumes it.
       tavily-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # Bearer for the agentic-inbox email MCP bridge (home/email-mcp.nix):
       # the bridge launcher exports it as MCP_AUTH_TOKEN so the stdio bridge
@@ -106,7 +106,7 @@
       # session to that mailbox and its read/draft/send scopes.
       email-api-key = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
       };
       # Desktop-app OAuth client JSON for the Google Calendar MCP server
       # (home/google-calendar-mcp.nix). The launcher exports it as
@@ -114,7 +114,18 @@
       # as non-confidential, but it stays out of the store with the rest.
       google-calendar-oauth = {
         owner = "codebam";
-        group = "users";
+        mode = "0400";
+      };
+      # Root and codebam password hashes live here so they are not
+      # committed as plaintext. Same hashes as before (no rotation, per
+      # owner request); wired via hashedPasswordFile in users.nix below.
+      # The secrets themselves are verifier hashes, but keeping them in
+      # SOPS avoids leaving them in git history for current generations.
+      root-hashed-password = {
+        mode = "0400";
+      };
+      codebam-hashed-password = {
+        mode = "0400";
       };
       searx-secret = { };
     };

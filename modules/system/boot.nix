@@ -17,6 +17,11 @@
   boot = {
     initrd.systemd = {
       # enable = true;
+      # Intentionally the same hash as root (owner request). No
+      # emergencyAccessFile option exists in NixOS, and the emergency
+      # shell must work before SOPS secrets are decrypted, so this
+      # verifier stays inline as the documented exception to the
+      # "no secrets in git" rule. It is a root-equivalent credential.
       emergencyAccess = "$6$GKIRYDCTJO3SOTfb$nZuvpwjNYh./Sxc3WFB4.Y7rGx6XcmPYhYZ.bmDGExMkouIsKf.tYefX6LEhOGLMdlQ8.ipovClQ6U8ZtQNBm0";
     };
     loader = {

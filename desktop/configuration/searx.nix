@@ -12,6 +12,8 @@
 
   services.searx = {
     enable = true;
+    # Limiter is disabled above (server.limiter = false), so there is no
+    # Redis consumer and no local Redis is created.
     redisCreateLocally = false;
     configureUwsgi = false;
     configureNginx = false;

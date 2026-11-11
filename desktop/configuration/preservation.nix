@@ -15,6 +15,35 @@ in
 {
   preservation = {
     preserveAt."/persistent" = {
+      directories = [
+        "/var/lib/OpenRGB"
+        {
+          directory = "/var/lib/transmission";
+          user = "codebam";
+          group = "users";
+        }
+        {
+          directory = "/var/lib/lidarr";
+          user = "codebam";
+          group = "users";
+        }
+        {
+          directory = "/var/lib/navidrome";
+          user = "navidrome";
+          group = "navidrome";
+        }
+        "/var/lib/private/prowlarr"
+        {
+          directory = "/var/lib/private/ollama";
+          user = "ollama";
+          group = "ollama";
+        }
+        {
+          directory = "/var/lib/acme";
+          user = "acme";
+          group = "nginx";
+        }
+      ];
       users = {
         codebam = {
           files = map kdeFile [

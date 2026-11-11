@@ -1,6 +1,9 @@
 { config, lib, ... }:
 
 let
+  # Names the WAN NICs for the vpn-bypass marks and UPnP rules below.
+  # If a NIC is renamed (predictable interface names) these rules silently
+  # never match, so changing hardware requires updating this set.
   wanInterfaces = ''{ "wlan0", "enp6s0" }'';
 in
 {
@@ -100,8 +103,7 @@ in
       # An unused open port is still a hole: re-add a line when the service
       # behind it comes back, not before.
       allowedTCPPorts = [
-        80 # nginx
-        443 # nginx
+        80 # nginx (plain HTTP only; no TLS vhost/ACME anymore)
       ];
       allowedUDPPorts = [
         1900 # UPnP

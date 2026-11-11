@@ -8,11 +8,17 @@
 let
   vx = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system};
 
-  withSqlite = drv: drv.overrideAttrs (old: {
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite ];
-  });
+  withSqlite =
+    drv:
+    drv.overrideAttrs (old: {
+      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite ];
+    });
 
-  wrap = wrapped: patched: wrapped.overrideAttrs (_: { paths = [ patched ]; });
+  wrap =
+    wrapped: patched:
+    wrapped.overrideAttrs (_: {
+      paths = [ patched ];
+    });
 in
 {
   default = wrap vx.default (withSqlite vx.voxtype-unwrapped);

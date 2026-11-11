@@ -12,7 +12,10 @@
   outputs =
     { nixpkgs, ... }:
     let
-      systems = [ "x86_64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
 
       # Same unfree predicate the hosts use (./unfree.nix), because three of
       # the derivations below (ssg, sigmashake-desktop, polariumcode) are

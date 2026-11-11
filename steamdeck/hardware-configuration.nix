@@ -41,7 +41,6 @@
             ".config/kdeconnect"
             ".config/rpcs3"
             ".config/Ryujinx"
-            ".config/decky-loader"
           ];
         };
       };

@@ -27,6 +27,7 @@ let
   tools = fsTools.${cfg.fsType};
 
   script = ''
+    set -u
     log() {
       echo "[cleanup-root] $*" >&2
     }
@@ -35,6 +36,13 @@ let
       log "FATAL: $*"
       exit 1
     }
+
+    # Fail fast if the initrd stops carrying binaries this script assumes.
+    # mount/umount come from nixpkgs' own initrd extraBin (see below);
+    # everything else is shadowed by extraBin entries there.
+    for cmd in mount umount mkdir mv rm cat printf; do
+      command -v "$cmd" >/dev/null 2>&1 || fail "missing required binary: $cmd"
+    done
 
     MOUNT_POINT="/cleanup-root-tmp"
 
@@ -100,7 +108,7 @@ let
           # --- 3. Replace @root, keeping the old one until the new one exists ---
           if [[ -e "$MOUNT_POINT/@root" ]]; then
             log "Found existing @root subvolume. Preparing to replace it."
-            BOOT_BACKUP_NAME="@root.bak-$(date +%s)"
+            BOOT_BACKUP_NAME="@root.bak-$(date +%s-%N)"
 
             log "Moving @root to $BOOT_BACKUP_NAME as a temporary backup."
             if ! mv "$MOUNT_POINT/@root" "$MOUNT_POINT/$BOOT_BACKUP_NAME"; then
@@ -142,7 +150,7 @@ let
             if [[ -d "$MOUNT_POINT/old_roots" ]]; then
               cutoff=$(( $(date +%s) - ${toString cfg.keepDays} * 24 * 60 * 60 ))
               log "Deleting old roots older than ${toString cfg.keepDays} days."
-              find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while read -r old_root; do
+              find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r old_root; do
                 mtime=$(stat -c %Y "$old_root" 2>/dev/null || echo 0)
                 if (( mtime > 0 && mtime < cutoff )); then
                   log "Deleting old root: $old_root"
