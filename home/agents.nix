@@ -348,17 +348,27 @@ let
   };
 
   # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
-  # the curated selection for the fleet -- three models, deliberately, not the
+  # the curated selection for the fleet -- eight models, deliberately, not the
   # 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
   # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
   # so this list is the single source their projections below read.
   #
+  # The set is the daily driver plus the cheap frontier tier around it (about
+  # $0.10-0.15 input and $0.30-0.60 output per million tokens) and the
+  # stronger MiMo pair; every entry must call tools. Muse Ember, Claude Haiku
+  # 5.5, and GPT 6 Luna bill per token; the rest are included in the NanoGPT
+  # subscription.
+  #
   # Metadata is from the provider's own /api/v1/models?detailed=true, checked
-  # against models.dev's copy (both live 2026-10-08): `efforts` are the wire
-  # values the gateway's reasoning_effort parameter accepts, `cost` is USD per
-  # million tokens with NanoGPT's cache-read rate, and `vision` mirrors the
-  # capabilities block.
+  # against models.dev's copy (both live 2026-11-11; Muse Ember shipped that
+  # day): `efforts` are the wire values the gateway's reasoning_effort
+  # parameter accepts, `cost` is USD per million tokens with NanoGPT's
+  # cache-read rate, and `vision` mirrors the capabilities block. Claude Haiku
+  # 5.5 and GPT 6 Luna bill more above their long-context thresholds (100k and
+  # 200k tokens); `cost` records their base tier. Muse Ember's gateway entry
+  # omits the max output, so its output limit follows models.dev's copy, which
+  # reports the whole context window.
   nanogptModels = [
     {
       id = "deepseek/deepseek-v4.1-flash-1017";
@@ -374,9 +384,9 @@ let
         "max"
       ];
       cost = {
-        input = 0.13;
-        output = 0.52;
-        cacheRead = 0.006;
+        input = 0.1;
+        output = 0.6;
+        cacheRead = 0.0042;
       };
     }
     {
@@ -393,7 +403,7 @@ let
       cost = {
         input = 0.14;
         output = 0.28;
-        cacheRead = 0.003;
+        cacheRead = 0.0028;
       };
     }
     {
@@ -410,7 +420,107 @@ let
       cost = {
         input = 0.435;
         output = 0.87;
+        cacheRead = 0.0036;
+      };
+    }
+    {
+      id = "meta/muse-ember";
+      name = "Muse Ember";
+      context = 1048576;
+      output = 1048576;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      cost = {
+        input = 0.1;
+        output = 0.5;
         cacheRead = 0.004;
+      };
+    }
+    {
+      id = "anthropic/claude-haiku-5.5";
+      name = "Claude Haiku 5.5";
+      context = 1000000;
+      output = 128000;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      cost = {
+        input = 0.1;
+        output = 0.5;
+        cacheRead = 0.01;
+      };
+    }
+    {
+      id = "openai/gpt-6-luna";
+      name = "GPT 6 Luna";
+      context = 1050000;
+      output = 128000;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "none"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      cost = {
+        input = 0.1;
+        output = 0.5;
+        cacheRead = 0.01;
+      };
+    }
+    {
+      id = "z-ai/glm-5.3-flash";
+      name = "GLM 5.3 Flash";
+      context = 1048576;
+      output = 131072;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+      cost = {
+        input = 0.1;
+        output = 0.3;
+        cacheRead = 0.025;
+      };
+    }
+    {
+      id = "minimax/minimax-m3.1-flash";
+      name = "MiniMax M3.1 Flash";
+      context = 1048576;
+      output = 524288;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      cost = {
+        input = 0.15;
+        output = 0.6;
+        cacheRead = 0.015;
       };
     }
   ];
@@ -514,7 +624,7 @@ let
     // lib.optionalAttrs (model.efforts != [ ]) {
       thinkingLevelMap = {
         off = if builtins.elem "none" model.efforts then "none" else null;
-        minimal = null;
+        minimal = if builtins.elem "minimal" model.efforts then "minimal" else null;
         low = if builtins.elem "low" model.efforts then "low" else null;
         medium = if builtins.elem "medium" model.efforts then "medium" else null;
         high = if builtins.elem "high" model.efforts then "high" else null;
@@ -549,6 +659,7 @@ let
         else
           [ "          reasoningEfforts:" ]
           ++ lib.optional (builtins.elem "none" model.efforts) "            off: none"
+          ++ lib.optional (builtins.elem "minimal" model.efforts) "            minimal: minimal"
           ++ lib.optional (builtins.elem "low" model.efforts) "            low: low"
           ++ lib.optional (builtins.elem "medium" model.efforts) "            medium: medium"
           ++ lib.optional (builtins.elem "high" model.efforts) "            high: high"
