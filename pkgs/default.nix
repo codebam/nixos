@@ -82,11 +82,10 @@
     ];
   });
 
-  # DeepSeek Harness CLI (@deepseek-ai/dsh). The registry tarball has no
-  # lockfile, so the derivation vendors a production lockfile and strips the
-  # devDependencies block that lockfile cannot match; it wraps the bin to
-  # start node with --expose-internals (its HMR plugin requires it). See
-  # pkgs/dsh.nix.
+  # DeepSeek Harness CLI (@deepseek-ai/dsh). The 0.2.2-rc.2 release was never
+  # published to npm, so the derivation builds the release tarballs from the
+  # GitHub tag and installs those; it also wraps the bin to start node with
+  # --expose-internals (its HMR plugin requires it). See pkgs/dsh.nix.
   dsh = pkgs.callPackage ./dsh.nix { };
 
   # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell
