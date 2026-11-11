@@ -415,6 +415,72 @@ let
     }
   ];
 
+  # Qwen Code's model catalog. `qwen` speaks OpenAI-compatible
+  # chat-completions, so nano-gpt is declared in its `openai` auth slot rather
+  # than Qwen's own hosted endpoints; `envKey` names the variable loadKey
+  # exports, which keeps the key out of the settings file the TUI writes.
+  # contextWindowSize and modalities are from nano-gpt's
+  # /api/v1/models?detailed=true (read 2026-11-11) and drive Qwen Code's
+  # compaction budget and image input. The Qwen coder routes are the point of
+  # running this CLI; deepseek-v4.1-flash stays listed so the daily-driver
+  # model the other harnesses default to is one `/model` away.
+  qwenNanoGptModels = [
+    {
+      id = "qwen/qwen3-coder-next";
+      name = "Qwen3 Coder Next";
+      context = 262144;
+    }
+    {
+      id = "qwen/qwen3-coder";
+      name = "Qwen3 Coder 480B";
+      context = 262000;
+    }
+    {
+      id = "qwen/qwen3.8-flash";
+      name = "Qwen3.8 Flash";
+      context = 1000000;
+      vision = true;
+    }
+    {
+      id = "qwen/qwen3.8-max";
+      name = "Qwen3.8 Max";
+      context = 991000;
+      vision = true;
+    }
+    {
+      id = "deepseek/deepseek-v4.1-flash-1017";
+      name = "DeepSeek V4.1 Flash 1017";
+      context = 1048576;
+      vision = true;
+    }
+  ];
+
+  qwenModelEntry =
+    {
+      id,
+      name,
+      context,
+      vision ? false,
+    }:
+    {
+      inherit id name;
+      envKey = "NANOGPT_API_KEY";
+      baseUrl = "https://nano-gpt.com/api/v1";
+      generationConfig = {
+        contextWindowSize = context;
+      }
+      // lib.optionalAttrs vision { modalities.image = true; };
+    };
+
+  # Only the catalog and the default selection are managed: `/model`, `/auth`
+  # and the theme picker write the same file, so the merge keeps every other
+  # key the TUI has stored.
+  qwenSettings = {
+    modelProviders.openai = map qwenModelEntry qwenNanoGptModels;
+    security.auth.selectedType = "openai";
+    model.name = "qwen/qwen3-coder-next";
+  };
+
   # pi's models.json shape. `nano-gpt` is a new provider rather than an
   # override of a built-in, so it names the endpoint and protocol itself. The
   # compat block is not optional: pi cannot recognise the endpoint, and
@@ -543,6 +609,19 @@ let
         --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep ]} \
         --set OPENCODE_DISABLE_AUTOUPDATE true \
         --set OPENCODE_DISABLE_FILEWATCHER true
+    '';
+  };
+
+  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package. Wrapped with loadKey
+  # because its model catalog (below) authenticates with NANOGPT_API_KEY from
+  # the same sops secret as the other harnesses; the gateway itself is declared
+  # in ~/.qwen/settings.json by home.activation.qwenSettings.
+  qwen = pkgs.symlinkJoin {
+    name = "qwen-wrapped-${pkgs.qwen-code.version}";
+    paths = [ pkgs.qwen-code ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/qwen --run '. ${loadKey}'
     '';
   };
 
@@ -1813,12 +1892,27 @@ let
       > "$settings.tmp"
     mv "$settings.tmp" "$settings"
   '';
+
+  # ~/.qwen/settings.json is the same kind of live document (/auth, /model and
+  # the theme picker write it), so the managed catalog is merged in, Nix keys
+  # winning, rather than symlinked.
+  qwenSettingsMerge = pkgs.writeShellScript "qwen-settings-merge" ''
+    set -eu
+    settings="$HOME/.qwen/settings.json"
+    mkdir -p "$(dirname "$settings")"
+    current=$(${pkgs.jq}/bin/jq . "$settings" 2>/dev/null || echo '{}')
+    printf '%s' "$current" \
+      | ${pkgs.jq}/bin/jq --argjson managed ${lib.escapeShellArg (builtins.toJSON qwenSettings)} '. * $managed' \
+      > "$settings.tmp"
+    mv "$settings.tmp" "$settings"
+  '';
 in
 {
   home = {
     packages = [
       opencode-desktop-beta
       opencode2
+      qwen
       pi
       dshInstalled
       dshSubscription
@@ -1843,6 +1937,12 @@ in
       # keys are merged in rather than symlinked.
       opencodeCliSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${opencodeCliSettingsMerge}
+      '';
+
+      # qwen's settings.json is the same kind of live document; the managed
+      # model catalog is merged in after the TUI has had a chance to write it.
+      qwenSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${qwenSettingsMerge}
       '';
 
       # dsh's settings.yaml is the same kind of live document (onboarding, chat
