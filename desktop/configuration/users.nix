@@ -1,13 +1,21 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  # SOPS-sourced password hashes take precedence over the shared inline
-  # hashes (users.mutableUsers = false precedence: ... ->
-  # hashedPassword -> ... -> hashedPasswordFile). Reuses the same hash
-  # values already in modules/users/default.nix, now stored in SOPS.
+  # SOPS-sourced password hashes replace the shared inline hashes. The
+  # inline `hashedPassword` is nulled out here so only `hashedPasswordFile`
+  # remains set (setting both triggers the multiple-options warning, even
+  # though File wins with mutableUsers = false). Same hash values, now
+  # stored in SOPS.
   users.users = {
 
+    root.hashedPassword = lib.mkForce null;
     root.hashedPasswordFile = config.sops.secrets.root-hashed-password.path;
+    codebam.hashedPassword = lib.mkForce null;
     codebam.hashedPasswordFile = config.sops.secrets.codebam-hashed-password.path;
 
     makano = {
