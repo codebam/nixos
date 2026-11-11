@@ -19,12 +19,12 @@
 stdenv.mkDerivation {
   pname = "sigmashake-desktop";
   # Vendor ships a rolling "stable" tarball with no version in the URL.
-  # Date is the mtime of the binaries inside the 2025-08-04 release we hashed.
-  version = "0-unstable-2025-08-04";
+  # Date is the mtime of the binaries inside the 2026-08-30 release we hashed.
+  version = "0-unstable-2026-08-30";
 
   src = fetchurl {
     url = "https://download.sigmashake.com/desktop/wails/stable-linux-x64-SigmaShakeDesktop.tar.gz";
-    hash = "sha256-ncLnacIbqzGUSJxLHXQ7pRv4RXRXZqjBAcioITXonNU=";
+    hash = "sha256-Ve5Jd8TcK1yREIhRUAJnKqIYb20RvkiJ9Paob4BjNDw=";
   };
 
   sourceRoot = "SigmaShakeDesktop";

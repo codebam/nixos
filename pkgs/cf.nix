@@ -27,7 +27,7 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "cf";
-  version = "1.0.0-beta.10";
+  version = "1.0.0-beta.30";
 
   # cf is on the open beta and publishes often. When bumping: regenerate
   # pkgs/cf/package-lock.json from the new tarball (drop devDependencies as
@@ -36,7 +36,7 @@ buildNpmPackage (finalAttrs: {
   # hash-mismatch message for the npm-deps one).
   src = fetchzip {
     url = "https://registry.npmjs.org/cf/-/cf-${finalAttrs.version}.tgz";
-    hash = "sha256-xhVhC1ezcuvtCvGVf2sgBL1pD9LR2vP/pD/GKeQIxBg=";
+    hash = "sha256-FMksNNVuYAkZsaQsxtIMFizhAGtNengoocKSCgQGdC4=";
   };
 
   # buildNpmPackage forwards postPatch to fetchNpmDeps but not nativeBuildInputs,
@@ -47,7 +47,7 @@ buildNpmPackage (finalAttrs: {
     inherit (finalAttrs) src;
     nativeBuildInputs = [ nodejs ];
     postPatch = patchManifest;
-    hash = "sha256-bhdS6FK38gW5POtlGBtPKQDPjvveGo4qGQAZYkXgxYw=";
+    hash = "sha256-qNJe5xY+/CY2pd7aNAX88pedgjnezoOgXvoeKo9bQnM=";
   };
 
   postPatch = patchManifest;
@@ -60,10 +60,10 @@ buildNpmPackage (finalAttrs: {
   dontNpmBuild = true;
   npmRebuildFlags = [ "--ignore-scripts" ];
 
-  # Assert the banner and the externalized-dependency graph: the bundle
-  # imports part of its runtime from node_modules (minisearch for `cf cli
-  # search`, miniflare/workerd for local dev), so a broken production install
-  # fails the build instead of shipping.
+  # Assert the version output and the externalized-dependency graph: the
+  # bundle imports part of its runtime from node_modules (miniflare/workerd
+  # for local dev), so a broken production install fails the build instead of
+  # shipping.
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
@@ -76,9 +76,9 @@ buildNpmPackage (finalAttrs: {
     version="$($out/bin/cf --version | head -n 1)"
     echo "cf --version: $version"
     case "$version" in
-      *"cf · v${finalAttrs.version}"*) ;;
+      "${finalAttrs.version}"|*"cf · v${finalAttrs.version}"*) ;;
       *)
-        echo "expected the version banner to name v${finalAttrs.version}" >&2
+        echo "expected cf --version to name v${finalAttrs.version}" >&2
         exit 1
         ;;
     esac

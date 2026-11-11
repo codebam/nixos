@@ -21,16 +21,16 @@
 let
   inherit (stdenv.hostPlatform) system;
 
-  version = "2.0.12";
+  version = "2.2.7";
 
   variants = {
     "x86_64-linux" = {
       appimageName = "linux-x86_64";
-      hash = "sha256-RA+wAPrnVgaZMdoK6wkDsh4SHCufO14zuwerOP6p8dk=";
+      hash = "sha256-ilRwn95uWWSXBZ+rYWK1Ix7fJu1hL/HSPQsdUXgo/tA=";
     };
     "aarch64-linux" = {
       appimageName = "linux-arm64";
-      hash = "sha256-j1NoMFgk3ROQcOnX7/hw4dyt6z4vGrcDqJA0A/ub5sg=";
+      hash = "sha256-7kkXFwxSh0FtsOW153V2clotVOKsZfMCr/3DIiqkTgU=";
     };
   };
 
@@ -60,14 +60,14 @@ appimageTools.wrapType2 {
       $out/share/applications/ai.opencode.desktop.beta.desktop
     substituteInPlace $out/share/applications/ai.opencode.desktop.beta.desktop \
       --replace-fail 'Exec=AppRun --no-sandbox' 'Exec=opencode-desktop-beta --no-sandbox' \
-      --replace-fail 'Icon=ai.opencode.desktop' 'Icon=ai.opencode.desktop.beta' \
+      --replace-fail 'Icon=ai.opencode' 'Icon=ai.opencode.beta' \
       --replace-fail 'Name=OpenCode' 'Name=OpenCode (v2)'
 
     mkdir -p $out/share
     # The AppImage's icon tree is mode 0555/0444; plain `cp -r` preserves those
     # directory modes, which makes the renames below fail with EACCES.
     cp -r --no-preserve=mode ${appimageContents}/usr/share/icons $out/share/
-    for icon in $out/share/icons/hicolor/*/apps/ai.opencode.desktop.png; do
+    for icon in $out/share/icons/hicolor/*/apps/ai.opencode.png; do
       [ -e "$icon" ] || continue
       mv "$icon" "''${icon%.png}.beta.png"
     done

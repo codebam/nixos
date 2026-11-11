@@ -35,15 +35,17 @@
 
   # Zero-dependency C++23 CLI + MCP server that hands coding agents a ranked,
   # deterministic call-graph map of a repo. All deps vendored in-tree, so the
-  # build needs no network; the binary installs with `--component ripwire` and
-  # skills/ + hooks/ are staged under share/ripwire (v0.3.8's CMake predates
-  # upstream's own asset install rules), mirroring upstream's install.sh.
+  # build needs no network; the binary installs with `--component ripwire`, and
+  # that component also stages skills/ + hooks/ under share/ripwire, mirroring
+  # upstream's install.sh.
   ripwire = pkgs.callPackage ./ripwire.nix { };
 
-  # npm CLI (@zvec/zvec-grep) with no nixpkgs package. The registry tarball
-  # ships a prebuilt dist/ but no lockfile, so the derivation pins the upstream
-  # tag's package-lock.json and skips install scripts; every native dependency
-  # (zvec, onnxruntime, ripgrep, llama.cpp, sharp) arrives prebuilt.
+  # npm CLI (@zvec/zvec-grep) with no nixpkgs package. Since 0.3.0 the tarball
+  # is a Rust native-binary wrapper: its postinstall materializes the platform
+  # binary from an exact-version optional dependency, and it ships no lockfile
+  # (the tag's root lockfile is the old TypeScript tree's), so the derivation
+  # vendors a generated production lockfile like pkgs/cf.nix does. See
+  # pkgs/zvec-grep.nix for why the install script must run.
   zvec-grep = pkgs.callPackage ./zvec-grep.nix { };
 
   # nspady's Google Calendar MCP server (@cocal/google-calendar-mcp): the

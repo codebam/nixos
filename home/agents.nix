@@ -1394,7 +1394,7 @@ let
   zgServerName = "zvec_grep";
   zgArgv = [
     "zg"
-    "server"
+    "--server"
     "--stdio"
   ];
   # The installer's --mcp-tool-timeout default: 600s in ms.
@@ -1405,7 +1405,7 @@ let
   # object belongs to opencode's internal Mcp.TimeoutConfig and is not accepted
   # here: config normalization rejects the whole entry ("skipped malformed
   # recognized value") and the server silently never loads. Verified against
-  # opencode2 2.0.12.
+  # opencode2 2.2.7.
   zgTimeoutMs = 600000;
 
   # Microsoft's Playwright MCP server, declared once and rendered in each
@@ -1456,13 +1456,13 @@ let
   # strings into its prompt hints.
   cfCli = import ./cf.nix;
 
-  # The guidance block `zg install` writes, copied verbatim from its 0.2.2
+  # The guidance block `zg --install` writes, copied verbatim from its 0.3.0
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
   # adapter's default `toolPrefix` ("server") builds the identical string.
   # Re-derive it from the new package when bumping zvec-grep (run the installer
   # with HOME pointed at a scratch dir). The ZVEC_GREP_START/END markers stay
-  # per-host, so `zg install`'s own uninstall can still find its block in
+  # per-host, so `zg --uninstall`'s own uninstall can still find its block in
   # opencode's file and pi's extra header below can be dropped wholesale.
   zgGuidance = ''
     ## zvec-grep
@@ -1498,7 +1498,7 @@ let
   # its own short routing note rather than the mcp-name-rendered block above.
 
   # ripwire's use-when blurb, copied verbatim from the packaged binary's own
-  # `ripwire wrap opencode` output (v0.3.8): the CLI-first protocol both
+  # `ripwire wrap opencode` output (v0.6.10): the CLI-first protocol both
   # harnesses share, since both have a shell tool. Re-derive it the same way
   # (`ripwire wrap opencode`) when bumping ripwire. The RIPWIRE_START/END
   # markers stay per-host, mirroring the ZVEC_GREP block.
@@ -1507,22 +1507,22 @@ let
     Reach for it BEFORE blind grep + whole-file reads. First call ~1s cold; after that warm, ~0.1s.
     - Orient on a task: `ripwire <dir> --for="<task in words>"` — ranked, quality-annotated
       signatures. Paste symbol/file names from the issue verbatim; named mentions get anchored.
-    - Everything at once under one token budget: `ripwire <dir> --pack-task="<task>"`.
-    - Have a stack trace / build error: `ripwire <dir> --from-trace=FILE` (`-` = stdin) —
+    - One task: `--pack-task="<task>" --legend=compact`; before parallel agents: `--plan-lanes=N --task="<goal>"`, then read `lanes[].execution`.
+    - Have a stack trace / build error: `ripwire <dir> --from-trace=FILE --legend=compact` (`-` = stdin) —
       paste the error, don't paraphrase it into a query.
-    - Who calls X: `--callers=SYM`. "Is it safe to change X?" needs the full blast radius:
-      `--impact=SYM` (transitive) plus `--uses=SYM` (every read/write/import site).
-    - Just edited a symbol: `--edit-check=SYM` — contract change + newly incompatible callers.
-    - Before writing a new fn/class/helper: `--exemplar="<what you're writing>"` — duplicates
-      are born on tasks that feel too small to tool up for.
-    - Before calling work done: `--quality-delta` (what you made worse), then `--test-gate`.
-    - Trust notes: counts marked counts_floor are floors, not totals; a zero means "none
-      found", never "none exists".
+    - Who calls X: `--callers=SYM --legend=compact`. "Is it safe to change X?" needs the full blast radius:
+      `--impact=SYM --legend=compact` (transitive) plus `--uses=SYM --legend=compact` (every read/write/import site).
+    - Apply a whole-symbol edit without a whole-file Read: `--replace-symbol-body=SYM` plus `--edit-payload=FILE|-`
+      (or insert-before/after); the receipt carries region, blob_sha, edit_check, tests_to_run + ONE next= — no re-read after it; `--edit-check=SYM --legend=compact` is for a contract question WITHOUT an edit in hand.
+    - Before writing a new fn/class/helper: `--exemplar="<what you're writing>" --legend=compact` — duplicates are born on small tasks.
+    - Before calling work done: `--quality-delta --legend=compact` (what you made worse), then `--test-gate --legend=compact`.
+    - Trust notes: counts marked counts_floor are floors, not totals; a zero means "none found", never "none exists".
+    - The commands above ask for the compact legend (terse definitions of only the attributes present); add `--legend=full` when a definition's reasoning is needed: a term you do not recognise, a floor or cap you need explained, a map a human will read.
     Defaults to break (less context is measurably MORE accurate, not just cheaper — code-repair
     accuracy fell 29% -> 3% as context grew 32K -> 256K tokens, LongCodeBench):
     - Do NOT open a file you have not located first: rank with `--for`/`--grep`, then read what it names.
-    - Do NOT read a whole file to understand one symbol: `--expand=SYM` gives the body + callee sigs.
-    - Do NOT fan reads across several files to learn one thing: `--pack-task="<task>"` is one call.
+    - Do NOT read a whole file to understand one symbol: `--expand=SYM --legend=compact` gives the body + callee sigs.
+    - Do NOT fan reads across several files to learn one thing: `--pack-task="<task>" --legend=compact` is one call.
   '';
 
   # The upstream package embeds a thin discovery stub at
@@ -2162,9 +2162,10 @@ in
       # dsh's provider follows symlinked entries when it scans.
       ".dsh/skills/security-audit".source = securityAuditSkill;
 
-      # pi's global context file (docs/usage.md: "Context Files"). pi is not one
-      # of `zg install`'s targets -- codex, claude, qwen, qoder, opencode and
-      # cursor are -- so this is the shared guidance above plus a hand-written
+      # pi's global context file (docs/usage.md: "Context Files"). pi is one
+      # of `zg --install`'s targets since 0.3.0, but its installer writes a
+      # direct MCP entry, not this adapter's lazy proxy -- so this is the
+      # shared guidance above plus a hand-written
       # header for the one thing that differs: under the adapter the tools are
       # behind the `mcp` proxy and lazy, so they are NOT in pi's tool list when a
       # session starts, and the verbatim "when it is listed by the current host"
@@ -2424,10 +2425,10 @@ in
         # lint (W20) flags four sibling `mcp.<name>` assignments, the same
         # reason `xdg.configFile` above is nested rather than flat.
         mcp = {
-          # Declarative equivalent of `zg install --target opencode
-          # --mcp-transport stdio` from zvec-grep 0.2.2 (install.ts
-          # installOpenCodeIntegration). stdio means no daemon to keep up: each
-          # opencode session spawns `zg server --stdio`, which manages its own
+          # Declarative equivalent of `zg --install --target opencode
+          # --mcp-transport stdio` from zvec-grep 0.3.0. stdio means no daemon
+          # to keep up: each opencode session spawns `zg --server --stdio`,
+          # which manages its own
           # shared daemon. Re-derive both this and `zgGuidance` from the new
           # package (run the installer with HOME pointed at a scratch dir) when
           # bumping zvec-grep's version.
@@ -2440,7 +2441,7 @@ in
           };
 
           # Declarative equivalent of `ripwire wrap opencode`'s MCP alternative
-          # (v0.3.8, wrapMcpJsonOpencode): stdio server, no daemon to keep up --
+          # (v0.6.10): stdio server, no daemon to keep up --
           # each session spawns `ripwire --mcp`, which manages its own warm
           # index cache. The CLI-first blurb in AGENTS.md below is the
           # recommended path (zero context until invoked); this is the
@@ -2662,7 +2663,7 @@ in
       #     which it could not do anyway, being a read-only store symlink.
       #
       # `lifecycle` is left at the adapter's default (`lazy`): it starts
-      # `zg server --stdio` on the first call and idle-drops it after 10 minutes,
+      # `zg --server --stdio` on the first call and idle-drops it after 10 minutes,
       # keeping the ~200-token proxy tool in context instead of every zvec-grep
       # schema. Tool names come out as `zvec_grep_zvec_grep_*`, matching
       # `zgGuidance`, so that text is worth re-checking if the server name or the

@@ -43,7 +43,7 @@
   # runs the AppImage the user already has, extracted to the user cache on
   # first start. Override POLARIUMCODE_APPIMAGE or these for a different file.
   appimageDir ? "$HOME/Downloads",
-  appimageName ? "PolariumCode_0.3.3_linux-x86_64.AppImage",
+  appimageName ? "PolariumCode_0.3.7_linux-x86_64.AppImage",
 }:
 
 let
@@ -73,7 +73,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "polariumcode";
-  version = "0.3.3";
+  version = "0.3.7";
 
   dontUnpack = true;
   dontConfigure = true;

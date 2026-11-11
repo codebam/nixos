@@ -18,23 +18,23 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "google-calendar-mcp";
-  version = "2.6.3";
+  version = "2.8.1";
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@cocal/google-calendar-mcp/-/google-calendar-mcp-${finalAttrs.version}.tgz";
-    hash = "sha256-YKjtcP7Ylk4/2dOF3Udx8h8WqOJzaRQlT4jyLX/rSCE=";
+    hash = "sha256-PMOGJp8KvqyT7f8yY51k+9fp/rSfCMjFwakj4ULlabY=";
   };
 
   packageLock = fetchurl {
     url = "https://raw.githubusercontent.com/nspady/google-calendar-mcp/v${finalAttrs.version}/package-lock.json";
-    hash = "sha256-KFW+3FbElH7GQHztCK0iTwN6BPp9jMh8DJ0HYhF1OLQ=";
+    hash = "sha256-aTWeSJLoiH5OIcdBH7GfPpF8mNAL881MGXaFJLd8aIg=";
   };
 
   postPatch = ''
     cp ${finalAttrs.packageLock} package-lock.json
   '';
 
-  npmDepsHash = "sha256-aWOLMLiDmtc5R/apz8yUxrYONGELVsEpodgc3/tM/Yg=";
+  npmDepsHash = "sha256-GlQPUt/xZ9AY+9ABWRnJk/KjXBcnhrf53JNb5GtuE4Y=";
 
   # build/ is already compiled; the TS sources and scripts/ are not in the
   # registry tarball, so `npm run build` has nothing to run against.

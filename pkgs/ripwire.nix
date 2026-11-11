@@ -7,13 +7,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "ripwire";
-  version = "0.3.8";
+  version = "0.6.10";
 
   src = fetchFromGitHub {
     owner = "redhat-et";
     repo = "ripwire";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-ZBuF5GupyyiLe0SVvbtma0EnGMfm0z80eSUure1rIwo=";
+    hash = "sha256-vvOEqwRIgXM/HeoDsCnvdxH+h2zvAokjuHxl7z2ET/w=";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -32,24 +32,16 @@ stdenv.mkDerivation (finalAttrs: {
   # that warning rather than patching upstream sources.
   env.NIX_CFLAGS_COMPILE = "-Wno-error=format-security";
 
-  # v0.3.8's CMake installs only the binary: `--component ripwire` keeps the
-  # vendored tree-sitter subproject's own install rules (headers/pkgconfig/
-  # static lib) out of this output.
+  # `--component ripwire` keeps the vendored tree-sitter subproject's own
+  # install rules (headers/pkgconfig/static lib) out of this output. Since
+  # upstream added its own install rules for the agent assets, that same
+  # component now also stages skills/ and hooks/ under share/ripwire exactly
+  # the way install.sh describes them, so `ripwire wrap claude` probes the
+  # staged copy and prints a working installer path straight from the store.
   installPhase = ''
     runHook preInstall
     cmake --install . --prefix "$out" --component ripwire
     runHook postInstall
-  '';
-
-  # v0.3.8 predates upstream's own skills/hooks install rules, so stage the
-  # agent assets beside the binary the way install.sh describes them
-  # ($prefix/share/ripwire/{skills,hooks}). `ripwire wrap` probes exactly
-  # that staged copy, so e.g. `ripwire wrap claude` prints a working
-  # installer path straight from the store.
-  postInstall = ''
-    mkdir -p "$out/share/ripwire"
-    cp -r "$src/skills" "$out/share/ripwire/skills"
-    cp -r "$src/hooks" "$out/share/ripwire/hooks"
   '';
 
   meta = {
