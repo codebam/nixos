@@ -380,6 +380,10 @@ in
       # lock interrupts use. `lock_after = 0` is "off" (idle.rs arms only a
       # positive value). Blanking stays on for battery.
       lock_after = if isDeck then 0 else 600;
+      # Ten seconds black before the lock lands; any key or pointer activity
+      # in that window cancels the lock and brings the desk back. Zero or
+      # absent would lock immediately, as before.
+      lock_delay = 10;
       lock_command = "${lib.getExe pkgs.swaylock} -f";
       blank_after = 900;
     };
