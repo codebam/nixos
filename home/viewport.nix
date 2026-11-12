@@ -357,6 +357,17 @@ in
       width = 2;
     };
 
+    # Inactive window dimming: compositor-side opacity multipliers.
+    # `inactive` dims every unfocused window to 85% so the focused one
+    # reads at a glance in the scrolling layout; `active` and
+    # `fullscreen` stay at 1 so a fullscreen window never dims itself.
+    # All three default to 1 (no dimming) when absent.
+    opacity = {
+      active = 1;
+      inactive = 0.85;
+      fullscreen = 1;
+    };
+
     # No theme block, deliberately. Every key here is written straight onto
     # the document as a CSS custom property (`applyTheme`, data/shell/
     # windows.js), so overriding them replaces whatever shell.css does with
