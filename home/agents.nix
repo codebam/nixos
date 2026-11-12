@@ -1817,22 +1817,44 @@ let
                 medium: medium
                 high: high
 
-        # Qwen Cloud Token Plan. The endpoint, wire protocol, and
-        # Personal-Edition catalog come from pi-ai's
-        # qwen-token-plan-individual provider, keyed from
-        # QWEN_TOKEN_PLAN_API_KEY (which `loadKey` exports from the same
-        # secret as QWEN_API_KEY, the name pi-ai's ambient discovery looks
-        # for).
+        # Qwen Cloud Token Plan. The wire protocol and Personal-Edition
+        # catalog come from pi-ai's qwen-token-plan-individual provider,
+        # keyed from QWEN_TOKEN_PLAN_API_KEY (which `loadKey` exports from
+        # the same secret as QWEN_API_KEY, the name pi-ai's ambient
+        # discovery looks for). The endpoint is pinned explicitly: pi-ai's
+        # bundled catalog still names the old aliyuncs host, while the live
+        # Token Plan endpoint moved to
+        # https://token-plan.maas.qwencloudapi.com/compatible-mode/v1.
         #
         # pi-ai 0.85.1's bundled catalog predates deepseek-v4.1-flash
-        # (QwenCloud release 2026-09-13), and llm-pi-ai has no upsert: a
-        # `models` list replaces the route's catalog, so the installed ids
-        # are restated bare (each defaults from its catalog entry) and only
-        # the new model carries its own metadata.
+        # (QwenCloud release 2026-09-13), qwen4-max-preview (2026-11-11
+        # preview), and deepseek-v4.1-flash-1017 (2026-10-18), and
+        # llm-pi-ai has no upsert: a `models` list replaces the route's
+        # catalog, so the installed ids are restated bare (each defaults
+        # from its catalog entry) and only the new models carry their own
+        # metadata.
         qwen-token-plan-individual:
           displayName: Qwen Cloud (Token Plan)
           apiKeyEnv: QWEN_TOKEN_PLAN_API_KEY
+          api: openai-completions
+          baseURL: https://token-plan.maas.qwencloudapi.com/compatible-mode/v1
           models:
+            - id: qwen4-max-preview
+              name: Qwen4 Max Preview
+              contextWindow: 1000000
+              maxTokens: 393216
+              input:
+                - text
+                - image
+              reasoningEfforts:
+                low: low
+                medium: medium
+                xhigh: xhigh
+              compat:
+                thinkingFormat: qwen
+                supportsDeveloperRole: false
+                supportsStore: false
+                supportsReasoningEffort: true
             - id: qwen3.8-max
             - id: qwen3.8-flash
             - id: qwen3.7-max
@@ -1853,6 +1875,21 @@ let
               # absent resolves to thinkingLevelMap.off = null (unsupported),
               # matching pi-ai's deepseek catalog, while an explicit empty
               # off: would declare off selectable and send nothing.
+              reasoningEfforts:
+                high: high
+                max: max
+              compat:
+                thinkingFormat: qwen
+                supportsDeveloperRole: false
+                supportsStore: false
+                supportsReasoningEffort: true
+            - id: deepseek-v4.1-flash-1017
+              name: DeepSeek V4.1 Flash 1017
+              contextWindow: 1000000
+              maxTokens: 384000
+              input:
+                - text
+                - image
               reasoningEfforts:
                 high: high
                 max: max
