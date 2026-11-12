@@ -348,7 +348,7 @@ let
   };
 
   # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
-  # the curated selection for the fleet -- ten models, deliberately, not the
+  # the curated selection for the fleet -- eleven models, deliberately, not the
   # 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
   # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
@@ -356,11 +356,12 @@ let
   #
   # The set is the daily driver plus the cheap frontier tier around it (about
   # $0.10-0.15 input and $0.30-0.60 output per million tokens), the stronger
-  # MiMo pair, and the uncensored GLM pair; every entry must call tools. Muse
-  # Ember, Claude Haiku 5.5, and GPT 6 Luna bill per token, as does GLM 5.3
-  # Uncensored at $1.25/$2.25 -- the priciest route in the list, kept for the
-  # uncensored tier rather than price. The rest, GLM 5.3 Flash Uncensored
-  # included, ship in the subscription.
+  # MiMo pair, and the GLM 5.3 line (base, flash, and both uncensored
+  # variants); every entry must call tools. Muse Ember, Claude Haiku 5.5, GPT
+  # 6 Luna, and GLM 5.3 Uncensored bill per token rather than sit in the
+  # subscription -- Uncensored is the priciest route here and is kept for the
+  # uncensored tier, not price. Everything else, GLM 5.3 included, ships in
+  # the subscription.
   #
   # Metadata is from the provider's own /api/v1/models?detailed=true, checked
   # against models.dev's copy (both live 2026-11-11; Muse Ember shipped that
@@ -370,8 +371,8 @@ let
   # 5.5 and GPT 6 Luna bill more above their long-context thresholds (100k and
   # 200k tokens); `cost` records their base tier. Muse Ember's gateway entry
   # omits the max output, so its output limit follows models.dev's copy, which
-  # reports the whole context window. The two uncensored GLM 5.3 routes were
-  # added on 2026-11-12 and passed the same cross-check.
+  # reports the whole context window. The base and uncensored GLM 5.3 routes
+  # were added on 2026-11-12 and passed the same cross-check.
   nanogptModels = [
     {
       id = "deepseek/deepseek-v4.1-flash-1017";
@@ -486,6 +487,24 @@ let
         input = 0.1;
         output = 0.5;
         cacheRead = 0.01;
+      };
+    }
+    {
+      id = "z-ai/glm-5.3";
+      name = "GLM 5.3";
+      context = 1048576;
+      output = 131072;
+      vision = false;
+      tool_call = true;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+      cost = {
+        input = 0.6;
+        output = 1.1;
+        cacheRead = 0.2;
       };
     }
     {
