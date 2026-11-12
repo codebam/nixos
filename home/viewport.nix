@@ -390,7 +390,7 @@ in
       # The deck does not lock: a handheld has nothing to hide from and the
       # lock interrupts use. `lock_after = 0` is "off" (idle.rs arms only a
       # positive value). Blanking stays on for battery.
-      lock_after = if isDeck then 0 else 600;
+      lock_after = if isDeck then 0 else 120;
       # Ten seconds black before the lock lands; any key or pointer activity
       # in that window cancels the lock and brings the desk back. Zero or
       # absent would lock immediately, as before.
