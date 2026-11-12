@@ -839,11 +839,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794459629,
-        "narHash": "sha256-xQbPaZpTXbdp04nq3zz+ZjK9glun9tK8yvWBjRrlS6Q=",
+        "lastModified": 1794461293,
+        "narHash": "sha256-JrJAVUZj2bCjnWzpf6dT6FY3Fr5luBtT3ljXMWJdeD4=",
         "owner": "codebam",
         "repo": "viewport",
-        "rev": "00d742b8a4e875b73b4795831baade4260525327",
+        "rev": "415681fb32697ba298ba54d586907e54336c87d3",
         "type": "github"
       },
       "original": {
