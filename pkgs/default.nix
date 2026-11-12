@@ -97,6 +97,12 @@
   # independently publishable to npm.
   dsh-tool-nu = pkgs.callPackage ./dsh-tool-nu.nix { };
 
+  # dsh's model-facing Viewport tool. It drives the compositor through the
+  # session's own `viewport msg` client (the only client the control socket
+  # trusts for synthetic input) and captures through grim; home/agents.nix
+  # copies it into $DSH_HOME next to the profile's node_modules.
+  dsh-tool-viewport = pkgs.callPackage ./dsh-tool-viewport.nix { };
+
   # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode2`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };

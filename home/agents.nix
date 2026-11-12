@@ -994,6 +994,26 @@ let
           config:
             executable: ${pkgs.nushell}/bin/nu
             enableRunInBackground: true
+
+    # @codebam/dsh-tool-viewport: see and drive the Viewport desktop —
+    # screenshot, pointer, click, scroll, type, keys — through the trusted
+    # `viewport msg` client. Captures go through grim.
+    #
+    # `executable` must name the SAME build the session runs: the control
+    # socket only accepts synthetic input from the session's own
+    # executable, so after a rebuild that changes viewport, restart the
+    # session before the tool can reach it (a mismatch is refused as an
+    # untrusted client). /run/current-system/sw/bin/viewport is that binary
+    # while the session is current. Socket and Wayland display are left to
+    # the harness environment (VIEWPORT_SOCKET / XDG_RUNTIME_DIR /
+    # WAYLAND_DISPLAY), so no pins here; the pinned form in the plugin's
+    # examples/mount.yml is for throwaway headless instances only.
+    - insert:
+        - id: tool-viewport
+          name: ${config.home.homeDirectory}/.dsh/profiles/viewport-tool/index.mjs
+          disabled: !!js process.platform === 'win32'
+          config:
+            executable: /run/current-system/sw/bin/viewport
   '';
 
   # dsh 0.2.x keeps plugin config in the active profile's patch: the legacy
@@ -2138,6 +2158,25 @@ in
           run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-nu}/lib/dsh-tool-nu/package.json "$HOME/.dsh/profiles/tool-nu/package.json"
           run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/tool-nu/node_modules"
           run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/tool-nu/node_modules"
+        ''
+      );
+
+      # @codebam/dsh-tool-viewport is published from its own repository,
+      # pinned in pkgs/dsh-tool-viewport.nix. Copy it into $DSH_HOME rather
+      # than symlinking, for the same Node module-resolution reason as above.
+      dshToolViewport = lib.mkIf podmanEnabled (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run ${pkgs.coreutils}/bin/install -d -m 0755 "$HOME/.dsh/profiles/viewport-tool"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-viewport}/lib/dsh-tool-viewport/index.mjs "$HOME/.dsh/profiles/viewport-tool/index.mjs"
+          # cp -r copies the store source directory's 0555 mode onto the
+          # destination, so repair an older copied tree before replacing it.
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/viewport-tool/src" 2>/dev/null || true
+          run ${pkgs.coreutils}/bin/rm -rf "$HOME/.dsh/profiles/viewport-tool/src"
+          run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-tool-viewport}/lib/dsh-tool-viewport/src "$HOME/.dsh/profiles/viewport-tool/src"
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$HOME/.dsh/profiles/viewport-tool/src"
+          run ${pkgs.coreutils}/bin/cp -f ${pkgs.dsh-tool-viewport}/lib/dsh-tool-viewport/package.json "$HOME/.dsh/profiles/viewport-tool/package.json"
+          run ${pkgs.coreutils}/bin/rm -f "$HOME/.dsh/profiles/viewport-tool/node_modules"
+          run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/viewport-tool/node_modules"
         ''
       );
     };
