@@ -18,6 +18,10 @@ let
   # its system-prompt hints.
   cfCli = import ./cf.nix;
 
+  # The Assisted-by commit trailer rule (home/commit-trailer.nix), shared with
+  # the dsh/pi/opencode AGENTS.md copies in home/agents.nix.
+  commitTrailer = import ./commit-trailer.nix;
+
   # The shared agent-memory knowledge graph (home/agent-memory.nix): the same
   # remote server opencode, dsh, and pi read and write, plus the guidance
   # block those harnesses render -- Hermes registers the
@@ -352,8 +356,10 @@ in
       # facts and the memory guidance ride the same channel: native memory is
       # off below, so this text is the replacement.
       agent = {
-        environment_hint = emailMcp.policy + cfCli.guidance + standingFacts + memoryGuidance;
-        coding_instructions = emailMcp.policy + cfCli.guidance + standingFacts + memoryGuidance;
+        environment_hint =
+          emailMcp.policy + cfCli.guidance + commitTrailer.guidance + standingFacts + memoryGuidance;
+        coding_instructions =
+          emailMcp.policy + cfCli.guidance + commitTrailer.guidance + standingFacts + memoryGuidance;
         # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
         # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
         # every route asks for max and each route clamps onto the levels it

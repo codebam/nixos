@@ -1476,6 +1476,11 @@ let
   # strings into its prompt hints.
   cfCli = import ./cf.nix;
 
+  # The Assisted-by commit trailer rule (home/commit-trailer.nix): defined once
+  # and interpolated into the dsh, pi and opencode global AGENTS.md below;
+  # home/hermes.nix imports the same file for its always-on prompt hints.
+  commitTrailer = import ./commit-trailer.nix;
+
   # The guidance block `zg --install` writes, copied verbatim from its 0.3.0
   # opencode output and shared by both hosts: the tool names it cites are the
   # same in each, since opencode prefixes them with the entry name and the
@@ -2300,6 +2305,9 @@ in
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
+        <!-- ASSISTED_BY_START -->
+        ${commitTrailer.guidance}
+        <!-- ASSISTED_BY_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
@@ -2375,6 +2383,9 @@ in
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
+        <!-- ASSISTED_BY_START -->
+        ${commitTrailer.guidance}
+        <!-- ASSISTED_BY_END -->
       '';
 
       # dsh's user-global patch layer. Precedence is bundle layers, then the
@@ -2707,6 +2718,9 @@ in
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
+        <!-- ASSISTED_BY_START -->
+        ${commitTrailer.guidance}
+        <!-- ASSISTED_BY_END -->
 
       '';
 
