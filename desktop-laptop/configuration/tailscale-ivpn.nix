@@ -21,43 +21,92 @@ let
   # ivpn), but that is an implementation detail of the daemon's generated
   # config, so read it back rather than hardcoding it.
   script = pkgs.writeShellScript "tailscale-via-ivpn" ''
-    set -u
-    PATH=${pkgs.iproute2}/bin:$PATH
+    set -euo pipefail
+    PATH=${pkgs.iproute2}/bin:${pkgs.jq}/bin:$PATH
+    family="$2"
 
     findTable() {
-      ip -$1 route show default dev wgivpn table all 2>/dev/null |
-        ${pkgs.gawk}/bin/awk '{ for (i = 1; i < NF; i++) if ($i == "table") { print $(i + 1); exit } }'
+      ip -N -j -"$family" route show default dev wgivpn table all |
+        jq -r '[.[] | select(.table != null) | .table] | unique |
+          if length == 0 then "" elif length == 1 then .[0]
+          else error("multiple wgivpn default routing tables") end'
+    }
+
+    # Only touch our exact selectors, including the old table after a flap.
+    # Listing first makes absent rules a no-op without hiding netlink failures.
+    removeRules() {
+      local priority="$1" tables table
+      tables=$(ip -N -j -"$family" rule show | jq -r --argjson priority "$priority" '
+        .[] | select(.priority == $priority and .src == "all" and
+          .fwmark == "0x80000" and .fwmask == "0xff0000" and .table != null) |
+        select(if $priority == ${lanRulePriority} then
+          .table == "254" and .suppress_prefixlen == 0
+        else .suppress_prefixlen == null end) |
+        select(del(.priority, .src, .fwmark, .fwmask, .table, .suppress_prefixlen) == {}) |
+        .table') || return 1
+      while IFS= read -r table; do
+        [ -n "$table" ] || continue
+        if [ "$priority" = ${lanRulePriority} ]; then
+          ip -"$family" rule del priority "$priority" fwmark ${tsFwmark} lookup "$table" suppress_prefixlength 0 || return 1
+        else
+          ip -"$family" rule del priority "$priority" fwmark ${tsFwmark} lookup "$table" || return 1
+        fi
+      done <<< "$tables"
+    }
+
+    cleanup() {
+      local status=0
+      removeRules ${rulePriority} || status=1
+      removeRules ${lanRulePriority} || status=1
+      return "$status"
     }
 
     case "$1" in
       up)
-        # The device unit fires when wg-quick creates the link, which is
-        # before it installs the routes. Wait for the default route to show
-        # up rather than adding a rule that points at an empty table.
-        for _ in $(seq 50); do
-          table=$(findTable 4)
-          [ -n "$table" ] && break
-          sleep 0.1
-        done
-        [ -n "$table" ] || { echo "no default route via wgivpn; leaving routing alone"; exit 0; }
-
-        ip rule add priority ${lanRulePriority} fwmark ${tsFwmark} lookup main suppress_prefixlength 0
-        ip rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table"
-        table6=$(findTable 6)
-        if [ -n "$table6" ]; then
-          ip -6 rule add priority ${lanRulePriority} fwmark ${tsFwmark} lookup main suppress_prefixlength 0
-          ip -6 rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table6"
+        # The device can appear before either family has its route. Missing
+        # IPv6 is retryable too: this configuration does not prove it is
+        # permanently disabled, and IPv4 must not wait for it.
+        table=$(findTable)
+        if [ -z "$table" ]; then
+          echo "no IPv$family default route via wgivpn" >&2
+          exit 1
         fi
+        cleanup
+        ip -"$family" rule add priority ${lanRulePriority} fwmark ${tsFwmark} lookup main suppress_prefixlength 0
+        ip -"$family" rule add priority ${rulePriority} fwmark ${tsFwmark} lookup "$table"
         ;;
       down)
-        ip rule del priority ${rulePriority} fwmark ${tsFwmark} 2>/dev/null
-        ip rule del priority ${lanRulePriority} fwmark ${tsFwmark} 2>/dev/null
-        ip -6 rule del priority ${rulePriority} fwmark ${tsFwmark} 2>/dev/null
-        ip -6 rule del priority ${lanRulePriority} fwmark ${tsFwmark} 2>/dev/null
+        cleanup
+        ;;
+      *)
+        echo "unknown action: $1" >&2
+        exit 2
         ;;
     esac
-    exit 0
   '';
+
+  routeService = family: {
+    description = "Route tailscale IPv${family} through the ivpn tunnel while it is up";
+    bindsTo = [ "sys-subsystem-net-devices-wgivpn.device" ];
+    after = [ "sys-subsystem-net-devices-wgivpn.device" ];
+    wantedBy = [ "sys-subsystem-net-devices-wgivpn.device" ];
+    # Stop retrying if a route is genuinely absent; a later device cycle or
+    # manual start can try again after the interval (or after reset-failed).
+    unitConfig = {
+      StartLimitIntervalSec = 120;
+      StartLimitBurst = 12;
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      Restart = "on-failure";
+      RestartSec = 5;
+      ExecStart = "${script} up ${family}";
+      ExecStop = "${script} down ${family}";
+      # ExecStop is not run if ExecStart fails partway through.
+      ExecStopPost = "${script} down ${family}";
+    };
+  };
 
   # `ivpn` is only a client for the daemon and works once the daemon has
   # published its connection-info. A rebuild restarts ivpn-service and this
@@ -76,46 +125,38 @@ let
   '';
 in
 {
-  # Sends tailscale's marked packets into ivpn's routing table for as long as
-  # wgivpn exists. Nothing is needed for the fallback: when ivpn is down the
-  # rules are gone (and even if they lingered, the table is empty and the lookup
-  # falls through to tailscale's own rule 5210 -> main), so routing is exactly
-  # what it was before.
-  systemd.services.tailscale-via-ivpn = {
-    description = "Route tailscale through the ivpn tunnel while it is up";
-    bindsTo = [ "sys-subsystem-net-devices-wgivpn.device" ];
-    after = [ "sys-subsystem-net-devices-wgivpn.device" ];
-    wantedBy = [ "sys-subsystem-net-devices-wgivpn.device" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${script} up";
-      ExecStop = "${script} down";
-    };
-  };
+  systemd.services = {
+    # Sends tailscale's marked packets into ivpn's routing table for as long as
+    # wgivpn exists. Nothing is needed for the fallback: when ivpn is down the
+    # rules are gone (and even if they lingered, the table is empty and the lookup
+    # falls through to tailscale's own rule 5210 -> main), so routing is exactly
+    # what it was before.
+    tailscale-via-ivpn = routeService "4";
+    tailscale-via-ivpn-ipv6 = routeService "6";
 
-  # Routing tailscale into the tunnel is only half of it: ivpn's killswitch
-  # also drops traffic on tailscale0 itself, so reaching tailnet peers from
-  # this host needs the CGNAT range as a user exception. The setting lives in
-  # /etc/opt/ivpn/mutable/settings.json (preserved), and re-applying it is
-  # idempotent. IPv6 tailnet addresses (fd7a:115c:a1e0::/48) need no rule --
-  # ivpn's ip6tables chains already accept FD00::/8.
-  #
-  # Not covered: MagicDNS. ivpn's DNS chain drops port 53 to anything but the
-  # resolver it pushed, and it is evaluated before the user exceptions, so
-  # 100.100.100.100 stays blocked and *.ts.net names do not resolve while
-  # connected. Peer IPs still work.
-  systemd.services.ivpn-tailscale-exception = {
-    description = "Allow the tailnet range through ivpn's killswitch";
-    after = [ "ivpn-service.service" ];
-    requires = [ "ivpn-service.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      Restart = "on-failure";
-      RestartSec = 5;
-      ExecStart = applyException;
+    # Routing tailscale into the tunnel is only half of it: ivpn's killswitch
+    # also drops traffic on tailscale0 itself, so reaching tailnet peers from
+    # this host needs the CGNAT range as a user exception. The setting lives in
+    # /etc/opt/ivpn/mutable/settings.json (preserved), and re-applying it is
+    # idempotent. IPv6 tailnet addresses (fd7a:115c:a1e0::/48) need no rule --
+    # ivpn's ip6tables chains already accept FD00::/8.
+    #
+    # Not covered: MagicDNS. ivpn's DNS chain drops port 53 to anything but the
+    # resolver it pushed, and it is evaluated before the user exceptions, so
+    # 100.100.100.100 stays blocked and *.ts.net names do not resolve while
+    # connected. Peer IPs still work.
+    ivpn-tailscale-exception = {
+      description = "Allow the tailnet range through ivpn's killswitch";
+      after = [ "ivpn-service.service" ];
+      requires = [ "ivpn-service.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        Restart = "on-failure";
+        RestartSec = 5;
+        ExecStart = applyException;
+      };
     };
   };
 }
