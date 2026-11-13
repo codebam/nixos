@@ -1579,6 +1579,13 @@ let
   # stay in one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
+  # Google Calendar MCP: one definition shared by the dsh registration below
+  # and Hermes (home/hermes.nix imports the same file), so the launcher -- which
+  # points the server at the `google-calendar-oauth` sops secret -- and the
+  # server name stay in one place. The OAuth tokens it reads live in
+  # ~/.config/google-calendar-mcp, preserved on the desktop across the root wipe.
+  calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
+
   # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block: home/cf.nix defines
   # the text once -- `guidance` for host tiers, `guidanceSandbox` for the dsh
   # and opencode sandbox worlds -- and home/hermes.nix interpolates the same
@@ -2502,10 +2509,11 @@ in
       # overlays, so rows here apply to every profile: web, headless, acp, sdk,
       # and the custom dsh-tui profile.
       #
-      # The memory server, the Playwright MCP server, and the agentic-inbox
-      # email bridge are mounted here; the other host-side bridges (zvec-grep,
-      # ripwire) are intentionally absent from the default agent tier: they
-      # run as the host user and accept arbitrary host paths or commands.
+      # The memory server, the Playwright MCP server, the agentic-inbox email
+      # bridge, and the Google Calendar MCP server are mounted here; the other
+      # host-side bridges (zvec-grep, ripwire) are intentionally absent from
+      # the default agent tier: they run as the host user and accept arbitrary
+      # host paths or commands.
       # Their CLIs remain available inside the sandbox (where they run
       # against the mounted workspace).
       #
@@ -2561,6 +2569,21 @@ in
                     emailMcp.url
                   ]
                 }
+                toolCallTimeoutMs: 180000
+
+            # Google Calendar MCP (home/google-calendar-mcp.nix): the same
+            # local stdio server Hermes mounts, so dsh sees the tools Hermes
+            # already uses (mcp__google-calendar__*). The shared launcher adds
+            # the `google-calendar-oauth` sops secret path; the OAuth tokens
+            # themselves live in ~/.config/google-calendar-mcp, preserved on
+            # the desktop. Hosts without tokens still start -- calendar calls
+            # report the missing token file instead of failing the session.
+            - id: mcp-google-calendar
+              name: '@deepseek-ai/dsh-mcp-client'
+              config:
+                serverName: ${calendarMcp.name}
+                transport: stdio
+                command: ${builtins.toJSON calendarMcp.launcher}
                 toolCallTimeoutMs: 180000
       '';
 
