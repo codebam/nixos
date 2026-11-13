@@ -110,6 +110,12 @@ in
             # the flake, and the per-user module uses ~/.hermes rather than
             # the retired service's /var/lib/hermes.
             ".hermes"
+            # The Calendar MCP stores OAuth tokens here; without persistence,
+            # the root wipe requires authenticating again after every boot.
+            {
+              directory = ".config/google-calendar-mcp";
+              mode = "0700";
+            }
           ];
         };
         makano = {

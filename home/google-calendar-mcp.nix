@@ -4,8 +4,8 @@
 #
 # The server is packaged in pkgs/google-calendar-mcp.nix; interactive
 # authentication is a one-time `google-calendar-mcp auth` run whose tokens
-# land in ~/.config/google-calendar-mcp/tokens.json, preserved across the
-# root wipe with the rest of the home directory.
+# land in ~/.config/google-calendar-mcp/tokens.json, preserved on the desktop
+# across the root wipe by desktop/configuration/preservation.nix.
 { config, pkgs }:
 
 let
