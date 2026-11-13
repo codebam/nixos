@@ -106,12 +106,13 @@ let
       else
         ''
           # --- 3. Replace @root, keeping the old one until the new one exists ---
+          archived_this_run=""
           if [[ -e "$MOUNT_POINT/@root" ]]; then
             log "Found existing @root subvolume. Preparing to replace it."
             BOOT_BACKUP_NAME="@root.bak-$(date +%s-%N)"
 
             log "Moving @root to $BOOT_BACKUP_NAME as a temporary backup."
-            if ! mv "$MOUNT_POINT/@root" "$MOUNT_POINT/$BOOT_BACKUP_NAME"; then
+            if ! mv -T -n "$MOUNT_POINT/@root" "$MOUNT_POINT/$BOOT_BACKUP_NAME" || [[ -e "$MOUNT_POINT/@root" ]]; then
               unmount_and_fail "Could not move existing @root. Aborting."
             fi
 
@@ -132,10 +133,31 @@ let
 
             log "New @root subvolume created successfully."
             log "Moving temporary backup to long-term storage."
-            mkdir -p "$MOUNT_POINT/old_roots"
-            timestamp=$(date --date="@$(stat -c %Y "$MOUNT_POINT/$BOOT_BACKUP_NAME")" "+%Y-%m-%d_%H-%M-%S")
-            mv "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$MOUNT_POINT/old_roots/$timestamp" \
-              || log "Warning: Could not move backup to old_roots."
+            pending="$MOUNT_POINT/old_roots/.pending-$BOOT_BACKUP_NAME"
+            if mkdir -p "$MOUNT_POINT/old_roots" && \
+              mv -T -n "$MOUNT_POINT/$BOOT_BACKUP_NAME" "$pending" && \
+              [[ ! -e "$MOUNT_POINT/$BOOT_BACKUP_NAME" ]]; then
+              # Only a complete, matching sidecar makes an archive eligible for
+              # deletion. An interrupted move or write therefore keeps the root.
+              if archive_id=$(date +%s-%N) && [[ "$archive_id" =~ ^[1-9][0-9]{0,9}-[0-9]{9}$ ]]; then
+                archive="$MOUNT_POINT/old_roots/archive-$archive_id"
+                marker="$archive.archive-time"
+                if [[ ! -e "$archive" && ! -e "$marker" && ! -e "$marker.tmp" ]] && \
+                  mv -T -n "$pending" "$archive" && [[ ! -e "$pending" ]]; then
+                  archived_this_run="$archive"
+                  if ! { printf '%s\n' "$archive_id" > "$marker.tmp" && \
+                    mv -T -n "$marker.tmp" "$marker" && [[ ! -e "$marker.tmp" ]]; }; then
+                    log "Warning: Could not record archive time for $archive; keeping it."
+                  fi
+                else
+                  log "Warning: Could not name archived root $pending; keeping it."
+                fi
+              else
+                log "Warning: Could not determine archive time for $pending; keeping it."
+              fi
+            else
+              log "Warning: Could not move backup to old_roots; keeping it."
+            fi
           else
             log "No existing @root found. Creating a new one."
             ${tools.create} "$MOUNT_POINT/@root"
@@ -144,15 +166,28 @@ let
           fi
 
           # --- 4. Non-critical cleanup of old roots ---
-          # Compares mtime rather than parsing directory names: the name format
-          # drifted between hosts and a misparse silently kept everything.
+          # Directory mtimes predate archival and can change afterwards. Legacy
+          # archives and incomplete or invalid sidecars have unknown age: keep them.
           (
             if [[ -d "$MOUNT_POINT/old_roots" ]]; then
-              cutoff=$(( $(date +%s) - ${toString cfg.keepDays} * 24 * 60 * 60 ))
+              now=$(date +%s)
+              [[ "$now" =~ ^[1-9][0-9]{0,9}$ ]] || exit 1
+              cutoff=$(( now - ${toString cfg.keepDays} * 24 * 60 * 60 ))
               log "Deleting old roots older than ${toString cfg.keepDays} days."
               find "$MOUNT_POINT/old_roots/" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r old_root; do
-                mtime=$(stat -c %Y "$old_root" 2>/dev/null || echo 0)
-                if (( mtime > 0 && mtime < cutoff )); then
+                # A clock jump during this run must not delete its new archive.
+                [[ "$old_root" != "$archived_this_run" ]] || continue
+                name="''${old_root##*/}"
+                [[ "$name" =~ ^archive-([1-9][0-9]{0,9})-([0-9]{9})$ ]] || continue
+                archive_time="''${BASH_REMATCH[1]}"
+                archive_id="''${name#archive-}"
+                marker="$old_root.archive-time"
+                [[ -f "$marker" && ! -L "$marker" ]] || continue
+                # Bash command substitution strips NULs, so reject them first.
+                if IFS= read -r -d "" ignored < "$marker"; then continue; fi
+                recorded=$(cat "$marker" && printf '.') || continue
+                [[ "$recorded" == "$archive_id"$'\n.' ]] || continue
+                if (( archive_time < cutoff )); then
                   log "Deleting old root: $old_root"
                   if ${tools.isSubvolume} "$old_root" &>/dev/null; then
                     delete_subvolume "$old_root"
@@ -160,6 +195,10 @@ let
                     log "Warning: $old_root is not a subvolume, removing with rm -rf"
                     [[ -d "$old_root/var/empty" ]] && chattr -i "$old_root/var/empty" || true
                     rm -rf "$old_root"
+                  fi
+                  # Keep the sidecar if deletion failed, so a later run can retry.
+                  if [[ ! -e "$old_root" ]]; then
+                    rm -f "$marker"
                   fi
                 fi
               done
@@ -242,7 +281,7 @@ in
     specialisation.noCleanup.configuration.cleanupRoot.mode = "keep";
 
     boot.initrd.systemd = {
-      # The script uses seq/sleep/find/stat/date/ls/mv in stage 1; only
+      # The script uses seq/sleep/find/date/ls/mv in stage 1; only
       # chattr used to be wired in, the rest relied on whatever the initrd
       # happened to carry. mount/umount/fsck/less already come from
       # nixpkgs' own initrd extraBin, so only the missing ones are added.
@@ -251,7 +290,6 @@ in
         seq = "${pkgs.coreutils}/bin/seq";
         sleep = "${pkgs.coreutils}/bin/sleep";
         find = "${pkgs.findutils}/bin/find";
-        stat = "${pkgs.coreutils}/bin/stat";
         date = "${pkgs.coreutils}/bin/date";
         ls = "${pkgs.coreutils}/bin/ls";
         mv = "${pkgs.coreutils}/bin/mv";
