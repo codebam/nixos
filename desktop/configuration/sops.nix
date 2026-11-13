@@ -121,10 +121,22 @@
       # owner request); wired via hashedPasswordFile in users.nix below.
       # The secrets themselves are verifier hashes, but keeping them in
       # SOPS avoids leaving them in git history for current generations.
+      #
+      # neededForUsers is mandatory: userborn reads hashedPasswordFile
+      # while it builds /etc/shadow, and that happens before the regular
+      # sops-install-secrets.service (which is ordered After=userborn).
+      # Without this flag the file does not exist yet, userborn logs
+      # "Failed to read hashedPasswordFile" and leaves the account locked.
+      # neededForUsers installs these into /run/secrets-for-users from
+      # sops-install-secrets-for-users.service, ordered before user
+      # creation; its path is still config.sops.secrets.<name>.path.
+      # They must stay root-owned, which is why no owner/group is set.
       root-hashed-password = {
+        neededForUsers = true;
         mode = "0400";
       };
       codebam-hashed-password = {
+        neededForUsers = true;
         mode = "0400";
       };
       searx-secret = { };

@@ -10,7 +10,8 @@
   # inline `hashedPassword` is nulled out here so only `hashedPasswordFile`
   # remains set (setting both triggers the multiple-options warning, even
   # though File wins with mutableUsers = false). Same hash values, now
-  # stored in SOPS.
+  # stored in SOPS. Both secrets set `neededForUsers = true` in sops.nix,
+  # so userborn can read them before it writes /etc/shadow.
   users.users = {
 
     root.hashedPassword = lib.mkForce null;
