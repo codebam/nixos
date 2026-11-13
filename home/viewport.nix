@@ -334,6 +334,7 @@ in
       "cpu"
       "load"
       "memory"
+      "mode"
       "clock"
     ];
 
