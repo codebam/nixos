@@ -33,10 +33,11 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 ### Steam Deck (`nixos-steamdeck`)
 - Jovian NixOS module (vendored prebuilt through `chaotic`): Steam Deck device
   support, Decky Loader, Steam auto-start
-- Viewport session, Sway as fallback (Plasma6 forced off)
+- Viewport session, Sway as fallback (Plasma6 on for Jovian's
+  "Switch to Desktop" session)
 - Extest layer, Gamescope, Proton CachyOS
 - RetroArch with libretro cores, Prism Launcher, Moonlight
-- VRAM-based swapfile (2 GB)
+- Disko declares a 2 GiB btrfs swapfile (`/swap/swapfile`)
 - Distributed builds off the desktop
 
 ### Android Linux Terminal (`droid@debian`)
