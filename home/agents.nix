@@ -348,8 +348,8 @@ let
   };
 
   # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
-  # the curated selection for the fleet -- eleven models, deliberately, not the
-  # 600-plus-model catalog. opencode needs no declaration at all: models.dev
+  # the curated selection for the fleet -- thirteen models, deliberately, not
+  # the 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
   # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
   # so this list is the single source their projections below read.
@@ -363,6 +363,18 @@ let
   # uncensored tier, not price. Everything else, GLM 5.3 included, ships in
   # the subscription.
   #
+  # Gemini 4 Carbon and GPT 6.1 Terra were added on 2026-11-13 as the two rungs
+  # above that band. Until then the strongest route in this list was DeepSeek
+  # V4.1 Flash's 159.4 Epoch Capabilities Index, with nothing to hand a stuck
+  # task to. NanoGPT's coding leaderboard (70% LMArena Coding, 30% LMArena
+  # WebDev, snapshot 2026-11-13) puts Carbon first at 89.3%, matching LMArena's
+  # own coding category (#1 of 416, 1567.2) and Epoch's 169.8 (#2 of 115);
+  # Terra is sixth on Epoch at 167.7 for $1/$5. Terra stays alongside Carbon
+  # rather than being a cheaper duplicate because Carbon caps combined thinking
+  # and output at 32,768 tokens -- tight for one patch across a
+  # compositor-sized tree -- while Terra's 128,000 fits it, and both bill per
+  # token rather than sit in the subscription.
+  #
   # Metadata is from the provider's own /api/v1/models?detailed=true, checked
   # against models.dev's copy (both live 2026-11-11; Muse Ember shipped that
   # day): `efforts` are the wire values the gateway's reasoning_effort
@@ -374,6 +386,45 @@ let
   # reports the whole context window. The base and uncensored GLM 5.3 routes
   # were added on 2026-11-12 and passed the same cross-check.
   nanogptModels = [
+    {
+      id = "google/gemini-4-carbon";
+      name = "Gemini 4 Carbon";
+      context = 1048576;
+      output = 32768;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+      ];
+      cost = {
+        input = 2.0;
+        output = 10.0;
+        cacheRead = 0.1;
+      };
+    }
+    {
+      id = "openai/gpt-6.1-terra";
+      name = "GPT 6.1 Terra";
+      context = 1050000;
+      output = 128000;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "none"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+      cost = {
+        input = 1.0;
+        output = 5.0;
+        cacheRead = 0.05;
+      };
+    }
     {
       id = "deepseek/deepseek-v4.1-flash-1017";
       name = "DeepSeek V4.1 Flash 1017";
