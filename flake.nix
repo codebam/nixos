@@ -46,11 +46,11 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pinned to main ~Aug 2025 (update deliberately: upstream breaks
-    # the nixos module options every few months; bump with
-    # `nix flake update lsfg-vk-flake` + a Deck rebuild to verify).
+    # Pinned to an Aug 2025 revision (update deliberately: upstream breaks
+    # the nixos module options every few months; change the revision, run
+    # `nix flake update lsfg-vk-flake`, and rebuild the Deck to verify).
     lsfg-vk-flake = {
-      url = "github:pabloaul/lsfg-vk-flake/main";
+      url = "github:pabloaul/lsfg-vk-flake/62aadfc844b2002abe47cbbc9dfd028033376248";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-pass = {

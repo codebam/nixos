@@ -109,18 +109,19 @@ in
 
   systemd.services.nixos-upgrade = {
     # nixos-rebuild switch honours flake.lock; --refresh alone re-checks
-    # caches but does not move a locked input. Update every input first.
+    # caches but does not move a locked input. Update only the unpinned inputs.
     preStart = ''
-      ${config.nix.package}/bin/nix flake update --flake ${flakeDir}
+      ${config.nix.package}/bin/nix flake update \
+        --flake ${flakeDir} \
+        nixpkgs chaotic home-manager disko lanzaboote rust-overlay \
+        sops-nix stylix preservation nix-index-database sops-pass viewport
 
       # pkgs/ is a second flake with its own lock, and the root flake's
       # lock-sync check requires both to name the same nixpkgs revision.
-      # Refresh it from the lock just written; a sync failure must not hold
-      # back the actual system rebuild, so it is only a warning.
+      # A sync failure must stop the upgrade before the system rebuild.
       ${config.nix.package}/bin/nix flake update \
         --flake ${flakeDir}/pkgs \
-        --reference-lock-file ${flakeDir}/flake.lock \
-        || echo "warning: could not synchronise pkgs/flake.lock" >&2
+        --reference-lock-file ${flakeDir}/flake.lock
     '';
 
     # Only a successful switch has a new generation to inspect.

@@ -410,8 +410,8 @@
       },
       "original": {
         "owner": "pabloaul",
-        "ref": "main",
         "repo": "lsfg-vk-flake",
+        "rev": "62aadfc844b2002abe47cbbc9dfd028033376248",
         "type": "github"
       }
     },
