@@ -140,6 +140,12 @@ _: {
             # home/hermes.nix) reads it on every MCP start; without this a
             # root wipe silently logs the bridge out.
             ".config/.wrangler"
+            # `cf auth login` OAuth token, refresh token, and any named auth
+            # profile (config/default.json). Same hazard as the wrangler
+            # session above: a root wipe drops the login and every managed
+            # command answers unauthenticated until the next interactive
+            # `cf auth login`.
+            ".config/cloudflare"
             # Shared agent-memory knowledge graph (the `agent-memory` user
             # service owned by home/agents.nix): one JSONL file, machine-local.
             ".local/share/agent-memory"
