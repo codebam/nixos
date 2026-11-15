@@ -309,10 +309,12 @@ in
     startup = if isDeck then "${deckStartup}" else null;
 
     # Override the whole right side of the bar with an explicit, ordered list.
-    # A bare string is a built-in module (net, disk, cpu, load, memory, clock,
-    # mode); an object is a widget, as bar_widgets used to take. The layout:
-    # volume far left, then the Pickering weather, network, the root disk with
-    # the /games watcher right after it, and the rest of the modules.
+    # A bare string is a built-in module (net, disk, cpu, load, memory, panel,
+    # clock, mode); an object is a widget, as bar_widgets used to take. The
+    # layout: volume far left, then the Pickering weather, network, the root
+    # disk with the /games watcher right after it, and the rest of the modules.
+    # "panel" is the live OLED mean-drive reading of the wallpaper; desktop only,
+    # since the deck's LCD has no burn-in to watch.
     bar_items = [
       { type = "volume"; }
       { type = "mic"; }
@@ -329,6 +331,7 @@ in
       "cpu"
       "load"
       "memory"
+    ] ++ lib.optional (!isDeck) "panel" ++ [
       "mode"
       "clock"
     ];
