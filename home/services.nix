@@ -49,6 +49,14 @@ in
     gpg-agent = {
       enable = true;
       enableSshSupport = true;
+      # Cache the PIN/passphrase for 8 hours, so the YubiKey prompts at most
+      # once a day. Without these the agent runs on its built-in defaults —
+      # default-cache-ttl 600 (the every-10-minutes re-prompt) and
+      # max-cache-ttl 7200. max is the absolute cap from the first prompt,
+      # default the idle expiry each use refreshes; both at 8 hours means
+      # one prompt per working day even under continuous use.
+      defaultCacheTtl = 28800;
+      maxCacheTtl = 28800;
       # pinentry-tty in a terminal window of its own under a graphical
       # session, on the calling tty when there is none. See pkgs/pinentry-auto.nix.
       pinentry.package = pkgs.pinentry-auto.override { terminal = config.defaultTerminal; };
