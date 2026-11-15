@@ -351,6 +351,14 @@ in
     border = {
       radius = 0;
       width = 2;
+    }
+    # OLED: the focused border drifts through dim, low-saturation hues so no
+    # subpixel carries a static bright load (the stock focus blue runs its
+    # blue channel at ~93% drive). Dim + moving, not a bright loop — the same
+    # reasoning as the gradient wallpaper above. Desktop only, like the
+    # wallpaper: the deck's LCD has no burn-in to manage.
+    // lib.optionalAttrs (!isDeck) {
+      animated = true;
     };
 
     # Inactive window dimming: compositor-side opacity multipliers.
