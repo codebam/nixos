@@ -245,7 +245,7 @@ in
   # anything it owned dies with it — a binding defined here still works in that
   # state, which is the difference between a broken desktop and a machine you
   # cannot quit without switching to a TTY.
-  xdg.configFile."viewport/config.json".text = builtins.toJSON {
+  xdg.configFile."viewport/config.json".text = builtins.toJSON ({
     layout = "scrolling";
     rules = [
       # Don't capture OBS Studio
@@ -470,5 +470,30 @@ in
       # The physical power button, which sway bound to suspend.
       "XF86PowerOff" = "exec systemctl suspend";
     };
-  };
+  }
+  # The OLED desk draws its background with an animated gradient extension
+  # (wallpapers/oled/gradient.js) instead of a still. It renders in the shell,
+  # so it works under the Vulkan renderer with no GLSL; it is dark within the
+  # burn-in budgets in wallpapers/oled/README.md (mean drive ~1.4%, nothing over
+  # half drive, peak ~0.5) and its glows drift on incommensurate periods so the
+  # light keeps moving rather than looping back into the same pixels. The stylix
+  # picture above stays as the fallback: clearing wallpaper_extension returns to
+  # it. Desktop only — the deck's LCD has no burn-in to manage.
+  // lib.optionalAttrs (!isDeck) {
+    wallpaper_extensions = {
+      oled-gradient = "wallpapers/oled-gradient.js";
+    };
+    wallpaper_extension = "oled-gradient";
+    wallpaper_options = {
+      palette = "dragon";
+      intensity = 1.0;
+      speed = 1.0;
+      dither = 1;
+    };
+  });
+
+  # The gradient script itself, beside the config so the relative path above
+  # resolves to it. Authored with the rest of the OLED art in wallpapers/oled/.
+  xdg.configFile."viewport/wallpapers/oled-gradient.js".source =
+    ../wallpapers/oled/gradient.js;
 }
