@@ -408,7 +408,10 @@ in
       # in that window cancels the lock and brings the desk back. Zero or
       # absent would lock immediately, as before.
       lock_delay = 10;
-      lock_command = "${lib.getExe pkgs.swaylock} -f";
+      # No lock_command: the shell's own lock screen draws (clock, password box,
+      # on-screen keyboard) as a translucent scrim over the wallpaper
+      # (lock_transparent below). An idle lock leaves the screen blanked until
+      # input rather than flashing bright with the locker.
       blank_after = 900;
     } // lib.optionalAttrs (!isDeck) {
       # Ramp the OLED brightness down from 5 minutes of inactivity to the
@@ -418,6 +421,11 @@ in
       dim_after = 300;
       dim_floor = 0.0;
     };
+
+    # The built-in lock screen draws as a translucent scrim over the wallpaper
+    # rather than an opaque cover; the desktop furniture is hidden while locked
+    # so only the wallpaper shows through. See docs/configuration.md.
+    lock_transparent = true;
 
     # binds_override appends/overrides keybindings on top of built-in defaults
     # without suppressing the default keymap.
