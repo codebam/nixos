@@ -245,299 +245,303 @@ in
   # anything it owned dies with it — a binding defined here still works in that
   # state, which is the difference between a broken desktop and a machine you
   # cannot quit without switching to a TTY.
-  xdg.configFile."viewport/config.json".text = builtins.toJSON ({
-    layout = "scrolling";
-    rules = [
-      # Don't capture OBS Studio
-      {
-        app_id = "com.obsproject.Studio";
-        capture = false;
-      }
-    ];
+  xdg.configFile."viewport/config.json".text = builtins.toJSON (
+    {
+      layout = "scrolling";
+      rules = [
+        # Don't capture OBS Studio
+        {
+          app_id = "com.obsproject.Studio";
+          capture = false;
+        }
+      ];
 
-    # What Mod4+Return opens. Without it the compositor falls back to its
-    # built-in default, which is foot.
-    terminal = terminalCommand;
+      # What Mod4+Return opens. Without it the compositor falls back to its
+      # built-in default, which is foot.
+      terminal = terminalCommand;
 
-    # The desktop background, taken from stylix so that the picture the rest of
-    # the session is themed against is the one the compositor draws. Stylix has
-    # no target for this compositor and never will set it by itself, so this is
-    # the wiring: without these two lines the shell paints its own gradient and
-    # `stylix.image` reaches nothing.
-    #
-    # The fitting names are stylix's own -- viewport takes `fill`, `fit`,
-    # `stretch`, `center` and `tile`, which is `imageScalingMode` exactly -- so
-    # this is handed across rather than translated.
-    wallpaper = "${osConfig.stylix.image}";
-    wallpaper_mode = osConfig.stylix.imageScalingMode;
-
-    outputs = {
-      "*" = {
-        max_refresh = true;
-      };
-    }
-    # The deck's panel is mounted portrait; rotation is a per-output key, so
-    # the wildcard above cannot carry it. The value is NOT the sway line's:
-    # sway's `output eDP-1 { transform = "90"; }` (steamdeck/home.nix) and
-    # Viewport's "90" do not turn the same way -- "90" here leaves the panel
-    # upside down, "270" is upright (verified on the deck, 2026-10-02).
-    // lib.optionalAttrs isDeck {
-      "eDP-1" = {
-        transform = "270";
-      };
-    };
-
-    # What a notification sounds like when the program sending it does not ask
-    # for something else. Viewport holds org.freedesktop.Notifications itself,
-    # so this is the setting a mako or dunst config would carry -- there is no
-    # notification daemon here to configure instead. A sender's own `sound-file`
-    # or `sound-name` hint wins over this, and `suppress-sound` silences it.
-    notifications = {
-      sound_file = "${bark}";
-    };
-
-    adaptive_sync = true;
-    bar = "auto";
-    logo = false;
-    tutorial = false;
-
-    # Startup for the deck: the Steam client in desktop mode, wrapped so it
-    # finds Xwayland's display (see deckStartup above -- a bare
-    # `steam -silent -desktop` here starts before Xwayland has reported one
-    # and dies with "unable to open a connection to X"). One shot; the
-    # client supervises itself. `null` is the absent key on the other hosts.
-    startup = if isDeck then "${deckStartup}" else null;
-
-    # Override the whole right side of the bar with an explicit, ordered list.
-    # A bare string is a built-in module (net, disk, cpu, load, memory, panel,
-    # clock, mode); an object is a widget, as bar_widgets used to take. The
-    # layout: volume far left, then the Pickering weather, network, the root
-    # disk with the /games watcher right after it, and the rest of the modules.
-    # "panel" is the live OLED mean-drive reading of the wallpaper; desktop only,
-    # since the deck's LCD has no burn-in to watch.
-    bar_items = [
-      { type = "volume"; }
-      { type = "mic"; }
-      {
-        type = "weather";
-        location = "Pickering, ON, Canada";
-      }
-      "net"
-      "disk"
-      {
-        type = "disk";
-        path = "/games";
-      }
-      "cpu"
-      "load"
-      "memory"
-    ] ++ lib.optional (!isDeck) "panel" ++ [
-      "mode"
-      "clock"
-    ];
-
-    # Space around and between windows, in pixels. `inner` is the gap between
-    # adjacent windows; `outer` is extra space around the edge of the output,
-    # added on top of the inner gap. `smart` drops the inner gap on a single
-    # window. Every layout model reads the same values, so a few numbers space
-    # the whole desktop.
-    gaps = {
-      inner = 15;
-      smart = true;
-    };
-
-    # The frame around a window. `radius` is the corner in pixels, on the
-    # outside of the border, and `width` is how thick that border is. Both are
-    # read by the compositor as well as the shell: a window's contents are a
-    # surface the compositor draws, so it crops each client to the same corner
-    # the page drew — square here, which costs it nothing.
-    border = {
-      radius = 0;
-      width = 2;
-    }
-    # OLED: the focused border drifts through dim, low-saturation hues so no
-    # subpixel carries a static bright load (the stock focus blue runs its
-    # blue channel at ~93% drive). Dim + moving, not a bright loop — the same
-    # reasoning as the gradient wallpaper above. Desktop only, like the
-    # wallpaper: the deck's LCD has no burn-in to manage.
-    // lib.optionalAttrs (!isDeck) {
-      animated = true;
-    };
-
-    # Inactive window dimming: compositor-side opacity multipliers.
-    # `inactive` dims every unfocused window to 85% so the focused one
-    # reads at a glance in the scrolling layout; `active` and
-    # `fullscreen` stay at 1 so a fullscreen window never dims itself.
-    # All three default to 1 (no dimming) when absent.
-    opacity = {
-      active = 1;
-      inactive = 0.85;
-      fullscreen = 1;
-    };
-
-    # A deliberately minimal theme block: only the focus hue. Every key here is
-    # written straight onto the document as a CSS custom property (`applyTheme`,
-    # data/shell/windows.js), so overriding them replaces whatever shell.css
-    # does with those tokens. Flattening bg and the glows to black and
-    # transparent meant the wallpaper vignette, the elevation shadows and the
-    # workspace-pill glow all resolved to black-on-black or nothing at all — so
-    # those are left alone. The one key set is border-focus, the Kanagawa Dragon
-    # teal (base0C), so the OLED border drift wanders around the same teal/sage
-    # family as the gradient wallpaper rather than the stock Tokyo Night blue.
-    # The drift dims and desaturates it regardless; this only chooses the hue.
-    theme = {
-      "border-focus" = "#8ea4a2";
-    };
-
-    # Takes the pointer image off the screen once it has been still that long
-    # — the arrow parked in the middle of a film. Any use of the pointer brings
-    # it back at once; typing does not, deliberately. Only the drawn image
-    # goes: focus and position are unchanged, so no client is told the mouse
-    # left. Milliseconds, not the seconds the idle block uses, because the
-    # useful values here are not whole seconds. Zero or absent is off.
-    cursor = {
-      hide_after_ms = 2000;
-    };
-
-    idle = {
-      # The deck does not lock: a handheld has nothing to hide from and the
-      # lock interrupts use. `lock_after = 0` is "off" (idle.rs arms only a
-      # positive value). Blanking stays on for battery.
-      lock_after = if isDeck then 0 else 120;
-      # Ten seconds black before the lock lands; any key or pointer activity
-      # in that window cancels the lock and brings the desk back. Zero or
-      # absent would lock immediately, as before.
-      lock_delay = 10;
-      # No lock_command: the shell's own lock screen draws (clock, password box,
-      # on-screen keyboard) as a translucent scrim over the wallpaper
-      # (lock_transparent below). An idle lock leaves the screen blanked until
-      # input rather than flashing bright with the locker.
+      # The desktop background, taken from stylix so that the picture the rest of
+      # the session is themed against is the one the compositor draws. Stylix has
+      # no target for this compositor and never will set it by itself, so this is
+      # the wiring: without these two lines the shell paints its own gradient and
+      # `stylix.image` reaches nothing.
       #
-      # The deck blanks at fifteen minutes for battery. The desktop blanks at
-      # the same two minutes the lock fires — the lock delay turns the outputs
-      # off at lock_after anyway, and this is the end of the dim ramp below,
-      # so the panel reaches the floor exactly as it goes off.
-      blank_after = if isDeck then 900 else 120;
-    } // lib.optionalAttrs (!isDeck) {
-      # Ramp the OLED brightness down from 1.5 minutes of inactivity to the
-      # 2-minute off, so the idle window is spent at falling drive rather
-      # than full-brightness-then-off. Any input brightens it again. The deck's
-      # LCD has no burn-in to manage, so the dim is desktop-only.
-      dim_after = 90;
-      dim_floor = 0.0;
-    };
+      # The fitting names are stylix's own -- viewport takes `fill`, `fit`,
+      # `stretch`, `center` and `tile`, which is `imageScalingMode` exactly -- so
+      # this is handed across rather than translated.
+      wallpaper = "${osConfig.stylix.image}";
+      wallpaper_mode = osConfig.stylix.imageScalingMode;
 
-    # The built-in lock screen draws as a translucent scrim over the wallpaper
-    # rather than an opaque cover; the desktop furniture is hidden while locked
-    # so only the wallpaper shows through. See docs/configuration.md.
-    lock_transparent = true;
+      outputs = {
+        "*" = {
+          max_refresh = true;
+        };
+      }
+      # The deck's panel is mounted portrait; rotation is a per-output key, so
+      # the wildcard above cannot carry it. The value is NOT the sway line's:
+      # sway's `output eDP-1 { transform = "90"; }` (steamdeck/home.nix) and
+      # Viewport's "90" do not turn the same way -- "90" here leaves the panel
+      # upside down, "270" is upright (verified on the deck, 2026-10-02).
+      // lib.optionalAttrs isDeck {
+        "eDP-1" = {
+          transform = "270";
+        };
+      };
 
-    # binds_override appends/overrides keybindings on top of built-in defaults
-    # without suppressing the default keymap.
-    binds_override = {
-      # Mute or unmute the microphone. wpctl talks to wireplumber, which is
-      # what the bar's mic module and sway's push-to-talk binding already use,
-      # so all three agree on one mute state.
-      "Mod4+space" = micMute;
-      "Mod4+x" = "exec ${screenshotSelect}";
-      "Mod4+Shift+x" = "exec ${screenshot}";
-      "Print" = "exec ${screenshot}";
-      # Toggle game mode: strip shell animations, hide the bar and pause the
-      # wallpaper drift while gaming; press again to restore them.
-      "Mod4+g" = "game-mode";
-      # "Mod4+Shift+p" = "shell power";
+      # What a notification sounds like when the program sending it does not ask
+      # for something else. Viewport holds org.freedesktop.Notifications itself,
+      # so this is the setting a mako or dunst config would carry -- there is no
+      # notification daemon here to configure instead. A sender's own `sound-file`
+      # or `sound-name` hint wins over this, and `suppress-sound` silences it.
+      notifications = {
+        sound_file = "${bark}";
+      };
+
+      adaptive_sync = true;
+      bar = "auto";
+      logo = false;
+      tutorial = false;
+
+      # Startup for the deck: the Steam client in desktop mode, wrapped so it
+      # finds Xwayland's display (see deckStartup above -- a bare
+      # `steam -silent -desktop` here starts before Xwayland has reported one
+      # and dies with "unable to open a connection to X"). One shot; the
+      # client supervises itself. `null` is the absent key on the other hosts.
+      startup = if isDeck then "${deckStartup}" else null;
+
+      # Override the whole right side of the bar with an explicit, ordered list.
+      # A bare string is a built-in module (net, disk, cpu, load, memory, panel,
+      # clock, mode); an object is a widget, as bar_widgets used to take. The
+      # layout: volume far left, then the Pickering weather, network, the root
+      # disk with the /games watcher right after it, and the rest of the modules.
+      # "panel" is the live OLED mean-drive reading of the wallpaper; desktop only,
+      # since the deck's LCD has no burn-in to watch.
+      bar_items = [
+        { type = "volume"; }
+        { type = "mic"; }
+        {
+          type = "weather";
+          location = "Pickering, ON, Canada";
+        }
+        "net"
+        "disk"
+        {
+          type = "disk";
+          path = "/games";
+        }
+        "cpu"
+        "load"
+        "memory"
+      ]
+      ++ lib.optional (!isDeck) "panel"
+      ++ [
+        "mode"
+        "clock"
+      ];
+
+      # Space around and between windows, in pixels. `inner` is the gap between
+      # adjacent windows; `outer` is extra space around the edge of the output,
+      # added on top of the inner gap. `smart` drops the inner gap on a single
+      # window. Every layout model reads the same values, so a few numbers space
+      # the whole desktop.
+      gaps = {
+        inner = 15;
+        smart = true;
+      };
+
+      # The frame around a window. `radius` is the corner in pixels, on the
+      # outside of the border, and `width` is how thick that border is. Both are
+      # read by the compositor as well as the shell: a window's contents are a
+      # surface the compositor draws, so it crops each client to the same corner
+      # the page drew — square here, which costs it nothing.
+      border = {
+        radius = 0;
+        width = 2;
+      }
+      # OLED: the focused border drifts through dim, low-saturation hues so no
+      # subpixel carries a static bright load (the stock focus blue runs its
+      # blue channel at ~93% drive). Dim + moving, not a bright loop — the same
+      # reasoning as the gradient wallpaper above. Desktop only, like the
+      # wallpaper: the deck's LCD has no burn-in to manage.
+      // lib.optionalAttrs (!isDeck) {
+        animated = true;
+      };
+
+      # Inactive window dimming: compositor-side opacity multipliers.
+      # `inactive` dims every unfocused window to 85% so the focused one
+      # reads at a glance in the scrolling layout; `active` and
+      # `fullscreen` stay at 1 so a fullscreen window never dims itself.
+      # All three default to 1 (no dimming) when absent.
+      opacity = {
+        active = 1;
+        inactive = 0.85;
+        fullscreen = 1;
+      };
+
+      # A deliberately minimal theme block: only the focus hue. Every key here is
+      # written straight onto the document as a CSS custom property (`applyTheme`,
+      # data/shell/windows.js), so overriding them replaces whatever shell.css
+      # does with those tokens. Flattening bg and the glows to black and
+      # transparent meant the wallpaper vignette, the elevation shadows and the
+      # workspace-pill glow all resolved to black-on-black or nothing at all — so
+      # those are left alone. The one key set is border-focus, the Kanagawa Dragon
+      # teal (base0C), so the OLED border drift wanders around the same teal/sage
+      # family as the gradient wallpaper rather than the stock Tokyo Night blue.
+      # The drift dims and desaturates it regardless; this only chooses the hue.
+      theme = {
+        "border-focus" = "#8ea4a2";
+      };
+
+      # Takes the pointer image off the screen once it has been still that long
+      # — the arrow parked in the middle of a film. Any use of the pointer brings
+      # it back at once; typing does not, deliberately. Only the drawn image
+      # goes: focus and position are unchanged, so no client is told the mouse
+      # left. Milliseconds, not the seconds the idle block uses, because the
+      # useful values here are not whole seconds. Zero or absent is off.
+      cursor = {
+        hide_after_ms = 2000;
+      };
+
+      idle = {
+        # The deck does not lock: a handheld has nothing to hide from and the
+        # lock interrupts use. `lock_after = 0` is "off" (idle.rs arms only a
+        # positive value). Blanking stays on for battery.
+        lock_after = if isDeck then 0 else 120;
+        # Ten seconds black before the lock lands; any key or pointer activity
+        # in that window cancels the lock and brings the desk back. Zero or
+        # absent would lock immediately, as before.
+        lock_delay = 10;
+        # No lock_command: the shell's own lock screen draws (clock, password box,
+        # on-screen keyboard) as a translucent scrim over the wallpaper
+        # (lock_transparent below). An idle lock leaves the screen blanked until
+        # input rather than flashing bright with the locker.
+        #
+        # The deck blanks at fifteen minutes for battery. The desktop blanks at
+        # the same two minutes the lock fires — the lock delay turns the outputs
+        # off at lock_after anyway, and this is the end of the dim ramp below,
+        # so the panel reaches the floor exactly as it goes off.
+        blank_after = if isDeck then 900 else 120;
+      }
+      // lib.optionalAttrs (!isDeck) {
+        # Ramp the OLED brightness down from 1.5 minutes of inactivity to the
+        # 2-minute off, so the idle window is spent at falling drive rather
+        # than full-brightness-then-off. Any input brightens it again. The deck's
+        # LCD has no burn-in to manage, so the dim is desktop-only.
+        dim_after = 90;
+        dim_floor = 0.0;
+      };
+
+      # The built-in lock screen draws as a translucent scrim over the wallpaper
+      # rather than an opaque cover; the desktop furniture is hidden while locked
+      # so only the wallpaper shows through. See docs/configuration.md.
+      lock_transparent = true;
+
+      # binds_override appends/overrides keybindings on top of built-in defaults
+      # without suppressing the default keymap.
+      binds_override = {
+        # Mute or unmute the microphone. wpctl talks to wireplumber, which is
+        # what the bar's mic module and sway's push-to-talk binding already use,
+        # so all three agree on one mute state.
+        "Mod4+space" = micMute;
+        "Mod4+x" = "exec ${screenshotSelect}";
+        "Mod4+Shift+x" = "exec ${screenshot}";
+        "Print" = "exec ${screenshot}";
+        # Toggle game mode: strip shell animations, hide the bar and pause the
+        # wallpaper drift while gaming; press again to restore them.
+        "Mod4+g" = "game-mode";
+        # "Mod4+Shift+p" = "shell power";
+      }
+      # Press to start dictating, press again to stop and transcribe the whole
+      # take. Both keys sit under the left hand, and `Mod4+c` is otherwise unused
+      # by the built-in keymap.
+      // lib.optionalAttrs config.programs.voxtype.enable {
+        "Mod4+c" = "exec ${lib.getExe config.programs.voxtype.package} record toggle";
+      }
+      # Same chord as in home/sway.nix. Throttles builds.slice down to a tenth of
+      # the machine (and off the reserved cores) so a rebuild cannot stutter an
+      # OBS capture; press again to give the CPU back. Only bound where the host
+      # enables the module -- the Steam Deck imports this file too.
+      // lib.optionalAttrs (osConfig.streamingMode.enable or false) {
+        "Mod4+Shift+o" = "exec ${lib.getExe osConfig.streamingMode.package} toggle";
+      }
+      # The deck's chords, ported from its sway config (steamdeck/home.nix),
+      # whose modifier was Mod1: the built-in keymap keeps its Mod4 chords, and
+      # these are the Alt mirrors a handheld keyboard can press, beside the
+      # F-keys sway bound:
+      #
+      # * F8 was a swaynag exit confirmation. The power picker is that
+      #   confirmation now -- quit is one of its rows, beside suspend, power
+      #   off and reboot -- and Ctrl+Alt+Backspace ends the session with no
+      #   keymap involved, so the deck cannot end up with no way out.
+      # * F9/F10 cycled workspaces under sway; F11 raised wvkbd, which the
+      #   shell's own on-screen keyboard replaces (it also comes up on its own
+      #   for the lock screen and focused text fields); F12 opened wmenu, which
+      #   the built-in launcher answers.
+      # * Alt+Tab copies what `defaults` installs for this session's layout:
+      #   the scrolling strip keeps windows outside the view, so that chord is
+      #   the shell's cycle, not the compositor's.
+      // lib.optionalAttrs isDeck {
+        "F8" = "shell power";
+        "F9" = "shell workspace.prev";
+        "F10" = "shell workspace.next";
+        "F11" = "shell osk";
+        "F12" = "shell launcher";
+        "Alt+k" = "shell osk";
+        "Alt+Return" = "exec ${terminalCommand}";
+        # The built-in chords a keyboard without a Super key cannot type.
+        "Alt+d" = "shell launcher";
+        # Scrolling mode's resize: `defaults` binds Mod4+r to cycling the
+        # focused column through niri's preset widths (1/3, 1/2, 2/3, full).
+        # A Super key is one the deck's own controls cannot send, so the chord
+        # has to be reachable without one -- it was the one built-in the Alt
+        # list below was still missing.
+        "Alt+r" = "shell layout.column.width";
+        "Alt+Shift+q" = "close";
+        "Alt+Tab" = "shell layout.focus next";
+        "Alt+Shift+Tab" = "shell layout.focus prev";
+        "Alt+space" = micMute;
+        "Alt+x" = "exec ${screenshotSelect}";
+        "Alt+Shift+x" = "exec ${screenshot}";
+        "Alt+1" = "shell workspace.switch 1";
+        "Alt+2" = "shell workspace.switch 2";
+        "Alt+3" = "shell workspace.switch 3";
+        "Alt+4" = "shell workspace.switch 4";
+        "Alt+5" = "shell workspace.switch 5";
+        "Alt+6" = "shell workspace.switch 6";
+        "Alt+7" = "shell workspace.switch 7";
+        "Alt+8" = "shell workspace.switch 8";
+        "Alt+9" = "shell workspace.switch 9";
+        # The physical power button, which sway bound to suspend.
+        "XF86PowerOff" = "exec systemctl suspend";
+      };
     }
-    # Press to start dictating, press again to stop and transcribe the whole
-    # take. Both keys sit under the left hand, and `Mod4+c` is otherwise unused
-    # by the built-in keymap.
-    // lib.optionalAttrs config.programs.voxtype.enable {
-      "Mod4+c" = "exec ${lib.getExe config.programs.voxtype.package} record toggle";
+    # The OLED desk draws its background with an animated gradient extension
+    # (wallpapers/oled/gradient.js) instead of a still. It renders in the shell,
+    # so it works under the Vulkan renderer with no GLSL; it is dark within the
+    # burn-in budgets in wallpapers/oled/README.md (mean drive ~1.4%, nothing over
+    # half drive, peak ~0.5) and its glows drift on incommensurate periods so the
+    # light keeps moving rather than looping back into the same pixels. The stylix
+    # picture above stays as the fallback: clearing wallpaper_extension returns to
+    # it. Desktop only — the deck's LCD has no burn-in to manage.
+    // lib.optionalAttrs (!isDeck) {
+      wallpaper_extensions = {
+        oled-gradient = "wallpapers/oled-gradient.js";
+      };
+      wallpaper_extension = "oled-gradient";
+      wallpaper_options = {
+        palette = "dragon";
+        intensity = 1.0;
+        speed = 1.0;
+        dither = 1;
+      };
+      # Sample the applied extension against the panel-drive budgets and log any
+      # frame that blows them (the gradient above passes at every moment of its
+      # drift). "warn" keeps it up; "refuse" would take a bad wallpaper down.
+      wallpaper_oled_guard = "warn";
     }
-    # Same chord as in home/sway.nix. Throttles builds.slice down to a tenth of
-    # the machine (and off the reserved cores) so a rebuild cannot stutter an
-    # OBS capture; press again to give the CPU back. Only bound where the host
-    # enables the module -- the Steam Deck imports this file too.
-    // lib.optionalAttrs (osConfig.streamingMode.enable or false) {
-      "Mod4+Shift+o" = "exec ${lib.getExe osConfig.streamingMode.package} toggle";
-    }
-    # The deck's chords, ported from its sway config (steamdeck/home.nix),
-    # whose modifier was Mod1: the built-in keymap keeps its Mod4 chords, and
-    # these are the Alt mirrors a handheld keyboard can press, beside the
-    # F-keys sway bound:
-    #
-    # * F8 was a swaynag exit confirmation. The power picker is that
-    #   confirmation now -- quit is one of its rows, beside suspend, power
-    #   off and reboot -- and Ctrl+Alt+Backspace ends the session with no
-    #   keymap involved, so the deck cannot end up with no way out.
-    # * F9/F10 cycled workspaces under sway; F11 raised wvkbd, which the
-    #   shell's own on-screen keyboard replaces (it also comes up on its own
-    #   for the lock screen and focused text fields); F12 opened wmenu, which
-    #   the built-in launcher answers.
-    # * Alt+Tab copies what `defaults` installs for this session's layout:
-    #   the scrolling strip keeps windows outside the view, so that chord is
-    #   the shell's cycle, not the compositor's.
-    // lib.optionalAttrs isDeck {
-      "F8" = "shell power";
-      "F9" = "shell workspace.prev";
-      "F10" = "shell workspace.next";
-      "F11" = "shell osk";
-      "F12" = "shell launcher";
-      "Alt+k" = "shell osk";
-      "Alt+Return" = "exec ${terminalCommand}";
-      # The built-in chords a keyboard without a Super key cannot type.
-      "Alt+d" = "shell launcher";
-      # Scrolling mode's resize: `defaults` binds Mod4+r to cycling the
-      # focused column through niri's preset widths (1/3, 1/2, 2/3, full).
-      # A Super key is one the deck's own controls cannot send, so the chord
-      # has to be reachable without one -- it was the one built-in the Alt
-      # list below was still missing.
-      "Alt+r" = "shell layout.column.width";
-      "Alt+Shift+q" = "close";
-      "Alt+Tab" = "shell layout.focus next";
-      "Alt+Shift+Tab" = "shell layout.focus prev";
-      "Alt+space" = micMute;
-      "Alt+x" = "exec ${screenshotSelect}";
-      "Alt+Shift+x" = "exec ${screenshot}";
-      "Alt+1" = "shell workspace.switch 1";
-      "Alt+2" = "shell workspace.switch 2";
-      "Alt+3" = "shell workspace.switch 3";
-      "Alt+4" = "shell workspace.switch 4";
-      "Alt+5" = "shell workspace.switch 5";
-      "Alt+6" = "shell workspace.switch 6";
-      "Alt+7" = "shell workspace.switch 7";
-      "Alt+8" = "shell workspace.switch 8";
-      "Alt+9" = "shell workspace.switch 9";
-      # The physical power button, which sway bound to suspend.
-      "XF86PowerOff" = "exec systemctl suspend";
-    };
-  }
-  # The OLED desk draws its background with an animated gradient extension
-  # (wallpapers/oled/gradient.js) instead of a still. It renders in the shell,
-  # so it works under the Vulkan renderer with no GLSL; it is dark within the
-  # burn-in budgets in wallpapers/oled/README.md (mean drive ~1.4%, nothing over
-  # half drive, peak ~0.5) and its glows drift on incommensurate periods so the
-  # light keeps moving rather than looping back into the same pixels. The stylix
-  # picture above stays as the fallback: clearing wallpaper_extension returns to
-  # it. Desktop only — the deck's LCD has no burn-in to manage.
-  // lib.optionalAttrs (!isDeck) {
-    wallpaper_extensions = {
-      oled-gradient = "wallpapers/oled-gradient.js";
-    };
-    wallpaper_extension = "oled-gradient";
-    wallpaper_options = {
-      palette = "dragon";
-      intensity = 1.0;
-      speed = 1.0;
-      dither = 1;
-    };
-    # Sample the applied extension against the panel-drive budgets and log any
-    # frame that blows them (the gradient above passes at every moment of its
-    # drift). "warn" keeps it up; "refuse" would take a bad wallpaper down.
-    wallpaper_oled_guard = "warn";
-  });
+  );
 
   # The gradient script itself, beside the config so the relative path above
   # resolves to it. Authored with the rest of the OLED art in wallpapers/oled/.
-  xdg.configFile."viewport/wallpapers/oled-gradient.js".source =
-    ../wallpapers/oled/gradient.js;
+  xdg.configFile."viewport/wallpapers/oled-gradient.js".source = ../wallpapers/oled/gradient.js;
 }
