@@ -1,7 +1,8 @@
 /* An OLED-safe animated gradient wallpaper for Viewport's wallpaper-extension
  * hook (registerWallpaper). It renders entirely in the shell — a z-index:-1
- * layer under the desktop, the same place the shell puts a film wallpaper — so
- * it works under every compositor renderer, Vulkan included, with no GLSL.
+ * layer under the desktop's own children, the same place the shell puts a film
+ * wallpaper — so it works under every compositor renderer, Vulkan included,
+ * with no GLSL.
  *
  * Built to the burn-in rules in this directory's README:
  *
@@ -22,15 +23,22 @@
  *     canvas redraw, so an idle desktop costs a compositor thread and nothing
  *     else — which matters when the machine is also running a game.
  *
+ * `root` is the output's own `.desktop`, so the layer is built inside it and
+ * paints that monitor alone; the container, stylesheet and keyframes are named
+ * per output so two monitors can run different palettes at different speeds.
+ *
  * Options (wallpaper_options), all optional:
  *   palette   "dragon" (default), "orchid", "ice", "ember", "mono"
- *   intensity 0..1, scales the glow strength (default 0.5). Lower = darker.
+ *   intensity 0..1, scales the glow strength (default 1). Lower = darker.
  *   speed     multiplier on the drift periods (default 1). Higher = faster.
  *   dither    0..2, dither strength in LSB (default 1). 0 disables.
  */
 registerWallpaper('oled-gradient', {
   apply({ root, options }) {
     const opts = options || {};
+    const suffix = (root.dataset && root.dataset.output) || 'page';
+    const wrapId = `oled-gradient-${suffix}`;
+    const styleId = `oled-gradient-style-${suffix}`;
 
     /* The dark end of each palette, lifted from live.html so a gradient stays
      * coherent with the baked pool and the pinned base16 scheme. Only the first
@@ -55,10 +63,6 @@ registerWallpaper('oled-gradient', {
      * light keeps moving across the panel instead of etching a loop. */
     const periods = [47, 71, 113, 157].map((p) => p / speed);
 
-    /* Each glow: a soft radial blob of one palette colour, oversized so a
-     * transform can drift it without uncovering an edge, animated on its own
-     * period. The alpha is the intensity knob; the colour is already dark, so
-     * even the centre of the brightest glow stays under half drive. */
     /* One small, brighter accent gives the frame a readable peak (~0.5-0.6 sRGB)
      * while the broad glows behind it stay dark, so the mean drive stays a few
      * percent: a clump on black, not a haze — the same shape the pool keeps. */
@@ -81,21 +85,22 @@ registerWallpaper('oled-gradient', {
       const [r, gg, b] = hexToRgb(g.c);
       const alpha = (g.a * intensity).toFixed(3);
       const dur = periods[i % periods.length].toFixed(2);
+      const anim = `oled-grad-drift-${suffix}-${i}`;
       /* A gentle closed drift: out and back on an ease, plus a slow turn, so
        * the blob wanders rather than sliding on a straight line. */
       keyframes += `
-        @keyframes oled-grad-drift-${i} {
+        @keyframes ${anim} {
           0%   { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg) scale(1); }
           50%  { transform: translate(-50%, -50%) translate(${g.dx}vw, ${g.dy}vh) rotate(${g.rot}deg) scale(1.12); }
           100% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg) scale(1); }
         }`;
       layers += `
-        #oled-gradient .glow-${i} {
+        #${wrapId} .glow-${i} {
           left: ${g.x}%; top: ${g.y}%;
           width: ${g.size}vmax; height: ${g.size}vmax;
           background: radial-gradient(closest-side,
             rgba(${r}, ${gg}, ${b}, ${alpha}), transparent 72%);
-          animation: oled-grad-drift-${i} ${dur}s ease-in-out infinite;
+          animation: ${anim} ${dur}s ease-in-out infinite;
         }`;
     });
 
@@ -128,29 +133,32 @@ registerWallpaper('oled-gradient', {
      * dither/255 of full scale. */
     const ditherOpacity = (dither * 0.004).toFixed(4);
 
-    const style = document.createElement('style');
-    style.id = 'oled-gradient-style';
+    let style = document.getElementById(styleId);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = styleId;
+      document.head.appendChild(style);
+    }
     style.textContent = `
-      html.oled-gradient body,
-      html.oled-gradient .desktop {
+      .oled-gradient {
         background-image: none !important;
         background-color: transparent !important;
       }
-      #oled-gradient {
-        position: fixed; inset: 0;
+      #${wrapId} {
+        position: absolute; inset: 0;
         z-index: -1;
         pointer-events: none;
         overflow: hidden;
         background: #000;
       }
-      #oled-gradient .glow {
+      #${wrapId} .glow {
         position: absolute;
         transform: translate(-50%, -50%);
         will-change: transform;
       }
       ${keyframes}
       ${layers}
-      #oled-gradient .dither {
+      #${wrapId} .dither {
         position: absolute; inset: 0;
         background-image: url(${ditherUrl});
         background-repeat: repeat;
@@ -158,30 +166,35 @@ registerWallpaper('oled-gradient', {
         mix-blend-mode: screen;
       }
       @media (prefers-reduced-motion: reduce) {
-        #oled-gradient .glow { animation: none; }
+        #${wrapId} .glow { animation: none; }
       }
     `;
-    document.head.appendChild(style);
 
-    const wrap = document.createElement('div');
-    wrap.id = 'oled-gradient';
-    glows.forEach((g, i) => {
-      const el = document.createElement('div');
-      el.className = `glow glow-${i}`;
-      wrap.appendChild(el);
-    });
-    if (dither > 0) {
-      const d = document.createElement('div');
-      d.className = 'dither';
-      wrap.appendChild(d);
+    let wrap = document.getElementById(wrapId);
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = wrapId;
+      glows.forEach((g, i) => {
+        const el = document.createElement('div');
+        el.className = `glow glow-${i}`;
+        wrap.appendChild(el);
+      });
+      if (dither > 0) {
+        const d = document.createElement('div');
+        d.className = 'dither';
+        wrap.appendChild(d);
+      }
+      /* Inside the output's own desktop, under its children — not on the page
+         body — so each monitor carries its own scene. */
+      root.appendChild(wrap);
     }
-    document.body.appendChild(wrap);
     root.classList.add('oled-gradient');
   },
 
   clear({ root }) {
+    const suffix = (root.dataset && root.dataset.output) || 'page';
     root.classList.remove('oled-gradient');
-    document.getElementById('oled-gradient-style')?.remove();
-    document.getElementById('oled-gradient')?.remove();
+    document.getElementById(`oled-gradient-style-${suffix}`)?.remove();
+    document.getElementById(`oled-gradient-${suffix}`)?.remove();
   },
 });
