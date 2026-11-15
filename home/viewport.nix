@@ -412,13 +412,18 @@ in
       # on-screen keyboard) as a translucent scrim over the wallpaper
       # (lock_transparent below). An idle lock leaves the screen blanked until
       # input rather than flashing bright with the locker.
-      blank_after = 900;
+      #
+      # The deck blanks at fifteen minutes for battery. The desktop blanks at
+      # the same two minutes the lock fires — the lock delay turns the outputs
+      # off at lock_after anyway, and this is the end of the dim ramp below,
+      # so the panel reaches the floor exactly as it goes off.
+      blank_after = if isDeck then 900 else 120;
     } // lib.optionalAttrs (!isDeck) {
-      # Ramp the OLED brightness down from 5 minutes of inactivity to the
-      # 15-minute blank, so the idle window is spent at falling drive rather
+      # Ramp the OLED brightness down from 1.5 minutes of inactivity to the
+      # 2-minute off, so the idle window is spent at falling drive rather
       # than full-brightness-then-off. Any input brightens it again. The deck's
       # LCD has no burn-in to manage, so the dim is desktop-only.
-      dim_after = 300;
+      dim_after = 90;
       dim_floor = 0.0;
     };
 
