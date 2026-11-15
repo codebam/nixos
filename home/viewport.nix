@@ -504,6 +504,10 @@ in
       speed = 1.0;
       dither = 1;
     };
+    # Sample the applied extension against the panel-drive budgets and log any
+    # frame that blows them (the gradient above passes at every moment of its
+    # drift). "warn" keeps it up; "refuse" would take a bad wallpaper down.
+    wallpaper_oled_guard = "warn";
   });
 
   # The gradient script itself, beside the config so the relative path above
