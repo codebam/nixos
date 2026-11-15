@@ -54,9 +54,16 @@ in
       # default-cache-ttl 600 (the every-10-minutes re-prompt) and
       # max-cache-ttl 7200. max is the absolute cap from the first prompt,
       # default the idle expiry each use refreshes; both at 8 hours means
-      # one prompt per working day even under continuous use.
+      # one prompt per working day even under continuous use. A running agent
+      # keeps its startup TTLs until reloaded, so after a switch run
+      # `systemctl --user reload gpg-agent` -- switching alone changes nothing.
       defaultCacheTtl = 28800;
       maxCacheTtl = 28800;
+      # SSH auth through the agent has its own pair of TTLs, untouched by the
+      # two above: without these, YubiKey SSH (git push, logins) falls back to
+      # the built-in 1800 idle / 7200 max and re-prompts every half hour.
+      defaultCacheTtlSsh = 28800;
+      maxCacheTtlSsh = 28800;
       # pinentry-tty in a terminal window of its own under a graphical
       # session, on the calling tty when there is none. See pkgs/pinentry-auto.nix.
       pinentry.package = pkgs.pinentry-auto.override { terminal = config.defaultTerminal; };
