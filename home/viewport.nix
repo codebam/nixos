@@ -429,6 +429,9 @@ in
       "Mod4+x" = "exec ${screenshotSelect}";
       "Mod4+Shift+x" = "exec ${screenshot}";
       "Print" = "exec ${screenshot}";
+      # Toggle game mode: strip shell animations, hide the bar and pause the
+      # wallpaper drift while gaming; press again to restore them.
+      "Mod4+g" = "game-mode";
       # "Mod4+Shift+p" = "shell power";
     }
     # Press to start dictating, press again to stop and transcribe the whole
