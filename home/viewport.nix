@@ -372,13 +372,19 @@ in
       fullscreen = 1;
     };
 
-    # No theme block, deliberately. Every key here is written straight onto
-    # the document as a CSS custom property (`applyTheme`, data/shell/
-    # windows.js), so overriding them replaces whatever shell.css does with
-    # those tokens. Flattening bg and the glows to black and transparent meant
-    # the wallpaper vignette, the elevation shadows and the workspace-pill glow
-    # all resolved to black-on-black or nothing at all — the styling was
-    # applying and had nothing to show for it.
+    # A deliberately minimal theme block: only the focus hue. Every key here is
+    # written straight onto the document as a CSS custom property (`applyTheme`,
+    # data/shell/windows.js), so overriding them replaces whatever shell.css
+    # does with those tokens. Flattening bg and the glows to black and
+    # transparent meant the wallpaper vignette, the elevation shadows and the
+    # workspace-pill glow all resolved to black-on-black or nothing at all — so
+    # those are left alone. The one key set is border-focus, the Kanagawa Dragon
+    # teal (base0C), so the OLED border drift wanders around the same teal/sage
+    # family as the gradient wallpaper rather than the stock Tokyo Night blue.
+    # The drift dims and desaturates it regardless; this only chooses the hue.
+    theme = {
+      "border-focus" = "#8ea4a2";
+    };
 
     # Takes the pointer image off the screen once it has been still that long
     # — the arrow parked in the middle of a film. Any use of the pointer brings
