@@ -34,6 +34,16 @@
  *   dither    0..2, dither strength in LSB (default 1). 0 disables.
  */
 registerWallpaper('oled-gradient', {
+  /* Declared so the settings panel can draw these as real controls (Viewport's
+   * wallpaper-extension options schema). The defaults match the config file. */
+  options: [
+    { key: 'palette', label: 'Palette', type: 'choice', default: 'dragon',
+      choices: ['dragon', 'orchid', 'ice', 'ember', 'mono'] },
+    { key: 'intensity', label: 'Intensity', type: 'number', default: 1.0, min: 0, max: 1, step: 0.05 },
+    { key: 'speed', label: 'Speed', type: 'number', default: 1, min: 0.1, max: 4, step: 0.1 },
+    { key: 'dither', label: 'Dither (LSB)', type: 'number', default: 1, min: 0, max: 2, step: 1 },
+  ],
+
   apply({ root, options }) {
     const opts = options || {};
     const suffix = (root.dataset && root.dataset.output) || 'page';
