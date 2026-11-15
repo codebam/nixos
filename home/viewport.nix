@@ -410,6 +410,13 @@ in
       lock_delay = 10;
       lock_command = "${lib.getExe pkgs.swaylock} -f";
       blank_after = 900;
+    } // lib.optionalAttrs (!isDeck) {
+      # Ramp the OLED brightness down from 5 minutes of inactivity to the
+      # 15-minute blank, so the idle window is spent at falling drive rather
+      # than full-brightness-then-off. Any input brightens it again. The deck's
+      # LCD has no burn-in to manage, so the dim is desktop-only.
+      dim_after = 300;
+      dim_floor = 0.0;
     };
 
     # binds_override appends/overrides keybindings on top of built-in defaults
