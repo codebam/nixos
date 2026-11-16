@@ -634,42 +634,36 @@ let
     }
   ];
 
-  # Qwen Code's model catalog. `qwen` speaks OpenAI-compatible
-  # chat-completions, so nano-gpt is declared in its `openai` auth slot rather
-  # than Qwen's own hosted endpoints; `envKey` names the variable loadKey
-  # exports, which keeps the key out of the settings file the TUI writes.
-  # contextWindowSize and modalities are from nano-gpt's
-  # /api/v1/models?detailed=true (read 2026-11-11) and drive Qwen Code's
-  # compaction budget and image input. The Qwen coder routes are the point of
-  # running this CLI; deepseek-v4.1-flash stays listed so the daily-driver
-  # model the other harnesses default to is one `/model` away.
-  qwenNanoGptModels = [
+  # Qwen Code's model catalog: qwen4-max on the two gateways the fleet already
+  # holds keys for. `qwen` speaks OpenAI-compatible chat-completions, so both
+  # routes sit in its `openai` auth slot; `envKey` names the variable loadKey
+  # exports, which keeps the keys out of the settings file the TUI writes.
+  # The model registry keys routes by id + baseUrl, so the same model on two
+  # gateways is two distinct entries and `/model` picks between them.
+  #
+  # QwenCloud's Token Plan is the subscription route and the default; its
+  # endpoint is the live compatible-mode host (pi-ai's bundled catalog still
+  # names the old aliyuncs one -- see the dsh qwen-token-plan-individual route
+  # below), and the limits match what pi/dsh declare for qwen4-max. NanoGPT's
+  # route bills per token and is the fallback for when the plan is out; its
+  # limits are from /api/v1/models?detailed=true (read 2026-11-16): 1M
+  # context, 131072 output, text+image input. contextWindowSize drives Qwen
+  # Code's compaction budget and modalities.image its image input.
+  qwenModels = [
     {
-      id = "qwen/qwen3-coder-next";
-      name = "Qwen3 Coder Next";
-      context = 262144;
-    }
-    {
-      id = "qwen/qwen3-coder";
-      name = "Qwen3 Coder 480B";
-      context = 262000;
-    }
-    {
-      id = "qwen/qwen3.8-flash";
-      name = "Qwen3.8 Flash";
+      id = "qwen4-max";
+      name = "Qwen4 Max (Qwen Cloud)";
+      envKey = "QWEN_API_KEY";
+      baseUrl = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1";
       context = 1000000;
       vision = true;
     }
     {
-      id = "qwen/qwen3.8-max";
-      name = "Qwen3.8 Max";
-      context = 991000;
-      vision = true;
-    }
-    {
-      id = "deepseek/deepseek-v4.1-flash-1017";
-      name = "DeepSeek V4.1 Flash 1017";
-      context = 1048576;
+      id = "qwen/qwen4-max";
+      name = "Qwen4 Max (NanoGPT)";
+      envKey = "NANOGPT_API_KEY";
+      baseUrl = "https://nano-gpt.com/api/v1";
+      context = 1000000;
       vision = true;
     }
   ];
@@ -678,26 +672,68 @@ let
     {
       id,
       name,
+      envKey,
+      baseUrl,
       context,
       vision ? false,
     }:
     {
-      inherit id name;
-      envKey = "NANOGPT_API_KEY";
-      baseUrl = "https://nano-gpt.com/api/v1";
+      inherit
+        id
+        name
+        envKey
+        baseUrl
+        ;
       generationConfig = {
         contextWindowSize = context;
       }
       // lib.optionalAttrs vision { modalities.image = true; };
     };
 
-  # Only the catalog and the default selection are managed: `/model`, `/auth`
-  # and the theme picker write the same file, so the merge keeps every other
-  # key the TUI has stored.
+  # Only the catalog, the default selection and the MCP fleet are managed:
+  # `/model`, `/auth` and the theme picker write the same file, so the merge
+  # keeps every other key the TUI has stored. jq's `*` replaces arrays
+  # wholesale, so shrinking the catalog drops the retired routes from the
+  # live document rather than leaving them past the managed list's end.
   qwenSettings = {
-    modelProviders.openai = map qwenModelEntry qwenNanoGptModels;
+    modelProviders.openai = map qwenModelEntry qwenModels;
     security.auth.selectedType = "openai";
-    model.name = "qwen/qwen3-coder-next";
+    model.name = "qwen4-max";
+
+    # The same four MCP servers opencode and pi register, in Qwen Code's
+    # MCPServerConfig shape: stdio keeps `command` and `args` apart, `timeout`
+    # is the tool-call timeout in ms, and streamable HTTP is `httpUrl` (`url`
+    # would select SSE). User-scope servers connect without the approval gate
+    # that project-level servers (.qwen/settings.json, .mcp.json) get.
+    # zg and ripwire resolve from the session PATH -- both are in
+    # home.packages, the same assumption the opencode rows make -- and the
+    # stdio child inherits the wrapper's environment, so loadKey's exports
+    # reach them. playwright names the store path because a desktop launch
+    # may not inherit the interactive PATH.
+    mcpServers = {
+      ${zgServerName} = {
+        command = builtins.head zgArgv;
+        args = builtins.tail zgArgv;
+        timeout = zgTimeoutMs;
+      };
+
+      ripwire = {
+        command = "ripwire";
+        args = [ "--mcp" ];
+      };
+
+      ${pwServerName} = {
+        command = builtins.head pwArgv;
+        args = builtins.tail pwArgv;
+        timeout = pwTimeoutMs;
+      };
+
+      # The shared agent-memory service: one writer for the whole fleet, so
+      # this is the remote loopback endpoint, never a per-session stdio copy.
+      ${memoryServerName} = {
+        httpUrl = memoryUrl;
+      };
+    };
   };
 
   # pi's models.json shape. `nano-gpt` is a new provider rather than an
@@ -832,10 +868,11 @@ let
     '';
   };
 
-  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package. Wrapped with loadKey
-  # because its model catalog (below) authenticates with NANOGPT_API_KEY from
-  # the same sops secret as the other harnesses; the gateway itself is declared
-  # in ~/.qwen/settings.json by home.activation.qwenSettings.
+  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.27.4
+  # (pkgs/qwen-code.nix). Wrapped with loadKey because its model catalog
+  # (below) authenticates with QWEN_API_KEY and NANOGPT_API_KEY from the same
+  # sops secrets as the other harnesses; the gateways and the MCP fleet are
+  # declared in ~/.qwen/settings.json by home.activation.qwenSettings.
   qwen = pkgs.symlinkJoin {
     name = "qwen-wrapped-${pkgs.qwen-code.version}";
     paths = [ pkgs.qwen-code ];
@@ -2184,8 +2221,11 @@ let
   '';
 
   # ~/.qwen/settings.json is the same kind of live document (/auth, /model and
-  # the theme picker write it), so the managed catalog is merged in, Nix keys
-  # winning, rather than symlinked.
+  # the theme picker write it), so the managed catalog and MCP fleet are
+  # merged in, Nix keys winning, rather than symlinked. `mcpServers` merges
+  # per server, so a server the user added with `qwen mcp add` survives;
+  # `modelProviders.openai` is an array and jq's `*` replaces it wholesale,
+  # which is what retires the old catalog entries.
   qwenSettingsMerge = pkgs.writeShellScript "qwen-settings-merge" ''
     set -eu
     settings="$HOME/.qwen/settings.json"
@@ -2230,7 +2270,8 @@ in
       '';
 
       # qwen's settings.json is the same kind of live document; the managed
-      # model catalog is merged in after the TUI has had a chance to write it.
+      # model catalog and MCP servers are merged in after the TUI has had a
+      # chance to write it.
       qwenSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${qwenSettingsMerge}
       '';

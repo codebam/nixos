@@ -112,6 +112,11 @@
   # pkgs/opencode-desktop-beta.nix.
   opencode-desktop-beta = pkgs.callPackage ./opencode-desktop-beta.nix { };
 
+  # Qwen Code CLI: nixpkgs' package rebuilt at the v0.27.4 release tag (the
+  # pin carries 0.26.7). home/agents.nix wraps this as `qwen`; see
+  # pkgs/qwen-code.nix.
+  qwen-code = pkgs.callPackage ./qwen-code.nix { base = prev.qwen-code; };
+
   # Polarium Code desktop app. The vendor ships only an AppImage and gates the
   # download behind an account, so there is no URL to pin a hash against:
   # pkgs/polariumcode wraps the AppImage kept at ~/Downloads and extracts it to
