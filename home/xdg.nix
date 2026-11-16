@@ -48,10 +48,10 @@ in
       # Chrome (also installed, and claiming http/https/text/html) wins the
       # alphabetical tie. Symptom: links open in Chrome despite this config.
       defaultApplications = {
-        "text/html" = "chromium-browser.desktop";
-        "x-scheme-handler/http" = "chromium-browser.desktop";
-        "x-scheme-handler/https" = "chromium-browser.desktop";
-        "x-scheme-handler/about" = "chromium-browser.desktop";
+        "text/html" = "google-chrome.desktop";
+        "x-scheme-handler/http" = "google-chrome.desktop";
+        "x-scheme-handler/https" = "google-chrome.desktop";
+        "x-scheme-handler/about" = "google-chrome.desktop";
         "inode/directory" = "term-folder.desktop";
       };
     };
