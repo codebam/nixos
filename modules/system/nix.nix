@@ -75,7 +75,9 @@
     # (~225G of store). nix-collect-garbage prunes by generation date across
     # all profiles and demonstrably works (2026-11-15: 1451 -> 66, 148G freed).
     # 14d keeps two weeks of rollback; daily runs bound the growth between
-    # upgrades. nh clean stays for gcroot and user-profile hygiene.
+    # upgrades. This owns GC: nh clean cannot also run (the nh module warns
+    # when both are on), and nix-collect-garbage prunes every profile, user
+    # ones included, so it covers the hygiene nh clean was kept for.
     gc = {
       automatic = true;
       dates = "daily";
@@ -90,10 +92,10 @@
 
   programs.nh = {
     enable = true;
-    clean = {
-      enable = true;
-      extraArgs = "--keep-since 7d --keep 5";
-    };
+    # Off because nix.gc.automatic above owns garbage collection; the nh module
+    # warns when both are enabled. nix-collect-garbage prunes all profiles
+    # (system and per-user), which is the hygiene nh clean was kept for.
+    clean.enable = false;
     flake = "/persistent/etc/nixos";
   };
 }
