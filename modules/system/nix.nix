@@ -69,8 +69,18 @@
       cores = lib.mkDefault 2;
       builders-use-substitutes = true;
     };
+    # nh clean (weekly, below) was not enough on its own: its Nov 2 run marked
+    # only 8 of ~1350 old system generations for deletion (3052-3059) and left
+    # everything older untouched, so generations piled up to 1451 by Nov 15
+    # (~225G of store). nix-collect-garbage prunes by generation date across
+    # all profiles and demonstrably works (2026-11-15: 1451 -> 66, 148G freed).
+    # 14d keeps two weeks of rollback; daily runs bound the growth between
+    # upgrades. nh clean stays for gcroot and user-profile hygiene.
     gc = {
-      automatic = false;
+      automatic = true;
+      dates = "daily";
+      persistent = true;
+      options = "--delete-older-than 14d";
     };
     optimise = {
       automatic = true;
