@@ -47,6 +47,11 @@ appimageTools.wrapType2 {
   pname = "qwen-code-desktop";
   inherit version src;
 
+  # linuxdeploy bundled libgcrypt/libsecret but assumed libgpg-error lives
+  # on the host; neither the AppImage nor the default FHS env carries it, so
+  # the loader dies at startup without this.
+  extraPkgs = pkgs: [ pkgs.libgpg-error ];
+
   extraInstallCommands = ''
     # The upstream entry already names the wrapped bin and icon; only the
     # file name changes (upstream ships it with spaces in it).
