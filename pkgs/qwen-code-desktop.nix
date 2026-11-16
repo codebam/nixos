@@ -12,6 +12,13 @@
   libsoup_3,
   openssl,
   webkitgtk_4_1,
+  ada,
+  c-ares,
+  libuv,
+  llhttp,
+  simdjson,
+  sqlite,
+  uvwasi,
   qwen-code,
 }:
 
@@ -67,6 +74,10 @@ rustPlatform.buildRustPackage {
   # for the same class of check-context failure.
   doCheck = false;
 
+  # The hook's own postFixup hook would run after the checksum stamping below
+  # and invalidate it again; run it explicitly at the top of postFixup instead.
+  dontAutoPatchelf = true;
+
   postPatch = ''
     # The release workflow stamps the tag version into the conf; the checked-in
     # 0.0.1 is a dev placeholder. createUpdaterArtifacts needs the upstream
@@ -93,6 +104,17 @@ rustPlatform.buildRustPackage {
     # does not run autoPatchelfHook on its own, so it is in nativeBuildInputs
     # and resolves them from here during fixup.
     stdenv.cc.cc.lib
+    # nixpkgs' node links these shared libs. auto-patchelf rebuilds node's
+    # RPATH from what it can find rather than keeping the original, so they
+    # must be findable here or the rewritten RPATH drops them and node dies.
+    # This pin's versions are the ones nodejs_22 was built against.
+    ada
+    c-ares
+    libuv
+    llhttp
+    simdjson
+    sqlite
+    uvwasi
   ];
 
   # Assemble the runtime the Tauri bundle lists under bundle.resources before
@@ -124,6 +146,8 @@ rustPlatform.buildRustPackage {
   # the staged one -- upstream's patchelf-immutable-runtime.sh exists because
   # rewriting the ELFs invalidates checksums taken before the rewrite.
   postFixup = ''
+    autoPatchelf -- "$out"
+
     RUNTIME_ROOT="$out/lib/Qwen Code Desktop/runtime/qwen-code" \
     DESKTOP_VERSION="${version}" \
     QWEN_COMMIT="${commit}" \
