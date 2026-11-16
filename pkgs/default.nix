@@ -117,6 +117,12 @@
   # pkgs/qwen-code.nix.
   qwen-code = pkgs.callPackage ./qwen-code.nix { base = prev.qwen-code; };
 
+  # Qwen Code Desktop: upstream's prebuilt Wails AppImage from the separate
+  # desktop-v<version> release line, bundling its own qwen CLI runtime.
+  # home/agents.nix wraps it with the shared agent keys; see
+  # pkgs/qwen-code-desktop.nix.
+  qwen-code-desktop = pkgs.callPackage ./qwen-code-desktop.nix { };
+
   # Polarium Code desktop app. The vendor ships only an AppImage and gates the
   # download behind an account, so there is no URL to pin a hash against:
   # pkgs/polariumcode wraps the AppImage kept at ~/Downloads and extracts it to

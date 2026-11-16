@@ -922,6 +922,22 @@ let
     '';
   };
 
+  # Qwen Code Desktop (pkgs/qwen-code-desktop.nix), the Wails shell around the
+  # same Web Shell the CLI serves; it bundles its own qwen runtime but reads
+  # the same ~/.qwen/settings.json catalog. Wrapped with loadKey for the same
+  # reason as opencode-desktop-beta: a .desktop launch inherits no shell
+  # environment, and the catalog authenticates with QWEN_API_KEY and
+  # NANOGPT_API_KEY. loadQwenKey's Telegram token stays channel-only -- the
+  # desktop has no channel to start.
+  qwen-code-desktop = pkgs.symlinkJoin {
+    name = "qwen-code-desktop-wrapped-${pkgs.qwen-code-desktop.version}";
+    paths = [ pkgs.qwen-code-desktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/qwen-code-desktop --run '. ${loadKey}'
+    '';
+  };
+
   # Pi ships its own updater and an install/version ping, neither of which
   # applies to a /nix/store copy it cannot write to.
   pi = pkgs.symlinkJoin {
@@ -2283,6 +2299,7 @@ in
       opencode-desktop-beta
       opencode2
       qwen
+      qwen-code-desktop
       pi
       dshInstalled
       dshSubscription
