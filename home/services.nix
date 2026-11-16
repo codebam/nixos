@@ -21,6 +21,15 @@ in
   services = {
     swayidle = {
       enable = !isDeck;
+      # swayidle is sway's idle manager: every command it runs is a swaymsg
+      # or a swaylock, and Viewport manages its own idle and lock (idle in
+      # home/viewport.nix). Bind it to sway-session.target, which only sway
+      # raises, rather than the default graphical-session.target, which every
+      # Wayland session raises: the desktop logs into Viewport too, and under
+      # it swayidle fired swaylock at 110s and before sleep — a second locker
+      # over the compositor's own. Viewport locks before sleep itself now
+      # (power::watch_sleep), so nothing is lost by leaving it out.
+      systemdTargets = [ "sway-session.target" ];
       timeouts = [
         {
           # Lock before the outputs go off so a resume never lands
@@ -73,6 +82,12 @@ in
   # All user units live here (was: systemd.nix) so there is one place to
   # look for autostarted user services.
   systemd.user.services = {
+    # The target binding above keeps swayidle out of a Viewport login, but a
+    # restart starts a unit whatever wants it — and home-manager restarts a
+    # changed unit on switch. SWAYSOCK is the one variable only a sway
+    # session imports into the user manager (sway's own exec line hands it
+    # over), so the condition refuses the restart under Viewport too.
+    swayidle.Unit.ConditionEnvironment = lib.mkForce "SWAYSOCK";
     tmux = {
       Unit = {
         Description = "Tmux server";
