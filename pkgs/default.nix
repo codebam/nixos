@@ -17,7 +17,7 @@
   pkgs,
   prev ? pkgs,
 }:
-{
+rec {
   # Home-manager both installs this and names it in a tmux popup binding.
   agent-overview = pkgs.callPackage ./agent-overview.nix { };
 
@@ -117,11 +117,13 @@
   # pkgs/qwen-code.nix.
   qwen-code = pkgs.callPackage ./qwen-code.nix { base = prev.qwen-code; };
 
-  # Qwen Code Desktop: upstream's prebuilt Wails AppImage from the separate
-  # desktop-v<version> release line, bundling its own qwen CLI runtime.
+  # Qwen Code Desktop: the Tauri shell from the desktop-v<version> release
+  # line, built from source against nixpkgs' WebKitGTK with a runtime
+  # assembled from this set's own qwen-code (inherit, so the standalone
+  # packages output does not fall back to nixpkgs' older CLI).
   # home/agents.nix wraps it with the shared agent keys; see
   # pkgs/qwen-code-desktop.nix.
-  qwen-code-desktop = pkgs.callPackage ./qwen-code-desktop.nix { };
+  qwen-code-desktop = pkgs.callPackage ./qwen-code-desktop.nix { inherit qwen-code; };
 
   # Polarium Code desktop app. The vendor ships only an AppImage and gates the
   # download behind an account, so there is no URL to pin a hash against:

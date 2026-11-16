@@ -922,19 +922,22 @@ let
     '';
   };
 
-  # Qwen Code Desktop (pkgs/qwen-code-desktop.nix), the Wails shell around the
+  # Qwen Code Desktop (pkgs/qwen-code-desktop.nix), the Tauri shell around the
   # same Web Shell the CLI serves; it bundles its own qwen runtime but reads
   # the same ~/.qwen/settings.json catalog. Wrapped with loadKey for the same
   # reason as opencode-desktop-beta: a .desktop launch inherits no shell
   # environment, and the catalog authenticates with QWEN_API_KEY and
   # NANOGPT_API_KEY. loadQwenKey's Telegram token stays channel-only -- the
-  # desktop has no channel to start.
+  # desktop has no channel to start. The updater is off for the same reason
+  # opencode2's autoupdate is: a /nix/store copy cannot write itself.
   qwen-code-desktop = pkgs.symlinkJoin {
     name = "qwen-code-desktop-wrapped-${pkgs.qwen-code-desktop.version}";
     paths = [ pkgs.qwen-code-desktop ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/qwen-code-desktop --run '. ${loadKey}'
+      wrapProgram $out/bin/qwen-code-desktop \
+        --run '. ${loadKey}' \
+        --set QWEN_DESKTOP_DISABLE_UPDATES 1
     '';
   };
 
