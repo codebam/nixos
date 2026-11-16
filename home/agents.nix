@@ -116,6 +116,23 @@ let
     fi
   '';
 
+  # qwen's launch environment: the shared agent keys plus the Telegram bot
+  # token its channel authenticates with (the `channels.telegram` block in
+  # qwenSettings below resolves $TELEGRAM_BOT_TOKEN). Kept out of loadKey on
+  # purpose -- the token is channel-only, and the other harnesses have no
+  # business holding it. The sops secret is desktop-mounted, so on the other
+  # hosts the guard leaves the variable unset and only `qwen channel start`
+  # would notice.
+  loadQwenKey = pkgs.writeShellScript "qwen-load-env" ''
+    . ${loadKey}
+
+    telegram_secret=/run/secrets/qwen-bot-telegram-key
+    if [ -r "$telegram_secret" ]; then
+      value=$(cat "$telegram_secret")
+      if [ -n "$value" ]; then export TELEGRAM_BOT_TOKEN="$value"; fi
+    fi
+  '';
+
   # OpenRouter's Pareto Code Router picks a coder per request off the current
   # price/capability frontier, so there is no fixed per-token price to quote.
   # The floor below is what keeps it from bottoming out on a weak one.
@@ -690,11 +707,12 @@ let
       // lib.optionalAttrs vision { modalities.image = true; };
     };
 
-  # Only the catalog, the default selection and the MCP fleet are managed:
-  # `/model`, `/auth` and the theme picker write the same file, so the merge
-  # keeps every other key the TUI has stored. jq's `*` replaces arrays
-  # wholesale, so shrinking the catalog drops the retired routes from the
-  # live document rather than leaving them past the managed list's end.
+  # Only the catalog, the default selection, the MCP fleet and the Telegram
+  # channel are managed: `/model`, `/auth` and the theme picker write the
+  # same file, so the merge keeps every other key the TUI has stored. jq's
+  # `*` replaces arrays wholesale, so shrinking the catalog drops the
+  # retired routes from the live document rather than leaving them past the
+  # managed list's end.
   qwenSettings = {
     modelProviders.openai = map qwenModelEntry qwenModels;
     security.auth.selectedType = "openai";
@@ -733,6 +751,27 @@ let
       ${memoryServerName} = {
         httpUrl = memoryUrl;
       };
+    };
+  }
+  # The Telegram bot that replaced the Hermes gateway, on the same bot token
+  # (qwen-bot-telegram-key, exported by loadQwenKey). Desktop-only: that is
+  # where the secret mounts and where the qwen-telegram service below runs.
+  # The adapter long-polls -- it has no webhook mode -- and deletes any
+  # webhook left on the bot at startup, so the retired gateway's
+  # tg.codebam.ca registration clears itself on the first start. The
+  # allowlist is the gateway's old TELEGRAM_ALLOWED_USERS, and groups stay
+  # off like the gateway's DM-only policy. Approval mode is left at the
+  # attended default: tool approvals surface in the chat as /approve.
+  // lib.optionalAttrs isDesktop {
+    channels.telegram = {
+      type = "telegram";
+      token = "$TELEGRAM_BOT_TOKEN";
+      privatePolicy = "allowlist";
+      allowedUsers = [ "69148517" ];
+      sessionScope = "user";
+      cwd = "/home/codebam";
+      groupPolicy = "disabled";
+      instructions = "You are Sean's assistant, answering over Telegram. Keep replies short and readable in a chat client: Telegram caps a message at 4096 characters.";
     };
   };
 
@@ -869,16 +908,17 @@ let
   };
 
   # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.27.4
-  # (pkgs/qwen-code.nix). Wrapped with loadKey because its model catalog
+  # (pkgs/qwen-code.nix). Wrapped with loadQwenKey because its model catalog
   # (below) authenticates with QWEN_API_KEY and NANOGPT_API_KEY from the same
-  # sops secrets as the other harnesses; the gateways and the MCP fleet are
-  # declared in ~/.qwen/settings.json by home.activation.qwenSettings.
+  # sops secrets as the other harnesses, and its Telegram channel needs
+  # TELEGRAM_BOT_TOKEN on top; the gateways, the MCP fleet and the channel
+  # are declared in ~/.qwen/settings.json by home.activation.qwenSettings.
   qwen = pkgs.symlinkJoin {
     name = "qwen-wrapped-${pkgs.qwen-code.version}";
     paths = [ pkgs.qwen-code ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/qwen --run '. ${loadKey}'
+      wrapProgram $out/bin/qwen --run '. ${loadQwenKey}'
     '';
   };
 
@@ -3079,6 +3119,35 @@ in
           "--"
           "${pkgs.mcp-server-memory}/bin/mcp-server-memory"
         ];
+        Restart = "always";
+        RestartSec = 2;
+        TimeoutStopSec = 10;
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+
+    # The Telegram bot, always-on like the Hermes gateway it replaced. The
+    # wrapped qwen loads the bot token itself (loadQwenKey), and the channel
+    # config lives in ~/.qwen/settings.json via the qwenSettings merge, so
+    # the unit only names the channel. Desktop-only with the secret and the
+    # channels block above.
+    qwen-telegram = lib.mkIf isDesktop {
+      Unit = {
+        Description = "Qwen Code Telegram channel";
+        # Telegram long-polling can fail for a while after a network change;
+        # do not let the default restart-rate limit disable the bot.
+        StartLimitIntervalSec = 0;
+      };
+      Service = {
+        Type = "simple";
+        WorkingDirectory = "%h";
+        # The channel's MCP fleet resolves zg and ripwire from PATH (see
+        # qwenSettings), and the user manager's default PATH carries neither
+        # the profile nor the system sw bin.
+        Environment = [ "PATH=${config.home.profileDirectory}/bin:/run/current-system/sw/bin" ];
+        ExecStart = "${qwen}/bin/qwen channel start telegram";
         Restart = "always";
         RestartSec = 2;
         TimeoutStopSec = 10;

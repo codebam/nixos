@@ -73,23 +73,21 @@
         owner = "codebam";
         mode = "0400";
       };
-      # Telegram bot token consumed only by the Hermes gateway. It is not in
-      # home/agents.nix's secretVars: no interactive agent wrapper needs it.
-      hermes-bot-telegram-key = {
-        owner = "codebam";
-        mode = "0400";
-      };
-      # Telegram echoes this on every webhook delivery; the gateway refuses
-      # to start in webhook mode without it (GHSA-3vpc-7q5r-276h). Same
-      # audience as the bot token: the hermes-env template only.
-      telegram-webhook-secret = {
+      # Telegram bot token for the Qwen Code Telegram channel
+      # (home/agents.nix): the qwen wrapper exports it as TELEGRAM_BOT_TOKEN
+      # for `qwen channel start`. It replaced the Hermes gateway on the same
+      # bot, hence the rename from hermes-bot-telegram-key. Deliberately not
+      # in home/agents.nix's shared secretVars: only the qwen wrapper loads
+      # it, so no other harness sees the token.
+      qwen-bot-telegram-key = {
         owner = "codebam";
         mode = "0400";
       };
       # cloudflared credentials for the hermes-telegram tunnel
       # (desktop/configuration/cloudflared.nix), loaded by the tunnel unit as
       # a runtime credential -- systemd reads it as root, so root ownership
-      # is fine.
+      # is fine. The tunnel outlived the Hermes gateway it was built for;
+      # the Qwen Code channel long-polls and does not use it.
       cloudflared-tunnel-credentials = { };
       # Tavily API key backing Hermes' web.extract_backend (home/hermes.nix).
       # No wrapper exports it; only the hermes-env template below consumes it.
@@ -146,9 +144,11 @@
     # come from the same individual sops keys the wrappers read; the plan keys
     # are added under the names Hermes resolves them by, so its built-in
     # OpenCode Go and DeepSeek providers authenticate, its hand-declared
-    # Qwen Token Plan and NanoGPT providers find their key_envs, the gateway
-    # gets the Telegram bot token and its webhook secret, and its pinned
-    # web.extract_backend (home/hermes.nix) finds the Tavily key. Both
+    # Qwen Token Plan and NanoGPT providers find their key_envs, and its pinned
+    # web.extract_backend (home/hermes.nix) finds the Tavily key. No Telegram
+    # token here: the bot moved to the Qwen Code channel, and leaving
+    # TELEGRAM_BOT_TOKEN in this file would switch the Telegram platform back
+    # on in any `hermes serve` child (the desktop app spawns one). Both
     # OpenCode Go subscriptions enter the
     # credential pool as the unnumbered/numbered pair (the numbered sibling
     # is auto-discovered), and fill_first tries the unnumbered slot first --
@@ -171,8 +171,6 @@
         OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key}
         NANOGPT_API_KEY=${config.sops.placeholder.nanogpt-api-key}
         TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
-        TELEGRAM_BOT_TOKEN=${config.sops.placeholder.hermes-bot-telegram-key}
-        TELEGRAM_WEBHOOK_SECRET=${config.sops.placeholder.telegram-webhook-secret}
       '';
       owner = "codebam";
       group = "users";

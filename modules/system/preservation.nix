@@ -135,6 +135,11 @@ _: {
             ".pi"
             # deepseek harness settings and plugins
             ".dsh"
+            # Qwen Code settings, sessions, and Telegram channel state
+            # (transcripts, CHANNEL.json memory): the always-on qwen-telegram
+            # service (home/agents.nix) keeps the bot's conversations here,
+            # and a root wipe would otherwise reset them every boot.
+            ".qwen"
             # `wrangler login` OAuth token. The agentic-inbox email MCP
             # bridge (home/email-mcp.nix, registered in home/agents.nix and
             # home/hermes.nix) reads it on every MCP start; without this a

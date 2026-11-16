@@ -306,29 +306,15 @@ in
       };
     };
 
-    # The gateway shares this HERMES_HOME. TELEGRAM_BOT_TOKEN turns the
-    # Telegram platform on by itself; TELEGRAM_ALLOWED_USERS then pins the
-    # only account the bot answers to. The user ID is not a credential, so
-    # it goes through `environment` rather than the sops env file.
-    #
-    # Webhook mode in place of long polling: Telegram pushes updates to the
-    # cloudflared hostname (desktop/configuration/cloudflared.nix), which
-    # forwards them to the loopback listener, so nothing on the WAN listens
-    # and the origin address never appears in DNS. The delivery secret
-    # Telegram must echo rides the sops env file with the bot token.
-    environment = {
-      TELEGRAM_ALLOWED_USERS = "69148517";
-      TELEGRAM_WEBHOOK_URL = "https://tg.codebam.ca/telegram";
-      TELEGRAM_WEBHOOK_PORT = "8443";
-      TELEGRAM_WEBHOOK_HOST = "127.0.0.1";
-      # Home channel: the /sethome target for Sean's DM -- where gateway
-      # notices, cron deliveries, and bare `telegram` sends land. Seeded from
-      # these at gateway start; pinned because a value that lives only in
-      # $HERMES_HOME/.env does not survive activation, which regenerates it.
-      TELEGRAM_HOME_CHANNEL = "69148517";
-      TELEGRAM_HOME_CHANNEL_NAME = "Sean";
-    };
-    gateway.enable = true;
+    # The Telegram bot moved to the Qwen Code channel (home/agents.nix,
+    # `qwen-telegram` user service) on the same bot token, so the gateway is
+    # retired: no TELEGRAM_* environment here and no token in the hermes-env
+    # template -- TELEGRAM_BOT_TOKEN alone would switch the Telegram platform
+    # back on in any `hermes serve` child, including the desktop app's. The
+    # Qwen channel long-polls (its adapter has no webhook mode) and clears
+    # the old webhook itself; the cloudflared tunnel stays up but no longer
+    # serves the bot (desktop/configuration/cloudflared.nix).
+    gateway.enable = false;
 
     # Pin the startup route. home/agents.nix declares the token-plan
     # providers for explicit /model picks; this keeps a mutable `hermes model`
