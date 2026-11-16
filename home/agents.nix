@@ -1948,8 +1948,9 @@ let
         # https://token-plan.maas.qwencloudapi.com/compatible-mode/v1.
         #
         # pi-ai 0.85.1's bundled catalog predates deepseek-v4.1-flash
-        # (QwenCloud release 2026-09-13), qwen4-max-preview (2026-11-11
-        # preview), and deepseek-v4.1-flash-1017 (2026-10-18), and
+        # (QwenCloud release 2026-09-13), qwen4-max (the 2026-11-11
+        # preview's id before the rename), and deepseek-v4.1-flash-1017
+        # (2026-10-18), and
         # llm-pi-ai has no upsert: a `models` list replaces the route's
         # catalog, so the installed ids are restated bare (each defaults
         # from its catalog entry) and only the new models carry their own
@@ -1960,8 +1961,8 @@ let
           api: openai-completions
           baseURL: https://token-plan.maas.qwencloudapi.com/compatible-mode/v1
           models:
-            - id: qwen4-max-preview
-              name: Qwen4 Max Preview
+            - id: qwen4-max
+              name: Qwen4 Max
               contextWindow: 1000000
               maxTokens: 393216
               input:
