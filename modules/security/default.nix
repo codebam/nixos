@@ -18,16 +18,16 @@ _: {
       enable = true;
       extraConfig = ''
         // Allow members of the wheel group to execute any action without a
-        // prompt, but only from a session attached to a local seat. Requiring
-        // `subject.seat` (not just `local && active`) keeps passwordless
-        // elevation to real TTY/graphical sessions: SSH sessions and
-        // user@1000.service's manager session have no seat, so they must
-        // authenticate (`--ask-elevate-password` covers remote deploys).
+        // prompt from any local active session -- including user@1000.service's
+        // seatless manager session, where the agent harnesses (dsh, Hermes,
+        // opencode) run their shells and need run0 for host maintenance such as
+        // nix-collect-garbage. SSH sessions stay excluded: they are remote, so
+        // `subject.local` is false and they must authenticate
+        // (`--ask-elevate-password` covers remote deploys).
         polkit.addRule(function(action, subject) {
             if (subject.isInGroup("wheel") &&
                 subject.local &&
-                subject.active &&
-                subject.seat) {
+                subject.active) {
                 return polkit.Result.YES;
             }
         });
