@@ -88,20 +88,39 @@ in
     # session imports into the user manager (sway's own exec line hands it
     # over), so the condition refuses the restart under Viewport too.
     swayidle.Unit.ConditionEnvironment = lib.mkForce "SWAYSOCK";
+    # A launcher, not a supervisor: the tmux server is meant to outlive the
+    # unit (persistence is the point of tmux), and in practice it already
+    # does — the server runs while the unit sits dead. The old unit was
+    # Type=forking with `new-session -d -s default`, which fails with
+    # "duplicate session" whenever the server is already up; systemd then
+    # waited the full 90s DefaultTimeoutStartSec for a daemon PID that never
+    # came, and home-manager's switch waits on that job — every switch that
+    # touched the unit hung for a minute and a half. Oneshot with an
+    # idempotent start completes at once whether or not the session exists.
+    # No ExecStop: sd-switch restarts a changed unit on every switch, and
+    # `kill-session` there would destroy the live session to install a new
+    # unit file. Stopping the unit now just marks it inactive; the server
+    # stays, and the next start adopts it.
     tmux = {
       Unit = {
         Description = "Tmux server";
         After = [ "graphical-session.target" ];
       };
       Service = {
-        Type = "forking";
+        Type = "oneshot";
+        RemainAfterExit = true;
         Environment = [
           "TERM=xterm-256color"
           "COLORTERM=truecolor"
         ];
-        ExecStart = "${lib.getExe pkgs.tmux} -S /run/user/%U/tmux-%U/default new-session -d -s default";
-        ExecStop = "${lib.getExe pkgs.tmux} -S /run/user/%U/tmux-%U/default kill-session -t default";
-        Restart = "always";
+        ExecStart = "${pkgs.writeShellScript "tmux-server-start" ''
+          sock=$1
+          if ${lib.getExe pkgs.tmux} -S "$sock" has-session -t default 2>/dev/null; then
+            exit 0
+          fi
+          exec ${lib.getExe pkgs.tmux} -S "$sock" new-session -d -s default
+        ''} /run/user/%U/tmux-%U/default";
+        Restart = "on-failure";
       };
       Install = {
         WantedBy = [ "default.target" ];
