@@ -139,6 +139,15 @@ _: {
             # (transcripts, CHANNEL.json memory): the always-on qwen-telegram
             # service (home/agents.nix) keeps the bot's conversations here,
             # and a root wipe would otherwise reset them every boot.
+            #
+            # Seeding hazard, learned adding this entry (2026-11-16): the
+            # mount unit for a NEW entry starts at the end of the switch
+            # that introduces it, after activation has already written into
+            # the live root-side directory -- so the empty persistent side
+            # mounts over real state and hides it (settings.json, sessions).
+            # When preserving a directory that already holds live state,
+            # copy that state to the persistent side first. Recovery view:
+            # a non-recursive bind mount of / exposes the buried directory.
             ".qwen"
             # `wrangler login` OAuth token. The agentic-inbox email MCP
             # bridge (home/email-mcp.nix, registered in home/agents.nix and
