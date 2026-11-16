@@ -85,6 +85,17 @@ rustPlatform.buildRustPackage {
     substituteInPlace packages/desktop/src-tauri/tauri.conf.json \
       --replace-fail '"version": "0.0.1"' '"version": "${version}"' \
       --replace-fail '"createUpdaterArtifacts": true' '"createUpdaterArtifacts": false'
+
+    # The window is built in code (the conf's windows list is empty), and
+    # tao's GTK backend draws a light HeaderBar ribbon on Wayland: client-side
+    # decorations that ignore xdg-decoration and duplicate the compositor's
+    # own frame. Drop them on Linux; macOS keeps its overlay titlebar. The
+    # replacement's continuation lines sit four spaces past the block's common
+    # indent so Nix's stripping leaves them at Rust's four.
+    substituteInPlace packages/desktop/src-tauri/src/main.rs \
+      --replace-fail '    let window = window_builder.build()?;' '    #[cfg(target_os = "linux")]
+        let window_builder = window_builder.decorations(false);
+        let window = window_builder.build()?;'
   '';
 
   nativeBuildInputs = [
