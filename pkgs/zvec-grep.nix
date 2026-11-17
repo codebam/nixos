@@ -6,8 +6,13 @@
   nodejs,
   autoPatchelfHook,
   stdenv,
+  callPackage,
+  vulkan-loader,
 }:
 
+let
+  ggml-vulkan = callPackage ./zvec-grep-ggml-vulkan.nix { };
+in
 buildNpmPackage (finalAttrs: {
   pname = "zvec-grep";
   version = "0.3.0";
@@ -42,10 +47,11 @@ buildNpmPackage (finalAttrs: {
   # Unlike 0.2.x, the install script MUST run: it is what replaces the
   # bin/zg.exe stub with the real binary (see above). Keep it offline and
   # deterministic instead: `cpu` skips the NVIDIA detection and the CUDA
-  # component downloads it would otherwise attempt, and
-  # ZG_INSTALL_SKIP_AGENT_UPGRADE opts out of the postinstall migration of
-  # user-level agent launch configurations, which has no business running
-  # (or depending on $HOME) in a store build.
+  # component downloads it would otherwise attempt (upstream's only GPU
+  # components are CUDA; the AMD/Vulkan path is the ggml plugin added in
+  # postInstall below), and ZG_INSTALL_SKIP_AGENT_UPGRADE opts out of the
+  # postinstall migration of user-level agent launch configurations, which
+  # has no business running (or depending on $HOME) in a store build.
   env = {
     ZG_INSTALL_ACCELERATOR = "cpu";
     ZG_INSTALL_SKIP_AGENT_UPGRADE = "1";
@@ -61,7 +67,11 @@ buildNpmPackage (finalAttrs: {
     autoPatchelfHook
     makeWrapper
   ];
-  buildInputs = [ stdenv.cc.cc ];
+  buildInputs = [
+    stdenv.cc.cc
+    # libvulkan.so.1 for the ggml Vulkan plugin added in postInstall.
+    vulkan-loader
+  ];
 
   # The install script's materialized payload does not survive the install
   # hook: its copy step only carries the package.json `files` entries (bin/,
@@ -75,11 +85,24 @@ buildNpmPackage (finalAttrs: {
     chmod -R u+w "$meta"
     (cd "$meta" && ${lib.getExe' nodejs "node"} install.cjs)
 
+    # The installer only ever materializes CPU backends (or CUDA, which this
+    # host cannot use), and the binary's own Vulkan loading path is dead
+    # code (llama_cpp::llama_backend::load_backends_from_path has no
+    # callers), so a plugin in lib/ is never discovered on its own. Install
+    # the Vulkan plugin built from the matching ggml release plus a
+    # constructor shim that registers it via ggml_backend_load; the wrapper
+    # below preloads the shim, which stays inert outside zg processes.
+    install -m755 ${ggml-vulkan}/lib/libggml-vulkan.so "$meta/lib/libggml-vulkan.so"
+    $CC -shared -fPIC -O2 \
+      -DZG_VULKAN_PLUGIN="\"$meta/lib/libggml-vulkan.so\"" \
+      -o "$meta/lib/zg-vulkan-init.so" ${./zvec-grep/vulkan-init.c} -ldl
+
     # npm's bin wrapper execs node on bin/zg.exe, which is an ELF binary
     # since 0.3.0 (it was a JS entry point in 0.2.x). Replace it with a
     # wrapper that execs the binary directly.
     rm -f "$out/bin/zg"
-    makeWrapper "$meta/bin/zg.exe" "$out/bin/zg"
+    makeWrapper "$meta/bin/zg.exe" "$out/bin/zg" \
+      --prefix LD_PRELOAD : "$meta/lib/zg-vulkan-init.so"
   '';
 
   # The node-wrapper break above shipped silently as a build that succeeded
