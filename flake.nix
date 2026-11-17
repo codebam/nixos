@@ -131,10 +131,13 @@
           extraModules ? [ ],
         }:
         nixpkgs.lib.nixosSystem {
-          inherit system;
           # Pass all flake inputs to NixOS modules
           specialArgs = { inherit inputs; };
           modules = [
+            # The platform, set modularly: `system` as a nixosSystem argument
+            # is legacy and warns. mkDefault leaves the host's
+            # hardware-configuration free to name it.
+            { nixpkgs.hostPlatform = nixpkgs.lib.mkDefault system; }
             inputs.disko.nixosModules.disko
             # Configured in modules/system/boot.nix, next to the systemd-boot
             # options it overrides.
