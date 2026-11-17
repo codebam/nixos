@@ -22,7 +22,7 @@
   qwen-code,
 }:
 
-# Qwen Code Desktop at the desktop-v0.27.4 release tag, built from source.
+# Qwen Code Desktop at the desktop-v0.28.0 release tag, built from source.
 # The prebuilt AppImage this replaces bundled its own WebKitGTK, which died
 # at startup with EGL_BAD_PARAMETER against the host graphics drivers; this
 # build links nixpkgs' webkitgtk_4_1 instead, so the shell uses the same
@@ -39,11 +39,11 @@
 # so no QWEN_DESKTOP_RUNTIME_DIR override is needed. The home-manager wrapper
 # disables the updater: a /nix/store copy cannot apply updates.
 let
-  version = "0.27.4";
+  version = "0.28.0";
 
   # The commit both release tags resolve to; upstream's manifest.json carries
   # it as qwenCodeCommit.
-  commit = "f35dde84157f992bc324c0a3f59b1119344a683d";
+  commit = "895dfca8ff125ac0e16372edacd4653322c02147";
 
   desktopTarget =
     {
@@ -60,7 +60,7 @@ rustPlatform.buildRustPackage {
     owner = "QwenLM";
     repo = "qwen-code";
     tag = "desktop-v${version}";
-    hash = "sha256-lmwmzLEu7SS3eHBxSdVefo9KYLZRrL8uFn2VfbktnTA=";
+    hash = "sha256-OrIaWuLstQS+LZCgNzK+h4ianRd+/TigdA6nszzntek=";
   };
 
   cargoRoot = "packages/desktop/src-tauri";

@@ -112,7 +112,7 @@ rec {
   # pkgs/opencode-desktop-beta.nix.
   opencode-desktop-beta = pkgs.callPackage ./opencode-desktop-beta.nix { };
 
-  # Qwen Code CLI: nixpkgs' package rebuilt at the v0.27.4 release tag (the
+  # Qwen Code CLI: nixpkgs' package rebuilt at the v0.28.0 release tag (the
   # pin carries 0.26.7). home/agents.nix wraps this as `qwen`; see
   # pkgs/qwen-code.nix.
   qwen-code = pkgs.callPackage ./qwen-code.nix { base = prev.qwen-code; };

@@ -907,7 +907,7 @@ let
     '';
   };
 
-  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.27.4
+  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.28.0
   # (pkgs/qwen-code.nix). Wrapped with loadQwenKey because its model catalog
   # (below) authenticates with QWEN_API_KEY and NANOGPT_API_KEY from the same
   # sops secrets as the other harnesses, and its Telegram channel needs
