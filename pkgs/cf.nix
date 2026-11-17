@@ -27,16 +27,16 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "cf";
-  version = "1.0.0-beta.30";
+  version = "1.0.0-rc.1";
 
-  # cf is on the open beta and publishes often. When bumping: regenerate
+  # cf is pre-1.0 and publishes often. When bumping: regenerate
   # pkgs/cf/package-lock.json from the new tarball (drop devDependencies as
   # above, then `npm install --package-lock-only --omit=dev`) and refresh
   # both hashes (`nix-prefetch-url --unpack` for this one; a build's
   # hash-mismatch message for the npm-deps one).
   src = fetchzip {
     url = "https://registry.npmjs.org/cf/-/cf-${finalAttrs.version}.tgz";
-    hash = "sha256-FMksNNVuYAkZsaQsxtIMFizhAGtNengoocKSCgQGdC4=";
+    hash = "sha256-bz6pc+ZXwKhd7CD3Vt815DzsoPCuSkEs2PA8GWK76zA=";
   };
 
   # buildNpmPackage forwards postPatch to fetchNpmDeps but not nativeBuildInputs,
@@ -47,13 +47,14 @@ buildNpmPackage (finalAttrs: {
     inherit (finalAttrs) src;
     nativeBuildInputs = [ nodejs ];
     postPatch = patchManifest;
-    hash = "sha256-qNJe5xY+/CY2pd7aNAX88pedgjnezoOgXvoeKo9bQnM=";
+    hash = "sha256-YT/5zHan8Zvw/6bwSdMBgc3LWto7L4C/2oSCfireHzs=";
   };
 
   postPatch = patchManifest;
 
-  # dist/ is prebuilt by the release (tsdown-bundled) and the package has no
-  # build script. Nothing needs an install script either -- miniflare/workerd,
+  # dist/ is prebuilt by the release (tsdown-bundled); the published build
+  # script (`vp run task:build`) drives monorepo-only tooling that is not in
+  # the tarball. Nothing needs an install script either -- miniflare/workerd,
   # blake3-wasm, and sharp ship as prebuilt platform optionalDependencies --
   # so keep npm rebuild from trying to fetch prebuilds or compile outside the
   # sandbox network.
