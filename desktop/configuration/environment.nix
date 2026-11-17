@@ -1,21 +1,28 @@
 { pkgs, inputs, ... }:
 
 {
-  # The portal routing lives with the compositor, since a version of it that
-  # only exists here would have to be rediscovered by anyone else using the
-  # flake. Without it screen sharing fails with nothing in any log naming a
-  # portal: the ScreenCast interface is never exposed at all.
-  # From the rewrite rather than the C build: the two modules differ in one
-  # line, which is who answers ScreenCast. The rewrite implements that
-  # interface itself — the wlroots portal can only offer monitors — so its
-  # module names viewport first and leaves wlr as the fallback.
-  imports = [ inputs.viewport.nixosModules.portal ];
-  programs.viewport.portals.enable = true;
-  # The same package systemPackages installs below, named so the portal backend
-  # is that one rather than whatever the flake defaults to. Without it both end
-  # up in the closure, and the portal is answered by a compositor this system
-  # does not run.
-  programs.viewport.package = inputs.viewport.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  # The session module rather than the hand-rolled portal wiring this file
+  # used to carry: `enable` installs the package, the display-manager session
+  # entry, seatd, polkit, the lock screen's PAM policy and the portal routing
+  # — ScreenCast answered by the compositor itself, wlr the fallback — in one
+  # place upstream, where anyone else using the flake gets the same.
+  imports = [ inputs.viewport.nixosModules.default ];
+
+  programs.viewport = {
+    enable = true;
+
+    # The bootstrap config stays the user's: home/viewport.nix writes
+    # ~/.config/viewport/config.json (the stylix wallpaper, the screenshot
+    # bindings, the OLED gradient). --config names the one file the
+    # compositor reads, so a generated one would shadow it, not merge with it.
+    userConfig = true;
+
+    # The chromium backend's engine, named: nixpkgs' Google Chrome rather
+    # than chromium — same Blink, same DevTools protocol. The wrapper sets
+    # VIEWPORT_CHROMIUM_BIN with --set-default, so the environment can still
+    # override it at runtime.
+    chromiumBinary = "${pkgs.google-chrome}/bin/google-chrome-stable";
+  };
 
   # No `cargo` or `gcc` here. Both were system-wide and between them anchored
   # rustc (1.0 GB) and a full gcc (264 MB) in every generation, for toolchains
@@ -25,13 +32,6 @@
     # blender-hip
     # inputs.steel.packages.${pkgs.stdenv.hostPlatform.system}.default
     # inputs.lulu.packages.${pkgs.stdenv.hostPlatform.system}.default
-    # The Smithay rewrite. `.default` follows whichever engine that flake
-    # recommends — `.servoshell` today, i.e. nixpkgs' prebuilt Servo started
-    # as a child process, which is what this host runs. The alternative is
-    # naming a backend (`.wpe`, `.webkitgtk`, `.chromium`, `.cef`,
-    # `.servoshell`) and being held to it, which is what naming the old
-    # `.viewport` attribute did: it resolved to `.wpe` and quietly kept this
-    # system compiling WebKit after the default had moved away from it twice.
-    inputs.viewport.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # Viewport itself is installed by the module above.
   ];
 }
