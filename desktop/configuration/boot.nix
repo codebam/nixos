@@ -16,7 +16,10 @@
 
   boot = {
     supportedFilesystems = [ "btrfs" ];
-    kernelPackages = pkgs.linuxPackages_latest;
+    # CachyOS rc kernel from chaotic-nyx (its NixOS module, imported in
+    # flake.nix, supplies the overlay): desktop/gaming tuning and sched_ext
+    # support instead of mainline latest.
+    kernelPackages = pkgs.linuxPackages_cachyos-rc;
     kernelParams = [
       "usbcore.autosuspend=-1"
       "amd_pstate=active"
