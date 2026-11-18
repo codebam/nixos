@@ -719,11 +719,12 @@ let
     model.name = "qwen4-max";
 
     # The four MCP servers opencode and pi register, plus the email bridge
-    # dsh and Hermes mount, in Qwen Code's MCPServerConfig shape: stdio keeps
-    # `command` and `args` apart, `timeout` is the tool-call timeout in ms,
-    # and streamable HTTP is `httpUrl` (`url` would select SSE). User-scope
-    # servers connect without the approval gate that project-level servers
-    # (.qwen/settings.json, .mcp.json) get.
+    # and Google Calendar server dsh and Hermes mount, in Qwen Code's
+    # MCPServerConfig shape: stdio keeps `command` and `args` apart,
+    # `timeout` is the tool-call timeout in ms, and streamable HTTP is
+    # `httpUrl` (`url` would select SSE). User-scope servers connect without
+    # the approval gate that project-level servers (.qwen/settings.json,
+    # .mcp.json) get.
     # zg and ripwire resolve from the session PATH -- both are in
     # home.packages, the same assumption the opencode rows make -- and the
     # stdio child inherits the wrapper's environment, so loadKey's exports
@@ -776,6 +777,17 @@ let
           emailMcp.url
         ];
         timeout = 180000;
+      };
+
+      # Google Calendar MCP (home/google-calendar-mcp.nix): the same shared
+      # launcher dsh and Hermes mount, pointing the server at the
+      # `google-calendar-oauth` sops secret with the manual credentials copy
+      # as fallback. Hosts without tokens still start -- calendar calls
+      # report the missing token file instead of failing the session. Reads
+      # and writes go to Sean's own calendar at his request, so no extra
+      # policy text like the email server's.
+      ${calendarMcp.name} = {
+        command = calendarMcp.launcher;
       };
     };
   }
@@ -1711,11 +1723,12 @@ let
   # one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
-  # Google Calendar MCP: one definition shared by the dsh registration below
-  # and Hermes (home/hermes.nix imports the same file), so the launcher -- which
-  # points the server at the `google-calendar-oauth` sops secret -- and the
-  # server name stay in one place. The OAuth tokens it reads live in
-  # ~/.config/google-calendar-mcp, preserved on the desktop across the root wipe.
+  # Google Calendar MCP: one definition shared by the qwen and dsh
+  # registrations below and Hermes (home/hermes.nix imports the same file),
+  # so the launcher -- which points the server at the `google-calendar-oauth`
+  # sops secret -- and the server name stay in one place. The OAuth tokens it
+  # reads live in ~/.config/google-calendar-mcp, preserved on the desktop
+  # across the root wipe.
   calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
 
   # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block: home/cf.nix defines
