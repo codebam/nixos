@@ -15,7 +15,7 @@ let
 in
 buildNpmPackage (finalAttrs: {
   pname = "zvec-grep";
-  version = "0.3.0";
+  version = "0.3.1";
 
   # Since 0.3.0 the published tarball is a wrapper around a Rust native
   # binary: bin/zg.exe is a stub shell script and the postinstall
@@ -31,14 +31,14 @@ buildNpmPackage (finalAttrs: {
   # fetchNpmDeps as well).
   src = fetchzip {
     url = "https://registry.npmjs.org/@zvec/zvec-grep/-/zvec-grep-${finalAttrs.version}.tgz";
-    hash = "sha256-/bU2Wzq+6gftfEsh29w1IVM7JL3wPE48IYcqEjfuGEE=";
+    hash = "sha256-b1bXS2bOk/tpKNkXjAwFbCmYaeiQfIzUtOcvdNZdTyM=";
   };
 
   postPatch = ''
     cp ${./zvec-grep/package-lock.json} package-lock.json
   '';
 
-  npmDepsHash = "sha256-p0V/GfntIfMjT4Njl9osE8aAkV/kk31I1MVSHKJZ9X0=";
+  npmDepsHash = "sha256-cDyOzx8vD/mmJ+BclNpp7Dvli57qeOTdbeuLcyTuYP8=";
 
   # The native binary is prebuilt in the platform optional dependency; there
   # is nothing to compile here.

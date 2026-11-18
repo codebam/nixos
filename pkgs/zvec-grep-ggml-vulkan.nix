@@ -11,8 +11,8 @@
 #
 # The version MUST track the ggml inside zvec-grep. Re-derive it after a
 # zvec-grep bump by dlopening the bundled libggml-base.so.0 and calling
-# ggml_version() (0.18.0 for zvec-grep 0.3.0; the build embeds no git
-# commit, so the release tag is the pin).
+# ggml_version() (0.18.0 for zvec-grep 0.3.0 and 0.3.1; the build embeds no
+# git commit, so the release tag is the pin).
 {
   lib,
   stdenv,
