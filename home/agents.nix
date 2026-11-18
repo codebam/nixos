@@ -734,6 +734,11 @@ let
         command = builtins.head zgArgv;
         args = builtins.tail zgArgv;
         timeout = zgTimeoutMs;
+        # The 0.3.1 installer's Qwen default: list the search tool outright
+        # instead of leaving it behind tool_search deferral -- the friction
+        # that kept Qwen on native grep. Only the agent toolset's single
+        # search schema pays the context cost.
+        alwaysLoadTools = true;
       };
 
       ripwire = {
@@ -1641,11 +1646,11 @@ let
   # standard MCP file that pi-mcp-adapter reads (`~/.config/mcp/mcp.json`, the
   # user-global layer of the `mcpServers` format) keeps `command` and `args`
   # apart, and has no `enabled` field at all -- a server is present unless it
-  # carries `"disabled": true`. Both use the same server name so the tools the
-  #  `zgGuidance` below tells the agent to reach for --
-  # `zvec_grep_zvec_grep_search`, `zvec_grep_zvec_grep_rg` -- are the names
-  # actually registered: opencode prefixes with the entry name, and the
-  # adapter's default `toolPrefix` ("server") does the same.
+  # carries `"disabled": true`. Both use the same server name. The tools the
+  # `zgGuidance` below tells the agent to reach for are named
+  # `mcp__zvec_grep__zvec_grep_search` under Qwen Code and pi-mcp-adapter >= 2.32;
+  # opencode's native registration prefixes with the entry name instead
+  # (`zvec_grep_zvec_grep_search`), which its guidance header maps.
   zgServerName = "zvec_grep";
   zgArgv = [
     "zg"
@@ -1724,14 +1729,15 @@ let
   # home/hermes.nix imports the same file for its always-on prompt hints.
   commitTrailer = import ./commit-trailer.nix;
 
-  # The guidance block `zg --install` writes, copied verbatim from its 0.3.0
-  # opencode output and shared by both hosts: the tool names it cites are the
-  # same in each, since opencode prefixes them with the entry name and the
-  # adapter's default `toolPrefix` ("server") builds the identical string.
-  # Re-derive it from the new package when bumping zvec-grep (run the installer
-  # with HOME pointed at a scratch dir). The ZVEC_GREP_START/END markers stay
-  # per-host, so `zg --uninstall`'s own uninstall can still find its block in
-  # opencode's file and pi's extra header below can be dropped wholesale.
+  # The guidance block `zg --install` writes, copied verbatim from its 0.3.1
+  # Qwen/Pi output (0.3.1 dropped the opencode install target). The mcp__ names
+  # it cites are what Qwen Code and pi-mcp-adapter >= 2.32 register; opencode's
+  # native registration still prefixes with the entry name, so its copy below
+  # carries a name-mapping header. Re-derive it from the new package when
+  # bumping zvec-grep (run the installer with HOME pointed at a scratch dir).
+  # The ZVEC_GREP_START/END markers stay per-host, so `zg --uninstall`'s own
+  # uninstall can still find its block and pi's extra header below can be
+  # dropped wholesale.
   zgGuidance = ''
     ## zvec-grep
 
@@ -1743,10 +1749,11 @@ let
     - Do not use workspace retrieval for unrelated open-world questions, current external facts, or web content that does not depend on local evidence.
 
     ### Retrieval routing
-    - When an exact word, phrase, name, date, identifier, filename, path, configuration key, error message, source fragment, literal, or regex is known and locating its occurrences is sufficient, use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
-    - Use `zvec_grep_zvec_grep_search` when wording or location is unknown, or when the answer requires semantic, conceptual, fuzzy, or paraphrase discovery; relationships, chronology, causality, architecture, or data or control flow; or comparison or synthesis across files, sections, or documents.
-    - For a mixed task with exact anchors that still requires relationships or cross-file synthesis, call `zvec_grep_zvec_grep_search` with the concept and anchors, then use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg` for focused follow-up.
-    - When no sufficient exact anchor is available and the user asks whether conceptually related material exists locally, make at most one focused `zvec_grep_zvec_grep_search` probe using the question plus distinctive names, dates, or terms. This probe does not apply to exact quotations, configuration keys, filenames, regexes, or exhaustive occurrence requests. Continue only when results are relevant; otherwise stop and report that the indexed workspace did not establish the answer.
+    - When an exact word, phrase, name, date, identifier, filename, path, configuration key, error message, source fragment, literal, or regex is known and locating its occurrences is sufficient, use `mcp__zvec_grep__zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
+    - For workspaces indexed with graph support, use `mcp__zvec_grep__zvec_grep_callers` or `mcp__zvec_grep__zvec_grep_callees` for known symbols. Empty results do not prove absence. Enable graph indexing only with user authorization: `zg --index --graph` (add `--rebuild` for an existing index).
+    - Use `mcp__zvec_grep__zvec_grep_search` when wording or location is unknown, or when the answer requires semantic, conceptual, fuzzy, or paraphrase discovery; relationships, chronology, causality, architecture, or data or control flow; or comparison or synthesis across files, sections, or documents.
+    - For a mixed task with exact anchors that still requires relationships or cross-file synthesis, call `mcp__zvec_grep__zvec_grep_search` with the concept and anchors, then use `mcp__zvec_grep__zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg` for focused follow-up.
+    - When no sufficient exact anchor is available and the user asks whether conceptually related material exists locally, make at most one focused `mcp__zvec_grep__zvec_grep_search` probe using the question plus distinctive names, dates, or terms. This probe does not apply to exact quotations, configuration keys, filenames, regexes, or exhaustive occurrence requests. Continue only when results are relevant; otherwise stop and report that the indexed workspace did not establish the answer.
     - Before broad file reads or delegating workspace discovery, use the appropriate search route. Do not delegate solely to locate material, and stop when the evidence is sufficient.
 
     ### Search evidence
@@ -1756,7 +1763,7 @@ let
     - Pass a daemon-visible absolute `root` on every zvec-grep workspace call.
     - Read `freshness` and `background_refresh` from search results without a status preflight.
     - When results are `served_from_current_index`, use them when sufficient instead of waiting for the background refresh.
-    - If the index is missing but exact or regex lookup can answer the task, use `zvec_grep_zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
+    - If the index is missing but exact or regex lookup can answer the task, use `mcp__zvec_grep__zvec_grep_rg` when it is listed by the current host; otherwise native Grep or `rg`.
     - Creating, rebuilding, or dropping a persistent index requires an explicit user request or authorization; never do so silently.
   '';
 
@@ -2521,9 +2528,9 @@ in
         pi reaches zvec-grep through pi-mcp-adapter's single `mcp` proxy tool, and that server is lazy: none of its tools appear in the tool list at session start.
 
         - Discover: `mcp({ search: "zvec_grep" })` — "semantic search", "workspace grep" and "code index" find it too.
-        - Parameters: `mcp({ describe: "zvec_grep_zvec_grep_search" })`.
-        - Call: `mcp({ tool: "zvec_grep_zvec_grep_search", args: { root: "/absolute/path", query: "…" } })`. The prefixed name is the address; `args` is the server's own parameter object (`root` is required, absolute, daemon-visible).
-        - Several retrieval round trips in one turn: `mcpScript` with `tools.zvec_grep_zvec_grep_search(args)`.
+        - Parameters: `mcp({ describe: "mcp__zvec_grep__zvec_grep_search" })`.
+        - Call: `mcp({ tool: "mcp__zvec_grep__zvec_grep_search", args: { root: "/absolute/path", query: "…" } })`. The prefixed name is the address; `args` is the server's own parameter object (`root` is required, absolute, daemon-visible).
+        - Several retrieval round trips in one turn: `mcpScript` with `tools.mcp__zvec_grep__zvec_grep_search(args)`.
         - The first call connects and starts the stdio bootstrap, so judge availability after it rather than from the empty initial tool list. Where the rules below say "when it is listed by the current host", read that as "once `mcp({ search })` has returned it".
         - `zvec_grep_rg` — the managed exact/regex route — is only exposed when the server runs with `--mcp-toolset full`. This config keeps the installer default (`agent` toolset, indexed search only), so exact lookups go to native Grep or `rg`, which makes the indexed route the one worth calling at all.
 
@@ -2557,6 +2564,31 @@ in
         <!-- ASSISTED_BY_START -->
         ${commitTrailer.guidance}
         <!-- ASSISTED_BY_END -->
+      '';
+
+      # Qwen Code reads ~/.qwen/QWEN.md as its user-global context file, ahead
+      # of the project QWEN.md/AGENTS.md chain -- the Qwen counterpart of pi's
+      # and opencode's global AGENTS.md. The shared block needs a Qwen header:
+      # Qwen's MCP tools are deferred behind tool_search/tool_call rather than
+      # listed at session start, so the verbatim guidance would name tools
+      # absent from the tool list and route Qwen to native grep instead.
+      # settings.json stays a merged live document (qwenSettings above); this
+      # file is flake-managed like pi's: the /memory panel can open it, but
+      # edits go through this flake, and a hand-written copy appearing first
+      # fails activation loudly rather than being clobbered.
+      ".qwen/QWEN.md".text = ''
+        <!-- ZVEC_GREP_START -->
+        ## zvec-grep is a deferred MCP tool here
+
+        Qwen Code registers the `zvec_grep` MCP server, but its tools are deferred: they are named in the deferred-tools reminder, not listed in the active tool list at session start.
+
+        - Discover: `tool_search` with `select:mcp__zvec_grep__zvec_grep_search` — the keyword "zvec" finds it too.
+        - Call: `tool_call` with that exact name and schema-shaped arguments (`root` is required, absolute, daemon-visible).
+        - The registration sets `alwaysLoadTools`, so sessions normally list the search tool outright and can call it directly; where the rules below say "when it is listed by the current host", read that as "once listed, or once `tool_search` has returned it" in sessions that still defer it.
+        - `zvec_grep_rg` — the managed exact/regex route — is not exposed here (the server runs the `agent` toolset, indexed search only), so exact lookups go to the native `grep_search`/`glob` tools, which makes the indexed route the one worth calling at all. Index lifecycle is the `zg` CLI on PATH.
+
+        ${zgGuidance}
+        <!-- ZVEC_GREP_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
@@ -2966,9 +2998,15 @@ in
       };
 
       # opencode loads the config-dir AGENTS.md globally; the body is shared with
-      # pi's copy below.
+      # pi's copy below. opencode's native MCP registration names tools
+      # `<server>_<tool>`, so the shared block's mcp__ names need the mapping
+      # header (the 0.3.1 installer no longer emits an opencode block).
       "opencode/AGENTS.md".text = ''
         <!-- ZVEC_GREP_START -->
+        ## zvec-grep tool names here
+
+        opencode names MCP tools `<server>_<tool>`, not the `mcp__<server>__<tool>` form the block below uses: where it says `mcp__zvec_grep__zvec_grep_search`, call `zvec_grep_zvec_grep_search`, and likewise for any other tool it names.
+
         ${zgGuidance}
         <!-- ZVEC_GREP_END -->
         <!-- RIPWIRE_START -->
@@ -3020,9 +3058,9 @@ in
       # `lifecycle` is left at the adapter's default (`lazy`): it starts
       # `zg --server --stdio` on the first call and idle-drops it after 10 minutes,
       # keeping the ~200-token proxy tool in context instead of every zvec-grep
-      # schema. Tool names come out as `zvec_grep_zvec_grep_*`, matching
-      # `zgGuidance`, so that text is worth re-checking if the server name or the
-      # adapter's `toolPrefix` setting ever changes.
+      # schema. Tool names come out as `mcp__zvec_grep__*` (the adapter's mcp__
+      # naming since 2.32), matching `zgGuidance`, so that text is worth
+      # re-checking if the server name or the adapter's naming mode ever changes.
       "mcp/mcp.json".text = builtins.toJSON {
         # All four servers under one `mcpServers` key (statix W20; see the
         # opencode block above).
