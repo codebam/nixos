@@ -73,18 +73,18 @@
             scx =
               let
                 rustscheds = prev.scx.rustscheds.overrideAttrs (old: {
-                  version = "1.1.4-unstable-2026-10-27";
+                  version = "1.1.4-unstable-2026-11-18";
                   src = prev.fetchFromGitHub {
                     owner = "sched-ext";
                     repo = "scx";
-                    rev = "abcc603de96a0809e74b4b266eea8e16419be567";
-                    hash = "sha256-DCIz7/slDJmw6MYZ7zm+y3AbStKxFfUcKTQlB5pNAO0=";
+                    rev = "35c423e7f11939e40477b8abc281c061e90cda91";
+                    hash = "sha256-K93c78paDqS3cntno/RepuFHfrUYYhQoFDghZlw8B7A=";
                   };
                   cargoDeps = prev.rustPlatform.importCargoLock {
                     lockFileContents = builtins.readFile (
                       builtins.fetchurl {
-                        url = "https://raw.githubusercontent.com/sched-ext/scx/abcc603de96a0809e74b4b266eea8e16419be567/Cargo.lock";
-                        sha256 = "b922551e6a76c0480c41a488a27c4cbcf12588aa31a44841183bf2525cf0e8f1";
+                        url = "https://raw.githubusercontent.com/sched-ext/scx/35c423e7f11939e40477b8abc281c061e90cda91/Cargo.lock";
+                        sha256 = "5fc53440cb21f19030339dade20dc3d6c000244968442fa5d487c1fbc337a714";
                       }
                     );
                   };
