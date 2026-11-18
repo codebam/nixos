@@ -1,8 +1,9 @@
-# Shared values for the agentic-inbox email MCP (the "@Email agent MCP").
-# Imported by home/agents.nix (dsh registration and the .dsh/AGENTS.md
-# guardrail) and home/hermes.nix (Hermes registration and its system-prompt
-# policy), so the bridge path, endpoint, server name, and send authorization
-# rule cannot drift between the two harnesses.
+# Shared values for the email MCP (server name `email-mcp`, the "@Email
+# agent MCP" bridging the agentic-inbox Worker). Imported by home/agents.nix
+# (the qwen and dsh registrations, the Telegram channel guardrail, and the
+# .dsh/AGENTS.md guardrail) and home/hermes.nix (Hermes registration and its
+# system-prompt policy), so the bridge path, endpoint, server name, and send
+# authorization rule cannot drift between the harnesses.
 { config, pkgs }:
 
 let
@@ -25,11 +26,11 @@ in
   # modules/system/preservation.nix preserves across the root wipe.
   bridge = "${config.home.homeDirectory}/Documents/git/agentic-inbox/scripts/mcp-bridge.mjs";
 
-  # Launcher shared by Hermes' service and dsh's stdio MCP client. Node is
-  # addressed by store path, and its bin directory is prepended to PATH so a
-  # project-local `wrangler` with a `#!/usr/bin/env node` shebang (or an
-  # `npx` fallback) still resolves when the harness unit starts with a
-  # minimal environment.
+  # Launcher shared by Hermes' service and the qwen/dsh stdio MCP clients.
+  # Node is addressed by store path, and its bin directory is prepended to
+  # PATH so a project-local `wrangler` with a `#!/usr/bin/env node` shebang
+  # (or an `npx` fallback) still resolves when the harness unit starts with
+  # a minimal environment.
   #
   # The launcher exports the `email-api-key` sops secret (mounted by sops-nix
   # at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN, which
@@ -39,7 +40,7 @@ in
   # hosts without the secret -- or a machine before the activation that
   # mounts it -- keep the Wrangler fallback untouched.
   runner = builtins.toString (
-    pkgs.writeShellScript "agentic-inbox-mcp" ''
+    pkgs.writeShellScript "email-mcp" ''
       export PATH=${pkgs.nodejs_latest}/bin:$PATH
       ${pkgs.lib.optionalString exportEmailApiKey ''
         if [ -r /run/secrets/email-api-key ]; then
@@ -55,19 +56,23 @@ in
   # the Worker route / custom domain in agentic-inbox's wrangler.jsonc.
   url = "https://email.codebam.ca/mcp";
 
-  # The MCP server name is the tool namespace in both harnesses. Hermes
-  # sanitizes the hyphen, so its tools are `mcp__agentic_inbox__*`; dsh's
-  # public names are `mcp__agentic-inbox__*`.
-  name = "agentic-inbox";
+  # The MCP server name is the tool namespace in every harness that mounts
+  # it. Hermes sanitizes the hyphen, so its tools are `mcp__email_mcp__*`;
+  # qwen and dsh keep it: `mcp__email-mcp__*`.
+  name = "email-mcp";
 
-  # Rendered into each harness's standing instructions. The agentic-inbox
-  # server also advertises its own instructions, but Hermes ignores that
-  # InitializeResult field and dsh only injects it when the server connects,
-  # so the send guardrail has to live in the harness prompt as well.
+  # Rendered into each harness's standing instructions. The Worker also
+  # advertises its own send rule in the InitializeResult instructions, but
+  # the bridge's scoped-token mode (the `email-api-key` path above)
+  # synthesizes that response without the field, Hermes ignores it anyway,
+  # and dsh only injects it when the server connects -- so the guardrail has
+  # to live in the harness prompt as well. Qwen Code does inject server
+  # instructions when present (0.28.0), which covers the Wrangler-fallback
+  # path only; its Telegram channel carries this policy for the sops path.
   policy = ''
-    ## Email authorization (agentic-inbox MCP)
+    ## Email authorization (email-mcp)
 
-    The `agentic-inbox` MCP server can read, draft, and send email. Reading,
+    The `email-mcp` MCP server can read, draft, and send email. Reading,
     listing, searching, and drafting are always allowed. Sending is not: never
     call `send_email` (or its prefixed `mcp__...__send_email` form), or any
     tool whose name or description sends, replies to, or forwards mail, unless

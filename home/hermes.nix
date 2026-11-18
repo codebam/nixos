@@ -272,8 +272,8 @@ in
       extraPythonPackages = [ memoryProvider.package ];
     };
 
-    # agentic-inbox email MCP. The stdio bridge authenticates to the Worker
-    # with the `email-api-key` sops secret, falling back to the local
+    # email MCP (the agentic-inbox bridge). The stdio bridge authenticates
+    # to the Worker with the `email-api-key` sops secret, falling back to the local
     # Wrangler login token on hosts without it (home/email-mcp.nix); its
     # launcher pins Node and PATH itself so this service does not depend on
     # the interactive shell's profile.

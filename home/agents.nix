@@ -718,11 +718,12 @@ let
     security.auth.selectedType = "openai";
     model.name = "qwen4-max";
 
-    # The same four MCP servers opencode and pi register, in Qwen Code's
-    # MCPServerConfig shape: stdio keeps `command` and `args` apart, `timeout`
-    # is the tool-call timeout in ms, and streamable HTTP is `httpUrl` (`url`
-    # would select SSE). User-scope servers connect without the approval gate
-    # that project-level servers (.qwen/settings.json, .mcp.json) get.
+    # The four MCP servers opencode and pi register, plus the email bridge
+    # dsh and Hermes mount, in Qwen Code's MCPServerConfig shape: stdio keeps
+    # `command` and `args` apart, `timeout` is the tool-call timeout in ms,
+    # and streamable HTTP is `httpUrl` (`url` would select SSE). User-scope
+    # servers connect without the approval gate that project-level servers
+    # (.qwen/settings.json, .mcp.json) get.
     # zg and ripwire resolve from the session PATH -- both are in
     # home.packages, the same assumption the opencode rows make -- and the
     # stdio child inherits the wrapper's environment, so loadKey's exports
@@ -751,6 +752,26 @@ let
       ${memoryServerName} = {
         httpUrl = memoryUrl;
       };
+
+      # The email bridge dsh and Hermes mount (home/email-mcp.nix): the
+      # launcher exports the `email-api-key` sops secret as MCP_AUTH_TOKEN,
+      # falling back to `wrangler auth token` where it is absent. Like the
+      # dsh row, registered on every host -- without the agentic-inbox
+      # checkout the server just fails to connect and the session keeps its
+      # other tools. The send guardrail rides the Telegram channel
+      # instructions below: the bridge's scoped-token mode answers
+      # initialize without the Worker's instructions field, so Qwen's
+      # server-instruction injection never sees the send rule on the sops
+      # path.
+      ${emailMcp.name} = {
+        command = emailMcp.runner;
+        args = [
+          emailMcp.bridge
+          "--url"
+          emailMcp.url
+        ];
+        timeout = 180000;
+      };
     };
   }
   # The Telegram bot that replaced the Hermes gateway, on the same bot token
@@ -771,7 +792,16 @@ let
       sessionScope = "user";
       cwd = "/home/codebam";
       groupPolicy = "disabled";
-      instructions = "You are Sean's assistant, answering over Telegram. Keep replies short and readable in a chat client: Telegram caps a message at 4096 characters.";
+      # The email send policy rides here because the channel is the fleet's
+      # one unattended Qwen surface and this is the managed prompt it reads;
+      # interactive sessions still see the confirmation rule in the send
+      # tool descriptions. The bridge's scoped-token mode drops the
+      # Worker's own instructions (see the email-mcp row above), so this
+      # copy is the guardrail that actually reaches the bot.
+      instructions =
+        "You are Sean's assistant, answering over Telegram. Keep replies short and readable in a chat client: Telegram caps a message at 4096 characters."
+        + "\n\n"
+        + emailMcp.policy;
     };
   };
 
@@ -1669,10 +1699,11 @@ let
   # dsh names the tools `mcp__<server>__<tool>`, like Hermes.
   memoryGuidanceDsh = memorySrv.guidanceMcp;
 
-  # agentic-inbox email MCP: one definition shared by the dsh registration
-  # below and the .dsh/AGENTS.md guardrail. home/hermes.nix imports the same
-  # file for Hermes, so the bridge path, URL, server name, and send policy
-  # stay in one place.
+  # email MCP (the agentic-inbox bridge): one definition shared by the qwen
+  # and dsh registrations below, the Telegram channel guardrail, and the
+  # .dsh/AGENTS.md guardrail. home/hermes.nix imports the same file for
+  # Hermes, so the bridge path, URL, server name, and send policy stay in
+  # one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
   # Google Calendar MCP: one definition shared by the dsh registration below
@@ -2611,7 +2642,7 @@ in
       # overlays, so rows here apply to every profile: web, headless, acp, sdk,
       # and the custom dsh-tui profile.
       #
-      # The memory server, the Playwright MCP server, the agentic-inbox email
+      # The memory server, the Playwright MCP server, the email MCP
       # bridge, and the Google Calendar MCP server are mounted here; the other
       # host-side bridges (zvec-grep, ripwire) are intentionally absent from
       # the default agent tier: they run as the host user and accept arbitrary
@@ -2651,7 +2682,7 @@ in
                 args: ${builtins.toJSON (builtins.tail pwArgv)}
                 toolCallTimeoutMs: ${toString pwTimeoutMs}
 
-            # agentic-inbox email MCP, through the stdio bridge in the
+            # email MCP, through the stdio bridge in the agentic-inbox
             # checkout. The launcher exports the `email-api-key` sops secret
             # as MCP_AUTH_TOKEN (falling back to `wrangler auth token` on
             # hosts without it), so the token never appears in this patch or

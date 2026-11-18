@@ -99,7 +99,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── agent-memory.nix         # The one shared agent-memory MCP graph and its guidance
 │   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
 │   ├── cf.nix                   # Cloudflare CLI guidance shared by the agent prompts
-│   ├── email-mcp.nix            # agentic-inbox email MCP bridge and send policy
+│   ├── email-mcp.nix            # email-mcp server: agentic-inbox bridge and send policy
 │   ├── google-calendar-mcp.nix  # Google Calendar MCP launcher
 │   ├── hermes.nix               # Hermes agent config and standing prompt
 │   ├── hermes-agent-memory.nix  # Hermes memory provider over the shared graph
@@ -241,12 +241,14 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   host harnesses keep their zvec-grep/ripwire/Playwright MCP rows; dsh's web
   profile also registers the shared memory MCP and the isolated, headless
   Playwright MCP (its file access is scoped to the session workspace by
-  Playwright's default guardrail, and it runs on the host network). Hermes and
-  dsh additionally register the agentic-inbox email MCP, a host-side stdio
-  bridge that authenticates with the local `wrangler login` token (run `npx
-  wrangler login` once from that checkout); both harnesses carry a standing
-  instruction that outbound mail is sent only after an explicit authorization
-  for that exact message.
+  Playwright's default guardrail, and it runs on the host network). Hermes,
+  dsh, and Qwen Code additionally register the `email-mcp` server, a
+  host-side stdio bridge into the agentic-inbox Worker that authenticates
+  with the `email-api-key` sops secret, falling back to the local `wrangler
+  login` token (run `npx wrangler login` once from that checkout on hosts
+  without the secret). Outbound mail is sent only after an explicit
+  authorization for that exact message -- a standing rule in the Hermes and
+  dsh prompts and in Qwen's Telegram channel instructions.
 - **Sandbox**: dsh is the one harness that runs its commands in a sandbox by
   default -- the bundled bwrap/Landlock world, rooted at the process cwd, with
   no host credentials or Nix daemon socket forwarded. Every other harness
