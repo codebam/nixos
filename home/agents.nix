@@ -652,20 +652,28 @@ let
   ];
 
   # Qwen Code's model catalog: qwen4-max on the two gateways the fleet already
-  # holds keys for. `qwen` speaks OpenAI-compatible chat-completions, so both
-  # routes sit in its `openai` auth slot; `envKey` names the variable loadKey
-  # exports, which keeps the keys out of the settings file the TUI writes.
-  # The model registry keys routes by id + baseUrl, so the same model on two
-  # gateways is two distinct entries and `/model` picks between them.
+  # holds keys for, plus Tencent's Hy4 Flash on NanoGPT. `qwen` speaks
+  # OpenAI-compatible chat-completions, so every route sits in its `openai`
+  # auth slot; `envKey` names the variable loadKey exports, which keeps the
+  # keys out of the settings file the TUI writes. The model registry keys
+  # routes by id + baseUrl, so the same model on two gateways is two distinct
+  # entries and `/model` picks between them.
   #
   # QwenCloud's Token Plan is the subscription route and the default; its
   # endpoint is the live compatible-mode host (pi-ai's bundled catalog still
   # names the old aliyuncs one -- see the dsh qwen-token-plan-individual route
   # below), and the limits match what pi/dsh declare for qwen4-max. NanoGPT's
-  # route bills per token and is the fallback for when the plan is out; its
-  # limits are from /api/v1/models?detailed=true (read 2026-11-16): 1M
-  # context, 131072 output, text+image input. contextWindowSize drives Qwen
+  # qwen4-max route bills per token and is the fallback for when the plan is
+  # out; its limits are from /api/v1/models?detailed=true (read 2026-11-16):
+  # 1M context, 131072 output, text+image input. contextWindowSize drives Qwen
   # Code's compaction budget and modalities.image its image input.
+  #
+  # Hy4 Flash joined on 2026-11-19, the day it shipped: Tencent's cheap
+  # high-volume rung ($0.035/$0.1405 per million tokens, below the curated
+  # nanogptModels band), per-token billing, not in the subscription. Same
+  # /api/v1/models?detailed=true read: 1M context, 65536 output, text+image
+  # input, tool calling, efforts none/high. models.dev does not carry it yet,
+  # so the gateway entry is the sole metadata source.
   qwenModels = [
     {
       id = "qwen4-max";
@@ -681,6 +689,14 @@ let
       envKey = "NANOGPT_API_KEY";
       baseUrl = "https://nano-gpt.com/api/v1";
       context = 1000000;
+      vision = true;
+    }
+    {
+      id = "tencent/hy4-flash";
+      name = "Tencent Hy4 Flash (NanoGPT)";
+      envKey = "NANOGPT_API_KEY";
+      baseUrl = "https://nano-gpt.com/api/v1";
+      context = 1048576;
       vision = true;
     }
   ];
