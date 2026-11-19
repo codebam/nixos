@@ -24,7 +24,7 @@
         # protontricks bakes whatever is here into its
         # STEAM_EXTRA_COMPAT_TOOLS_PATHS, so it was pinned twice over.
         extraCompatPackages = with pkgs; [
-          proton-cachyos_x86_64_v3
+          proton-cachyos-bin_x86_64_v3
         ];
         protontricks.enable = true;
         extest.enable = config.gaming.extest;
