@@ -103,7 +103,7 @@ rec {
   # copies it into $DSH_HOME next to the profile's node_modules.
   dsh-tool-viewport = pkgs.callPackage ./dsh-tool-viewport.nix { };
 
-  # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode2`): the
+  # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };
 

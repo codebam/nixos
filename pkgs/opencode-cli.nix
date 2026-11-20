@@ -13,12 +13,12 @@ let
   variants = {
     "x86_64-linux" = {
       npmName = "linux-x64";
-      hash = "sha256-1lk1Rk+T8HkTYz+XfLmXI69k7v9q56gicizom+2r3UU=";
-      baselineHash = "sha256-IFErDFxcMMUZWc4T4RsZpjDOO1vvVrSGhZvzj4snvK4=";
+      hash = "sha256-hFRo41qlorV0lFoLlmdeZMYE9Sec7ZqnJFBo2MC29rs=";
+      baselineHash = "sha256-5Wfc2xMQ3K5ORCB34NUI4QqAwbmWExoE3JuXjN0m5c0=";
     };
     "aarch64-linux" = {
       npmName = "linux-arm64";
-      hash = "sha256-fnTOtk/lcE/y/e897kWGbvy1gNcfGCpsrilgbK0fi1I=";
+      hash = "sha256-kak3Ep79ro64wMUBiuUz+fNRF/Jv/ZpNH3pfnaHmkwY=";
     };
   };
 
@@ -29,7 +29,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "opencode-cli";
-  version = "2.2.7";
+  version = "2.3.2";
 
   # The @opencode/cli npm wrapper (upstream command: `opencode`, with an
   # `opencode2` alias) ships no runnable code: bin/opencode.exe is a stub and
@@ -53,7 +53,7 @@ stdenv.mkDerivation (finalAttrs: {
   # section, so it belongs to no symbol and no relocation. stdenv's fixup `strip`
   # rewrites the file from section contents, zeroing that slack (and clipping the
   # tail off the last PT_LOAD). Without the pointer Bun never finds its embedded
-  # graph and silently degrades into the plain `bun` CLI: `opencode2 --version`
+  # graph and silently degrades into the plain `bun` CLI: `opencode --version`
   # answers `1.4.2`, `--help` prints Bun's usage, exit status stays 0.
   # patchelf survives because it shifts whole pages instead of repacking gaps.
   dontStrip = true;
@@ -61,9 +61,10 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     # The 2.0 line renamed the payload from bin/opencode2 to bin/opencode;
-    # keep installing it as `opencode2` so this package exposes the command the
-    # repo wraps (and `bin/opencode` stays nixpkgs' v1 package).
-    install -Dm755 bin/opencode "$out/bin/opencode2"
+    # install it under that upstream name. The historical `opencode2` command
+    # is gone: nixpkgs' v1 package is no longer in the profile, so `opencode`
+    # is unambiguous now.
+    install -Dm755 bin/opencode "$out/bin/opencode"
     runHook postInstall
   '';
 
@@ -77,8 +78,8 @@ stdenv.mkDerivation (finalAttrs: {
     # answers even `--version`, and the build sandbox points HOME at the
     # non-existent /homeless-shelter.
     export HOME="$PWD"
-    version="$($out/bin/opencode2 --version)"
-    echo "opencode2 --version: $version"
+    version="$($out/bin/opencode --version)"
+    echo "opencode --version: $version"
     if [ "$version" != "opencode v${finalAttrs.version}" ]; then
       echo "expected 'opencode v${finalAttrs.version}'; a bare bun version here" \
         "means the embedded module graph was damaged during the build (see dontStrip)"
@@ -106,7 +107,7 @@ stdenv.mkDerivation (finalAttrs: {
         github = "codebam";
       }
     ];
-    mainProgram = "opencode2";
+    mainProgram = "opencode";
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = [
       "x86_64-linux"

@@ -1,9 +1,10 @@
 # Shared values for the email MCP (server name `email-mcp`, the "@Email
 # agent MCP" bridging the agentic-inbox Worker). Imported by home/agents.nix
-# (the qwen and dsh registrations, the Telegram channel guardrail, and the
-# .dsh/AGENTS.md guardrail) and home/hermes.nix (Hermes registration and its
-# system-prompt policy), so the bridge path, endpoint, server name, and send
-# authorization rule cannot drift between the harnesses.
+# (the qwen, dsh, and opencode registrations, the Telegram channel guardrail,
+# and the .dsh/AGENTS.md and opencode/AGENTS.md guardrails) and
+# home/hermes.nix (Hermes registration and its system-prompt policy), so the
+# bridge path, endpoint, server name, and send authorization rule cannot
+# drift between the harnesses.
 { config, pkgs }:
 
 let
@@ -26,7 +27,8 @@ in
   # modules/system/preservation.nix preserves across the root wipe.
   bridge = "${config.home.homeDirectory}/Documents/git/agentic-inbox/scripts/mcp-bridge.mjs";
 
-  # Launcher shared by Hermes' service and the qwen/dsh stdio MCP clients.
+  # Launcher shared by Hermes' service and the qwen/dsh/opencode stdio MCP
+  # clients.
   # Node is addressed by store path, and its bin directory is prepended to
   # PATH so a project-local `wrangler` with a `#!/usr/bin/env node` shebang
   # (or an `npx` fallback) still resolves when the harness unit starts with
@@ -58,7 +60,8 @@ in
 
   # The MCP server name is the tool namespace in every harness that mounts
   # it. Hermes sanitizes the hyphen, so its tools are `mcp__email_mcp__*`;
-  # qwen and dsh keep it: `mcp__email-mcp__*`.
+  # qwen and dsh keep it: `mcp__email-mcp__*`; opencode prefixes with the
+  # entry name: `email-mcp_*`.
   name = "email-mcp";
 
   # Rendered into each harness's standing instructions. The Worker also
@@ -69,6 +72,7 @@ in
   # to live in the harness prompt as well. Qwen Code does inject server
   # instructions when present (0.28.0), which covers the Wrangler-fallback
   # path only; its Telegram channel carries this policy for the sops path.
+  # opencode's copy rides opencode/AGENTS.md for the same reason.
   policy = ''
     ## Email authorization (email-mcp)
 

@@ -72,7 +72,7 @@ let
     # used by the `nano-gpt` provider/route in pi's models.json, dsh's
     # llm-pi-ai profile, and Hermes. Two names, one secret: NANOGPT_API_KEY
     # is the name NanoGPT's own docs use; NANO_GPT_API_KEY is the name
-    # models.dev lists for its `nano-gpt` provider and what opencode2 and
+    # models.dev lists for its `nano-gpt` provider and what opencode and
     # the desktop client resolve provider credentials from, so the full
     # models.dev catalog needs no provider block in opencode.json -- the
     # same mechanism as OpenCode Go above.
@@ -94,7 +94,7 @@ let
   # defaulting to the first. The credential seam resolves a reference per
   # operation from the launch environment, so every route naming
   # OPENCODE_API_KEY follows the choice; dsh keeps no credential pool, so
-  # there is no automatic rotation -- the choice is the switch. opencode2,
+  # there is no automatic rotation -- the choice is the switch. opencode,
   # pi, and the desktop client still read OPENCODE_API_KEY alone: the second
   # key is dsh-only.
   loadDshKey = pkgs.writeShellScript "dsh-load-env" ''
@@ -735,8 +735,8 @@ let
     model.name = "qwen4-max";
 
     # The four MCP servers opencode and pi register, plus the email bridge
-    # and Google Calendar server dsh and Hermes mount, in Qwen Code's
-    # MCPServerConfig shape: stdio keeps `command` and `args` apart,
+    # and Google Calendar server opencode, dsh, and Hermes mount, in Qwen
+    # Code's MCPServerConfig shape: stdio keeps `command` and `args` apart,
     # `timeout` is the tool-call timeout in ms, and streamable HTTP is
     # `httpUrl` (`url` would select SSE). User-scope servers connect without
     # the approval gate that project-level servers (.qwen/settings.json,
@@ -922,7 +922,7 @@ let
   # Headroom opencode keeps before it auto-compacts; see `compaction` below.
   compactionReserved = 20000;
 
-  # The desktop client of the opencode2 line: upstream's 2.0.x AppImage, and
+  # The desktop client of the v2 line: upstream's 2.0.x AppImage, and
   # the build that hosts the integrated browser the agent's browser.* tools
   # attach to. The historical `-beta` name stays so the command, desktop-entry
   # id, and icon names don't change. Wrapped with loadKey because a .desktop
@@ -937,7 +937,7 @@ let
     '';
   };
 
-  # The v2 line of the agent (npm @opencode/cli, installed as `opencode2` from
+  # The v2 line of the agent (npm @opencode/cli, installed as `opencode` from
   # the registry binaries in pkgs/opencode-cli.nix). Wrapped with loadKey so it
   # sees the same provider secrets as the other agents.
   #
@@ -945,7 +945,7 @@ let
   # opencode.ai/update/api/<platform>/<arch>/npm on a 10-minute interval and,
   # when it recognises its own install method (npm/pnpm/bun/yarn -g), offers to
   # reinstall itself. A /nix/store binary is read-only and pkged here, so both
-  # the poll and the offer are noise. ripgrep joins PATH because opencode2
+  # the poll and the offer are noise. ripgrep joins PATH because opencode
   # shells out to `rg` for grep/search and the wrapper is the only place to
   # name it.
   #
@@ -956,13 +956,13 @@ let
   # server-process maps it to `fs.filewatcher: false`, which makes the watcher
   # service a no-op. This trades config/skill hot reload (restart the session
   # to reload) for not wedging the watch pool; drop it when upstream fixes the
-  # leak. `opencode2 service restart` releases watches an older server holds.
-  opencode2 = pkgs.symlinkJoin {
-    name = "opencode2-wrapped-${pkgs.opencode-cli.version}";
+  # leak. `opencode service restart` releases watches an older server holds.
+  opencode = pkgs.symlinkJoin {
+    name = "opencode-wrapped-${pkgs.opencode-cli.version}";
     paths = [ pkgs.opencode-cli ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/opencode2 \
+      wrapProgram $out/bin/opencode \
         --run '. ${loadKey}' \
         --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep ]} \
         --set OPENCODE_DISABLE_AUTOUPDATE true \
@@ -992,7 +992,7 @@ let
   # environment, and the catalog authenticates with QWEN_API_KEY and
   # NANOGPT_API_KEY. loadQwenKey's Telegram token stays channel-only -- the
   # desktop has no channel to start. The updater is off for the same reason
-  # opencode2's autoupdate is: a /nix/store copy cannot write itself.
+  # opencode's autoupdate is: a /nix/store copy cannot write itself.
   qwen-code-desktop = pkgs.symlinkJoin {
     name = "qwen-code-desktop-wrapped-${pkgs.qwen-code-desktop.version}";
     paths = [ pkgs.qwen-code-desktop ];
@@ -1019,7 +1019,7 @@ let
   };
 
   # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadDshKey
-  # for the same reason as opencode2 and pi: its llm-pi-ai `opencode-go` routes
+  # for the same reason as opencode and pi: its llm-pi-ai `opencode-go` routes
   # name the OPENCODE_API_KEY credential reference, and the credential store
   # falls back to the launch environment, so exporting the keys here is what
   # makes the routes authenticate without a secret in settings.yaml. loadDshKey
@@ -1693,7 +1693,7 @@ let
   # object belongs to opencode's internal Mcp.TimeoutConfig and is not accepted
   # here: config normalization rejects the whole entry ("skipped malformed
   # recognized value") and the server silently never loads. Verified against
-  # opencode2 2.2.7.
+  # opencode 2.3.2.
   zgTimeoutMs = 600000;
 
   # Microsoft's Playwright MCP server, declared once and rendered in each
@@ -1732,14 +1732,14 @@ let
   # dsh names the tools `mcp__<server>__<tool>`, like Hermes.
   memoryGuidanceDsh = memorySrv.guidanceMcp;
 
-  # email MCP (the agentic-inbox bridge): one definition shared by the qwen
-  # and dsh registrations below, the Telegram channel guardrail, and the
-  # .dsh/AGENTS.md guardrail. home/hermes.nix imports the same file for
-  # Hermes, so the bridge path, URL, server name, and send policy stay in
-  # one place.
+  # email MCP (the agentic-inbox bridge): one definition shared by the qwen,
+  # dsh, and opencode registrations below, the Telegram channel guardrail,
+  # and the .dsh/AGENTS.md and opencode/AGENTS.md guardrails.
+  # home/hermes.nix imports the same file for Hermes, so the bridge path,
+  # URL, server name, and send policy stay in one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
-  # Google Calendar MCP: one definition shared by the qwen and dsh
+  # Google Calendar MCP: one definition shared by the qwen, dsh, and opencode
   # registrations below and Hermes (home/hermes.nix imports the same file),
   # so the launcher -- which points the server at the `google-calendar-oauth`
   # sops secret -- and the server name stay in one place. The OAuth tokens it
@@ -2322,7 +2322,7 @@ let
     ${pkgs.yq-go}/bin/yq -i ". * load(\"${dshSettings}\")" "$settings"
   '';
 
-  # opencode2's CLI settings document (`cli.json`) is written by the TUI itself
+  # opencode's v2 CLI settings document (`cli.json`) is written by the TUI itself
   # -- Ctrl+P "Open settings", and the thinking toggle migrated out of v1's
   # state -- so it cannot become a read-only store symlink the way opencode.json
   # still is. Merge the managed keys in, Nix winning, the same treatment pi's
@@ -2367,7 +2367,7 @@ in
   home = {
     packages = [
       opencode-desktop-beta
-      opencode2
+      opencode
       qwen
       qwen-code-desktop
       pi
@@ -2389,7 +2389,7 @@ in
         run ${piSettingsMerge}
       '';
 
-      # opencode2's cli.json is the same kind of live document (see the
+      # opencode's cli.json is the same kind of live document (see the
       # opencodeCliSettings comment above): the TUI writes it, so the managed
       # keys are merged in rather than symlinked.
       opencodeCliSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -2834,8 +2834,8 @@ in
         autoupdate = false;
         share = "disabled";
 
-        # All four MCP servers live under one `mcp` key: statix's repeated-keys
-        # lint (W20) flags four sibling `mcp.<name>` assignments, the same
+        # All six MCP servers live under one `mcp` key: statix's repeated-keys
+        # lint (W20) flags six sibling `mcp.<name>` assignments, the same
         # reason `xdg.configFile` above is nested rather than flat.
         mcp = {
           # Declarative equivalent of `zg --install --target opencode
@@ -2895,6 +2895,42 @@ in
             timeout = 30000;
           };
 
+          # The email bridge dsh and Hermes mount (home/email-mcp.nix): the
+          # launcher exports the `email-api-key` sops secret as MCP_AUTH_TOKEN,
+          # falling back to `wrangler auth token` where it is absent. Like the
+          # dsh row, registered on every host -- without the agentic-inbox
+          # checkout the server just fails to connect and the session keeps its
+          # other tools. The send guardrail rides opencode/AGENTS.md below: the
+          # bridge's scoped-token mode answers initialize without the Worker's
+          # instructions field, so server-instruction injection never sees the
+          # send rule on the sops path. `command` is the whole argv here
+          # (opencode shape, top-level `mcp`).
+          ${emailMcp.name} = {
+            type = "local";
+            command = [
+              emailMcp.runner
+              emailMcp.bridge
+              "--url"
+              emailMcp.url
+            ];
+            enabled = true;
+            timeout = 180000;
+          };
+
+          # Google Calendar MCP (home/google-calendar-mcp.nix): the same shared
+          # launcher dsh and Hermes mount, pointing the server at the
+          # `google-calendar-oauth` sops secret with the manual credentials copy
+          # as fallback. Hosts without tokens still start -- calendar calls
+          # report the missing token file instead of failing the session. Reads
+          # and writes go to Sean's own calendar at his request, so no extra
+          # policy text like the email server's.
+          ${calendarMcp.name} = {
+            type = "local";
+            command = [ calendarMcp.launcher ];
+            enabled = true;
+            timeout = 180000;
+          };
+
         };
 
         # Models picked from the TUI's model list (`/models`) live in opencode's
@@ -2910,7 +2946,7 @@ in
           # The served windows mirror the pi/dsh entries: 153600 of the 160k
           # tag's 163840 and 251904 of the 262k tag's 262144, leaving room for
           # output and the 20k compaction reserve.
-          # opencode2 reads this same config directory.
+          # opencode reads this config directory.
           ollama = {
             npm = "@ai-sdk/openai-compatible";
             name = "Ollama (local)";
@@ -3029,8 +3065,19 @@ in
       # opencode loads the config-dir AGENTS.md globally; the body is shared with
       # pi's copy below. opencode's native MCP registration names tools
       # `<server>_<tool>`, so the shared block's mcp__ names need the mapping
-      # header (the 0.3.1 installer no longer emits an opencode block).
+      # header (the 0.3.1 installer no longer emits an opencode block). The
+      # email block makes the outbound-send rule explicit even when the MCP
+      # client's server instructions fail to load (the bridge's scoped-token
+      # mode drops them).
       "opencode/AGENTS.md".text = ''
+        <!-- EMAIL_START -->
+        ${emailMcp.policy}
+
+        In opencode the email tools are named `email-mcp_<tool>` (server name
+        + `_` + tool), e.g. `email-mcp_send_email`. If they are missing, the
+        bridge or the Wrangler login is unavailable; report that and do not
+        try another send path.
+        <!-- EMAIL_END -->
         <!-- ZVEC_GREP_START -->
         ## zvec-grep tool names here
 
@@ -3056,11 +3103,11 @@ in
 
       '';
 
-      # opencode2's documented global skill root. A copy here makes the setup
+      # opencode's documented global skill root (v2). A copy here makes the setup
       # independent of its `~/.claude/skills` auto-discovery fallback.
       "opencode/skills/agent-browser/SKILL.md".text = agentBrowserSkill;
 
-      # opencode2 scans both `skill/` and `skills/` under a config root and
+      # opencode scans both `skill/` and `skills/` under a config root and
       # follows the directory symlink.
       "opencode/skills/security-audit".source = securityAuditSkill;
 

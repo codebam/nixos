@@ -97,7 +97,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   │                              helix, firefox, mpv (Anime4K), mangohud, browsers,
 │   │                              terminals (ghostty, rio)
 │   ├── agent-memory.nix         # The one shared agent-memory MCP graph and its guidance
-│   ├── agents.nix               # opencode/opencode2/pi providers, MCP servers, AGENTS.md
+│   ├── agents.nix               # opencode/pi providers, MCP servers, AGENTS.md
 │   ├── cf.nix                   # Cloudflare CLI guidance shared by the agent prompts
 │   ├── email-mcp.nix            # email-mcp server: agentic-inbox bridge and send policy
 │   ├── google-calendar-mcp.nix  # Google Calendar MCP launcher
@@ -119,7 +119,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── agent-overview.nix       # tmux agent dashboard
 │   ├── dsh.nix                  # DeepSeek Harness CLI
 │   ├── dsh-tool-nu.nix          # dsh's Nushell (`nu`) tool plugin
-│   ├── opencode-cli.nix         # @opencode/cli v2 (opencode2)
+│   ├── opencode-cli.nix         # @opencode/cli v2 (opencode)
 │   ├── opencode-desktop-beta.nix
 │   ├── pinentry-auto.nix        # terminal-aware pinentry
 │   ├── polariumcode/            # Polarium Code desktop app (AppImage wrapper)
@@ -235,24 +235,26 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
-- **Agents**: OpenCode (v1 stable + v2 `opencode2`), OpenCode Desktop, Pi, and
+- **Agents**: OpenCode (v2 `opencode`), OpenCode Desktop, Pi, and
   dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. All are trusted
   host harnesses: their shell, file, and MCP tools run as the host user. The
   host harnesses keep their zvec-grep/ripwire/Playwright MCP rows; dsh's web
   profile also registers the shared memory MCP and the isolated, headless
   Playwright MCP (its file access is scoped to the session workspace by
   Playwright's default guardrail, and it runs on the host network). Hermes,
-  dsh, and Qwen Code additionally register the `email-mcp` server, a
-  host-side stdio bridge into the agentic-inbox Worker that authenticates
+  dsh, Qwen Code, and OpenCode additionally register the `email-mcp` server,
+  a host-side stdio bridge into the agentic-inbox Worker that authenticates
   with the `email-api-key` sops secret, falling back to the local `wrangler
   login` token (run `npx wrangler login` once from that checkout on hosts
-  without the secret). Outbound mail is sent only after an explicit
-  authorization for that exact message -- a standing rule in the Hermes and
-  dsh prompts and in Qwen's Telegram channel instructions.
+  without the secret), and the `google-calendar` MCP server, which reads the
+  `google-calendar-oauth` sops secret. Outbound mail is sent only after an
+  explicit authorization for that exact message -- a standing rule in the
+  Hermes, dsh, and OpenCode prompts and in Qwen's Telegram channel
+  instructions.
 - **Sandbox**: dsh is the one harness that runs its commands in a sandbox by
   default -- the bundled bwrap/Landlock world, rooted at the process cwd, with
   no host credentials or Nix daemon socket forwarded. Every other harness
-  (opencode, opencode2, pi, Hermes) executes on the host shell as the user.
+  (opencode, pi, Hermes) executes on the host shell as the user.
 - **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)

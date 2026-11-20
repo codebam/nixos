@@ -8,7 +8,7 @@
 
 # OpenCode's v2 desktop client. nixpkgs' `opencode-desktop` still builds the
 # 1.18.x tree, which has no browser host; upstream's 2.0.x desktop AppImage is
-# the build that pairs with `opencode2` and carries `experimental.browser`, the
+# the build that pairs with the v2 CLI (`opencode`) and carries `experimental.browser`, the
 # feature the agent's browser.* tools attach to. Pin the prebuilt AppImage and
 # let appimageTools provide the FHS the bundled Electron and the 200 MB
 # `opencode-cli` sidecar expect.
@@ -74,7 +74,7 @@ appimageTools.wrapType2 {
   '';
 
   meta = {
-    description = "OpenCode desktop client (v2 AppImage; pairs with opencode2 and hosts the integrated browser)";
+    description = "OpenCode desktop client (v2 AppImage; pairs with the v2 CLI and hosts the integrated browser)";
     homepage = "https://opencode.ai";
     license = lib.licenses.mit;
     maintainers = [

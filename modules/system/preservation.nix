@@ -126,7 +126,7 @@ _: {
             ".config/opencode"
             # The v2 desktop client's Electron userData (appData +
             # `ai.opencode.desktop`): drafts.sqlite, window geometry, app
-            # settings, the staged opencode2 sidecar, and the shell's own
+            # settings, the staged CLI sidecar, and the shell's own
             # logs. The CLI paths above are shared with it; this directory
             # is desktop-only and a root wipe otherwise loses every draft
             # and the window layout.
