@@ -1164,6 +1164,7 @@ let
     };
     security.auth.selectedType = "openai";
     model.name = "qwen4-max";
+    model.goalTokenBudget = -1;
 
     # The ${session_id} placeholder in the OpenCode Go entries' session
     # header expands per request only with this on; qwen drops placeholder
