@@ -723,16 +723,453 @@ let
       // lib.optionalAttrs vision { modalities.image = true; };
     };
 
+  # OpenCode Go, the subscription gateway (`opencode-go` in models.dev and
+  # pi-ai's catalogs; OPENCODE_API_KEY from loadKey authenticates, the same
+  # secret opencode, pi, dsh, and the desktop client read). The model set is
+  # the gateway's own /models list read live on 2026-11-20 -- 31 models, not
+  # models.dev's 42: its opencode-go catalog carries eleven entries the
+  # gateway no longer serves (space-bunny, cat-jam-free, glm-5.2, ...), which
+  # is also why opencode's picker lists more Go models than work.
+  #
+  # The gateway is multi-protocol and each model names the wire it wants
+  # (recommended_api in /models), each with its own base URL:
+  #   chat-completions, responses  https://opencode.ai/inference/go/openai/v1
+  #   messages                     https://opencode.ai/inference/go/anthropic
+  #   generate-content              https://opencode.ai/inference/go/google
+  # Both OpenAI wires take the /v1 form as-is (qwen's OpenAI SDKs normalize a
+  # trailing /v1 themselves); the anthropic base is versionless because
+  # qwen's Anthropic SDK appends /v1/messages (the same convention as dsh's
+  # opencode-go-union-alpha route); the google base is versionless because
+  # the GenAI SDK appends /v1beta/models/... The dsh routes still name the
+  # older zen/go aliases, which also answer, but the gateway's own metadata
+  # is what is pinned here.
+  #
+  # Every entry carries the x-opencode-session header: the gateway 400s
+  # MissingSessionID without it (verified against the live endpoint,
+  # 2026-11-20; dsh's opencode-go-session-header plugin exists for the same
+  # reason). Qwen Code's schema documents this exact use -- the value is the
+  # ${session_id} runtime placeholder, expanded per request from live session
+  # state, and outboundCorrelation.allowDynamicHeaderValues in qwenSettings
+  # opts into that expansion. Without the switch qwen drops any header value
+  # containing a placeholder rather than sending it.
+  #
+  # gemini-4-argon's recommended wire is `interactions`, an OpenCode-specific
+  # API qwen does not speak, but the gateway serves the model on
+  # generate-content at the same base, so that wire is declared instead.
+  #
+  # `efforts` mirror each model's advertised reasoning_effort levels minus
+  # none/minimal, for which qwen's effort ladder has no tier: declaring them
+  # keeps /effort from sending a level the gateway would reject (undeclared
+  # models fall back to the generic low/medium/high/xhigh set, which is wrong
+  # for more than half of these). Models with no advertised levels carry an
+  # empty list and no declaration, so the server default applies.
+  # `vision` mirrors the gateway modalities (image inputs -- deepseek-v4-pro
+  # and glm-5.3 really are text-only there, unlike their NanoGPT copies).
+  opencodeGoModels = [
+    # chat-completions
+    {
+      id = "deepseek-v4.1-flash";
+      name = "DeepSeek V4.1 Flash 1017";
+      wire = "chat";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+    }
+    {
+      id = "deepseek-v4-pro";
+      name = "DeepSeek V4 Pro";
+      wire = "chat";
+      context = 1000000;
+      vision = false;
+      efforts = [
+        "high"
+        "max"
+      ];
+    }
+    {
+      id = "glm-5.3";
+      name = "GLM-5.3";
+      wire = "chat";
+      context = 1000000;
+      vision = false;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+    }
+    {
+      id = "glm-5.3-flash";
+      name = "GLM-5.3-Flash";
+      wire = "chat";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+    }
+    {
+      id = "hy3";
+      name = "Hy3";
+      wire = "chat";
+      context = 256000;
+      vision = false;
+      efforts = [
+        "low"
+        "high"
+      ];
+    }
+    {
+      id = "hy4-preview";
+      name = "Hy4 preview";
+      wire = "chat";
+      context = 1024000;
+      vision = false;
+      efforts = [ "high" ];
+    }
+    {
+      id = "kimi-k2.7-code";
+      name = "Kimi K2.7 Code";
+      wire = "chat";
+      context = 262144;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "kimi-k3";
+      name = "Kimi K3";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [ "max" ];
+    }
+    {
+      id = "mimo-v2.6-flash";
+      name = "MiMo-V2.6-Flash";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "mimo-v2.6-pro";
+      name = "MiMo-V2.6-Pro";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "minimax-m3.1-flash";
+      name = "MiniMax M3.1 Flash";
+      wire = "chat";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+    }
+    {
+      id = "longcat-2.0";
+      name = "LongCat-2.0";
+      wire = "chat";
+      context = 1000000;
+      vision = false;
+      efforts = [ ];
+    }
+    {
+      id = "step-5-preview";
+      name = "Step 5 Preview";
+      wire = "chat";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+      ];
+    }
+    {
+      id = "beam-free";
+      name = "Beam Free";
+      wire = "chat";
+      context = 1048576;
+      vision = false;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+    }
+    {
+      id = "kimi-k3.1-pro";
+      name = "Kimi K3.1 Pro";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [
+        "low"
+        "high"
+        "max"
+      ];
+    }
+    {
+      id = "iceman-contributor-free";
+      name = "Iceman Contributor Free";
+      wire = "chat";
+      context = 262144;
+      vision = false;
+      efforts = [ ];
+    }
+    {
+      id = "hy4";
+      name = "Hy4";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [ "high" ];
+    }
+    {
+      id = "longcat-2.5-free";
+      name = "LongCat 2.5 Free";
+      wire = "chat";
+      context = 1000000;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "hy4-flash-free";
+      name = "Hy4 flash Free";
+      wire = "chat";
+      context = 1048576;
+      vision = true;
+      efforts = [ "high" ];
+    }
+
+    # responses
+    {
+      id = "grok-4.7";
+      name = "Grok 4.7";
+      wire = "responses";
+      context = 500000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ];
+    }
+    {
+      id = "muse-spark-1.2-contributor";
+      name = "Muse Spark 1.2 Contributor";
+      wire = "responses";
+      context = 1048576;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ];
+    }
+    {
+      id = "muse-spark-1.3-contributor";
+      name = "Muse Spark 1.3 Contributor";
+      wire = "responses";
+      context = 1048576;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ];
+    }
+    {
+      id = "gpt-5.6-luna";
+      name = "GPT-5.6 Luna";
+      wire = "responses";
+      context = 1050000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+    }
+    {
+      id = "gpt-6-luna";
+      name = "GPT-6 Luna";
+      wire = "responses";
+      context = 1050000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+    }
+
+    # messages (Anthropic)
+    {
+      id = "claude-haiku-5-5";
+      name = "Claude Haiku 5.5";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+        "max"
+      ];
+    }
+    {
+      id = "minimax-m3";
+      name = "MiniMax-M3";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "qwen3.8-max";
+      name = "Qwen3.8 Max";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "xhigh"
+      ];
+    }
+    {
+      id = "qwen3.8-flash";
+      name = "Qwen3.8 Flash";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "xhigh"
+      ];
+    }
+    {
+      id = "qwen3.7-plus";
+      name = "Qwen3.7 Plus";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [ ];
+    }
+    {
+      id = "qwen4-max";
+      name = "Qwen4 Max";
+      wire = "messages";
+      context = 1000000;
+      vision = true;
+      efforts = [
+        "low"
+        "high"
+        "xhigh"
+      ];
+    }
+
+    # generate-content (Google)
+    {
+      id = "gemini-4-argon";
+      name = "Gemini 4 Argon";
+      wire = "generate-content";
+      context = 1048576;
+      vision = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+      ];
+    }
+  ];
+
+  # Per-wire base URLs; see opencodeGoModels above for the /v1 conventions.
+  opencodeGoWires = {
+    chat = "https://opencode.ai/inference/go/openai/v1";
+    responses = "https://opencode.ai/inference/go/openai/v1";
+    messages = "https://opencode.ai/inference/go/anthropic";
+    "generate-content" = "https://opencode.ai/inference/go/google";
+  };
+
+  opencodeGoEntry =
+    model:
+    {
+      inherit (model) id;
+      name = "${model.name} (OpenCode Go)";
+      envKey = "OPENCODE_API_KEY";
+      baseUrl = opencodeGoWires.${model.wire};
+      generationConfig = {
+        contextWindowSize = model.context;
+        # "\${...}" escapes the interpolation: the JSON carries the literal
+        # placeholder for qwen's per-request expansion.
+        customHeaders."x-opencode-session" = "\${session_id}";
+      }
+      // lib.optionalAttrs model.vision { modalities.image = true; };
+    }
+    // lib.optionalAttrs (model.wire == "responses") { wireApi = "responses"; }
+    // lib.optionalAttrs (model.efforts != [ ]) {
+      capabilities.reasoning.efforts = model.efforts;
+    };
+
   # Only the catalog, the default selection, the MCP fleet and the Telegram
   # channel are managed: `/model`, `/auth` and the theme picker write the
   # same file, so the merge keeps every other key the TUI has stored. jq's
-  # `*` replaces arrays wholesale, so shrinking the catalog drops the
+  # `*` replaces arrays wholesale, so shrinking a protocol's list drops the
   # retired routes from the live document rather than leaving them past the
-  # managed list's end.
+  # managed list's end; a dropped protocol KEY would linger instead, because
+  # the merge is per-key over modelProviders' three protocol objects.
   qwenSettings = {
-    modelProviders.openai = map qwenModelEntry qwenModels;
+    # The Qwen Cloud / NanoGPT routes and OpenCode Go's two OpenAI wires
+    # share the openai protocol; the gateway's Anthropic and Google wires
+    # sit under their own protocol keys so each model is routed by the wire
+    # the gateway declares for it. /model switches protocol groups and pins
+    # the selection as authType:id plus baseUrl, so the same model id under
+    # two protocols (qwen4-max is served by both the Qwen Cloud
+    # chat-completions route and the Go messages wire) stays two routes.
+    modelProviders = {
+      openai =
+        (map qwenModelEntry qwenModels)
+        ++ (map opencodeGoEntry (
+          lib.filter (m: m.wire == "chat" || m.wire == "responses") opencodeGoModels
+        ));
+      anthropic = map opencodeGoEntry (lib.filter (m: m.wire == "messages") opencodeGoModels);
+      gemini = map opencodeGoEntry (lib.filter (m: m.wire == "generate-content") opencodeGoModels);
+    };
     security.auth.selectedType = "openai";
     model.name = "qwen4-max";
+
+    # The ${session_id} placeholder in the OpenCode Go entries' session
+    # header expands per request only with this on; qwen drops placeholder
+    # header values otherwise (packages/core/src/core/outbound-dynamic-headers.ts
+    # in the v0.28.3 tree).
+    outboundCorrelation.allowDynamicHeaderValues = true;
 
     # The four MCP servers opencode and pi register, plus the email bridge
     # and Google Calendar server opencode, dsh, and Hermes mount, in Qwen
@@ -970,12 +1407,13 @@ let
     '';
   };
 
-  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.28.0
+  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.28.3
   # (pkgs/qwen-code.nix). Wrapped with loadQwenKey because its model catalog
-  # (below) authenticates with QWEN_API_KEY and NANOGPT_API_KEY from the same
-  # sops secrets as the other harnesses, and its Telegram channel needs
-  # TELEGRAM_BOT_TOKEN on top; the gateways, the MCP fleet and the channel
-  # are declared in ~/.qwen/settings.json by home.activation.qwenSettings.
+  # (below) authenticates with QWEN_API_KEY, NANOGPT_API_KEY and
+  # OPENCODE_API_KEY from the same sops secrets as the other harnesses, and
+  # its Telegram channel needs TELEGRAM_BOT_TOKEN on top; the gateways, the
+  # MCP fleet and the channel are declared in ~/.qwen/settings.json by
+  # home.activation.qwenSettings.
   qwen = pkgs.symlinkJoin {
     name = "qwen-wrapped-${pkgs.qwen-code.version}";
     paths = [ pkgs.qwen-code ];
@@ -989,10 +1427,11 @@ let
   # same Web Shell the CLI serves; it bundles its own qwen runtime but reads
   # the same ~/.qwen/settings.json catalog. Wrapped with loadKey for the same
   # reason as opencode-desktop-beta: a .desktop launch inherits no shell
-  # environment, and the catalog authenticates with QWEN_API_KEY and
-  # NANOGPT_API_KEY. loadQwenKey's Telegram token stays channel-only -- the
-  # desktop has no channel to start. The updater is off for the same reason
-  # opencode's autoupdate is: a /nix/store copy cannot write itself.
+  # environment, and the catalog authenticates with QWEN_API_KEY,
+  # NANOGPT_API_KEY and OPENCODE_API_KEY. loadQwenKey's Telegram token stays
+  # channel-only -- the desktop has no channel to start. The updater is off
+  # for the same reason opencode's autoupdate is: a /nix/store copy cannot
+  # write itself.
   qwen-code-desktop = pkgs.symlinkJoin {
     name = "qwen-code-desktop-wrapped-${pkgs.qwen-code-desktop.version}";
     paths = [ pkgs.qwen-code-desktop ];
@@ -2350,8 +2789,8 @@ let
   # the theme picker write it), so the managed catalog and MCP fleet are
   # merged in, Nix keys winning, rather than symlinked. `mcpServers` merges
   # per server, so a server the user added with `qwen mcp add` survives;
-  # `modelProviders.openai` is an array and jq's `*` replaces it wholesale,
-  # which is what retires the old catalog entries.
+  # each `modelProviders.<protocol>` list is an array and jq's `*` replaces
+  # arrays wholesale, which is what retires the old catalog entries.
   qwenSettingsMerge = pkgs.writeShellScript "qwen-settings-merge" ''
     set -eu
     settings="$HOME/.qwen/settings.json"

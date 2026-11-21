@@ -30,10 +30,17 @@
 #
 # The shell is a thin Tauri 2 wrapper: it spawns `qwen serve` from a bundled
 # runtime and opens the daemon-served Web Shell. The runtime is assembled
-# from the CLI this flake already builds (the desktop and CLI release tags
-# point at the same commit) plus nodejs_22 (.nvmrc major 22): qwen-code's
-# share/qwen-code is exactly the dist/ + production node_modules layout the
-# upstream prepare-runtime.js stages into lib/, node-pty prebuilds included.
+# from the CLI this flake already builds plus nodejs_22 (.nvmrc major 22):
+# qwen-code's share/qwen-code is exactly the dist/ + production node_modules
+# layout the upstream prepare-runtime.js stages into lib/, node-pty prebuilds
+# included. The desktop release line lags the CLI line -- desktop-v0.28.0
+# (2026-11-17) is still the newest desktop release, three days older than CLI
+# v0.28.3 -- so the shell tag stays at the latest desktop release while the
+# bundled runtime follows the flake's CLI. That is the same deliberate reuse
+# as before, just with versions that no longer coincide, and manifest.json
+# records both (qwenCodeVersion/qwenCodeCommit name the runtime, not the
+# shell tag). v0.28.3's release notes claim no breaking changes for the
+# serve/Web Shell contract.
 # cargo-tauri.hook bundles a deb whose usr/lib/<productName>/runtime/qwen-code
 # layout is what Tauri's resource_dir() resolves against the installed bin,
 # so no QWEN_DESKTOP_RUNTIME_DIR override is needed. The home-manager wrapper
@@ -41,9 +48,10 @@
 let
   version = "0.28.0";
 
-  # The commit both release tags resolve to; upstream's manifest.json carries
-  # it as qwenCodeCommit.
-  commit = "895dfca8ff125ac0e16372edacd4653322c02147";
+  # The bundled CLI runtime's commit (v0.28.3); upstream's manifest.json
+  # carries it as qwenCodeCommit. The desktop shell's own tag points at the
+  # desktop-v0.28.0 commit only because the desktop line has not caught up.
+  commit = "99fcf89892f1a3a8027c75468546c7e7be906245";
 
   desktopTarget =
     {
@@ -161,6 +169,7 @@ rustPlatform.buildRustPackage {
 
     RUNTIME_ROOT="$out/lib/Qwen Code Desktop/runtime/qwen-code" \
     DESKTOP_VERSION="${version}" \
+    QWEN_VERSION="${qwen-code.version}" \
     QWEN_COMMIT="${commit}" \
     DESKTOP_TARGET="${desktopTarget}" \
     ${nodejs_22}/bin/node -e '
@@ -182,7 +191,7 @@ rustPlatform.buildRustPackage {
       fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify({
         name: "@qwen-code/qwen-code",
         desktopVersion: process.env.DESKTOP_VERSION,
-        qwenCodeVersion: process.env.DESKTOP_VERSION,
+        qwenCodeVersion: process.env.QWEN_VERSION,
         qwenCodeCommit: process.env.QWEN_COMMIT,
         target: process.env.DESKTOP_TARGET,
         node: "v" + process.versions.node,
