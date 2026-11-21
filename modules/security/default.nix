@@ -1,4 +1,4 @@
-_: {
+{ lib, ... }: {
   # Remote `nixos-rebuild --elevate=run0` runs `systemd-run --uid=0` inside
   # an SSH session, where polkit has no TTY to prompt on. The supported
   # alternative is the target-architecture `polkit-stdin-agent`; ship it in
@@ -11,6 +11,12 @@ _: {
       acceptTerms = true;
       defaults = {
         email = "codebam@riseup.net";
+      };
+    };
+
+    wrappers = {
+      pkexec = {
+        enable = lib.mkForce false;
       };
     };
 
