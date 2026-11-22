@@ -18,6 +18,8 @@ _:
     ./programs.nix
     ./agents.nix
     ./hermes.nix
+    # /rewrite: one prompt-improver across all harnesses
+    ./rewrite.nix
     ./voxtype.nix
   ];
 }
