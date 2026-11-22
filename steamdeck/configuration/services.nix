@@ -1,4 +1,4 @@
-_:
+{ lib, ... }:
 
 {
   services = {
@@ -10,10 +10,11 @@ _:
     # plasma6.nix sets this with mkDefault; same choice as the desktop
     # (desktop/configuration/plasma.nix), for the same closure reason.
     orca.enable = false;
-    # scx-loader config comes from modules/services/default.nix, which is
-    # off; only the desktop opts in through the main-snapshot overlay in
-    # modules/system/nixpkgs.nix. The plain false there also keeps Jovian's
-    # mkDefault true from turning scx on here.
+    # The shared module leaves scx-loader off with a plain false; opt the
+    # Deck in so it uses the game-tuned cake from the main snapshot pinned in
+    # modules/system/nixpkgs.nix. Jovian's own scx unit is disabled below --
+    # two schedulers cannot both own sched_ext's root/ops.
+    scx-loader.enable = lib.mkForce true;
     lsfg-vk = {
       enable = true;
       ui.enable = true;
@@ -30,6 +31,12 @@ _:
       HandleHibernateKey = "ignore";
     };
   };
+
+  # Jovian's steam module starts its own scx_lavd from jovianPackages.scx-scheds,
+  # gated on /sys/kernel/sched_ext. With scx-loader enabled above it would
+  # compete for the sched_ext root, so turn the vendor unit off. mkForce is
+  # needed because Jovian sets enable = true as a plain value.
+  systemd.services.scx.enable = lib.mkForce false;
 
   # Plasma's module turns the KDE PIM suite on by default -- akonadi, KMail
   # and Kontact, with akonadi autostarting in the session. Same choice as the
