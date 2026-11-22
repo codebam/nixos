@@ -66,7 +66,7 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── programs/                # nix-index, UWSM/sway, fish, wireshark, gnupg,
 │   │                              gaming (Steam/Gamescope), sops-pass
 │   ├── security/                # ACME, polkit, apparmor, rtkit, no sudo
-│   ├── services/                # scx_lavd, tailscale, pipewire, openssh, ...
+│   ├── services/                # scx-loader, tailscale, pipewire, openssh, ...
 │   ├── stylix/                  # kanagawa scheme, Papirus icons, capitaine cursor,
 │   │                              JetBrainsMono Nerd Font, neon wallpaper
 │   ├── system/                  # boot, cleanup-root, env, fonts, journald,

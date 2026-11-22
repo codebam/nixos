@@ -10,7 +10,7 @@ _:
     # plasma6.nix sets this with mkDefault; same choice as the desktop
     # (desktop/configuration/plasma.nix), for the same closure reason.
     orca.enable = false;
-    # scx/scx_lavd config comes from modules/services/default.nix, which is
+    # scx-loader config comes from modules/services/default.nix, which is
     # off; only the desktop opts in through the main-snapshot overlay in
     # modules/system/nixpkgs.nix. The plain false there also keeps Jovian's
     # mkDefault true from turning scx on here.

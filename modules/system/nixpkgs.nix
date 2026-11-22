@@ -60,31 +60,29 @@
 
             # scx_lavd 1.1.3 regressed on kernel 7.2 (a migration-disabled
             # task affine to one CPU was never dispatched and sat out the RCU
-            # stall timeout); nixpkgs had reverted to 1.1.2, which is why this
-            # pin exists. nixpkgs now carries 1.1.4, which contains the fix
-            # (upstream 6d31ddd8973), so master is tracked here only for the
-            # scx_lavd work that landed after that tag: per-compute-domain
-            # idle tracking, the uclamp/perf-target fix and the load-balance
-            # band cap. Pin by commit, not branch, so this rebuilds
-            # identically; importCargoLock reads the matching Cargo.lock
-            # instead of a cargoHash, so no tag hash can drift onto a
-            # different dependency set. Drop this attr to fall back to
-            # nixpkgs' 1.1.4 if master breaks.
+            # stall timeout); nixpkgs carries 1.1.4, which contains the fix
+            # (upstream 6d31ddd8973). This pin now exists for scx_cake: the
+            # desktop moved off lavd to the game-tuned cake, and main ships a
+            # much newer cake (1.4.2) than the 1.2.2 in nixpkgs' 1.1.4 tag.
+            # Pin by commit, not branch, so this rebuilds identically;
+            # importCargoLock reads the matching Cargo.lock instead of a
+            # cargoHash, so no tag hash can drift onto a different dependency
+            # set. Drop this attr to fall back to nixpkgs' older cake.
             scx =
               let
                 rustscheds = prev.scx.rustscheds.overrideAttrs (old: {
-                  version = "1.1.4-unstable-2026-11-18";
+                  version = "1.1.4-unstable-2026-11-21";
                   src = prev.fetchFromGitHub {
                     owner = "sched-ext";
                     repo = "scx";
-                    rev = "35c423e7f11939e40477b8abc281c061e90cda91";
-                    hash = "sha256-K93c78paDqS3cntno/RepuFHfrUYYhQoFDghZlw8B7A=";
+                    rev = "0d149b2aa848e3115acaf505c3e8b41550aa34ea";
+                    hash = "sha256-w8NqYmcTo4Ip1dh8pIE4q5kVIXMBEOvlc2e+xFDWgNI=";
                   };
                   cargoDeps = prev.rustPlatform.importCargoLock {
                     lockFileContents = builtins.readFile (
                       builtins.fetchurl {
-                        url = "https://raw.githubusercontent.com/sched-ext/scx/35c423e7f11939e40477b8abc281c061e90cda91/Cargo.lock";
-                        sha256 = "5fc53440cb21f19030339dade20dc3d6c000244968442fa5d487c1fbc337a714";
+                        url = "https://raw.githubusercontent.com/sched-ext/scx/0d149b2aa848e3115acaf505c3e8b41550aa34ea/Cargo.lock";
+                        sha256 = "b0c1787a6041e5a32dcbcd8925d5f24686dcd3c7eb47feeca31e6f3809212ffe";
                       }
                     );
                   };
@@ -92,11 +90,11 @@
                   # reason to compile the other twenty-odd workspace bins on
                   # every nixpkgs bump.
                   env = (old.env or { }) // {
-                    cargoBuildFlags = "--package scx_lavd";
+                    cargoBuildFlags = "--package scx_cake";
                   };
                   postInstall = "";
                   passthru = (old.passthru or { }) // {
-                    schedulers = [ "scx_lavd" ];
+                    schedulers = [ "scx_cake" ];
                   };
                   __intentionallyOverridingVersion = true;
                 });

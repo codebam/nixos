@@ -3,22 +3,19 @@
   imports = [ ./smartd.nix ];
 
   services = {
-    # Off: scx_lavd 1.1.3 regressed on kernel 7.2 -- a task that is
-    # migration-disabled and affine to a single CPU is never dispatched onto
-    # that CPU, so it waits out the 21s RCU stall timeout in idle_sched_class
-    # and the kernel ejects the scheduler (103 ejections in one 3-hour boot;
-    # Firefox threads in systemd's migrate-disabled BPF hooks took the worst
-    # of it). Upstream fixed this after the 1.1.3 tag in 6d31ddd8973, and the
-    # fix is in 1.1.4, which is what nixpkgs ships now; the desktop still
-    # runs the master snapshot pinned in modules/system/nixpkgs.nix because
-    # it carries the scx_lavd work from after that tag. sched-ext stays
-    # opt-in: desktop turns it on with mkForce below, the other hosts stay on
-    # EEVDF.
+    # Off: sched-ext stays opt-in -- desktop turns it on with mkForce in
+    # desktop/configuration/services.nix, the other hosts stay on EEVDF.
+    # The desktop's default was scx_lavd until 1.1.3 regressed on kernel 7.2
+    # (a migration-disabled, single-CPU-affine task was never dispatched and
+    # waited out the 21s RCU stall timeout; fixed upstream in 6d31ddd8973 and
+    # shipped in 1.1.4). It now runs scx_cake from the main snapshot pinned in
+    # modules/system/nixpkgs.nix: cake is game-tuned and is newer there than
+    # in nixpkgs' 1.1.4 tag.
     # nixpkgs 26.11 removed services.scx in favour of the scx-loader daemon
     # (services.scx-loader); default_sched replaces the old `scheduler`.
     scx-loader = {
       enable = false;
-      config.default_sched = "scx_lavd"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_lavd/README.md
+      config.default_sched = "scx_cake"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_cake/README.md
     };
     # Portals are already set up for sway in modules/system/xdg.nix, which is
     # what flatpak apps need to reach files, screenshare, and the theme.
