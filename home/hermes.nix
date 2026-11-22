@@ -11,6 +11,9 @@ let
   isDesktop = osConfig.networking.hostName == "nixos-desktop";
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
   calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
+  # The Viewport computer-use MCP server, registered the same way in
+  # home/agents.nix for qwen, opencode and pi.
+  viewportMcp = import ./viewport-mcp.nix { inherit pkgs; };
 
   # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block. home/cf.nix defines
   # the text once (host tiers get `guidance`, the sandbox tiers below get
@@ -28,6 +31,7 @@ let
   # `mcp__<server>__<tool>` form like dsh.
   agentMemory = import ./agent-memory.nix;
   memoryGuidance = "\n\n" + agentMemory.guidanceMcp;
+  viewportGuidance = "\n\n" + viewportMcp.guidance;
 
   # The hermes package every Hermes surface runs: the CLI on PATH, the
   # services, and the desktop app (which uses its `hermesDesktop` passthru).
@@ -297,6 +301,15 @@ in
         command = calendarMcp.launcher;
       };
 
+      # Viewport computer use (home/viewport-mcp.nix): the same stdio server
+      # qwen, opencode and pi mount. The launcher pins the session's own
+      # `viewport msg` client and grim, so a Hermes service with no Wayland
+      # environment can still reach the desktop.
+      ${viewportMcp.name} = {
+        command = builtins.head viewportMcp.argv;
+        args = builtins.tail viewportMcp.argv;
+      };
+
       # Shared agent-memory knowledge graph (home/agent-memory.nix): a remote
       # Streamable HTTP row onto the one `agent-memory` unit, not a stdio
       # spawn -- the JSONL store takes no cross-process lock, so the single
@@ -343,9 +356,19 @@ in
       # off below, so this text is the replacement.
       agent = {
         environment_hint =
-          emailMcp.policy + cfCli.guidance + commitTrailer.guidance + standingFacts + memoryGuidance;
+          emailMcp.policy
+          + cfCli.guidance
+          + commitTrailer.guidance
+          + standingFacts
+          + memoryGuidance
+          + viewportGuidance;
         coding_instructions =
-          emailMcp.policy + cfCli.guidance + commitTrailer.guidance + standingFacts + memoryGuidance;
+          emailMcp.policy
+          + cfCli.guidance
+          + commitTrailer.guidance
+          + standingFacts
+          + memoryGuidance
+          + viewportGuidance;
         # Top tier of the Go relay's reasoning_effort knob for the DeepSeek V4
         # family (low/high/max; Hermes' xhigh maps onto max). The main loop on
         # every route asks for max and each route clamps onto the levels it

@@ -103,6 +103,12 @@ rec {
   # copies it into $DSH_HOME next to the profile's node_modules.
   dsh-tool-viewport = pkgs.callPackage ./dsh-tool-viewport.nix { };
 
+  # The same desktop control as a standard MCP stdio server, so the harnesses
+  # that cannot load dsh plugins get computer use too. It reuses the pinned
+  # dsh-tool-viewport protocol modules; only the transport and result shapes
+  # differ. See pkgs/mcp-viewport.nix.
+  mcp-viewport = pkgs.callPackage ./mcp-viewport.nix { inherit dsh-tool-viewport; };
+
   # OpenCode's v2 CLI from npm (@opencode/cli, installed as `opencode`): the
   # derivation pins the registry's per-platform binary tarballs directly.
   opencode-cli = pkgs.callPackage ./opencode-cli.nix { };

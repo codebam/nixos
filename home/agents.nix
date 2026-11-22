@@ -1172,9 +1172,9 @@ let
     # in the v0.28.3 tree).
     outboundCorrelation.allowDynamicHeaderValues = true;
 
-    # The four MCP servers opencode and pi register, plus the email bridge
-    # and Google Calendar server opencode, dsh, and Hermes mount, in Qwen
-    # Code's MCPServerConfig shape: stdio keeps `command` and `args` apart,
+    # The four MCP servers opencode and pi register, plus the email bridge,
+    # Google Calendar and Viewport computer use that opencode, dsh and Hermes
+    # also mount, in Qwen Code's MCPServerConfig shape: stdio keeps `command` and `args` apart,
     # `timeout` is the tool-call timeout in ms, and streamable HTTP is
     # `httpUrl` (`url` would select SSE). User-scope servers connect without
     # the approval gate that project-level servers (.qwen/settings.json,
@@ -1242,6 +1242,17 @@ let
       # policy text like the email server's.
       ${calendarMcp.name} = {
         command = calendarMcp.launcher;
+      };
+
+      # Viewport desktop control (home/viewport-mcp.nix): the stdio server
+      # pins the session's own `viewport msg` client and grim, so it can drive
+      # the real desktop without depending on the harness shell's PATH. The
+      # server and grim store paths are baked into the launcher, so a desktop
+      # launch with a minimal environment still reaches the control socket.
+      ${viewportMcp.name} = {
+        command = builtins.head viewportMcp.argv;
+        args = builtins.tail viewportMcp.argv;
+        timeout = viewportMcp.timeoutMs;
       };
     };
   }
@@ -2187,6 +2198,11 @@ let
   # across the root wipe.
   calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
 
+  # Viewport computer use: the same stdio MCP server Hermes mounts, shared so
+  # the server name, argv and standing guidance cannot drift. dsh keeps its
+  # native `viewport` plugin; the others get this bridge.
+  viewportMcp = import ./viewport-mcp.nix { inherit pkgs; };
+
   # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block: home/cf.nix defines
   # the text once -- `guidance` for host tiers, `guidanceSandbox` for the dsh
   # and opencode sandbox worlds -- and home/hermes.nix interpolates the same
@@ -3027,6 +3043,9 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
+        <!-- VIEWPORT_START -->
+        ${viewportMcp.guidance}
+        <!-- VIEWPORT_END -->
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
@@ -3058,6 +3077,9 @@ in
 
         ${zgGuidance}
         <!-- ZVEC_GREP_END -->
+        <!-- VIEWPORT_START -->
+        ${viewportMcp.guidance}
+        <!-- VIEWPORT_END -->
       '';
 
       # dsh reads exactly one user-global instruction file, `$DSH_HOME/AGENTS.md`,
@@ -3274,8 +3296,8 @@ in
         autoupdate = false;
         share = "disabled";
 
-        # All six MCP servers live under one `mcp` key: statix's repeated-keys
-        # lint (W20) flags six sibling `mcp.<name>` assignments, the same
+        # All seven MCP servers live under one `mcp` key: statix's repeated-keys
+        # lint (W20) flags seven sibling `mcp.<name>` assignments, the same
         # reason `xdg.configFile` above is nested rather than flat.
         mcp = {
           # Declarative equivalent of `zg --install --target opencode
@@ -3369,6 +3391,17 @@ in
             command = [ calendarMcp.launcher ];
             enabled = true;
             timeout = 180000;
+          };
+
+          # Viewport computer use (home/viewport-mcp.nix): the same stdio
+          # server Qwen, pi and Hermes mount. Its launcher pins the session's
+          # own `viewport msg` client and grim, so opencode needs no desktop
+          # PATH to reach the live session.
+          ${viewportMcp.name} = {
+            type = "local";
+            command = viewportMcp.argv;
+            enabled = true;
+            timeout = viewportMcp.timeoutMs;
           };
 
         };
@@ -3534,6 +3567,9 @@ in
         <!-- MEMORY_START -->
         ${memoryGuidance}
         <!-- MEMORY_END -->
+        <!-- VIEWPORT_START -->
+        ${viewportMcp.guidance}
+        <!-- VIEWPORT_END -->
         <!-- CF_START -->
         ${cfCli.guidance}
         <!-- CF_END -->
@@ -3578,7 +3614,7 @@ in
       # naming since 2.32), matching `zgGuidance`, so that text is worth
       # re-checking if the server name or the adapter's naming mode ever changes.
       "mcp/mcp.json".text = builtins.toJSON {
-        # All four servers under one `mcpServers` key (statix W20; see the
+        # All five servers under one `mcpServers` key (statix W20; see the
         # opencode block above).
         mcpServers = {
           ${zgServerName} = {
@@ -3678,6 +3714,31 @@ in
               "observation"
               "fact"
               "decision"
+            ];
+          };
+
+          # Viewport computer use: reached through the same lazy proxy, so the
+          # tool costs no context until a search names it. The keywords carry
+          # the words a task uses when the model needs to see or drive the
+          # screen; `viewport` is the server name and the upstream tool name,
+          # so the address is `mcp__viewport__viewport`.
+          ${viewportMcp.name} = {
+            command = builtins.head viewportMcp.argv;
+            args = builtins.tail viewportMcp.argv;
+            requestTimeoutMs = viewportMcp.timeoutMs;
+            searchKeywords."*" = [
+              "viewport"
+              "desktop"
+              "computer use"
+              "screenshot"
+              "screen"
+              "pointer"
+              "mouse"
+              "click"
+              "scroll"
+              "keyboard"
+              "type"
+              "gui"
             ];
           };
 
