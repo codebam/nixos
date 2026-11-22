@@ -33,6 +33,32 @@
             inherit prev;
           })
           // {
+            # nixpkgs ships 0.40.16, while 0.40.17 moves its pinned llama.cpp
+            # from b12177 to b12257. postPatch asserts that pin, so src,
+            # vendorHash and both passthru llama.cpp attributes have to move
+            # together. The desktop serves Ollama through the Vulkan/RADV
+            # backend rather than the ROCm one selected by config.rocmSupport.
+            ollama-vulkan = prev.ollama-vulkan.overrideAttrs (old: {
+              version = "0.40.17";
+              src = prev.fetchFromGitHub {
+                owner = "ollama";
+                repo = "ollama";
+                tag = "v0.40.17";
+                hash = "sha256-PyZVSRttWuHG8zrEuKo3Q1r6O1SI8whj1IJV32cHmcU=";
+              };
+              vendorHash = "sha256-1mzJrZUHH2ouP6I+LVojHbft7No5AumqKZVq0I/Ubsg=";
+              passthru = old.passthru // {
+                llamaCppVersion = "b12257";
+                llamaCppSrc = prev.fetchFromGitHub {
+                  owner = "ggml-org";
+                  repo = "llama.cpp";
+                  tag = "b12257";
+                  hash = "sha256-lOtgL6pGoDaf5wK2y37AyycU0J4BoYvxfVl1h28HbUU=";
+                };
+              };
+              __intentionallyOverridingVersion = true;
+            });
+
             # yt-dlp needs a JS runtime to solve YouTube's nsig challenge, and
             # nixpkgs defaults `jsRuntime` to deno -- 251 MB, pulled into this
             # closure transitively by mpv. quickjs-ng runs the same extractor

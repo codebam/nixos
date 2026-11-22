@@ -515,6 +515,7 @@ in
     };
     ollama = {
       enable = true;
+      package = pkgs.ollama-vulkan;
       # Loopback only. The API has no authentication of any kind: it runs and
       # pulls arbitrary models for whoever reaches the port. On 0.0.0.0 that
       # was everything on the tailnet and every libvirt guest, because
@@ -522,7 +523,6 @@ in
       # closed firewall port was doing nothing for those two.
       host = "127.0.0.1";
       environmentVariables = {
-        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
         # Quarters KV cache memory against f16, which is what buys the context
         # length on a 24 GiB card. qwen3-coder:30b spends 27 MiB of KV per 1k
         # context here, so 17524 MiB of weights leaves room for roughly 192k
