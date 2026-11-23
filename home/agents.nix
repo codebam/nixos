@@ -1133,6 +1133,13 @@ let
     }
   ];
 
+  # The appservice bridge lists models from two sources: this JSON (the full
+  # opencode-go catalog) and the provider routes in ~/.dsh/settings.yaml via
+  # yq, so !models reflects the same set the web profile can actually use.
+  matrixBridgeModels = pkgs.writeText "matrix-bridge-models.json" (
+    builtins.toJSON (map (model: { inherit (model) id name; }) opencodeGoModels)
+  );
+
   # Per-wire base URLs; see opencodeGoModels above for the /v1 conventions.
   opencodeGoWires = {
     chat = "https://opencode.ai/inference/go/openai/v1";
@@ -3969,7 +3976,9 @@ in
           "MATRIX_BRIDGE_HOMESERVER=https://codebam.ca"
           "MATRIX_BRIDGE_BOT_USER=@dshbot:codebam.ca"
           "MATRIX_BRIDGE_ALLOWED_USER=@codebam:codebam.ca"
-          "MATRIX_BRIDGE_MODELS=deepseek-flash,deepseek-chat,deepseek-reasoner"
+          "MATRIX_BRIDGE_YQ=${lib.getExe pkgs.yq-go}"
+          "MATRIX_BRIDGE_SETTINGS_FILE=${config.home.homeDirectory}/.dsh/settings.yaml"
+          "MATRIX_BRIDGE_MODELS_FILE=${matrixBridgeModels}"
           "MATRIX_BRIDGE_STATE_DIR=%h/.local/share/matrix-bridge"
           "MATRIX_BRIDGE_DSH=${config.home.profileDirectory}/bin/dsh"
           "MATRIX_BRIDGE_HS_TOKEN_FILE=${osConfig.sops.secrets.matrix-bridge-hs-token.path}"

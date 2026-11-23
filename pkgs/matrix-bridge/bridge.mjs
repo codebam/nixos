@@ -23,8 +23,9 @@ const HS_TOKEN_FILE = process.env.MATRIX_BRIDGE_HS_TOKEN_FILE
 const BOT_TOKEN_FILE = process.env.MATRIX_BRIDGE_BOT_TOKEN_FILE
 const BOT_USER = process.env.MATRIX_BRIDGE_BOT_USER ?? '@dshbot:codebam.ca'
 const ALLOWED_USER = process.env.MATRIX_BRIDGE_ALLOWED_USER ?? '@codebam:codebam.ca'
-const MODELS = (process.env.MATRIX_BRIDGE_MODELS ?? 'deepseek-flash,deepseek-chat,deepseek-reasoner')
-  .split(',').map((item) => item.trim()).filter(Boolean)
+const YQ = process.env.MATRIX_BRIDGE_YQ
+const SETTINGS_FILE = process.env.MATRIX_BRIDGE_SETTINGS_FILE
+const OPENCODE_MODELS_FILE = process.env.MATRIX_BRIDGE_MODELS_FILE
 const DEFAULT_PROVIDER = process.env.MATRIX_BRIDGE_PROVIDER ?? 'deepseek-official'
 const MAX_CHUNK = 3800
 const DSH_TIMEOUT_MS = 10 * 60 * 1000
@@ -42,6 +43,60 @@ function readSecret(file) {
 const hsToken = readSecret(HS_TOKEN_FILE)
 const botToken = readSecret(BOT_TOKEN_FILE)
 const stateFile = path.join(STATE_DIR, 'state.json')
+
+function readJsonFile(file, fallback) {
+  if (!file || !fs.existsSync(file)) return fallback
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return fallback
+  }
+}
+
+// The dsh web profile's provider routes live in ~/.dsh/settings.yaml. yq
+// converts that YAML into the JSON we need both for listing models and for
+// mounting the same routes into the headless run when a model is selected.
+function loadProviders() {
+  if (!YQ || !SETTINGS_FILE || !fs.existsSync(SETTINGS_FILE)) return {}
+  const result = spawnSync(YQ, [ '-o=json', '.llm-pi-ai.providers', SETTINGS_FILE ], {
+    encoding: 'utf8',
+    timeout: 10_000,
+  })
+  if (result.status !== 0) {
+    console.error('matrix-bridge: could not read provider catalog:', (result.stderr ?? '').trim().slice(0, 300))
+    return {}
+  }
+  try {
+    const parsed = JSON.parse(result.stdout)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+const providers = loadProviders()
+const catalog = []
+for (const [provider, config] of Object.entries(providers)) {
+  if (!Array.isArray(config?.models)) continue
+  for (const model of config.models) {
+    if (typeof model?.id !== 'string') continue
+    catalog.push({ id: `${provider}/${model.id}`, provider, model: model.id, name: model.name ?? model.id })
+  }
+}
+for (const model of readJsonFile(OPENCODE_MODELS_FILE, [])) {
+  if (typeof model?.id !== 'string') continue
+  catalog.push({ id: `opencode-go/${model.id}`, provider: 'opencode-go', model: model.id, name: model.name ?? model.id })
+}
+for (const model of [ 'deepseek-flash', 'deepseek-chat', 'deepseek-reasoner' ]) {
+  catalog.push({ id: `${DEFAULT_PROVIDER}/${model}`, provider: DEFAULT_PROVIDER, model, name: model })
+}
+const seenModels = new Set()
+const MODELS = catalog.filter((entry) => {
+  if (seenModels.has(entry.id)) return false
+  seenModels.add(entry.id)
+  return true
+})
+console.log(`matrix-bridge: ${MODELS.length} models available`)
 
 fs.mkdirSync(STATE_DIR, { recursive: true })
 let state = { transactions: [], events: [], rooms: {} }
@@ -122,16 +177,37 @@ function roomDir(roomId) {
   return dir
 }
 
-function writeModelPatch(roomId, model) {
-  if (!/^[A-Za-z0-9._-]+$/.test(model) || !/^[A-Za-z0-9._-]+$/.test(DEFAULT_PROVIDER)) {
+function writeModelPatch(roomId, provider, model) {
+  if (!/^[A-Za-z0-9._:/-]+$/.test(provider) || !/^[A-Za-z0-9._:-]+$/.test(model)) {
     throw new Error('invalid model or provider name')
   }
+  const patch = [
+    {
+      id: 'llm-pi-ai',
+      name: '@deepseek-ai/dsh-llm-pi-ai',
+      config: { providers },
+    },
+    {
+      id: 'agent-default-model',
+      config: { provider, model },
+    },
+  ]
+  let body
+  if (YQ) {
+    const result = spawnSync(YQ, [ '-p=json', '-o=yaml' ], {
+      input: JSON.stringify(patch),
+      encoding: 'utf8',
+      timeout: 10_000,
+    })
+    if (result.status === 0) body = result.stdout
+  }
+  if (!body) {
+    // Fallback still switches the default route, but cannot mount the full
+    // provider catalog in a headless profile without yq.
+    body = `- id: agent-default-model\n  config:\n    provider: ${provider}\n    model: ${model}\n`
+  }
   const file = path.join(roomDir(roomId), 'model.patch.yml')
-  fs.writeFileSync(
-    file,
-    `- id: agent-default-model\n  config:\n    provider: ${DEFAULT_PROVIDER}\n    model: ${model}\n`,
-    { mode: 0o600 },
-  )
+  fs.writeFileSync(file, body, { mode: 0o600 })
   return file
 }
 
@@ -142,8 +218,10 @@ function runDsh(roomId, prompt) {
     '--permission-mode', 'danger-full-access',
     '--approval-policy', 'never',
   ]
-  const selectedModel = state.rooms[roomId]?.model
-  if (selectedModel) args.push('--patch', writeModelPatch(roomId, selectedModel))
+  const selected = state.rooms[roomId]
+  if (selected?.model) {
+    args.push('--patch', writeModelPatch(roomId, selected.provider ?? DEFAULT_PROVIDER, selected.model))
+  }
   const sessionId = state.rooms[roomId]?.sessionId
   if (sessionId) args.push('--session-id', sessionId)
   args.push(prompt)
@@ -227,24 +305,32 @@ async function handleMessage(roomId, eventId, sender, text) {
     await sendText(roomId, eventId, 'Started a fresh session.')
     return
   }
+  const modelList = MODELS.map((entry) => `${entry.id}${entry.name && entry.name !== entry.model ? ` — ${entry.name}` : ''}`).join('\n')
+  const currentSelection = state.rooms[roomId]?.model
+    ? `${state.rooms[roomId].provider ?? DEFAULT_PROVIDER}/${state.rooms[roomId].model}`
+    : `default (${DEFAULT_PROVIDER}/deepseek-flash)`
   if (command === 'models') {
-    await sendText(roomId, eventId, `Models: ${MODELS.join(', ')}`)
+    await sendText(roomId, eventId, `Available models:\n${modelList}`)
     return
   }
   if (command === 'model') {
     if (argument === '') {
-      const current = state.rooms[roomId]?.model ?? MODELS[0]
-      await sendText(roomId, eventId, `Models: ${MODELS.join(', ')}\nCurrent: ${current}\n!model <id> switches (starts a fresh session).`)
+      await sendText(roomId, eventId, `Current: ${currentSelection}\n\nAvailable models:\n${modelList}\n\n!model <provider/model> switches (starts a fresh session).`)
       return
     }
-    if (!MODELS.includes(argument)) {
-      await sendText(roomId, eventId, `Unknown model "${argument}". Available: ${MODELS.join(', ')}`)
+    let selected = MODELS.find((entry) => entry.id === argument)
+    if (!selected) {
+      const matches = MODELS.filter((entry) => entry.model === argument)
+      if (matches.length === 1) selected = matches[0]
+    }
+    if (!selected) {
+      await sendText(roomId, eventId, `Unknown model "${argument}". Send !models for the list.`)
       return
     }
-    state.rooms[roomId] = { ...(state.rooms[roomId] ?? {}), model: argument }
+    state.rooms[roomId] = { ...(state.rooms[roomId] ?? {}), provider: selected.provider, model: selected.model }
     delete state.rooms[roomId].sessionId
     saveState()
-    await sendText(roomId, eventId, `Model set to ${argument}. Next message starts a fresh session.`)
+    await sendText(roomId, eventId, `Model set to ${selected.id}. Next !prompt starts a fresh session.`)
     return
   }
   if (command === 'session') {
