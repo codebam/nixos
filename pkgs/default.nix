@@ -90,6 +90,16 @@ rec {
   # --expose-internals (its HMR plugin requires it). See pkgs/dsh.nix.
   dsh = pkgs.callPackage ./dsh.nix { };
 
+  # @xmanrui/dsh-im: the npm IM bridge (Telegram, WhatsApp, Slack, ...).
+  # The registry ships prebuilt lib/ and no lockfile; pkgs/dsh-im.nix vendors
+  # the lock and packages the full runtime dependency tree for the dsh web
+  # profile. home/agents.nix stages it into $DSH_HOME.
+  dsh-im = pkgs.callPackage ./dsh-im.nix { };
+
+  # Appservice webhook bridge for the Matrix channel. Replaces dsh-im's
+  # /sync-based Matrix transport so the homeserver pushes events instead.
+  matrix-bridge = pkgs.callPackage ./matrix-bridge.nix { };
+
   # dsh's model-facing Nushell (`nu`) tool. It consumes the existing ctx.shell
   # provider (bash-sandbox in dsh's built-in world), so the stock bash tool and
   # execution world stay mounted; home/agents.nix copies it into $DSH_HOME next

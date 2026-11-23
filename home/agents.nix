@@ -141,6 +141,21 @@ let
     fi
   '';
 
+  # dsh-im resolves channel credentials through DSH's credential service,
+  # which falls back to environment variables named after each ref. Export the
+  # Telegram ref here so the bridge never needs the token in its config file.
+  # The Matrix channel moved to the appservice webhook bridge; only dsh-web
+  # sources this loader.
+  loadDshImKeys = pkgs.writeShellScript "dsh-im-load-env" ''
+    tg_secret=/run/secrets/qwen-bot-telegram-key
+    if [ -r "$tg_secret" ]; then
+      value=$(cat "$tg_secret")
+      if [ -n "$value" ]; then
+        export DSH_TELEGRAM_BOT_TOKEN_0CF592520BDA08A127119D35="$value"
+      fi
+    fi
+  '';
+
   # OpenRouter's Pareto Code Router picks a coder per request off the current
   # price/capability frontier, so there is no fixed per-token price to quote.
   # The floor below is what keeps it from bottoming out on a weak one.
@@ -1264,6 +1279,7 @@ let
       };
     };
   }
+  # Retained but unused: dsh-im owns the Telegram token and bot now.
   # The Telegram bot that replaced the Hermes gateway, on the same bot token
   # (qwen-bot-telegram-key, exported by loadQwenKey). Desktop-only: that is
   # where the secret mounts and where the qwen-telegram service below runs.
@@ -1851,6 +1867,9 @@ let
       set -eu
       # shellcheck source=/dev/null
       . ${loadDshKey}
+      # dsh-im's channel credential refs (Telegram, Matrix) come from sops.
+      # shellcheck source=/dev/null
+      . ${loadDshImKeys}
       authority=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
       exec ${lib.getExe pkgs.dsh} web \
         --host 127.0.0.1 \
@@ -3031,6 +3050,29 @@ in
           run ${pkgs.coreutils}/bin/ln -sfn "$HOME/.dsh/profiles/node_modules" "$HOME/.dsh/profiles/viewport-tool/node_modules"
         ''
       );
+
+      # @xmanrui/dsh-im (pkgs/dsh-im.nix): the multi-channel IM bridge.
+      # Staged into the web profile's node_modules and registered in its
+      # manifest the same way `dsh plugin --profile web add -w` would, but
+      # from the store: no pnpm, no network, and a pinned npm lockfile.
+      # Channel credentials are bound per bot in the web UI and never live
+      # in this repo. Desktop-only -- that is where dsh-web runs.
+      dshImPlugin = lib.mkIf isDesktop (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          profile="$HOME/.dsh/profiles/web"
+          target="$profile/node_modules/@xmanrui/dsh-im"
+          run ${pkgs.coreutils}/bin/install -d -m 0755 "$profile/node_modules/@xmanrui"
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$target" 2>/dev/null || true
+          run ${pkgs.coreutils}/bin/rm -rf "$target"
+          run ${pkgs.coreutils}/bin/cp -r ${pkgs.dsh-im}/lib/node_modules/@xmanrui/dsh-im "$target"
+          run ${pkgs.coreutils}/bin/chmod -R u+w "$target"
+          if [ -f "$profile/package.json" ]; then
+            run ${pkgs.yq-go}/bin/yq -i \
+              '.dependencies."@xmanrui/dsh-im" = "${pkgs.dsh-im.version}" | .dsh.profile.bundles += ["@xmanrui/dsh-im"] | .dsh.profile.bundles |= unique' \
+              "$profile/package.json"
+          fi
+        ''
+      );
     };
 
     # models.json, unlike settings.json, is user-authored config that pi only
@@ -3052,6 +3094,26 @@ in
       # (`~/.dsh/skills`, rank 400). The target is a symlink to the bundle;
       # dsh's provider follows symlinked entries when it scans.
       ".dsh/skills/security-audit".source = securityAuditSkill;
+
+      # dsh-im's Telegram bot config. The token itself is never stored here:
+      # it comes from the qwen-bot-telegram-key sops secret via the credential
+      # ref exported by loadDshImKeys. The allowlist matches the old Qwen
+      # channel, which this replaces.
+      ".dsh/integrations/dsh-telegram/config.json".text = builtins.toJSON {
+        version = 1;
+        bots = [
+          {
+            botId = "telegram_0cf592520bda08a127119d35";
+            platformId = "codebamHermesBot";
+            tokenRef = "DSH_TELEGRAM_BOT_TOKEN_0CF592520BDA08A127119D35";
+            name = "codebamHermesBot";
+            username = "codebamHermesBot";
+            createdAt = "2026-11-23T00:00:00Z";
+            accessMode = "private-allowlist";
+            allowedUsers = [ "69148517" ];
+          }
+        ];
+      };
 
       # pi's global context file (docs/usage.md: "Context Files"). pi is one
       # of `zg --install`'s targets since 0.3.0, but its installer writes a
@@ -3863,12 +3925,10 @@ in
       Install.WantedBy = [ "default.target" ];
     };
 
-    # The Telegram bot, always-on like the Hermes gateway it replaced. The
-    # wrapped qwen loads the bot token itself (loadQwenKey), and the channel
-    # config lives in ~/.qwen/settings.json via the qwenSettings merge, so
-    # the unit only names the channel. Desktop-only with the secret and the
-    # channels block above.
-    qwen-telegram = lib.mkIf isDesktop {
+    # Retired: dsh-im now owns the Telegram bot token and long-poll loop.
+    # Two clients on one token make Telegram abort each other's getUpdates,
+    # so this unit stays off. Re-enable only if dsh-im's Telegram bot is removed.
+    qwen-telegram = lib.mkIf false {
       Unit = {
         Description = "Qwen Code Telegram channel";
         # Telegram long-polling can fail for a while after a network change;
@@ -3886,6 +3946,38 @@ in
         Restart = "always";
         RestartSec = 2;
         TimeoutStopSec = 10;
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+
+    # Matrix appservice webhook bridge. matrix-workers pushes room events as
+    # appservice transactions to https://tg.codebam.ca (cloudflared forwards
+    # to 127.0.0.1:MATRIX_BRIDGE_PORT). This replaces dsh-im's /sync Matrix
+    # channel, which would have held long-poll Durable Objects open.
+    matrix-bridge = lib.mkIf isDesktop {
+      Unit = {
+        Description = "Matrix appservice webhook bridge for DeepSeek Harness";
+        StartLimitIntervalSec = 0;
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = lib.getExe pkgs.matrix-bridge;
+        Environment = [
+          "MATRIX_BRIDGE_PORT=3081"
+          "MATRIX_BRIDGE_HOMESERVER=https://codebam.ca"
+          "MATRIX_BRIDGE_BOT_USER=@dshbot:codebam.ca"
+          "MATRIX_BRIDGE_ALLOWED_USER=@codebam:codebam.ca"
+          "MATRIX_BRIDGE_MODELS=deepseek-flash,deepseek-chat,deepseek-reasoner"
+          "MATRIX_BRIDGE_STATE_DIR=%h/.local/share/matrix-bridge"
+          "MATRIX_BRIDGE_DSH=${config.home.profileDirectory}/bin/dsh"
+          "MATRIX_BRIDGE_HS_TOKEN_FILE=${osConfig.sops.secrets.matrix-bridge-hs-token.path}"
+          "MATRIX_BRIDGE_BOT_TOKEN_FILE=${osConfig.sops.secrets.dsh-im-matrix-token.path}"
+        ];
+        Restart = "always";
+        RestartSec = 2;
+        TimeoutStopSec = 15;
         StandardOutput = "journal";
         StandardError = "journal";
       };

@@ -73,6 +73,28 @@
         owner = "codebam";
         mode = "0400";
       };
+      # Appservice tokens for the local Matrix webhook bridge. hs_token is
+      # presented by the homeserver when pushing transactions; as_token would
+      # let the bridge act as its namespace user if needed.
+      matrix-bridge-hs-token = {
+        sopsFile = ../../secrets/matrix-bridge-hs-token.yaml;
+        owner = "codebam";
+        mode = "0400";
+      };
+      matrix-bridge-as-token = {
+        sopsFile = ../../secrets/matrix-bridge-as-token.yaml;
+        owner = "codebam";
+        mode = "0400";
+      };
+      # Access token for @dshbot:codebam.ca, now used by the appservice webhook
+      # bridge to post replies back into Matrix rooms. Kept in its own
+      # encrypted file so the token can be rotated without touching the
+      # shared secrets.yaml.
+      dsh-im-matrix-token = {
+        sopsFile = ../../secrets/dsh-im-matrix.yaml;
+        owner = "codebam";
+        mode = "0400";
+      };
       # Telegram bot token for the Qwen Code Telegram channel
       # (home/agents.nix): the qwen wrapper exports it as TELEGRAM_BOT_TOKEN
       # for `qwen channel start`. It replaced the Hermes gateway on the same
