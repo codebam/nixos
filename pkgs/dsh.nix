@@ -14,7 +14,7 @@
 
 let
   pname = "dsh";
-  version = "0.2.2-rc.2";
+  version = "0.2.3-alpha.2";
 
   # 0.2.2-rc.2's GitHub release is out, but the manual `Release publish (dsh)`
   # workflow that uploads its tarballs to npm had not run when this pin was
@@ -27,20 +27,20 @@ let
   # the commit is what it points at. Bumping the version means re-deriving four
   # hashes: src, pnpmDeps, and the install outputHash below; build each with an
   # empty hash and copy the "got: sha256-..." value out of the mismatch.
-  rev = "ddac96760b6edf8fa0fe17cbdcf0b512f4c12b2c";
+  rev = "4b399c39a6d1479cd84ca591b4d7c88e24d38a96";
 
   src = fetchFromGitHub {
     owner = "deepseek-ai";
     repo = "deepseek-harness";
     inherit rev;
-    hash = "sha256-lbRmFifO6+8YKn8kaR7gQzKeUQh9YBFu9wH/dWJ+3MA=";
+    hash = "sha256-rahOnpB3BGTEg5hscD6YlRWgCRNmhW00YF0j43AuSTU=";
   };
 
   pnpmDeps = fetchPnpmDeps {
     inherit pname version src;
     pnpm = pnpm_11;
     fetcherVersion = 5;
-    hash = "sha256-8GQ1IYvDx7FTlZCgYRZHomjDMZ8kJCK4BqIy1QAiG8Y=";
+    hash = "sha256-x0f56GwrG7DSRWxhZ4pJM+z5mX8zjulkWgTLJcUQEPs=";
   };
 
   # The upstream release-publish workflow's `pack` job, reproduced: build the
@@ -130,7 +130,7 @@ let
       # so a later rebuild resolves the same versions even after upstream
       # publishes newer releases; without it the fixed-output hash would drift.
       ( cd app && npm install --omit=dev --ignore-scripts --no-audit --no-fund --package-lock=false \
-          --before=2026-11-11T02:32:18.000Z )
+          --before=2026-11-23T00:00:00.000Z )
 
       runHook postBuild
     '';
@@ -155,7 +155,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-RhnVXBJ+TqfB3va3Z0Fq6rkmbDG8E5TLlx3BcJbaVQ4=";
+    outputHash = "sha256-RKlWtWyKDeDmQr07T1ct/iATnoYuO7weO3GU7Y+Q5JY=";
 
     meta.description = "Installed npm tree for dsh ${version}";
   };
