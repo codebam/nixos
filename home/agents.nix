@@ -1522,6 +1522,17 @@ let
     map (m: "          - provider: opencode-go\n            model: ${m.id}") opencodeGoModels
   );
 
+  # The two interactive profiles own different ids for the same host service:
+  # dsh-web-app inserts `subagent-model-selection-settings`, while dsh-tui's
+  # bundle falls back to `dsh-tui-subagent-model-selection-settings` (its scoped
+  # row self-disables only when the official id is already present at bundle
+  # time, which never happens in that profile). A patch with an id and no
+  # `insert` only overrides an EXISTING row, so patching just the official id
+  # left dsh-tui with the service's default empty policy and only the parent
+  # model was offered for delegation. Share one config for both ids.
+  subagentModelSelectionConfigYaml =
+    "        enabled: true\n        allowedModels:\n" + opencodeGoSubagentModelsYaml;
+
   dshProfilePatchCore = ''
 
     # Your patch layer for this dsh profile, applied after every bundle layer:
@@ -1556,11 +1567,15 @@ let
         maxDepth: 2
         maxActiveSubagents: 100
 
+    # An unknown id is skipped with a warning, as with the profile-specific
+    # rows above; whichever profile is booting gets the one row it owns.
     - id: subagent-model-selection-settings
       config:
-        enabled: true
-        allowedModels:
-    ${opencodeGoSubagentModelsYaml}
+    ${subagentModelSelectionConfigYaml}
+
+    - id: dsh-tui-subagent-model-selection-settings
+      config:
+    ${subagentModelSelectionConfigYaml}
 
     # The Minimal-Agents agent preset: the shipped `minimal` composition plus
     # workspace instructions, the subagent delegation tools, and local skills.
@@ -2811,6 +2826,22 @@ let
     ${pkgs.yq-go}/bin/yq -i ". * load(\"${dshSettings}\")" "$settings"
   '';
 
+  # dsh-tui's first-run wizard is gated by ~/.dsh-tui/onboarding.json, a pref
+  # file the TUI writes when the wizard is finished (it is deliberately not a
+  # cordis config row). These hosts have already been through the guide, so pin
+  # the completed record on activation: a freshly copied profile must not replay
+  # it. Keep it a real file rather than a store symlink so a future wizard
+  # revision can still stamp a newer version, and leave an existing newer
+  # completion alone.
+  dshTuiOnboarding = pkgs.writeShellScript "dsh-tui-onboarding" ''
+    set -eu
+    state="$HOME/.dsh-tui/onboarding.json"
+    if [ ! -s "$state" ] || ! ${pkgs.jq}/bin/jq -e '.completed == true and (.version // 0) >= 1' "$state" >/dev/null 2>&1; then
+      mkdir -p "$(dirname "$state")"
+      printf '{\n  "completed": true,\n  "version": 1\n}\n' > "$state"
+    fi
+  '';
+
   # opencode's v2 CLI settings document (`cli.json`) is written by the TUI itself
   # -- Ctrl+P "Open settings", and the thinking toggle migrated out of v1's
   # state -- so it cannot become a read-only store symlink the way opencode.json
@@ -2897,6 +2928,11 @@ in
       # treatment: Nix owns only the llm-pi-ai OpenCode Go route.
       dshSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${dshSettingsMerge}
+      '';
+
+      # Keep dsh-tui's first-run wizard marked done across profile copies.
+      dshTuiOnboarding = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${dshTuiOnboarding}
       '';
 
       # One-shot cleanup after dropping the CrofAI provider from the managed
