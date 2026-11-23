@@ -212,19 +212,18 @@ function writeModelPatch(roomId, provider, model) {
 }
 
 function runDsh(roomId, prompt) {
-  const args = [
-    '--profile', 'headless',
-    '--json',
-    '--permission-mode', 'danger-full-access',
-    '--approval-policy', 'never',
-  ]
+  // Launcher flags (--profile, --patch) must precede the headless app's own
+  // flags; otherwise the app rejects them as unknown options.
+  const launcherArgs = [ '--profile', 'headless' ]
+  const appArgs = [ '--json', '--permission-mode', 'danger-full-access', '--approval-policy', 'never' ]
   const selected = state.rooms[roomId]
   if (selected?.model) {
-    args.push('--patch', writeModelPatch(roomId, selected.provider ?? DEFAULT_PROVIDER, selected.model))
+    launcherArgs.push('--patch', writeModelPatch(roomId, selected.provider ?? DEFAULT_PROVIDER, selected.model))
   }
   const sessionId = state.rooms[roomId]?.sessionId
-  if (sessionId) args.push('--session-id', sessionId)
-  args.push(prompt)
+  if (sessionId) appArgs.push('--session-id', sessionId)
+  appArgs.push(prompt)
+  const args = [ ...launcherArgs, ...appArgs ]
 
   const result = spawnSync(DSH_BIN, args, {
     cwd: roomDir(roomId),
@@ -246,7 +245,15 @@ function runDsh(roomId, prompt) {
   }
   if (result.status !== 0 && final === '') {
     const detail = (result.stderr ?? '').trim().split('\n').slice(-3).join(' | ')
-    throw new Error(`dsh exited ${result.status}: ${detail}`)
+    const wireErrors = (result.stdout ?? '').split('\n')
+      .filter((line) => line.startsWith('{'))
+      .map((line) => {
+        try { return JSON.parse(line) } catch { return null }
+      })
+      .filter((record) => record?.type === 'error')
+      .map((record) => record.message)
+      .join(' | ')
+    throw new Error(`dsh exited ${result.status}: ${detail || wireErrors || 'no detail'}`)
   }
   if (nextSession && nextSession !== sessionId) {
     state.rooms[roomId] = { ...(state.rooms[roomId] ?? {}), sessionId: nextSession }
