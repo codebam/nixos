@@ -190,6 +190,7 @@ async function botJoined(roomId) {
 }
 
 const HELP_TEXT = [
+  '!prompt <text> — send a prompt to the agent (alias: !p, !ask)',
   '!help — show this help',
   '!new, !clear — start a fresh session',
   '!model [id] — show or switch the model for this room',
@@ -197,7 +198,7 @@ const HELP_TEXT = [
   '!session — show this room’s session id',
   '!status — bridge status',
   '!version — bridge version',
-  'Any other message is sent to the Harness agent.',
+  'Plain messages are ignored; use !prompt to send a prompt.',
   'All commands also accept the / prefix.',
 ].join('\n')
 
@@ -264,14 +265,20 @@ async function handleMessage(roomId, eventId, sender, text) {
     await sendText(roomId, eventId, 'matrix-bridge 1.0 (appservice webhook)')
     return
   }
-  if (command !== '') {
-    await sendText(roomId, eventId, `Unknown command !${command}. Send !help for the list.`)
+  if (command === 'prompt' || command === 'p' || command === 'ask') {
+    if (argument === '') {
+      await sendText(roomId, eventId, 'Usage: !prompt <text>')
+      return
+    }
+    await sendTyping(roomId)
+    const answer = runDsh(roomId, argument)
+    await sendText(roomId, eventId, answer === '' ? '(no response)' : answer)
     return
   }
-
-  await sendTyping(roomId)
-  const answer = runDsh(roomId, clean)
-  await sendText(roomId, eventId, answer === '' ? '(no response)' : answer)
+  if (command !== '') {
+    await sendText(roomId, eventId, `Unknown command !${command}. Send !help for the list.`)
+  }
+  // Plain room chatter is intentionally ignored: only !commands drive the bot.
 }
 
 const queue = []
