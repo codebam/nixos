@@ -232,6 +232,10 @@ _: {
               mode = "0700";
             }
             ".config/gcloud"
+            # The curated list of checkouts codedash tracks. It is written
+            # by `codedash add`, not by this config, so an impermanent root
+            # would otherwise empty the dashboard on every boot.
+            ".config/codedash"
             ".local/share/steel"
             ".config/retroarch"
             {
