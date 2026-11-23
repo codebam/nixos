@@ -27,6 +27,7 @@ const YQ = process.env.MATRIX_BRIDGE_YQ
 const SETTINGS_FILE = process.env.MATRIX_BRIDGE_SETTINGS_FILE
 const OPENCODE_MODELS_FILE = process.env.MATRIX_BRIDGE_MODELS_FILE
 const DEFAULT_PROVIDER = process.env.MATRIX_BRIDGE_PROVIDER ?? 'deepseek-official'
+const MESSAGE_TARGET = 1200
 const MAX_CHUNK = 3800
 const DSH_TIMEOUT_MS = 10 * 60 * 1000
 const STARTED_AT = Date.now()
@@ -157,16 +158,32 @@ async function sendTyping(roomId) {
   ).catch(() => undefined)
 }
 
-async function sendText(roomId, eventId, text, sequence = 0) {
+function splitForChat(text) {
+  const plain = text.replace(/\r\n/g, '\n')
+    .replace(/\*\*/g, '')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\|[\s:|-]+\|$/gm, '')
+    .replace(/^\|/gm, '')
+    .replace(/\|$/gm, '')
+    .replace(/\|/g, ' · ')
+    .trim()
   const chunks = []
-  let rest = text.trim()
-  while (rest.length > MAX_CHUNK) {
-    let cut = rest.lastIndexOf('\n', MAX_CHUNK)
-    if (cut < MAX_CHUNK / 2) cut = MAX_CHUNK
-    chunks.push(rest.slice(0, cut))
-    rest = rest.slice(cut).trimStart()
+  let rest = plain
+  while (rest.length > MESSAGE_TARGET) {
+    const window = rest.slice(0, MAX_CHUNK)
+    let cut = window.lastIndexOf('\n\n')
+    if (cut < MESSAGE_TARGET / 2) cut = window.lastIndexOf('\n')
+    if (cut < MESSAGE_TARGET / 2) cut = MESSAGE_TARGET
+    chunks.push(rest.slice(0, cut).trim())
+    rest = rest.slice(cut).trim()
   }
   if (rest !== '') chunks.push(rest)
+  return chunks
+}
+
+async function sendText(roomId, eventId, text, sequence = 0) {
+  const chunks = splitForChat(text)
   for (const [index, chunk] of chunks.entries()) {
     await matrix(
       'PUT',
@@ -186,15 +203,21 @@ function roomDir(roomId) {
 function writeRunPatch(roomId, selected) {
   // The persona keeps answers chat-sized and asks the agent to use several
   // messages when a task has several parts.
+  // A row with an id but no `insert` only overrides an existing row; the
+  // persona is new to the headless profile, so it must be inserted.
   const patch = [
     {
-      id: 'matrix-chat-persona',
-      name: '@deepseek-ai/dsh-persona',
-      config: {
-        prefix: PERSONA,
-        complete: true,
-        includeRuntimeContext: false,
-      },
+      insert: [
+        {
+          id: 'matrix-chat-persona',
+          name: '@deepseek-ai/dsh-persona',
+          config: {
+            prefix: PERSONA,
+            complete: true,
+            includeRuntimeContext: false,
+          },
+        },
+      ],
     },
   ]
   if (selected?.model) {
@@ -224,7 +247,7 @@ function writeRunPatch(roomId, selected) {
   if (!body) {
     // Fallback still applies the persona (and the model selection when set),
     // but cannot mount the full provider catalog without yq.
-    body = `- id: matrix-chat-persona\n  name: '@deepseek-ai/dsh-persona'\n  config:\n    prefix: ${JSON.stringify(PERSONA)}\n    complete: true\n    includeRuntimeContext: false\n`
+    body = `- insert:\n    - id: matrix-chat-persona\n      name: '@deepseek-ai/dsh-persona'\n      config:\n        prefix: ${JSON.stringify(PERSONA)}\n        complete: true\n        includeRuntimeContext: false\n`
     if (selected?.model) {
       body += `- id: agent-default-model\n  config:\n    provider: ${selected.provider ?? DEFAULT_PROVIDER}\n    model: ${selected.model}\n`
     }
