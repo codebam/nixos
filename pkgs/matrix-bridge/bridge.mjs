@@ -161,6 +161,7 @@ async function sendTyping(roomId) {
 function splitForChat(text) {
   const plain = text.replace(/\r\n/g, '\n')
     .replace(/\*\*/g, '')
+    .replace(/\*([^*\n]+)\*/g, '$1')
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/^\|[\s:|-]+\|$/gm, '')
@@ -171,7 +172,9 @@ function splitForChat(text) {
   const chunks = []
   let rest = plain
   while (rest.length > MESSAGE_TARGET) {
-    const window = rest.slice(0, MAX_CHUNK)
+    // Search only the target window: using a wider window lets a long block
+    // with many single newlines stay as one giant message.
+    const window = rest.slice(0, MESSAGE_TARGET)
     let cut = window.lastIndexOf('\n\n')
     if (cut < MESSAGE_TARGET / 2) cut = window.lastIndexOf('\n')
     if (cut < MESSAGE_TARGET / 2) cut = MESSAGE_TARGET
