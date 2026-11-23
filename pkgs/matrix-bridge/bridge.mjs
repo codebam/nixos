@@ -30,6 +30,12 @@ const DEFAULT_PROVIDER = process.env.MATRIX_BRIDGE_PROVIDER ?? 'deepseek-officia
 const MAX_CHUNK = 3800
 const DSH_TIMEOUT_MS = 10 * 60 * 1000
 const STARTED_AT = Date.now()
+const PERSONA = [
+  'You are a helpful assistant talking to the user over Matrix chat.',
+  'Keep replies concise and readable in a chat client: short paragraphs, no walls of text, no Markdown tables.',
+  'When a task needs several updates, send them as separate short messages rather than one long message.',
+  'Do not repeat the user’s question back to them.',
+].join(' ')
 
 if (!HS_TOKEN_FILE || !BOT_TOKEN_FILE) {
   console.error('matrix-bridge: MATRIX_BRIDGE_HS_TOKEN_FILE and MATRIX_BRIDGE_BOT_TOKEN_FILE are required')
@@ -151,7 +157,7 @@ async function sendTyping(roomId) {
   ).catch(() => undefined)
 }
 
-async function sendText(roomId, eventId, text) {
+async function sendText(roomId, eventId, text, sequence = 0) {
   const chunks = []
   let rest = text.trim()
   while (rest.length > MAX_CHUNK) {
@@ -164,7 +170,7 @@ async function sendText(roomId, eventId, text) {
   for (const [index, chunk] of chunks.entries()) {
     await matrix(
       'PUT',
-      `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(`${eventId}-${index}`)}`,
+      `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(`${eventId}-${sequence}-${index}`)}`,
       { msgtype: 'm.text', body: chunk },
     )
   }
@@ -177,21 +183,35 @@ function roomDir(roomId) {
   return dir
 }
 
-function writeModelPatch(roomId, provider, model) {
-  if (!/^[A-Za-z0-9._:/-]+$/.test(provider) || !/^[A-Za-z0-9._:-]+$/.test(model)) {
-    throw new Error('invalid model or provider name')
-  }
+function writeRunPatch(roomId, selected) {
+  // The persona keeps answers chat-sized and asks the agent to use several
+  // messages when a task has several parts.
   const patch = [
     {
+      id: 'matrix-chat-persona',
+      name: '@deepseek-ai/dsh-persona',
+      config: {
+        prefix: PERSONA,
+        complete: true,
+        includeRuntimeContext: false,
+      },
+    },
+  ]
+  if (selected?.model) {
+    const provider = selected.provider ?? DEFAULT_PROVIDER
+    if (!/^[A-Za-z0-9._:/-]+$/.test(provider) || !/^[A-Za-z0-9._:-]+$/.test(selected.model)) {
+      throw new Error('invalid model or provider name')
+    }
+    patch.unshift({
       id: 'llm-pi-ai',
       name: '@deepseek-ai/dsh-llm-pi-ai',
       config: { providers },
-    },
-    {
+    })
+    patch.push({
       id: 'agent-default-model',
-      config: { provider, model },
-    },
-  ]
+      config: { provider, model: selected.model },
+    })
+  }
   let body
   if (YQ) {
     const result = spawnSync(YQ, [ '-p=json', '-o=yaml' ], {
@@ -202,11 +222,14 @@ function writeModelPatch(roomId, provider, model) {
     if (result.status === 0) body = result.stdout
   }
   if (!body) {
-    // Fallback still switches the default route, but cannot mount the full
-    // provider catalog in a headless profile without yq.
-    body = `- id: agent-default-model\n  config:\n    provider: ${provider}\n    model: ${model}\n`
+    // Fallback still applies the persona (and the model selection when set),
+    // but cannot mount the full provider catalog without yq.
+    body = `- id: matrix-chat-persona\n  name: '@deepseek-ai/dsh-persona'\n  config:\n    prefix: ${JSON.stringify(PERSONA)}\n    complete: true\n    includeRuntimeContext: false\n`
+    if (selected?.model) {
+      body += `- id: agent-default-model\n  config:\n    provider: ${selected.provider ?? DEFAULT_PROVIDER}\n    model: ${selected.model}\n`
+    }
   }
-  const file = path.join(roomDir(roomId), 'model.patch.yml')
+  const file = path.join(roomDir(roomId), 'run.patch.yml')
   fs.writeFileSync(file, body, { mode: 0o600 })
   return file
 }
@@ -217,9 +240,7 @@ function runDsh(roomId, prompt) {
   const launcherArgs = [ '--profile', 'headless' ]
   const appArgs = [ '--json', '--permission-mode', 'danger-full-access', '--approval-policy', 'never' ]
   const selected = state.rooms[roomId]
-  if (selected?.model) {
-    launcherArgs.push('--patch', writeModelPatch(roomId, selected.provider ?? DEFAULT_PROVIDER, selected.model))
-  }
+  launcherArgs.push('--patch', writeRunPatch(roomId, selected))
   const sessionId = state.rooms[roomId]?.sessionId
   if (sessionId) appArgs.push('--session-id', sessionId)
   appArgs.push(prompt)
@@ -235,14 +256,21 @@ function runDsh(roomId, prompt) {
   if (result.error) throw result.error
 
   let nextSession = sessionId
+  const messages = []
   let final = ''
   for (const line of (result.stdout ?? '').split('\n')) {
     if (line.startsWith('{') === false) continue
     let record
     try { record = JSON.parse(line) } catch { continue }
     if (record.type === 'session' && typeof record.sessionId === 'string') nextSession = record.sessionId
-    if (record.type === 'final' && typeof record.text === 'string') final = record.text
+    if (record.type === 'text' && typeof record.text === 'string' && record.text.trim() !== '') {
+      messages.push(record.text.trim())
+    }
+    if (record.type === 'final' && typeof record.text === 'string') final = record.text.trim()
   }
+  // The final record usually restates the last streamed text block; only add
+  // it when it carries something new.
+  if (final !== '' && messages[messages.length - 1] !== final) messages.push(final)
   if (result.status !== 0 && final === '') {
     const detail = (result.stderr ?? '').trim().split('\n').slice(-3).join(' | ')
     const wireErrors = (result.stdout ?? '').split('\n')
@@ -259,7 +287,7 @@ function runDsh(roomId, prompt) {
     state.rooms[roomId] = { ...(state.rooms[roomId] ?? {}), sessionId: nextSession }
     saveState()
   }
-  return final.trim()
+  return messages
 }
 
 async function botJoined(roomId) {
@@ -364,8 +392,12 @@ async function handleMessage(roomId, eventId, sender, text) {
       return
     }
     await sendTyping(roomId)
-    const answer = runDsh(roomId, argument)
-    await sendText(roomId, eventId, answer === '' ? '(no response)' : answer)
+    const answers = runDsh(roomId, argument)
+    if (answers.length === 0) {
+      await sendText(roomId, eventId, '(no response)')
+    } else {
+      for (const [index, answer] of answers.entries()) await sendText(roomId, eventId, answer, index + 1)
+    }
     return
   }
   if (command !== '') {
