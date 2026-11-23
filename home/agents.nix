@@ -114,6 +114,14 @@ let
       value=$(cat "$go2_secret")
       if [ -n "$value" ]; then export OPENCODE_API_KEY="$value"; fi
     fi
+
+    # Full-access mode by default: dsh's sandbox-policy and user-approval
+    # entries read DSH_PERMISSION_MODE (defaulting to workspace-write), so
+    # exporting danger-full-access here makes new sessions start with full
+    # file access and no approval prompts. Override with DSH_PERMISSION_MODE
+    # in the environment for a single run.
+    : "''${DSH_PERMISSION_MODE:=danger-full-access}"
+    export DSH_PERMISSION_MODE
   '';
 
   # qwen's launch environment: the shared agent keys plus the Telegram bot
@@ -1508,7 +1516,14 @@ let
   # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
   # named or dsh attaches no x-opencode-session header and OpenCode Go answers
   # 400.
+  # YAML fragment listing every OpenCode Go model as an authorized subagent
+  # child route, so the model can select any of them when delegating.
+  opencodeGoSubagentModelsYaml = lib.concatStringsSep "\n" (
+    map (m: "          - provider: opencode-go\n            model: ${m.id}") opencodeGoModels
+  );
+
   dshProfilePatchCore = ''
+
     # Your patch layer for this dsh profile, applied after every bundle layer:
     # a top-level YAML array of loader patch entries (id-targeted config
     # overrides, disables, and insert lists; `!!js` expressions allowed).
@@ -1528,6 +1543,24 @@ let
           - opencode-go
           - opencode-go-deepseek
           - opencode-go-union-alpha
+
+    # Full-access defaults + subagent delegation limits. These are host-level
+    # (volatile) settings; the values below are the deployment base that new
+    # sessions inherit, and the Settings UI can still override them.
+    - id: permission
+      config:
+        defaultPreset: danger-full-access
+
+    - id: subagent
+      config:
+        maxDepth: 2
+        maxActiveSubagents: 100
+
+    - id: subagent-model-selection-settings
+      config:
+        enabled: true
+        allowedModels:
+    ${opencodeGoSubagentModelsYaml}
 
     # The Minimal-Agents agent preset: the shipped `minimal` composition plus
     # workspace instructions, the subagent delegation tools, and local skills.
