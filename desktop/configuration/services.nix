@@ -195,6 +195,17 @@ in
             deny all;
           '';
           locations = {
+            # The git-checkout dashboard (services.codedash) on loopback.
+            # A rebase can outlast nginx's default 60 s proxy read timeout on
+            # a large repository, so give the action endpoints room; the page
+            # keeps its own relative URLs under this prefix.
+            "/codedash" = {
+              proxyPass = "http://127.0.0.1:8090";
+              extraConfig = ''
+                proxy_read_timeout 300s;
+                proxy_send_timeout 300s;
+              '';
+            };
             "/lidarr" = {
               proxyPass = "http://127.0.0.1:8686";
               proxyWebsockets = true;

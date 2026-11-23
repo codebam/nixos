@@ -57,6 +57,13 @@
       url = "github:codebam/sops-pass";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # The git-checkout dashboard lives in its own repository; it is pinned like
+    # any other input, so a local edit takes effect once it is pushed and this
+    # input is bumped.
+    codedash = {
+      url = "github:codebam/codedash";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     viewport = {
       url = "github:codebam/viewport";
       inputs = {
@@ -148,6 +155,8 @@
             inputs.home-manager.nixosModules.home-manager
             inputs.nix-index-database.nixosModules.nix-index
             inputs.chaotic.nixosModules.default
+            # Options only; each host opts in with services.codedash.enable.
+            inputs.codedash.nixosModules.default
             # lsfg-vk intentionally not here: Steam Deck only, added
             # per-host below so other hosts skip the input entirely.
             ./modules

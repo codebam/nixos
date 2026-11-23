@@ -93,6 +93,26 @@
         "type": "github"
       }
     },
+    "codedash": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795464615,
+        "narHash": "sha256-jS3s6DHkharbdLMLY7ZGvoRbTMtNdpiWdbwMIyvd5+s=",
+        "owner": "codebam",
+        "repo": "codedash",
+        "rev": "3fa9c88360453ac1eb339bae6f72ed43d7550d8d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codebam",
+        "repo": "codedash",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1793836618,
@@ -582,6 +602,7 @@
     "root": {
       "inputs": {
         "chaotic": "chaotic",
+        "codedash": "codedash",
         "disko": "disko",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
