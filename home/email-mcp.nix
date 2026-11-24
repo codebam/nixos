@@ -1,5 +1,5 @@
 # Shared values for the email MCP (server name `email-mcp`, the "@Email
-# agent MCP" bridging the agentic-inbox Worker). Imported by home/agents.nix
+# agent MCP" bridging the mailflare Worker's /mcp endpoint). Imported by home/agents.nix
 # (the qwen, dsh, and opencode registrations, the Telegram channel guardrail,
 # and the .dsh/AGENTS.md and opencode/AGENTS.md guardrails) and
 # home/hermes.nix (Hermes registration and its system-prompt policy), so the
@@ -8,11 +8,15 @@
 { config, pkgs }:
 
 let
-  # The `email-api-key` sops secret holds a Settings-minted `ain1_` scoped
-  # token, and /mcp accepts those since agentic-inbox d7e44ef (deployed
-  # 2026-09-28), so the launcher below exports it as MCP_AUTH_TOKEN. Set
-  # false to drop back to the Wrangler credential fallback (e.g. if the
-  # token is revoked).
+  # The `email-api-key` sops secret holds a mail-scoped MCP API key minted in
+  # the app under Settings -> API keys: an `ep_` secret created with "Allow MCP
+  # access", the mcp:read / mcp:draft / mcp:organize / mcp:request-send scopes
+  # and the mailboxes the assistant may reach. mailflare's /mcp accepts only
+  # those `ep_` keys (the fork-era `ain1_`/`ain2_` scoped tokens, and keys
+  # carrying the admin scopes domains/accounts/mailboxes/storage, are
+  # rejected; admin and mail scopes cannot be mixed on one key), so the
+  # launcher below exports this secret as MCP_AUTH_TOKEN. Set false to drop
+  # back to the Wrangler credential fallback (e.g. if the key is revoked).
   exportEmailApiKey = true;
 in
 {
@@ -36,11 +40,14 @@ in
   #
   # The launcher exports the `email-api-key` sops secret (mounted by sops-nix
   # at /run/secrets/email-api-key, owner codebam) as MCP_AUTH_TOKEN, which
-  # the bridge prefers over `wrangler auth token`; that session is a scoped
-  # Settings token bound to its mailbox and the token's read/draft/send
-  # scopes. The file test is a runtime check, not an eval-time dependency, so
-  # hosts without the secret -- or a machine before the activation that
-  # mounts it -- keep the Wrangler fallback untouched.
+  # the bridge prefers over `wrangler auth token`; that key is the
+  # mail-scoped MCP key described above, and the tools it unlocks are
+  # mailflare's (list_emails/get_email/get_thread/search_emails,
+  # draft_email/draft_reply/edit_draft/discard_draft, mark_email_read and
+  # move_email/move_emails, request_send plus the calendar tools). The file
+  # test is a runtime check, not an eval-time dependency, so hosts without
+  # the secret -- or a machine before the activation that mounts it -- keep
+  # the Wrangler fallback untouched.
   runner = builtins.toString (
     pkgs.writeShellScript "email-mcp" ''
       export PATH=${pkgs.nodejs_latest}/bin:$PATH
@@ -76,18 +83,21 @@ in
   policy = ''
     ## Email authorization (email-mcp)
 
-    The `email-mcp` MCP server can read, draft, and send email. Reading,
-    listing, searching, and drafting are always allowed. Sending is not: never
-    call `send_email` (or its prefixed `mcp__...__send_email` form), or any
-    tool whose name or description sends, replies to, or forwards mail, unless
-    the user has explicitly authorized that exact message in the current
-    conversation (for example, "send it" after you show the draft).
-    Authorization for an earlier message, a standing request to draft, or
-    approval of a different draft does not authorize a send. Do not use a
-    shell, browser, or another tool to work around this rule. If the email
-    bridge is unavailable, report that and ask the user to check the
-    `email-api-key` sops secret (or run `wrangler login` on a host without
-    it); do not search for or use another credential. When in doubt, show
-    the draft and ask; do not send.
+    The `email-mcp` MCP server can read and draft email, and it exposes no
+    tool that sends: `request_send` only puts a draft in front of the user for
+    review, and the message leaves only when they approve it in the app.
+    Reading, listing, searching, and drafting are always allowed. Sending is
+    not: never call `request_send` (or any tool whose name or description
+    sends, replies to, or forwards mail) unless the user has explicitly asked
+    for that exact message to be prepared for sending in the current
+    conversation (for example, "draft it and send it" or "send it" after you
+    show the draft), and never tell the user a message was sent — say it is
+    waiting for their approval. Authorization for an earlier message, a
+    standing request to draft, or approval of a different draft does not
+    authorize a send. Do not use a shell, browser, or another tool to work
+    around this rule. If the email bridge is unavailable, report that and ask
+    the user to check the `email-api-key` sops secret (or run `wrangler login`
+    on a host without it); do not search for or use another credential. When
+    in doubt, show the draft and ask; do not send.
   '';
 }
