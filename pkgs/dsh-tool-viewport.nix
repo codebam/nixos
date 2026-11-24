@@ -7,18 +7,18 @@
 
 stdenvNoCC.mkDerivation {
   pname = "dsh-tool-viewport";
-  version = "0.1.0";
+  version = "0.2.0";
 
   # @codebam/dsh-tool-viewport is published from its own repository; this
   # host pins the reviewed revision so the profile copies exactly the plugin
   # sources it was tested with. The hash is the tag's unpacked-tree hash
   # (nix-prefetch-url --unpack, converted to SRI), precomputed from the
-  # pushed v0.1.0 tag.
+  # pushed v0.2.0 tag.
   src = fetchFromGitHub {
     owner = "codebam";
     repo = "dsh-tool-viewport";
-    rev = "v0.1.0";
-    hash = "sha256-4dVc95dbA9jri9IVomSxE3/soPrO3aSc7nX7d7F5W1M=";
+    rev = "v0.2.0";
+    hash = "sha256-k0+cZWR9QAGEXcA3kpPXoL6GGS3BwEw/PDiLCSkrw4Q=";
   };
 
   nativeBuildInputs = [ nodejs ];
