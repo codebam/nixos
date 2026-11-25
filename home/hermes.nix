@@ -244,10 +244,17 @@ in
   # individual API-key secrets, so the hand-maintained hermes-env blob does not
   # have to come back.
   #
+  # Declared but off: the agent's packages are no longer installed (see
+  # `programs.hermes-agent` at the bottom of this file). `enable` still gates
+  # the backend user unit, and that unit execs `hermes serve` -- a binary this
+  # profile no longer carries -- so it follows the installation down instead of
+  # leaving a unit that can only fail. Everything below stays as it was, so
+  # re-enabling is flipping this one flag and the two at the bottom.
+  #
   # Gated to the desktop like the old module: the template below, the
   # OpenRouter key path, and the Telegram gateway are desktop-only.
   services.hermes-agent = lib.mkIf isDesktop {
-    enable = true;
+    enable = false;
     environmentFiles = [ osConfig.sops.templates."hermes-env".path ];
 
     # The memory provider (home/hermes-agent-memory.nix) rides the default
@@ -431,16 +438,19 @@ in
   # The installation half of the upstream module (separate from the service
   # since 0.21): `hermes` on PATH with HERMES_HOME exported, and Hermes
   # Desktop with an XDG launcher that carries HERMES_HOME itself, because a
-  # .desktop launch reads no shell profile. Desktop-only, like the service
-  # block above; the app spawns its own headless `hermes serve` child from the
-  # wrapped binary, so the managed config.yaml, the sops-built .env, and the
-  # OpenCode Go credential pool are what it runs on. Electron userData (window
-  # state, themes, connections) is preserved as .config/Hermes in
+  # .desktop launch reads no shell profile. Both are off: the agent's packages
+  # were dropped from the profile, and these two flags are the only things that
+  # put them there (`desktop.enable` is independent of `enable`, so it has to
+  # go off on its own). The configuration below stays -- the wrapped binary
+  # spawns its own headless `hermes serve` child, so the managed config.yaml,
+  # the sops-built .env, and the OpenCode Go credential pool are what it runs
+  # on once this is flipped back. Electron userData (window state, themes,
+  # connections) is preserved as .config/Hermes in
   # modules/system/preservation.nix.
   programs.hermes-agent = {
-    enable = isDesktop;
+    enable = false;
     desktop = {
-      enable = isDesktop;
+      enable = false;
       # No `package` here: the default is `programs.hermes-agent.package`'s
       # `hermesDesktop` passthru. The local re-call of upstream's desktop.nix
       # existed only to intercept its pinned Electron headers fetchurl;

@@ -124,23 +124,6 @@ let
     export DSH_PERMISSION_MODE
   '';
 
-  # qwen's launch environment: the shared agent keys plus the Telegram bot
-  # token its channel authenticates with (the `channels.telegram` block in
-  # qwenSettings below resolves $TELEGRAM_BOT_TOKEN). Kept out of loadKey on
-  # purpose -- the token is channel-only, and the other harnesses have no
-  # business holding it. The sops secret is desktop-mounted, so on the other
-  # hosts the guard leaves the variable unset and only `qwen channel start`
-  # would notice.
-  loadQwenKey = pkgs.writeShellScript "qwen-load-env" ''
-    . ${loadKey}
-
-    telegram_secret=/run/secrets/qwen-bot-telegram-key
-    if [ -r "$telegram_secret" ]; then
-      value=$(cat "$telegram_secret")
-      if [ -n "$value" ]; then export TELEGRAM_BOT_TOKEN="$value"; fi
-    fi
-  '';
-
   # dsh-im resolves channel credentials through DSH's credential service,
   # which falls back to environment variables named after each ref. Export the
   # Telegram ref here so the bridge never needs the token in its config file.
@@ -1288,8 +1271,8 @@ let
   }
   # Retained but unused: dsh-im owns the Telegram token and bot now.
   # The Telegram bot that replaced the Hermes gateway, on the same bot token
-  # (qwen-bot-telegram-key, exported by loadQwenKey). Desktop-only: that is
-  # where the secret mounts and where the qwen-telegram service below runs.
+  # (qwen-bot-telegram-key, which the dsh-im loader exports). Desktop-only:
+  # that is where the secret mounts.
   # The adapter long-polls -- it has no webhook mode -- and deletes any
   # webhook left on the bot at startup, so the retired gateway's
   # tg.codebam.ca registration clears itself on the first start. The
@@ -1450,55 +1433,13 @@ let
     '';
   };
 
-  # Qwen Code (`qwen`), nixpkgs' `qwen-code` package rebuilt at v0.28.3
-  # (pkgs/qwen-code.nix). Wrapped with loadQwenKey because its model catalog
-  # (below) authenticates with QWEN_API_KEY, NANOGPT_API_KEY and
-  # OPENCODE_API_KEY from the same sops secrets as the other harnesses, and
-  # its Telegram channel needs TELEGRAM_BOT_TOKEN on top; the gateways, the
-  # MCP fleet and the channel are declared in ~/.qwen/settings.json by
-  # home.activation.qwenSettings.
-  qwen = pkgs.symlinkJoin {
-    name = "qwen-wrapped-${pkgs.qwen-code.version}";
-    paths = [ pkgs.qwen-code ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/qwen --run '. ${loadQwenKey}'
-    '';
-  };
-
-  # Qwen Code Desktop (pkgs/qwen-code-desktop.nix), the Tauri shell around the
-  # same Web Shell the CLI serves; it bundles its own qwen runtime but reads
-  # the same ~/.qwen/settings.json catalog. Wrapped with loadKey for the same
-  # reason as opencode-desktop-beta: a .desktop launch inherits no shell
-  # environment, and the catalog authenticates with QWEN_API_KEY,
-  # NANOGPT_API_KEY and OPENCODE_API_KEY. loadQwenKey's Telegram token stays
-  # channel-only -- the desktop has no channel to start. The updater is off
-  # for the same reason opencode's autoupdate is: a /nix/store copy cannot
-  # write itself.
-  qwen-code-desktop = pkgs.symlinkJoin {
-    name = "qwen-code-desktop-wrapped-${pkgs.qwen-code-desktop.version}";
-    paths = [ pkgs.qwen-code-desktop ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/qwen-code-desktop \
-        --run '. ${loadKey}' \
-        --set QWEN_DESKTOP_DISABLE_UPDATES 1
-    '';
-  };
-
-  # Pi ships its own updater and an install/version ping, neither of which
-  # applies to a /nix/store copy it cannot write to.
-  pi = pkgs.symlinkJoin {
-    name = "pi-coding-agent-wrapped-${pkgs.pi-coding-agent.version}";
-    paths = [ pkgs.pi-coding-agent ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/pi \
-        --run '. ${loadKey}' \
-        --set PI_SKIP_VERSION_CHECK 1 \
-        --set PI_TELEMETRY 0
-    '';
-  };
+  # qwen, qwen-code-desktop and pi are no longer installed, so the credential
+  # wrappers that used to sit here are gone with them. The derivations stay
+  # (pkgs/qwen-code.nix and pkgs/qwen-code-desktop.nix for the first two,
+  # nixpkgs' pi-coding-agent for the third) and so does everything declared
+  # around them -- the catalogs, ~/.qwen/settings.json and ~/.pi settings
+  # merges, the MCP rows, the secrets. Re-installing is a wrapper here plus a
+  # home.packages line below; nothing else has to come back.
 
   # DeepSeek Harness (`dsh`), packaged in pkgs/dsh.nix. Wrapped with loadDshKey
   # for the same reason as opencode and pi: its llm-pi-ai `opencode-go` routes
@@ -2914,9 +2855,6 @@ in
     packages = [
       opencode-desktop-beta
       opencode
-      qwen
-      qwen-code-desktop
-      pi
       dshInstalled
       dshSubscription
     ]
@@ -3932,32 +3870,9 @@ in
       Install.WantedBy = [ "default.target" ];
     };
 
-    # Retired: dsh-im now owns the Telegram bot token and long-poll loop.
-    # Two clients on one token make Telegram abort each other's getUpdates,
-    # so this unit stays off. Re-enable only if dsh-im's Telegram bot is removed.
-    qwen-telegram = lib.mkIf false {
-      Unit = {
-        Description = "Qwen Code Telegram channel";
-        # Telegram long-polling can fail for a while after a network change;
-        # do not let the default restart-rate limit disable the bot.
-        StartLimitIntervalSec = 0;
-      };
-      Service = {
-        Type = "simple";
-        WorkingDirectory = "%h";
-        # The channel's MCP fleet resolves zg and ripwire from PATH (see
-        # qwenSettings), and the user manager's default PATH carries neither
-        # the profile nor the system sw bin.
-        Environment = [ "PATH=${config.home.profileDirectory}/bin:/run/current-system/sw/bin" ];
-        ExecStart = "${qwen}/bin/qwen channel start telegram";
-        Restart = "always";
-        RestartSec = 2;
-        TimeoutStopSec = 10;
-        StandardOutput = "journal";
-        StandardError = "journal";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
+    # The retired Qwen Code Telegram channel unit went with the `qwen`
+    # package: dsh-im owns the bot token and the long-poll loop now, so this
+    # unit had been `lib.mkIf false` for a while and had nothing left to exec.
 
     # Matrix appservice webhook bridge. matrix-workers pushes room events as
     # appservice transactions to https://tg.codebam.ca (cloudflared forwards
