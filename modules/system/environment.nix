@@ -48,6 +48,41 @@
       ssh-to-age
       age
       age-plugin-yubikey
+      # One command to move between the sched_ext schedulers this host has
+      # installed, so a game session does not need a config rebuild. scxctl
+      # talks to scx_loader over D-Bus; the polkit rule in
+      # modules/security/default.nix already lets a member of wheel in a local
+      # active session act without a prompt, so this needs no sudo.
+      #
+      #   scx-switch            running scheduler
+      #   scx-switch game       scx_cake, the game-tuned one
+      #   scx-switch work       scx_eevdf, the default
+      #   scx-switch <name>     any installed scheduler, scx_ prefix optional
+      (writeShellApplication {
+        name = "scx-switch";
+        runtimeInputs = [ scx-loader ];
+        text = ''
+          case "''${1:-}" in
+            "" | status)
+              exec scxctl get
+              ;;
+            game | cake)
+              exec scxctl switch --sched scx_cake
+              ;;
+            work | default | eevdf)
+              exec scxctl switch --sched scx_eevdf
+              ;;
+            *)
+              sched="$1"
+              case "$sched" in
+                scx_*) ;;
+                *) sched="scx_$sched" ;;
+              esac
+              exec scxctl switch --sched "$sched"
+              ;;
+          esac
+        '';
+      })
     ];
   };
 }
