@@ -112,15 +112,20 @@
                       }
                     );
                   };
-                  # Only the desktop's scheduler is shipped, so there is no
-                  # reason to compile the other twenty-odd workspace bins on
-                  # every nixpkgs bump.
+                  # Only the schedulers the desktop runs are shipped, so there
+                  # is no reason to compile the other twenty-odd workspace bins
+                  # on every nixpkgs bump. The order is load-bearing:
+                  # installCheckPhase compares this list against the
+                  # alphabetically globbed $out/bin/scx_*.
                   env = (old.env or { }) // {
-                    cargoBuildFlags = "--package scx_cake";
+                    cargoBuildFlags = "--package scx_cake --package scx_eevdf";
                   };
                   postInstall = "";
                   passthru = (old.passthru or { }) // {
-                    schedulers = [ "scx_cake" ];
+                    schedulers = [
+                      "scx_cake"
+                      "scx_eevdf"
+                    ];
                   };
                   __intentionallyOverridingVersion = true;
                 });
@@ -132,6 +137,34 @@
               // {
                 full = prev.scx.full.override { scx = base; };
               };
+
+            # scx-loader v1.1.3, which nixpkgs still ships, predates
+            # scx_eevdf: upstream added it in 247fd05 on 2026-09-23, after the
+            # v1.1.3 tag, so `scxctl switch --sched scx_eevdf` is rejected as
+            # an unknown scheduler. Upstream has tagged nothing since, so this
+            # pins the main commit that also brings config-defined custom
+            # schedulers. Pinned by commit for the same reason as scx above.
+            # scxtui was moved out of the repository in the same window and is
+            # no longer shipped; nothing on this host used it.
+            scx-loader = prev.scx-loader.overrideAttrs (_: {
+              version = "1.1.3-unstable-2026-10-29";
+              src = prev.fetchFromGitHub {
+                owner = "sched-ext";
+                repo = "scx-loader";
+                rev = "259bb6c6d7c235903fe7b57665489d6e9f5af484";
+                hash = "sha256-mUyCXUuVCGmC92Yc709GK11Yf/G5gpOWIcY6AIa1/Xc=";
+              };
+              cargoDeps = prev.rustPlatform.importCargoLock {
+                lockFileContents = builtins.readFile (
+                  builtins.fetchurl {
+                    url = "https://raw.githubusercontent.com/sched-ext/scx-loader/259bb6c6d7c235903fe7b57665489d6e9f5af484/Cargo.lock";
+                    # sha256-95R5ghl40LQXnIauHC7LY3rhzbtlMOoErwPrRMDPP0k=
+                    sha256 = "95R5ghl40LQXnIauHC7LY3rhzbtlMOoErwPrRMDPP0k=";
+                  }
+                );
+              };
+              __intentionallyOverridingVersion = true;
+            });
 
             # nyx's `helix_git` builds its grammar farm from languages.json,
             # straight from each grammar's pinned revision. Its tree-sitter-perl

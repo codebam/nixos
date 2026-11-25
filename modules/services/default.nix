@@ -8,14 +8,22 @@
     # The desktop's default was scx_lavd until 1.1.3 regressed on kernel 7.2
     # (a migration-disabled, single-CPU-affine task was never dispatched and
     # waited out the 21s RCU stall timeout; fixed upstream in 6d31ddd8973 and
-    # shipped in 1.1.4). It now runs scx_cake from the main snapshot pinned in
-    # modules/system/nixpkgs.nix: cake is game-tuned and is newer there than
-    # in nixpkgs' 1.1.4 tag.
+    # shipped in 1.1.4). It then ran scx_cake, which is game-tuned.
+    #
+    # It now defaults to scx_eevdf, the faithful port of the kernel's own
+    # EEVDF: fair share is not a policy it can get wrong, so no task is owed
+    # service on a special path that can be missed, and it is the scheduler
+    # least likely to strand a thread mid-compile. Cake is still built and
+    # installed; `scx-switch game` moves to it, `scx-switch` (or
+    # `scx-switch work`) moves back.
+    #
     # nixpkgs 26.11 removed services.scx in favour of the scx-loader daemon
     # (services.scx-loader); default_sched replaces the old `scheduler`.
+    # Both pins live in modules/system/nixpkgs.nix: scx for the scheduler
+    # binaries, scx-loader for the daemon, whose v1.1.3 predates scx_eevdf.
     scx-loader = {
       enable = false;
-      config.default_sched = "scx_cake"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_cake/README.md
+      config.default_sched = "scx_eevdf"; # https://github.com/sched-ext/scx/blob/main/scheds/rust/scx_eevdf/README.md
     };
     # Portals are already set up for sway in modules/system/xdg.nix, which is
     # what flatpak apps need to reach files, screenshare, and the theme.
