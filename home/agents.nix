@@ -1477,9 +1477,9 @@ let
   podmanEnabled = osConfig.virtualisation.podman.enable or false;
 
   # The interactive dsh profiles share the hand-written OpenCode Go route
-  # row (`opencode-go-deepseek`, `opencode-go-union-alpha`), which must be
-  # named or dsh attaches no x-opencode-session header and OpenCode Go answers
-  # 400.
+  # rows (`opencode-go-deepseek`, `opencode-go-union-alpha`,
+  # `opencode-go-hungerg`), which must be named or dsh attaches no
+  # x-opencode-session header and OpenCode Go answers 400.
   # YAML fragment listing every OpenCode Go model as an authorized subagent
   # child route, so the model can select any of them when delegating.
   opencodeGoSubagentModelsYaml = lib.concatStringsSep "\n" (
@@ -1506,11 +1506,11 @@ let
     # Managed by home-manager (home/agents.nix); make changes in the flake,
     # not under ~/.dsh.
 
-    # `opencode-go-deepseek` and `opencode-go-union-alpha` are hand-declared
-    # pi-ai routes, not the catalog ids dsh-opencode-session defaults to
-    # (opencode/opencode-go), so the plugin has to be told about them or it
-    # attaches no x-opencode-session header and OpenCode Go answers 400
-    # MissingSessionID.
+    # `opencode-go-deepseek`, `opencode-go-union-alpha`, and
+    # `opencode-go-hungerg` are hand-declared pi-ai routes, not the catalog
+    # ids dsh-opencode-session defaults to (opencode/opencode-go), so the
+    # plugin has to be told about them or it attaches no x-opencode-session
+    # header and OpenCode Go answers 400 MissingSessionID.
     - id: opencode-go-session-header
       config:
         providers:
@@ -1518,6 +1518,7 @@ let
           - opencode-go
           - opencode-go-deepseek
           - opencode-go-union-alpha
+          - opencode-go-hungerg
 
     # Full-access defaults + subagent delegation limits. These are host-level
     # (volatile) settings; the values below are the deployment base that new
@@ -2571,6 +2572,49 @@ let
                 low: low
                 medium: medium
                 high: high
+
+        # HungerG Free is served by OpenCode Go but absent from pi-ai 1.6.0's
+        # bundled catalog, which is what dsh 0.2.2-rc.5 pins. That snapshot
+        # was generated 2026-11-20 (33 Go ids, hy4-flash-free and
+        # iceman-contributor-free among them) and HungerG lands in the
+        # gateway's live roster with a 2026-11-24 release date, four days too
+        # late. llm-pi-ai has no upsert and the catalog route's models speak
+        # three wire protocols, so `models` cannot append to it -- the
+        # dedicated single-model route is the same workaround
+        # opencode-go-deepseek and opencode-go-union-alpha use, and the route
+        # name must appear in opencode-go-session-header below or OpenCode Go
+        # answers 400 MissingSessionID.
+        #
+        # Metadata is the gateway's own /models entry (read 2026-11-25), not
+        # models.dev: chat-completions on the openai base, 1M context, 65,536
+        # output, text plus still-image input (jpeg/png/gif/webp -- the
+        # gateway also admits mp4/quicktime/mkv video, which dsh's model
+        # schema has no modality for). `capabilities.reasoning` carries no
+        # `effort` array and `effort_updates` is false, so there is no level
+        # this route may send; reasoningEfforts stays false rather than
+        # inventing one the endpoint never advertised. HungerG still reasons
+        # server-side, dsh simply never sends a reasoning_effort parameter.
+        # compat mirrors the catalog's other openai-completions Go entries
+        # (hy4-flash-free); the deepseek-only requiresReasoningContent /
+        # thinkingFormat switches do not apply, this is not a DeepSeek model.
+        opencode-go-hungerg:
+          displayName: OpenCode Go (HungerG)
+          apiKeyEnv: OPENCODE_API_KEY
+          api: openai-completions
+          baseURL: https://opencode.ai/inference/go/openai/v1
+          models:
+            - id: hungerg-free
+              name: HungerG Free
+              contextWindow: 1000000
+              maxTokens: 65536
+              input:
+                - text
+                - image
+              reasoningEfforts: false
+              compat:
+                supportsStore: false
+                supportsStrictMode: true
+                maxTokensField: max_tokens
 
         # Qwen Cloud Token Plan. The wire protocol and Personal-Edition
         # catalog come from pi-ai's qwen-token-plan-individual provider,
