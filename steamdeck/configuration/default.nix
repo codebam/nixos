@@ -5,6 +5,7 @@ _:
     ../hardware-configuration.nix
     ./nix.nix
     ./services.nix
+    ./bench.nix
     ./boot.nix
     ./environment.nix
     ./viewport.nix
