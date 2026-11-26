@@ -371,7 +371,7 @@ let
   };
 
   # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
-  # the curated selection for the fleet -- thirteen models, deliberately, not
+  # the curated selection for the fleet -- fourteen models, deliberately, not
   # the 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
   # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
@@ -408,6 +408,18 @@ let
   # omits the max output, so its output limit follows models.dev's copy, which
   # reports the whole context window. The base and uncensored GLM 5.3 routes
   # were added on 2026-11-12 and passed the same cross-check.
+  #
+  # Kitani's Evolve Beta joined on 2026-11-25. Calling it is free because
+  # Kitani trains on every conversation sent to it and credits the account
+  # $0.135/$2.25 per million input/output tokens instead of charging, so `cost`
+  # is a real zero rather than an unknown -- and the traffic is training data,
+  # which is why the gateway refuses it under zero-data-retention and Private
+  # Mode. Treat anything sent to it as public. Text plus up to four images in,
+  # tool calling, 200,000-token context and 8,192 out. The gateway advertises
+  # no reasoning_effort levels for it, so `efforts` stays empty rather than
+  # inventing one the endpoint never listed: it still reasons server-side, the
+  # same trade the Go relay's HungerG route makes, and every projection here
+  # simply never sends the parameter.
   nanogptModels = [
     {
       id = "google/gemini-4-carbon";
@@ -655,15 +667,30 @@ let
         cacheRead = 0.015;
       };
     }
+    {
+      id = "kitani/evolve-beta";
+      name = "Evolve Beta";
+      context = 200000;
+      output = 8192;
+      vision = true;
+      tool_call = true;
+      # No effort levels on the gateway; see the note above.
+      efforts = [ ];
+      cost = {
+        input = 0.0;
+        output = 0.0;
+        cacheRead = 0.0;
+      };
+    }
   ];
 
   # Qwen Code's model catalog: qwen4-max on the two gateways the fleet already
-  # holds keys for, plus Tencent's Hy4 Flash on NanoGPT. `qwen` speaks
-  # OpenAI-compatible chat-completions, so every route sits in its `openai`
-  # auth slot; `envKey` names the variable loadKey exports, which keeps the
-  # keys out of the settings file the TUI writes. The model registry keys
-  # routes by id + baseUrl, so the same model on two gateways is two distinct
-  # entries and `/model` picks between them.
+  # holds keys for, plus Tencent's Hy4 Flash and Kitani's Evolve Beta on
+  # NanoGPT. `qwen` speaks OpenAI-compatible chat-completions, so every route
+  # sits in its `openai` auth slot; `envKey` names the variable loadKey
+  # exports, which keeps the keys out of the settings file the TUI writes. The
+  # model registry keys routes by id + baseUrl, so the same model on two
+  # gateways is two distinct entries and `/model` picks between them.
   #
   # QwenCloud's Token Plan is the subscription route and the default; its
   # endpoint is the live compatible-mode host (pi-ai's bundled catalog still
@@ -680,6 +707,13 @@ let
   # /api/v1/models?detailed=true read: 1M context, 65536 output, text+image
   # input, tool calling, efforts none/high. models.dev does not carry it yet,
   # so the gateway entry is the sole metadata source.
+  #
+  # Evolve Beta is the same NanoGPT route as the curated nanogptModels entry
+  # (free traffic-for-training, text plus four images in, 200,000 context,
+  # 8,192 out, no effort levels), repeated here so Qwen Code's `/model` can
+  # reach it too. qwenModelEntry carries only the context budget and the image
+  # modality, so the zero cost and the training-data caveat stay documented
+  # above rather than in the settings file.
   qwenModels = [
     {
       id = "qwen4-max";
@@ -703,6 +737,14 @@ let
       envKey = "NANOGPT_API_KEY";
       baseUrl = "https://nano-gpt.com/api/v1";
       context = 1048576;
+      vision = true;
+    }
+    {
+      id = "kitani/evolve-beta";
+      name = "Evolve Beta (NanoGPT)";
+      envKey = "NANOGPT_API_KEY";
+      baseUrl = "https://nano-gpt.com/api/v1";
+      context = 200000;
       vision = true;
     }
   ];
