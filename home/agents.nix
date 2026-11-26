@@ -1522,10 +1522,16 @@ let
   # rows (`opencode-go-deepseek`, `opencode-go-union-alpha`,
   # `opencode-go-hungerg`), which must be named or dsh attaches no
   # x-opencode-session header and OpenCode Go answers 400.
-  # YAML fragment listing every OpenCode Go model as an authorized subagent
-  # child route, so the model can select any of them when delegating.
-  opencodeGoSubagentModelsYaml = lib.concatStringsSep "\n" (
+  #
+  # YAML fragment listing every model a delegated child may be pointed at: the
+  # whole OpenCode Go catalog and the curated NanoGPT catalog. A route missing
+  # from `allowedModels` is simply not offered in the subagent model picker, so
+  # both families are enumerated from the same lists the routes themselves
+  # declare -- a NanoGPT id that is not one of the fourteen would have no route
+  # to run on anyway.
+  subagentModelsYaml = lib.concatStringsSep "\n" (
     map (m: "          - provider: opencode-go\n            model: ${m.id}") opencodeGoModels
+    ++ map (m: "          - provider: nano-gpt\n            model: ${m.id}") nanogptModels
   );
 
   # The two interactive profiles own different ids for the same host service:
@@ -1537,7 +1543,7 @@ let
   # left dsh-tui with the service's default empty policy and only the parent
   # model was offered for delegation. Share one config for both ids.
   subagentModelSelectionConfigYaml =
-    "        enabled: true\n        allowedModels:\n" + opencodeGoSubagentModelsYaml;
+    "        enabled: true\n        allowedModels:\n" + subagentModelsYaml;
 
   dshProfilePatchCore = ''
 
