@@ -40,6 +40,15 @@
     };
     sway.enable = true;
     dconf.enable = true;
+    # OpenSSH 10 aborts when an included client config file is owned by someone
+    # other than root or the caller, and dsh's bwrap sandbox maps the host's
+    # root to nobody. The only Include in the generated ssh_config is
+    # systemd-ssh-proxy's snippet, a root-owned store file, so every ssh inside
+    # any dsh session died before connecting -- GitHub pushes included. That
+    # snippet only shortcuts `.host`, `unix/*` and `machine/*` to local systemd
+    # VMs, none of which this fleet runs, so drop the include instead of a
+    # feature anything here uses.
+    ssh.systemd-ssh-proxy.enable = false;
   };
 
   # programs.nushell does not add itself to /etc/shells the way the fish
