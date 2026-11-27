@@ -3,6 +3,7 @@
 # option) and the flake's `packages` output, so the two cannot disagree about
 # what is allowed. Keep sorted.
 [
+  "antigravity-cli"
   "claude-code"
   "google-chrome"
   "google-chrome-unstable"

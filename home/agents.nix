@@ -3003,6 +3003,13 @@ in
 {
   home = {
     packages = [
+      # Google's Antigravity CLI (`agy`, pkgs/antigravity-cli.nix). Left
+      # unwrapped, unlike opencode and dsh: agy signs in as the Antigravity
+      # account in the browser and keeps that credential under
+      # ~/.gemini/antigravity-cli, so exporting the agent keys into its
+      # environment would only offer a pay-per-token path off the subscription
+      # the CLI is installed for.
+      pkgs.antigravity-cli
       opencode-desktop-beta
       opencode
       dshInstalled

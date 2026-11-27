@@ -33,6 +33,12 @@ rec {
   # Official CLI from https://sigmashake.com/install (static Go binary).
   ssg = pkgs.callPackage ./ssg.nix { };
 
+  # Google's Antigravity CLI (`agy`). Closed-source Go binary from the
+  # upstream release tarballs; this pin carries 1.5.13 while upstream is
+  # 1.5.18, so the derivation pins the newer release. See
+  # pkgs/antigravity-cli.nix.
+  antigravity-cli = pkgs.callPackage ./antigravity-cli.nix { };
+
   # Zero-dependency C++23 CLI + MCP server that hands coding agents a ranked,
   # deterministic call-graph map of a repo. All deps vendored in-tree, so the
   # build needs no network; the binary installs with `--component ripwire`, and
