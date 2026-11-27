@@ -60,6 +60,24 @@ _:
         owner = "codebam";
         mode = "0400";
       };
+      # Google AI Studio (the Gemini API at generativelanguage.googleapis.com)
+      # API key. It is a separate credential from the Gemini Platform key
+      # above: AI Studio keys do not authenticate against aiplatform, and
+      # Platform keys do not authenticate against generativelanguage.
+      # home/agents.nix exports it as GEMINI_API_KEY (pi-ai's `google`
+      # provider) and GOOGLE_GENERATIVE_AI_API_KEY (the AI SDK name opencode's
+      # `google` provider also resolves).
+      google-aistudio-api-key = {
+        owner = "codebam";
+        mode = "0400";
+      };
+      # The Google Cloud project the AI Studio key is billed to. Neither
+      # harness sends it -- the Gemini API endpoint is not project-scoped --
+      # but it is mounted alongside the key so the pair stays together.
+      google-aistudio-project = {
+        owner = "codebam";
+        mode = "0400";
+      };
       # OpenCode Go subscription key, exported as OPENCODE_API_KEY by the
       # wrapper in home/agents.nix. Kept as its own secret: it is a personal
       # subscription key, not part of the shared agent environment.

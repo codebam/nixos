@@ -23,12 +23,18 @@ let
     # Gemini Platform (formerly Vertex AI), API-key auth. Two names, one
     # secret: pi-ai's google-vertex provider (the dsh route and pi) reads
     # GOOGLE_CLOUD_API_KEY, while opencode's own google-vertex plugin reads
-    # GOOGLE_VERTEX_API_KEY. The project and location come from
-    # geminiPlatformProject/ geminiPlatformLocation below -- the express
-    # path would resolve to the key's own region, which does not serve the
-    # Gemini 4 models.
+    # GOOGLE_VERTEX_API_KEY. The project is the `gemini-platform-project`
+    # secret (read where it is needed at runtime) and the location is
+    # geminiPlatformLocation below -- the express path would resolve to the
+    # key's own region, which does not serve the Gemini 4 models.
     GOOGLE_CLOUD_API_KEY = "gemini-platform-api-key";
     GOOGLE_VERTEX_API_KEY = "gemini-platform-api-key";
+    # Google AI Studio (Gemini API), a different credential from the Gemini
+    # Platform key above. GEMINI_API_KEY is pi-ai's `google` provider env;
+    # opencode's `google` provider resolves any of the models.dev names, and
+    # GOOGLE_GENERATIVE_AI_API_KEY is the AI SDK's own spelling.
+    GEMINI_API_KEY = "google-aistudio-api-key";
+    GOOGLE_GENERATIVE_AI_API_KEY = "google-aistudio-api-key";
   };
   secretVarPairs = lib.concatStringsSep " " (
     lib.mapAttrsToList (name: secret: "${name}:${secret}") secretVars
@@ -2843,6 +2849,17 @@ let
           displayName: Gemini Platform (Vertex AI)
           apiKeyEnv: GOOGLE_CLOUD_API_KEY
 
+        # Google AI Studio (the Gemini API), pi-ai's built-in `google`
+        # catalog: 26 models at the bundled 1.6.0 snapshot, served from
+        # generativelanguage.googleapis.com/v1beta, so no baseURL or project
+        # is involved. GEMINI_API_KEY is exported by `loadKey` from the
+        # `google-aistudio-api-key` sops secret, and it is a separate
+        # credential from the Gemini Platform key -- AI Studio keys do not
+        # authenticate against aiplatform.
+        google:
+          displayName: Google AI Studio (Gemini API)
+          apiKeyEnv: GEMINI_API_KEY
+
         # Union Alpha on OpenRouter. pi-ai 0.85.1's installed catalog predates
         # it, and neither way of extending that route works: a `models` list
         # would replace all 366 catalog entries, and `modelOverrides` refuses
@@ -3651,6 +3668,13 @@ in
           # plugin uses to build the project-scoped global endpoint (the
           # key's own express region does not serve the Gemini 4 models).
           google-vertex.name = "Gemini Platform (Vertex AI)";
+
+          # Google AI Studio (the Gemini API). models.dev's `google` provider
+          # already activates from GEMINI_API_KEY / GOOGLE_GENERATIVE_AI_API_KEY,
+          # both exported by loadKey from the `google-aistudio-api-key` sops
+          # secret; this only relabels it so the picker distinguishes it from
+          # the Gemini Platform route.
+          google.name = "Google AI Studio (Gemini API)";
 
           # Union Alpha Free. models.dev already carries it for both OpenCode
           # provider ids; the explicit declarations pin the free metadata so a
