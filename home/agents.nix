@@ -371,7 +371,7 @@ let
   };
 
   # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1). This is
-  # the curated selection for the fleet -- fourteen models, deliberately, not
+  # the curated selection for the fleet -- fifteen models, deliberately, not
   # the 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
   # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
@@ -382,11 +382,11 @@ let
   # MiMo pair, and the GLM 5.3 line (base, flash, and both uncensored
   # variants); every entry must call tools. Muse Ember, Claude Haiku 5.5, GPT
   # 6 Luna, and GLM 5.3 Uncensored bill per token rather than sit in the
-  # subscription -- Uncensored is the priciest route here and is kept for the
-  # uncensored tier, not price. Everything else, GLM 5.3 included, ships in
+  # subscription -- Uncensored is the priciest of the GLM line and is kept for
+  # the uncensored tier, not price. Everything else, GLM 5.3 included, ships in
   # the subscription.
   #
-  # Gemini 4 Carbon and GPT 6.1 Terra were added on 2026-11-13 as the two rungs
+  # Gemini 4 Carbon and GPT 6.1 Terra were added on 2026-11-13 as the rungs
   # above that band. Until then the strongest route in this list was DeepSeek
   # V4.1 Flash's 159.4 Epoch Capabilities Index, with nothing to hand a stuck
   # task to. NanoGPT's coding leaderboard (70% LMArena Coding, 30% LMArena
@@ -397,6 +397,19 @@ let
   # and output at 32,768 tokens -- tight for one patch across a
   # compositor-sized tree -- while Terra's 128,000 fits it, and both bill per
   # token rather than sit in the subscription.
+  #
+  # Gemini 4 Neon joined on 2026-11-26 as the deeper-reasoning rung above
+  # Carbon: the same 1,048,576-token window, but 65,536 combined thinking and
+  # output tokens (Carbon's 32,768 is the tight cap described above) and xhigh
+  # on top of Carbon's low/medium/high, described by the gateway for complex
+  # coding, document analysis, and scientific problem solving. At $3/$15 per
+  # million with $0.15 cache reads it is the priciest route here, so it is the
+  # one to reach for when a task needs depth rather than throughput. Its
+  # `context` is 983,040 rather than the whole window because the gateway
+  # reserves the remaining 65,536 for output and reports that input cap as
+  # context_length; models.dev's `nano-gpt` copy agrees, while Carbon keeps
+  # 1,048,576 because the gateway lists its window whole. Metadata from the
+  # same /api/v1/models?detailed=true read as the rest, re-read 2026-11-26.
   #
   # Metadata is from the provider's own /api/v1/models?detailed=true, checked
   # against models.dev's copy (both live 2026-11-11; Muse Ember shipped that
@@ -437,6 +450,27 @@ let
         input = 2.0;
         output = 10.0;
         cacheRead = 0.1;
+      };
+    }
+    {
+      id = "google/gemini-4-neon";
+      name = "Gemini 4 Neon";
+      # The gateway reports the input cap, not the 1,048,576-token window; see
+      # the note above.
+      context = 983040;
+      output = 65536;
+      vision = true;
+      tool_call = true;
+      efforts = [
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ];
+      cost = {
+        input = 3.0;
+        output = 15.0;
+        cacheRead = 0.15;
       };
     }
     {
@@ -1527,7 +1561,7 @@ let
   # whole OpenCode Go catalog and the curated NanoGPT catalog. A route missing
   # from `allowedModels` is simply not offered in the subagent model picker, so
   # both families are enumerated from the same lists the routes themselves
-  # declare -- a NanoGPT id that is not one of the fourteen would have no route
+  # declare -- a NanoGPT id that is not one of the fifteen would have no route
   # to run on anyway.
   subagentModelsYaml = lib.concatStringsSep "\n" (
     map (m: "          - provider: opencode-go\n            model: ${m.id}") opencodeGoModels
