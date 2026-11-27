@@ -29,7 +29,7 @@ broader file is dropped before a more specific one when the budget is hit.
   bundled bwrap/Landlock world rooted at the process cwd, and carries no host
   credentials or Nix daemon socket. Work that needs those is a human decision,
   not something an agent grants itself mid-session.
-- **opencode/pi/Hermes are trusted host harnesses, not sandboxes.** Their shell
+- **opencode/pi are trusted host harnesses, not sandboxes.** Their shell
   and MCP tools run as the host user. dsh's sandbox is the only agent-side
   boundary; do not describe the other harnesses as sandboxed.
 - **Treat agent-modified repo content as untrusted host input.** Do not run

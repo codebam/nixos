@@ -1,7 +1,6 @@
 # The Assisted-by commit trailer rule, defined once for every harness:
 # home/agents.nix interpolates `guidance` into the dsh, pi and opencode
-# global AGENTS.md files, and home/hermes.nix into its always-on
-# environment_hint / coding_instructions. The hand-written ~/.claude/CLAUDE.md
+# global AGENTS.md files. The hand-written ~/.claude/CLAUDE.md
 # and ~/.gemini/GEMINI.md carry the same rule by hand (they stay hand-written
 # so each tool's own /memory-style editing keeps working). Qwen's
 # ~/.qwen/QWEN.md is flake-managed (home/agents.nix) and carries only the

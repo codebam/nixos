@@ -1,7 +1,6 @@
 # Shared values for the Google Calendar MCP server (the `google-calendar`
 # tool namespace): the stdio launcher and the server name, so the
-# registrations in home/agents.nix (qwen, dsh, opencode) and home/hermes.nix
-# cannot drift.
+# registrations in home/agents.nix (qwen, dsh, opencode) cannot drift.
 #
 # The server is packaged in pkgs/google-calendar-mcp.nix; interactive
 # authentication is a one-time `google-calendar-mcp auth` run whose tokens
@@ -34,8 +33,7 @@ in
   );
 
   # The MCP server name is the tool namespace in every harness that mounts
-  # it: Hermes sanitizes the hyphen (`mcp__google_calendar__*`), qwen and dsh
-  # keep it (`mcp__google-calendar__*`), opencode prefixes with the entry
-  # name (`google-calendar_*`).
+  # it: qwen and dsh keep the hyphen (`mcp__google-calendar__*`), opencode
+  # prefixes with the entry name (`google-calendar_*`).
   name = "google-calendar";
 }

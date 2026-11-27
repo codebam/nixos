@@ -25,7 +25,7 @@
       extraConfig = ''
         // Allow members of the wheel group to execute any action without a
         // prompt from any local active session -- including user@1000.service's
-        // seatless manager session, where the agent harnesses (dsh, Hermes,
+        // seatless manager session, where the agent harnesses (dsh,
         // opencode) run their shells and need run0 for host maintenance such as
         // nix-collect-garbage. SSH sessions stay excluded: they are remote, so
         // `subject.local` is false and they must authenticate

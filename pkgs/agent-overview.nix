@@ -36,7 +36,7 @@ writeShellApplication {
 
     usage() {
       echo "usage: agent-overview [--watch [seconds]]"
-      echo "  Lists claude, hermes and agy sessions running in tmux, plus any"
+      echo "  Lists claude and agy sessions running in tmux, plus any"
       echo "  ''${prefix}* session whose agent has not drawn its UI yet."
       echo "  --watch redraws in place; a row's number or / connects to it."
     }
@@ -69,15 +69,12 @@ writeShellApplication {
     lines=()
 
     # Which CLI is in this pane. Each one is named by something only it puts
-    # on screen: hermes' ⚕ statusline, antigravity's fixed bottom-left hint,
-    # and Claude's mode line. Content rather than the process name, because
-    # hermes shows up as `python3.12` and any of the three can be behind a
+    # on screen: antigravity's fixed bottom-left hint and Claude's mode line.
+    # Content rather than the process name, because either can be behind a
     # wrapper -- and a pane is only worth a row once it has drawn its UI.
     detect() {
       local body=$1
-      if grep -qE '⚕|Hermes Agent' <<<"$body"; then
-        printf 'hermes'
-      elif grep -qE '\? for shortcuts|esc to cancel' <<<"$body"; then
+      if grep -qE '\? for shortcuts|esc to cancel' <<<"$body"; then
         printf 'agy'
       elif grep -qE 'bypass permissions|shift\+tab to cycle|\| \$[0-9.]+ \|' <<<"$body"; then
         printf 'claude'
@@ -85,7 +82,7 @@ writeShellApplication {
     }
 
     draw() {
-      local now sess sid attached activity pane path dir body tool prof status branch ctx cost row
+      local now sess sid attached activity pane path dir body tool status branch ctx cost row
       now=$(date +%s)
       rows=()
       lines=()
@@ -148,11 +145,10 @@ writeShellApplication {
 
         # Busy, in each CLI's own words. Claude: the elapsed/token counter
         # beside the spinner, which is up for every second of work, unlike the
-        # "esc to interrupt" hint that comes and goes. Hermes and antigravity
-        # both swap their input footer for a cancel hint while a turn runs, so
-        # that is the marker there; hermes' is the whole `Ctrl+C cancel` line,
-        # antigravity's replaces "? for shortcuts" with "esc to cancel".
-        if grep -qE '\([0-9]+[hms].*(tokens|esc to interrupt)|Ctrl\+C cancel|esc to cancel' <<<"$body"; then
+        # "esc to interrupt" hint that comes and goes. Antigravity swaps its
+        # input footer for a cancel hint while a turn runs -- it replaces
+        # "? for shortcuts" with "esc to cancel".
+        if grep -qE '\([0-9]+[hms].*(tokens|esc to interrupt)|esc to cancel' <<<"$body"; then
           status=$'\033[33mbusy\033[0m'
         elif grep -qE 'Do you want|❯ *[0-9]+\.|Yes, and (don|do not)|\[y/N\]|Approve\?' <<<"$body"; then
           # Waiting on a permission answer. Worth its own colour: it looks
@@ -169,30 +165,14 @@ writeShellApplication {
 
         # Context and cost come off each CLI's own statusline -- the one place
         # a session publishes them, and the pane is already captured. Claude
-        # prints ` | 73% | $151.34 |`; hermes a bar and a percentage after it,
-        # `[░░░░░] 12%`, with tokens rather than money; antigravity shows
-        # neither, so both columns stay `-` for it.
+        # prints ` | 73% | $151.34 |`; antigravity shows neither, so both
+        # columns stay `-` for it.
         ctx="" cost=""
         case $tool in
           claude)
             line=$(grep -oE '\| [0-9]+% \| \$[0-9.]+' <<<"$body" | tail -1 || true)
             ctx=$(grep -oE '[0-9]+%' <<<"$line" | tail -1 || true)
             cost=$(grep -oE '\$[0-9.]+' <<<"$line" | tail -1 || true)
-            ;;
-          hermes)
-            ctx=$(grep -oE '\] [0-9]+%' <<<"$body" | tail -1 || true)
-            ctx=''${ctx#* }
-
-            # `hermes -p viewport` selects a profile, not a directory, so a
-            # hermes session started from anywhere reports the cwd it was
-            # launched in -- usually ~ -- and every profile looks alike in the
-            # table. The profile is what names the session's work, and hermes
-            # puts it in front of its prompt (`viewport ❯`); the default
-            # profile prints the bare ⚕ prompt and gets no suffix.
-            prof=$(grep -oE '(^|⚕ )[A-Za-z0-9._-]+ ❯' <<<"$body" | tail -1 || true)
-            prof=''${prof#⚕ }
-            prof=''${prof% ❯}
-            [ -n "$prof" ] && tool="hermes:$prof"
             ;;
         esac
 

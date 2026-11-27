@@ -1,5 +1,5 @@
 # nspady's Google Calendar MCP server (@cocal/google-calendar-mcp), the local
-# stdio server behind Hermes' google-calendar MCP row (home/hermes.nix via
+# stdio server behind the harnesses' google-calendar MCP rows (via
 # home/google-calendar-mcp.nix). No nixpkgs package.
 #
 # The registry tarball ships a prebuilt build/ (compiled by the project's own
@@ -48,7 +48,7 @@ buildNpmPackage (finalAttrs: {
   nativeBuildInputs = [ makeWrapper ];
 
   # npm links the bin as a symlink onto build/index.js, whose shebang reads
-  # `#!/usr/bin/env node`; on NixOS that resolves to nothing under Hermes'
+  # `#!/usr/bin/env node`; on NixOS that resolves to nothing under a harness's
   # minimal service environment. Replace the link with the store's node,
   # like pkgs/dsh.nix does, so the bin is self-contained.
   postInstall = ''

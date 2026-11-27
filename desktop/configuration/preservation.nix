@@ -105,10 +105,10 @@ in
             # reproducible from the flake; re-downloading on every boot is
             # wasteful.
             ".zvec-grep"
-            # Per-user Hermes state installed by home/hermes.nix: API login,
+            # Per-user data from the retired Hermes install: API login,
             # sessions, memories, and skills. None of it is reproducible from
-            # the flake, and the per-user module uses ~/.hermes rather than
-            # the retired service's /var/lib/hermes.
+            # the flake; preserved so the history survives even though the
+            # harness is no longer installed.
             ".hermes"
             # The Calendar MCP stores OAuth tokens here; without persistence,
             # the root wipe requires authenticating again after every boot.
@@ -124,9 +124,9 @@ in
           ];
           directories = [
             "persist"
-            # This user's own HERMES_HOME (see desktop/makano-home.nix).
-            # Holds their API login, sessions, memories, and skills, none of
-            # which are reproducible from the flake.
+            # This user's own Hermes data (API login, sessions, memories,
+            # and skills), none of which is reproducible from the flake.
+            # Preserved with the harness removed.
             ".hermes"
             # `wrangler login` writes its OAuth token here. Without this the
             # login is undone by the next boot.

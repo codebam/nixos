@@ -1,6 +1,6 @@
 # One /rewrite prompt-improver for every harness on this machine.
 #
-# Qwen Code, dsh, Hermes and Claude Code read a user skill bundle as `/<name>`;
+# Qwen Code, dsh and Claude Code read a user skill bundle as `/<name>`;
 # Pi exposes its prompt templates directly as `/<name>` but skills only as
 # `/skill:<name>`; OpenCode needs a command file. The instruction body is one
 # file so the five spellings cannot drift -- only the frontmatter and the way
@@ -32,7 +32,6 @@ in
   home.file = {
     ".qwen/skills/rewrite/SKILL.md".text = skill;
     ".dsh/skills/rewrite/SKILL.md".text = skill;
-    ".hermes/skills/rewrite/SKILL.md".text = skill;
     ".claude/skills/rewrite/SKILL.md".text = skill;
     ".agents/skills/rewrite/SKILL.md".text = skill;
 

@@ -49,7 +49,7 @@ rec {
   zvec-grep = pkgs.callPackage ./zvec-grep.nix { };
 
   # nspady's Google Calendar MCP server (@cocal/google-calendar-mcp): the
-  # stdio server behind the google-calendar tools in home/hermes.nix. The
+  # stdio server behind the google-calendar tools the harnesses mount. The
   # registry tarball ships a prebuilt build/ and no lockfile, so like
   # zvec-grep the derivation vendors the upstream tag's package-lock.json.
   google-calendar-mcp = pkgs.callPackage ./google-calendar-mcp.nix { };

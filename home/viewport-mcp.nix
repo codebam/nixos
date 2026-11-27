@@ -1,7 +1,7 @@
-# One registration for the Viewport computer-use MCP server, imported by both
-# home/agents.nix (qwen, opencode, pi) and home/hermes.nix so the server name,
-# argv and standing guidance cannot drift between harnesses. dsh keeps its
-# native `viewport` plugin instead; this is the bridge for the others.
+# One registration for the Viewport computer-use MCP server, imported by
+# home/agents.nix (qwen, opencode, pi) so the server name, argv and standing
+# guidance cannot drift between harnesses. dsh keeps its native `viewport`
+# plugin instead; this is the bridge for the others.
 { pkgs }:
 
 let
@@ -19,8 +19,8 @@ in
     ## Viewport desktop control (viewport MCP)
 
     The `viewport` MCP server drives the actual desktop this harness runs on.
-    The tool is named `viewport`: `mcp__viewport__viewport` in Qwen Code, pi and
-    Hermes, `viewport_viewport` in opencode (pi registers it through the lazy
+    The tool is named `viewport`: `mcp__viewport__viewport` in Qwen Code and
+    pi, `viewport_viewport` in opencode (pi registers it through the lazy
     `mcp` proxy, so `mcp({ search: "viewport" })` first).
 
     Its screenshots are the live screen and its clicks, wheel turns and

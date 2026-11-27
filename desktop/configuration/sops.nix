@@ -1,7 +1,4 @@
-{
-  config,
-  ...
-}:
+_:
 
 {
   sops = {
@@ -19,8 +16,8 @@
         group = "navidrome";
       };
       # One sops key per credential, each mounted as its own file. The agent
-      # wrappers (home/agents.nix) read these directly, and the template below
-      # reassembles the old hermes-env file for Hermes itself.
+      # wrappers (home/agents.nix) read these directly; nothing else
+      # reassembles them into a shared environment file.
       openrouter-api-key = {
         owner = "codebam";
         mode = "0400";
@@ -45,6 +42,15 @@
         owner = "codebam";
         mode = "0400";
       };
+      # Gemini Platform (formerly Vertex AI) API key, in API-key/express mode
+      # rather than ADC. home/agents.nix's secretVars exports it under both
+      # names the harnesses resolve: GOOGLE_CLOUD_API_KEY for pi-ai (dsh, pi)
+      # and GOOGLE_VERTEX_API_KEY for opencode. No project or location is set:
+      # with an API key both clients target the global aiplatform endpoint.
+      gemini-platform-api-key = {
+        owner = "codebam";
+        mode = "0400";
+      };
       # OpenCode Go subscription key, exported as OPENCODE_API_KEY by the
       # wrapper in home/agents.nix. Kept as its own secret: it is a personal
       # subscription key, not part of the shared agent environment.
@@ -52,11 +58,7 @@
         owner = "codebam";
         mode = "0400";
       };
-      # Second OpenCode Go subscription, and the one Hermes leads with: the
-      # hermes-env template below puts its placeholder in the unnumbered
-      # OPENCODE_GO_API_KEY slot, which the credential pool's fill_first
-      # order tries before the numbered sibling, so the first subscription
-      # becomes the fallback entry. The dsh launchers export it too, as
+      # Second OpenCode Go subscription. The dsh launchers export it as
       # OPENCODE_API_KEY_2 (loadDshKey in home/agents.nix), so both
       # subscriptions resolve inside dsh and `dsh-subscription` flips which
       # one OPENCODE_API_KEY names; no other agent picks it up.
@@ -65,10 +67,9 @@
         mode = "0400";
       };
       # NanoGPT API key for the `nano-gpt` provider in opencode (as
-      # NANO_GPT_API_KEY, the name models.dev lists for it) and in pi, dsh,
-      # and Hermes (as NANOGPT_API_KEY, the name NanoGPT's own docs use);
-      # home/agents.nix exports both names from the wrappers, and the
-      # hermes-env template below feeds Hermes.
+      # NANO_GPT_API_KEY, the name models.dev lists for it) and in pi and dsh
+      # (as NANOGPT_API_KEY, the name NanoGPT's own docs use); home/agents.nix
+      # exports both names from the wrappers.
       nanogpt-api-key = {
         owner = "codebam";
         mode = "0400";
@@ -95,28 +96,19 @@
         owner = "codebam";
         mode = "0400";
       };
-      # Telegram bot token for the Qwen Code Telegram channel
-      # (home/agents.nix): the qwen wrapper exports it as TELEGRAM_BOT_TOKEN
-      # for `qwen channel start`. It replaced the Hermes gateway on the same
-      # bot, hence the rename from hermes-bot-telegram-key. Deliberately not
-      # in home/agents.nix's shared secretVars: only the qwen wrapper loads
-      # it, so no other harness sees the token.
+      # Telegram bot token for dsh-im's Telegram bot (home/agents.nix's
+      # loadDshImKeys exports it under the bot's credential ref). Deliberately
+      # not in home/agents.nix's shared secretVars: only that loader reads it,
+      # so no other harness sees the token.
       qwen-bot-telegram-key = {
         owner = "codebam";
         mode = "0400";
       };
-      # cloudflared credentials for the hermes-telegram tunnel
+      # cloudflared credentials for the tg.codebam.ca tunnel
       # (desktop/configuration/cloudflared.nix), loaded by the tunnel unit as
-      # a runtime credential -- systemd reads it as root, so root ownership
-      # is fine. The tunnel outlived the Hermes gateway it was built for;
-      # the Qwen Code channel long-polls and does not use it.
+      # a runtime credential -- systemd reads it as root, so root ownership is
+      # fine. The tunnel now fronts the Matrix appservice webhook bridge.
       cloudflared-tunnel-credentials = { };
-      # Tavily API key backing Hermes' web.extract_backend (home/hermes.nix).
-      # No wrapper exports it; only the hermes-env template below consumes it.
-      tavily-api-key = {
-        owner = "codebam";
-        mode = "0400";
-      };
       # Bearer for the agentic-inbox email MCP bridge (home/email-mcp.nix):
       # the bridge launcher exports it as MCP_AUTH_TOKEN so the stdio bridge
       # authenticates to the deployed Worker without depending on the
@@ -160,43 +152,6 @@
         mode = "0400";
       };
       searx-secret = { };
-    };
-
-    # Rebuild hermes-env as a runtime file for the Hermes agent. The base keys
-    # come from the same individual sops keys the wrappers read; the plan keys
-    # are added under the names Hermes resolves them by, so its built-in
-    # OpenCode Go and DeepSeek providers authenticate, its hand-declared
-    # Qwen Token Plan and NanoGPT providers find their key_envs, and its pinned
-    # web.extract_backend (home/hermes.nix) finds the Tavily key. No Telegram
-    # token here: the bot moved to the Qwen Code channel, and leaving
-    # TELEGRAM_BOT_TOKEN in this file would switch the Telegram platform back
-    # on in any `hermes serve` child (the desktop app spawns one). Both
-    # OpenCode Go subscriptions enter the
-    # credential pool as the unnumbered/numbered pair (the numbered sibling
-    # is auto-discovered), and fill_first tries the unnumbered slot first --
-    # so the placeholders are crossed below: the second subscription leads
-    # and the first one backs it up when a spent subscription rotates
-    # mid-session.
-    # owner codebam so Home Manager activation can read it and copy it into
-    # $HERMES_HOME/.env. CLOUDFLARE_API_TOKEN carries the same sops value as
-    # CLOUDFLARE_API_KEY, under the name the cf CLI (pkgs/cf.nix) resolves.
-    templates."hermes-env" = {
-      content = ''
-        OPENROUTER_API_KEY=${config.sops.placeholder.openrouter-api-key}
-        CONTEXT7_API_KEY=${config.sops.placeholder.context7-api-key}
-        CLOUDFLARE_API_KEY=${config.sops.placeholder.cloudflare-api-key}
-        CLOUDFLARE_ACCOUNT_ID=${config.sops.placeholder.cloudflare-account-id}
-        CLOUDFLARE_API_TOKEN=${config.sops.placeholder.cloudflare-api-key}
-        QWEN_TOKEN_PLAN_API_KEY=${config.sops.placeholder.qwen-api-key}
-        DEEPSEEK_API_KEY=${config.sops.placeholder.deepseek-api-key}
-        OPENCODE_GO_API_KEY=${config.sops.placeholder.opencode-go-api-key-2}
-        OPENCODE_GO_API_KEY_2=${config.sops.placeholder.opencode-go-api-key}
-        NANOGPT_API_KEY=${config.sops.placeholder.nanogpt-api-key}
-        TAVILY_API_KEY=${config.sops.placeholder.tavily-api-key}
-      '';
-      owner = "codebam";
-      group = "users";
-      mode = "0400";
     };
   };
 }

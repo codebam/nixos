@@ -1,7 +1,7 @@
 # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block, defined once the way
 # email-mcp.nix owns the email policy: home/agents.nix interpolates the text
-# into pi, dsh, and opencode's instruction files, and home/hermes.nix carries
-# it in its system-prompt hints. The operational rules are distilled from the
+# into pi, dsh, and opencode's instruction files. The operational rules are
+# distilled from the
 # upstream agent guide (https://developers.cloudflare.com/cf/agents/) so every
 # harness sees the same behavior the docs prescribe.
 {

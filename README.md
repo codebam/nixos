@@ -101,8 +101,6 @@ home-manager target -- that guest runs its own Debian, not NixOS.
 │   ├── cf.nix                   # Cloudflare CLI guidance shared by the agent prompts
 │   ├── email-mcp.nix            # email-mcp server: agentic-inbox bridge and send policy
 │   ├── google-calendar-mcp.nix  # Google Calendar MCP launcher
-│   ├── hermes.nix               # Hermes agent config and standing prompt
-│   ├── hermes-agent-memory.nix  # Hermes memory provider over the shared graph
 │   ├── services.nix             # swayidle, wl-clip-persist, gpg-agent, tmux user unit
 │   ├── shell-common.nix         # bash, zoxide, direnv, nushell, tmux
 │   ├── stylix.nix               # Per-user theming targets
@@ -182,7 +180,6 @@ is a sed program, not a derivation.
 | `voxtype` | peteonrails/voxtype v1.0.1 |
 | `sops-pass` | codebam/sops-pass |
 | `viewport` | codebam/viewport (compositor; default `servoshell` backend) |
-| `hermes-agent` | NousResearch/hermes-agent (Hermes CLI, gateway, and Desktop) |
 
 ## Key Features
 
@@ -211,9 +208,9 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
   tailnet name (no public vhost and no ACME certificate)
 - **Search**: SearXNG on 127.0.0.1:8081 (JSON API for agents)
 - **Cloudflare**: FlareSolverr container (loopback) for interstitial solving
-- **Cloudflare tunnel**: cloudflared serves `tg.codebam.ca` for the Hermes
-  Telegram webhook to `127.0.0.1:8443` (locally-managed tunnel, nothing
-  listens on the WAN)
+- **Cloudflare tunnel**: cloudflared serves `tg.codebam.ca` for the Matrix
+  appservice webhook bridge on `127.0.0.1:3081` (locally-managed tunnel,
+  nothing listens on the WAN)
 - **Local AI**: Ollama (loopback, AMD ROCm override)
 - **Networking**: Tailscale, IVPN, NetworkManager/iwd, systemd-resolved (DoT)
 - **Gaming**: Steam (extest, Gamescope, Proton CachyOS); Steam firewall holes closed
@@ -235,26 +232,25 @@ Nix implementation replaced by Lix, bringing `nixpkgs-review`, `nix-eval-jobs`,
 - **Editors**: Helix (git, nixd LSP), vim → hx alias
 - **Browsers**: Firefox, Google Chrome, Ungoogled Chromium
 - **Terminals**: Ghostty, Rio
-- **Agents**: OpenCode (v2 `opencode`), OpenCode Desktop, Pi, and
-  dsh, plus Hermes (CLI, gateway, and Desktop) on the desktop. All are trusted
-  host harnesses: their shell, file, and MCP tools run as the host user. The
-  host harnesses keep their zvec-grep/ripwire/Playwright MCP rows; dsh's web
-  profile also registers the shared memory MCP and the isolated, headless
-  Playwright MCP (its file access is scoped to the session workspace by
-  Playwright's default guardrail, and it runs on the host network). Hermes,
-  dsh, Qwen Code, and OpenCode additionally register the `email-mcp` server,
+- **Agents**: OpenCode (v2 `opencode`), OpenCode Desktop, Pi, and dsh.
+  All are trusted host harnesses: their shell, file, and MCP tools run as the
+  host user. The host harnesses keep their zvec-grep/ripwire/Playwright MCP
+  rows; dsh's web profile also registers the shared memory MCP and the
+  isolated, headless Playwright MCP (its file access is scoped to the session
+  workspace by Playwright's default guardrail, and it runs on the host
+  network). dsh, Qwen Code, and OpenCode additionally register the `email-mcp`
+  server,
   a host-side stdio bridge into the agentic-inbox Worker that authenticates
   with the `email-api-key` sops secret, falling back to the local `wrangler
   login` token (run `npx wrangler login` once from that checkout on hosts
   without the secret), and the `google-calendar` MCP server, which reads the
   `google-calendar-oauth` sops secret. Outbound mail is sent only after an
   explicit authorization for that exact message -- a standing rule in the
-  Hermes, dsh, and OpenCode prompts and in Qwen's Telegram channel
-  instructions.
+  dsh and OpenCode prompts and in Qwen's Telegram channel instructions.
 - **Sandbox**: dsh is the one harness that runs its commands in a sandbox by
   default -- the bundled bwrap/Landlock world, rooted at the process cwd, with
   no host credentials or Nix daemon socket forwarded. Every other harness
-  (opencode, pi, Hermes) executes on the host shell as the user.
+  (opencode, pi) executes on the host shell as the user.
 - **Dev**: gh, git (signed commits), claude-code
 - **Media**: mpv (Anime4K upscaling), OBS Studio (VAAPI)
 - **Gaming**: MangoHud, Prism Launcher (Deck), Moonlight (Deck)

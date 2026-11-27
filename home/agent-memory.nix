@@ -8,8 +8,7 @@
 # loopback only.
 #
 # Imported by home/agents.nix (the unit, the opencode/pi/dsh registrations,
-# and their instruction files) and home/hermes.nix (its MCP row and
-# system-prompt guidance), so the endpoint, server name, store path, and
+# and their instruction files), so the endpoint, server name, store path, and
 # rendered guidance cannot drift between harnesses.
 let
   name = "memory";
@@ -20,8 +19,7 @@ let
 
   # Rendered into each harness's standing instructions. opencode names the
   # tools `<server>_<tool>` and pi's adapter does the same with its default
-  # `toolPrefix` ("server"); dsh and Hermes register the
-  # `mcp__<server>__<tool>` form (Hermes sanitizes hyphens the same way),
+  # `toolPrefix` ("server"); dsh registers the `mcp__<server>__<tool>` form,
   # which is the one substitution below.
   guidance = ''
     ## Agent memory (shared knowledge graph)
@@ -46,11 +44,9 @@ let
     `search_nodes` is substring matching, not semantic, so try distinctive
     terms and synonyms.
 
-    On this machine the graph is *the* durable memory: Hermes runs with its
-    native MEMORY.md store disabled and recalls graph entries into every turn
-    by itself, so a fact worth keeping belongs here rather than in a
-    harness-local file, and entries written by any one harness are read by the
-    others.
+    On this machine the graph is *the* durable memory: entries written by any
+    one harness are read by the others, so a fact worth keeping belongs here
+    rather than in a harness-local file.
   '';
 in
 {
@@ -65,7 +61,7 @@ in
   # as a remote server and talks to the one shared writer.
   url = "http://127.0.0.1:${toString port}/mcp";
 
-  # The `mcp__<server>__<tool>` rendering (dsh and Hermes).
+  # The `mcp__<server>__<tool>` rendering (dsh).
   guidanceMcp =
     builtins.replaceStrings
       [

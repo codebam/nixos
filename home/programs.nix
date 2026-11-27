@@ -491,12 +491,13 @@
       enable = true;
       # A long agent run tied to a terminal window dies with the window. This
       # puts it in a session of its own, named after the repo, so closing the
-      # terminal detaches instead of killing: `agent claude`, `agent hermes`,
+      # terminal detaches instead of killing: `agent claude`, `agent opencode`,
       # or bare `agent` for a shell. Already inside tmux, it switches to that
       # session rather than nesting one inside another.
       #
       # The command is part of the session name: with the repo alone, a second
-      # `agent hermes` in a repo that already has `agent claude` running would
+      # `agent opencode` in a repo that already has `agent claude` running
+      # would
       # attach to the claude session and silently drop its own arguments.
       functions.agent = {
         description = "Attach or create a detached-safe tmux session for this repo";
@@ -610,7 +611,7 @@
           # a timer and restores on tmux start.
           #
           # Deliberately no agent binary in @resurrect-processes: a restored
-          # `claude` or `hermes` comes back with no conversation and looks
+          # `claude` or `opencode` comes back with no conversation and looks
           # alive. @resurrect-capture-pane-contents (above) keeps the
           # transcript, which is the part worth having back.
           plugin = continuum;

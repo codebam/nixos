@@ -10,10 +10,7 @@ let
   # The per-agent credentials live as individual sops keys
   # (desktop/configuration/sops.nix). Each wrapper below runs this script at
   # launch; it exports only the names in secretVars, so unrelated tokens in
-  # /run/secrets never reach an interactive shell. sops.templates."hermes-env"
-  # reassembles the base set plus the token-plan keys Hermes needs, as a file
-  # for the Hermes agent itself, so the deleted hand-maintained blob stays a
-  # generated artifact.
+  # /run/secrets never reach an interactive shell.
   secretVars = {
     OPENROUTER_API_KEY = "openrouter-api-key";
     CONTEXT7_API_KEY = "context7-api-key";
@@ -23,6 +20,13 @@ let
     # cloudflare-api-key is the account's API token (the workers-ai provider
     # rows already send it as the bearer token), so name it both ways.
     CLOUDFLARE_API_TOKEN = "cloudflare-api-key";
+    # Gemini Platform (formerly Vertex AI), API-key/express mode. Two names,
+    # one secret: pi-ai's google-vertex provider (the dsh route and pi) reads
+    # GOOGLE_CLOUD_API_KEY, while opencode's own google-vertex plugin reads
+    # GOOGLE_VERTEX_API_KEY. With an API key neither client needs a project or
+    # location -- both target the global aiplatform endpoint.
+    GOOGLE_CLOUD_API_KEY = "gemini-platform-api-key";
+    GOOGLE_VERTEX_API_KEY = "gemini-platform-api-key";
   };
   secretVarPairs = lib.concatStringsSep " " (
     lib.mapAttrsToList (name: secret: "${name}:${secret}") secretVars
@@ -69,8 +73,8 @@ let
     fi
 
     # NanoGPT's OpenAI-compatible gateway (https://nano-gpt.com/api/v1),
-    # used by the `nano-gpt` provider/route in pi's models.json, dsh's
-    # llm-pi-ai profile, and Hermes. Two names, one secret: NANOGPT_API_KEY
+    # used by the `nano-gpt` provider/route in pi's models.json and dsh's
+    # llm-pi-ai profile. Two names, one secret: NANOGPT_API_KEY
     # is the name NanoGPT's own docs use; NANO_GPT_API_KEY is the name
     # models.dev lists for its `nano-gpt` provider and what opencode and
     # the desktop client resolve provider credentials from, so the full
@@ -146,9 +150,9 @@ let
 
   # min_coding_score (0.0-1.0) is the router's capability floor: higher routes
   # to stronger and pricier coders, lower opens up cheap ones. 0.65 lands
-  # mid-frontier and is the same floor the hermes module used. Omitting the
-  # plugin entirely is NOT the neutral choice -- the router then picks the
-  # strongest available coder, which is the expensive end.
+  # mid-frontier. Omitting the plugin entirely is NOT the neutral choice --
+  # the router then picks the strongest available coder, which is the
+  # expensive end.
   minCodingScore = 0.65;
   paretoPlugin = [
     {
@@ -374,8 +378,8 @@ let
   # the curated selection for the fleet -- fifteen models, deliberately, not
   # the 600-plus-model catalog. opencode needs no declaration at all: models.dev
   # carries the `nano-gpt` provider with the full catalog, keyed from
-  # NANO_GPT_API_KEY (see loadKey). pi, dsh, and Hermes ship no such catalog,
-  # so this list is the single source their projections below read.
+  # NANO_GPT_API_KEY (see loadKey). pi and dsh ship no such catalog, so this
+  # list is the single source their projections below read.
   #
   # The set is the daily driver plus the cheap frontier tier around it (about
   # $0.10-0.15 input and $0.30-0.60 output per million tokens), the stronger
@@ -1262,8 +1266,8 @@ let
     outboundCorrelation.allowDynamicHeaderValues = true;
 
     # The four MCP servers opencode and pi register, plus the email bridge,
-    # Google Calendar and Viewport computer use that opencode, dsh and Hermes
-    # also mount, in Qwen Code's MCPServerConfig shape: stdio keeps `command` and `args` apart,
+    # Google Calendar and Viewport computer use that opencode and dsh also
+    # mount, in Qwen Code's MCPServerConfig shape: stdio keeps `command` and `args` apart,
     # `timeout` is the tool-call timeout in ms, and streamable HTTP is
     # `httpUrl` (`url` would select SSE). User-scope servers connect without
     # the approval gate that project-level servers (.qwen/settings.json,
@@ -1302,7 +1306,7 @@ let
         httpUrl = memoryUrl;
       };
 
-      # The email bridge dsh and Hermes mount (home/email-mcp.nix): the
+      # The email bridge dsh mounts (home/email-mcp.nix): the
       # launcher exports the `email-api-key` sops secret as MCP_AUTH_TOKEN,
       # falling back to `wrangler auth token` where it is absent. Like the
       # dsh row, registered on every host -- without the agentic-inbox
@@ -1323,7 +1327,7 @@ let
       };
 
       # Google Calendar MCP (home/google-calendar-mcp.nix): the same shared
-      # launcher dsh and Hermes mount, pointing the server at the
+      # launcher dsh mounts, pointing the server at the
       # `google-calendar-oauth` sops secret with the manual credentials copy
       # as fallback. Hosts without tokens still start -- calendar calls
       # report the missing token file instead of failing the session. Reads
@@ -1346,7 +1350,7 @@ let
     };
   }
   # Retained but unused: dsh-im owns the Telegram token and bot now.
-  # The Telegram bot that replaced the Hermes gateway, on the same bot token
+  # The Telegram bot, on the same bot token
   # (qwen-bot-telegram-key, which the dsh-im loader exports). Desktop-only:
   # that is where the secret mounts.
   # The adapter long-polls -- it has no webhook mode -- and deletes any
@@ -1914,8 +1918,8 @@ let
   # OPENCODE_API_KEY to. Writes the choice file read by loadDshKey and
   # restarts the web UI so it picks the change up; running terminal sessions
   # keep their old key, so start a new one (or run `DSH_OPENCODE_SUB=2 dsh`
-  # for a one-off). Only dsh consults this: Hermes and the other agents keep
-  # their own key wiring.
+  # for a one-off). Only dsh consults this; the other agents keep their own
+  # key wiring.
   dshSubscription = pkgs.writeShellApplication {
     name = "dsh-subscription";
     runtimeInputs = [ pkgs.coreutils ];
@@ -2269,47 +2273,44 @@ let
   # Browser navigation and first paint can outrun the 60s MCP default.
   pwTimeoutMs = 120000;
 
-  # Shared agent memory (home/agent-memory.nix holds the definition, shared
-  # with Hermes): the aliases below keep this file's service unit and the
-  # opencode/pi/dsh registrations reading the same names.
+  # Shared agent memory (home/agent-memory.nix holds the definition): the
+  # aliases below keep this file's service unit and the opencode/pi/dsh
+  # registrations reading the same names.
   memorySrv = import ./agent-memory.nix;
   memoryServerName = memorySrv.name;
   memoryPort = memorySrv.port;
   memoryUrl = memorySrv.url;
   memoryFileSpec = memorySrv.fileSpec;
   memoryGuidance = memorySrv.guidance;
-  # dsh names the tools `mcp__<server>__<tool>`, like Hermes.
+  # dsh names the tools `mcp__<server>__<tool>`.
   memoryGuidanceDsh = memorySrv.guidanceMcp;
 
   # email MCP (the agentic-inbox bridge): one definition shared by the qwen,
   # dsh, and opencode registrations below, the Telegram channel guardrail,
-  # and the .dsh/AGENTS.md and opencode/AGENTS.md guardrails.
-  # home/hermes.nix imports the same file for Hermes, so the bridge path,
-  # URL, server name, and send policy stay in one place.
+  # and the .dsh/AGENTS.md and opencode/AGENTS.md guardrails, so the bridge
+  # path, URL, server name, and send policy stay in one place.
   emailMcp = import ./email-mcp.nix { inherit config pkgs; };
 
   # Google Calendar MCP: one definition shared by the qwen, dsh, and opencode
-  # registrations below and Hermes (home/hermes.nix imports the same file),
-  # so the launcher -- which points the server at the `google-calendar-oauth`
+  # registrations below, so the launcher -- which points the server at the
+  # `google-calendar-oauth`
   # sops secret -- and the server name stay in one place. The OAuth tokens it
   # reads live in ~/.config/google-calendar-mcp, preserved on the desktop
   # across the root wipe.
   calendarMcp = import ./google-calendar-mcp.nix { inherit config pkgs; };
 
-  # Viewport computer use: the same stdio MCP server Hermes mounts, shared so
+  # Viewport computer use: one stdio MCP server for every harness, shared so
   # the server name, argv and standing guidance cannot drift. dsh keeps its
   # native `viewport` plugin; the others get this bridge.
   viewportMcp = import ./viewport-mcp.nix { inherit pkgs; };
 
   # The Cloudflare CLI (`cf`, pkgs/cf.nix) guidance block: home/cf.nix defines
   # the text once -- `guidance` for host tiers, `guidanceSandbox` for the dsh
-  # and opencode sandbox worlds -- and home/hermes.nix interpolates the same
-  # strings into its prompt hints.
+  # and opencode sandbox worlds.
   cfCli = import ./cf.nix;
 
   # The Assisted-by commit trailer rule (home/commit-trailer.nix): defined once
-  # and interpolated into the dsh, pi and opencode global AGENTS.md below;
-  # home/hermes.nix imports the same file for its always-on prompt hints.
+  # and interpolated into the dsh, pi and opencode global AGENTS.md below.
   commitTrailer = import ./commit-trailer.nix;
 
   # The guidance block `zg --install` writes, copied verbatim from its 0.3.1
@@ -2798,6 +2799,18 @@ let
           displayName: OpenRouter
           apiKeyEnv: OPENROUTER_API_KEY
 
+        # Gemini Platform (formerly Vertex AI), API-key/express mode. pi-ai's
+        # built-in google-vertex catalog supplies the models (17 at the
+        # bundled 1.6.0 snapshot); with no `models` key this stays an upsert
+        # onto that catalog, like the openrouter row above. GOOGLE_CLOUD_API_KEY
+        # is exported by `loadKey` from the `gemini-platform-api-key` sops
+        # secret, and pi-ai's google-vertex client takes its API-key path
+        # instead of ADC when that key is present, so no project/location is
+        # configured and the route targets the global aiplatform endpoint.
+        google-vertex:
+          displayName: Gemini Platform (Vertex AI)
+          apiKeyEnv: GOOGLE_CLOUD_API_KEY
+
         # Union Alpha on OpenRouter. pi-ai 0.85.1's installed catalog predates
         # it, and neither way of extending that route works: a `models` list
         # would replace all 366 catalog entries, and `modelOverrides` refuses
@@ -2841,63 +2854,6 @@ let
             maxTokensField: max_tokens
     ${nanogptDshModelsYaml}
   '';
-
-  # Hermes' hand-declared model providers. The upstream module ships built-in
-  # catalogs for OpenCode Go and DeepSeek, which the extended hermes-env
-  # template in desktop/configuration/sops.nix unlocks with
-  # OPENCODE_GO_API_KEY / DEEPSEEK_API_KEY; home/hermes.nix keeps OpenRouter
-  # pinned as the startup default. The Qwen Cloud Token Plan below has no
-  # Hermes catalog and points at the wrong endpoint out of the box:
-  #
-  #   - Qwen Cloud's Token Plan speaks Anthropic Messages (the vendor's
-  #     opencode recipe), while Hermes' built-in `alibaba` provider speaks
-  #     OpenAI-compatible DashScope; declare the vendor endpoint directly.
-  #
-  # Model metadata is projected from the same qwenProvider/nanogptModels
-  # shapes the other harnesses use, so the lists cannot drift between agents.
-  hermesProviderModels = {
-    qwen-token-plan = lib.mapAttrs (_: model: {
-      context_length = model.limit.context;
-      supports_reasoning = model.reasoning or false;
-      supports_tools = model.tool_call or false;
-      supports_vision = builtins.elem "image" (model.modalities.input or [ ]);
-    }) qwenProvider.qwen.models;
-
-    nanogpt = builtins.listToAttrs (
-      map (model: {
-        name = model.id;
-        value = {
-          context_length = model.context;
-          supports_reasoning = model.efforts != [ ];
-          supports_tools = model.tool_call;
-          supports_vision = model.vision;
-        };
-      }) nanogptModels
-    );
-  };
-
-  hermesProviders = {
-    qwen-token-plan = {
-      name = "Qwen Cloud (Token Plan)";
-      api = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1";
-      key_env = "QWEN_TOKEN_PLAN_API_KEY";
-      transport = "anthropic_messages";
-      # This gateway has no Anthropic /v1/models surface, so the picker uses
-      # the declared list instead of probing it.
-      discover_models = false;
-      models = hermesProviderModels.qwen-token-plan;
-    };
-
-    nano-gpt = {
-      name = "NanoGPT";
-      api = "https://nano-gpt.com/api/v1";
-      key_env = "NANOGPT_API_KEY";
-      transport = "chat_completions";
-      # Same reason as Qwen: the curated nanogptModels list is the catalog.
-      discover_models = false;
-      models = hermesProviderModels.nanogpt;
-    };
-  };
 
   # settings.yaml is dsh's live user-overrides document: the Models page and the
   # onboarding/permission toggles write it, and dsh hot-reloads external edits.
@@ -2993,8 +2949,7 @@ in
     activation = {
       # Pi's settings.json is mutable state — `/settings` and the model picker
       # write to it — so it cannot be a read-only store symlink like opencode's
-      # config. Merge instead, nix keys winning, the same way the hermes module
-      # handled its own config.yaml.
+      # config. Merge instead, nix keys winning.
       piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${piSettingsMerge}
       '';
@@ -3032,33 +2987,6 @@ in
       # `del` on the missing key is a no-op.
       dshCrofCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "dshSettings" ] ''
         run ${pkgs.yq-go}/bin/yq -i 'del(.llm-pi-ai.providers.crofai)' "$HOME/.dsh/settings.yaml"
-      '';
-
-      # Same one-shot cleanup for Hermes: config.yaml is a merged document
-      # too, so the providers.crofai entry an earlier activation wrote into
-      # it survived the fragment change and kept the provider in the desktop
-      # picker. Ordered after hermesAgentSetup, which rewrites the document;
-      # `del` on the missing key is a no-op. Guarded: hosts that never created
-      # the document (the deck has no Hermes profile) must not fail activation;
-      # yq errors on a missing file.
-      hermesCrofCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "hermesAgentSetup" ] ''
-        if [ -f "$HOME/.hermes/config.yaml" ]; then
-          run ${pkgs.yq-go}/bin/yq -i 'del(.providers.crofai)' "$HOME/.hermes/config.yaml"
-        fi
-      '';
-
-      # One-shot cleanup after removing the OpenSandbox terminal backend: the
-      # live config.yaml is a merged document, so the backend and plugin keys an
-      # earlier activation wrote would survive every later switch and keep
-      # selecting a plugin that no longer exists. The activation-managed plugin
-      # symlink goes too -- its store path is no longer referenced. Guarded like
-      # the CrofAI prune: the deck has no Hermes profile, and yq errors on a
-      # missing file.
-      hermesOpenSandboxCleanup = lib.hm.dag.entryAfter [ "writeBoundary" "hermesAgentSetup" ] ''
-        if [ -f "$HOME/.hermes/config.yaml" ]; then
-          run ${pkgs.yq-go}/bin/yq -i 'del(.terminal.backend) | del(.terminal.container_persistent) | del(.terminal.lifetime_seconds) | del(.plugins.enabled[] | select(. == "opensandbox"))' "$HOME/.hermes/config.yaml"
-        fi
-        run ${pkgs.coreutils}/bin/rm -f "$HOME/.hermes/plugins/nix-managed-hermes-opensandbox"
       '';
 
       # One-shot cleanup after dropping the nono provider: the old activation
@@ -3430,8 +3358,8 @@ in
                 toolCallTimeoutMs: 180000
 
             # Google Calendar MCP (home/google-calendar-mcp.nix): the same
-            # local stdio server Hermes mounts, so dsh sees the tools Hermes
-            # already uses (mcp__google-calendar__*). The shared launcher adds
+            # local stdio server the other harnesses mount, so dsh sees
+            # mcp__google-calendar__*. The shared launcher adds
             # the `google-calendar-oauth` sops secret path; the OAuth tokens
             # themselves live in ~/.config/google-calendar-mcp, preserved on
             # the desktop. Hosts without tokens still start -- calendar calls
@@ -3461,10 +3389,6 @@ in
       ".dsh/profiles/web/cordis.patch.yml".source = dshProfilePatch;
     };
   };
-
-  # Hermes' plan providers, merged into the settings home/hermes.nix owns;
-  # the upstream module deep-merges `settings` across modules by design.
-  services.hermes-agent.settings.providers = hermesProviders;
 
   # Nested rather than three top-level `xdg.configFile.` keys: statix's
   # repeated-keys lint flags the flat form once the third entry lands, and all
@@ -3559,7 +3483,7 @@ in
             timeout = 30000;
           };
 
-          # The email bridge dsh and Hermes mount (home/email-mcp.nix): the
+          # The email bridge dsh mounts (home/email-mcp.nix): the
           # launcher exports the `email-api-key` sops secret as MCP_AUTH_TOKEN,
           # falling back to `wrangler auth token` where it is absent. Like the
           # dsh row, registered on every host -- without the agentic-inbox
@@ -3582,7 +3506,7 @@ in
           };
 
           # Google Calendar MCP (home/google-calendar-mcp.nix): the same shared
-          # launcher dsh and Hermes mount, pointing the server at the
+          # launcher dsh mounts, pointing the server at the
           # `google-calendar-oauth` sops secret with the manual credentials copy
           # as fallback. Hosts without tokens still start -- calendar calls
           # report the missing token file instead of failing the session. Reads
@@ -3596,7 +3520,7 @@ in
           };
 
           # Viewport computer use (home/viewport-mcp.nix): the same stdio
-          # server Qwen, pi and Hermes mount. Its launcher pins the session's
+          # server Qwen and pi mount. Its launcher pins the session's
           # own `viewport msg` client and grim, so opencode needs no desktop
           # PATH to reach the live session.
           ${viewportMcp.name} = {
@@ -3665,6 +3589,16 @@ in
             };
           };
           cloudflare-workers-ai.models.${cfModel} = { };
+
+          # Gemini Platform (formerly Vertex AI). models.dev already ships the
+          # google-vertex catalog, so this block only relabels the provider in
+          # the picker; a partial provider block merges with the catalog the
+          # same way the cloudflare row above adds one model without restating
+          # it. Authentication is GOOGLE_VERTEX_API_KEY, exported by loadKey
+          # from the `gemini-platform-api-key` sops secret in API-key/express
+          # mode -- no project or location is configured, so the client uses
+          # the global aiplatform endpoint.
+          google-vertex.name = "Gemini Platform (Vertex AI)";
 
           # Union Alpha Free. models.dev already carries it for both OpenCode
           # provider ids; the explicit declarations pin the free metadata so a
