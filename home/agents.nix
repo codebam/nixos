@@ -20,11 +20,13 @@ let
     # cloudflare-api-key is the account's API token (the workers-ai provider
     # rows already send it as the bearer token), so name it both ways.
     CLOUDFLARE_API_TOKEN = "cloudflare-api-key";
-    # Gemini Platform (formerly Vertex AI), API-key/express mode. Two names,
-    # one secret: pi-ai's google-vertex provider (the dsh route and pi) reads
+    # Gemini Platform (formerly Vertex AI), API-key auth. Two names, one
+    # secret: pi-ai's google-vertex provider (the dsh route and pi) reads
     # GOOGLE_CLOUD_API_KEY, while opencode's own google-vertex plugin reads
-    # GOOGLE_VERTEX_API_KEY. With an API key neither client needs a project or
-    # location -- both target the global aiplatform endpoint.
+    # GOOGLE_VERTEX_API_KEY. The project and location come from
+    # geminiPlatformProject/ geminiPlatformLocation below -- the express
+    # path would resolve to the key's own region, which does not serve the
+    # Gemini 4 models.
     GOOGLE_CLOUD_API_KEY = "gemini-platform-api-key";
     GOOGLE_VERTEX_API_KEY = "gemini-platform-api-key";
   };
@@ -41,6 +43,18 @@ let
         if [ -n "$value" ]; then export "$name=$value"; fi
       fi
     done
+
+    # Gemini Platform routing (see geminiPlatformLocation above): opencode's
+    # google-vertex plugin reads these two names to build its project-scoped
+    # endpoint. The project comes from the sops secret, so it never enters the
+    # store; pi-ai ignores both and gets the endpoint from the dsh route's
+    # baseURL instead.
+    vp_project=/run/secrets/gemini-platform-project
+    if [ -r "$vp_project" ]; then
+      GOOGLE_VERTEX_PROJECT=$(cat "$vp_project")
+      export GOOGLE_VERTEX_PROJECT
+    fi
+    export GOOGLE_VERTEX_LOCATION=${geminiPlatformLocation}
 
     qwen_secret=/run/secrets/qwen-api-key
     if [ -r "$qwen_secret" ]; then
@@ -160,6 +174,15 @@ let
       min_coding_score = minCodingScore;
     }
   ];
+
+  # Gemini Platform (formerly Vertex AI) location. The project itself is the
+  # `gemini-platform-project` sops secret, read at runtime -- dsh's route gets
+  # its project-scoped baseURL from the activation-time settings merge below,
+  # and opencode builds the same endpoint from GOOGLE_VERTEX_PROJECT, which
+  # loadKey exports from that secret. Both are needed because the express URL
+  # (/v1/publishers/google/models/<model>) resolves to the API key's own
+  # region, where the Gemini 4 models are not served.
+  geminiPlatformLocation = "global";
 
   # Qwen 3.8 27B on Cloudflare Workers AI, offered as an alternate rather than
   # a default: it is cheap and long-context but a 27B model, so it is a
@@ -2799,14 +2822,23 @@ let
           displayName: OpenRouter
           apiKeyEnv: OPENROUTER_API_KEY
 
-        # Gemini Platform (formerly Vertex AI), API-key/express mode. pi-ai's
-        # built-in google-vertex catalog supplies the models (17 at the
-        # bundled 1.6.0 snapshot); with no `models` key this stays an upsert
-        # onto that catalog, like the openrouter row above. GOOGLE_CLOUD_API_KEY
-        # is exported by `loadKey` from the `gemini-platform-api-key` sops
-        # secret, and pi-ai's google-vertex client takes its API-key path
-        # instead of ADC when that key is present, so no project/location is
-        # configured and the route targets the global aiplatform endpoint.
+        # Gemini Platform (formerly Vertex AI). pi-ai's built-in google-vertex
+        # catalog supplies the models (17 at the bundled 1.6.0 snapshot); with
+        # no `models` key this stays an upsert onto that catalog, like the
+        # openrouter row above. GOOGLE_CLOUD_API_KEY is exported by `loadKey`
+        # from the `gemini-platform-api-key` sops secret; it travels as the
+        # x-goog-api-key header.
+        #
+        # pi-ai's catalog baseUrl carries a {location} placeholder it never
+        # substitutes, so left alone the request goes to the express path
+        # (/v1/publishers/google/models/<model>), which resolves to the API
+        # key's own region -- us-central1 for this key -- where the Gemini 4
+        # models are not served (404 "not found or your project does not have
+        # access"). dshSettingsMerge below therefore adds a project-scoped
+        # baseURL from the `gemini-platform-project` sops secret at activation
+        # time; it cannot live in this static fragment because the project is
+        # not allowed in the store. A baseURL naming an API version also tells
+        # pi-ai's genai client not to prepend project/location itself.
         google-vertex:
           displayName: Gemini Platform (Vertex AI)
           apiKeyEnv: GOOGLE_CLOUD_API_KEY
@@ -2873,6 +2905,25 @@ let
       printf '{}\n' > "$settings"
     fi
     ${pkgs.yq-go}/bin/yq -i ". * load(\"${dshSettings}\")" "$settings"
+
+    # Gemini Platform's project-scoped baseURL. The project is a sops secret,
+    # so it is resolved here (sops-install-secrets is ordered before the
+    # home-manager activation) rather than baked into the managed fragment.
+    # Without the secret -- a host with no sops secrets mounted -- the route
+    # keeps pi-ai's catalog baseURL, which is the express endpoint.
+    vp_project=/run/secrets/gemini-platform-project
+    if [ -r "$vp_project" ]; then
+      vp_project=$(cat "$vp_project")
+    else
+      vp_project=""
+    fi
+    if [ -n "$vp_project" ]; then
+      vp_base="https://aiplatform.googleapis.com/v1/projects/$vp_project/locations/${geminiPlatformLocation}"
+      VP_BASE="$vp_base" ${pkgs.yq-go}/bin/yq -i \
+        '.llm-pi-ai.providers."google-vertex".baseURL = strenv(VP_BASE)' "$settings"
+    else
+      ${pkgs.yq-go}/bin/yq -i 'del(.llm-pi-ai.providers."google-vertex".baseURL)' "$settings"
+    fi
   '';
 
   # dsh-tui's first-run wizard is gated by ~/.dsh-tui/onboarding.json, a pref
@@ -3591,13 +3642,14 @@ in
           cloudflare-workers-ai.models.${cfModel} = { };
 
           # Gemini Platform (formerly Vertex AI). models.dev already ships the
-          # google-vertex catalog, so this block only relabels the provider in
-          # the picker; a partial provider block merges with the catalog the
-          # same way the cloudflare row above adds one model without restating
-          # it. Authentication is GOOGLE_VERTEX_API_KEY, exported by loadKey
-          # from the `gemini-platform-api-key` sops secret in API-key/express
-          # mode -- no project or location is configured, so the client uses
-          # the global aiplatform endpoint.
+          # google-vertex catalog, so this block adds no models; a partial
+          # provider block merges with the catalog the same way the cloudflare
+          # row above adds one model without restating it. Authentication is
+          # GOOGLE_VERTEX_API_KEY, exported by loadKey from the
+          # `gemini-platform-api-key` sops secret. loadKey also exports
+          # GOOGLE_VERTEX_PROJECT and GOOGLE_VERTEX_LOCATION, which this
+          # plugin uses to build the project-scoped global endpoint (the
+          # key's own express region does not serve the Gemini 4 models).
           google-vertex.name = "Gemini Platform (Vertex AI)";
 
           # Union Alpha Free. models.dev already carries it for both OpenCode

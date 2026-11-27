@@ -42,12 +42,21 @@ _:
         owner = "codebam";
         mode = "0400";
       };
-      # Gemini Platform (formerly Vertex AI) API key, in API-key/express mode
-      # rather than ADC. home/agents.nix's secretVars exports it under both
-      # names the harnesses resolve: GOOGLE_CLOUD_API_KEY for pi-ai (dsh, pi)
-      # and GOOGLE_VERTEX_API_KEY for opencode. No project or location is set:
-      # with an API key both clients target the global aiplatform endpoint.
+      # Gemini Platform (formerly Vertex AI) API key, used instead of ADC.
+      # home/agents.nix's secretVars exports it under both names the harnesses
+      # resolve: GOOGLE_CLOUD_API_KEY for pi-ai (dsh, pi) and
+      # GOOGLE_VERTEX_API_KEY for opencode.
       gemini-platform-api-key = {
+        owner = "codebam";
+        mode = "0400";
+      };
+      # The Gemini Platform project the key belongs to. The key's express
+      # endpoint resolves to its own region (us-central1 here), which does not
+      # serve the Gemini 4 models, so both harnesses address the
+      # project-scoped global endpoint instead. Read at runtime: opencode's
+      # loader exports it as GOOGLE_VERTEX_PROJECT, and the dsh settings merge
+      # builds the route's baseURL from it -- keeping it out of the store.
+      gemini-platform-project = {
         owner = "codebam";
         mode = "0400";
       };
