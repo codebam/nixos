@@ -2999,6 +2999,81 @@ let
       > "$settings.tmp"
     mv "$settings.tmp" "$settings"
   '';
+
+  # Antigravity CLI's MCP registry: ~/.gemini/config/mcp_config.json, the
+  # Claude-style `mcpServers` map shared by the App, the IDE and the CLI
+  # (antigravity.google/docs/mcp). Rendered from the same values the other
+  # harnesses read, so a server cannot drift between them, and symlinked
+  # read-only below -- `agy mcp add/remove` edits that file in place, and
+  # keeping it out of reach is the point of declaring it here.
+  #
+  # agy's shape differs from dsh's in three places worth knowing when editing
+  # this: a remote server is a Streamable HTTP `serverUrl` (`httpUrl`, which
+  # dsh and opencode accept, is explicitly unsupported), timeouts are in
+  # seconds and bound both the connect and every tool call, and MCP tools are
+  # lazy by default -- `tools.<name>.eager` is agy's spelling of the intent
+  # behind dsh's alwaysLoadTools row, buying the search tool a direct
+  # `mcp_<server>_<tool>` call instead of a schema-file read plus
+  # call_mcp_tool.
+  agyMcpConfig = pkgs.writeText "agy-mcp_config.json" (
+    builtins.toJSON {
+      mcpServers = {
+        ${zgServerName} = {
+          command = builtins.head zgArgv;
+          args = builtins.tail zgArgv;
+          # 600s, the zvec-grep installer's own --mcp-tool-timeout default.
+          timeoutSeconds = zgTimeoutMs / 1000;
+          tools.zvec_grep_search.eager = true;
+        };
+
+        # Same stdio server as the opencode/pi rows: each session spawns
+        # `ripwire --mcp`, which manages its own warm index cache.
+        ripwire = {
+          command = "ripwire";
+          args = [ "--mcp" ];
+        };
+
+        ${pwServerName} = {
+          command = builtins.head pwArgv;
+          args = builtins.tail pwArgv;
+          timeoutSeconds = pwTimeoutMs / 1000;
+        };
+
+        # Remote, one shared writer: the loopback endpoint of the
+        # `agent-memory` user service, never a per-session stdio copy.
+        ${memoryServerName} = {
+          serverUrl = memoryUrl;
+          # Only guards a slow first connect; the service is idle-cheap.
+          timeoutSeconds = 30;
+        };
+
+        # The bridge exports the `email-api-key` sops secret itself (see
+        # home/email-mcp.nix), so no credential enters this file.
+        ${emailMcp.name} = {
+          command = emailMcp.runner;
+          args = [
+            emailMcp.bridge
+            "--url"
+            emailMcp.url
+          ];
+          timeoutSeconds = 180;
+        };
+
+        ${calendarMcp.name} = {
+          command = calendarMcp.launcher;
+          timeoutSeconds = 180;
+        };
+
+        ${viewportMcp.name} = {
+          command = builtins.head viewportMcp.argv;
+          args = builtins.tail viewportMcp.argv;
+          # Typing is a batch of up to 4000 control messages against a
+          # five-minute server budget.
+          timeoutSeconds = viewportMcp.timeoutMs / 1000;
+        };
+      };
+    }
+  );
 in
 {
   home = {
@@ -3157,6 +3232,13 @@ in
     # same reason the opencode config below sits under one `xdg.configFile`.
     file = {
       ".pi/agent/models.json".text = builtins.toJSON piModels;
+
+      # agy's MCP fleet, rendered above. Read-only on purpose: `agy mcp add`
+      # rewrites this file in place, so a store symlink makes the declaration
+      # the single source of truth. A file left by the installer (the CLI's
+      # global config dir is shared with the App and IDE) is moved aside to
+      # mcp_config.json.hm-backup by the flake's backupFileExtension.
+      ".gemini/config/mcp_config.json".source = agyMcpConfig;
 
       # The same version-matched discovery stub for the two non-opencode roots:
       # pi scans `~/.pi/agent/skills` and dsh scans `~/.dsh/skills`. opencode's
